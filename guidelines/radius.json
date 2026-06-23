@@ -1,0 +1,40 @@
+{
+  "$metadata": {
+    "category": "radius",
+    "designSystem": "AZ Design System"
+  },
+
+  "primitive": {
+    "xs": {
+      "$value": "4px"
+    },
+
+    "sm": {
+      "$value": "8px"
+    },
+
+    "md": {
+      "$value": "10px"
+    },
+
+    "lg": {
+      "$value": "12px"
+    },
+
+    "xl": {
+      "$value": "16px"
+    }
+  },
+
+  "semantic": {
+    "interactive": {
+      "$value": "{primitive.xs}",
+      "$description": "Buttons, badges, tags, compact controls"
+    },
+
+    "container": {
+      "$value": "{primitive.sm}",
+      "$description": "Cards, modals, message bubbles, input containers"
+    },
+  }
+}
