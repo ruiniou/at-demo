@@ -112,3 +112,9 @@ dist
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Guidelines (internal only)
+guidelines/
+
+# Qoder cache
+.qoder/

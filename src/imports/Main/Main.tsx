@@ -1,5 +1,5 @@
 // AI Copilot Chat Window - Design Tokens & Visual Specs
-import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, Suspense, lazy } from "react";
 import atlasLogoUrl from "../../icons/Atlas-Logo.svg";
 import aiSubmitIconUrl from "../../icons/AI-submit.svg";
 import checkIconUrl from "../../icons/check-line.svg";
@@ -643,18 +643,69 @@ function CodeStatusDot({ color }: { color: string }) {
   return <span className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: color }} />;
 }
 
-function TooltipText({ label, children }: { label: string; children: React.ReactNode }) {
+function TooltipText({ label, children, align = "center" }: { label: string; children: React.ReactNode; align?: "center" | "left" }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0, translateX: "translateX(-50%)", translateY: "translateY(0)" });
+  const triggerRef = useRef<HTMLSpanElement>(null);
+  const tooltipRef = useRef<HTMLSpanElement>(null);
+
+  const handleMouseEnter = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const showAbove = spaceBelow < 24;
+      const gap = align === "left" ? 0 : 2;
+      setPos({
+        top: showAbove ? rect.top - gap : rect.bottom + gap,
+        left: align === "left" ? rect.left : rect.left + rect.width / 2,
+        translateX: align === "center" ? "translateX(-50%)" : "translateX(0)",
+        translateY: showAbove ? "translateY(-100%)" : "translateY(0)",
+      });
+    }
+    setIsOpen(true);
+  };
+
+  // Adjust position after render to handle viewport boundary cases
+  useLayoutEffect(() => {
+    if (!isOpen || !triggerRef.current || !tooltipRef.current || align !== "center") return;
+
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const tooltipRect = tooltipRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const margin = 8;
+
+    const centeredLeft = triggerRect.left + triggerRect.width / 2;
+    const tooltipHalfWidth = tooltipRect.width / 2;
+
+    if (centeredLeft + tooltipHalfWidth > viewportWidth - margin) {
+      // Near right edge: right-align tooltip with button
+      setPos((prev) => ({ ...prev, left: triggerRect.right, translateX: "translateX(-100%)" }));
+    } else if (centeredLeft - tooltipHalfWidth < margin) {
+      // Near left edge: left-align tooltip with button
+      setPos((prev) => ({ ...prev, left: triggerRect.left, translateX: "translateX(0)" }));
+    }
+  }, [isOpen, align, label]);
 
   return (
     <span
+      ref={triggerRef}
       className="relative inline-flex"
-      onMouseEnter={() => setIsOpen(true)}
+      onMouseEnter={handleMouseEnter}
       onMouseLeave={() => setIsOpen(false)}
     >
       {children}
       {isOpen && (
-        <span className="absolute left-1/2 top-full z-50 mt-[4px] -translate-x-1/2 whitespace-nowrap rounded-[4px] bg-[#3C4242] px-[6px] py-[4px] t-small text-[#F8F7F7] shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
+        <span
+          ref={tooltipRef}
+          className={`fixed z-[9999] rounded-[4px] bg-[#3C4242] px-[6px] py-[4px] t-small text-[#F8F7F7] shadow-[0px_2px_4px_rgba(0,0,0,0.08)] ${
+            align === "left" ? "max-w-[232px] break-words" : "whitespace-nowrap"
+          }`}
+          style={{
+            top: `${pos.top}px`,
+            left: `${pos.left}px`,
+            transform: `${pos.translateX} ${pos.translateY}`,
+          }}
+        >
           {label}
         </span>
       )}
@@ -737,47 +788,53 @@ function PanelViewToggle({
 }) {
   return (
     <div className="bg-[#F8F7F7] flex items-center rounded-[4px]">
-      <button
-        onClick={() => onChange('shell')}
-        className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
-          value === 'shell' ? 'bg-white' : ''
-        }`}
-      >
-        {value === 'shell' && (
-          <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
-        )}
-        <p className={`t-small whitespace-nowrap ${value === 'shell' ? 'text-[#3C4242]' : 'text-[#888E8E]'}`}>
-          {docType === 'listing' ? 'Preview' : 'Shell'}
-        </p>
-      </button>
-      <button
-        onClick={() => onChange('both')}
-        className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
-          value === 'both' ? 'bg-white' : ''
-        }`}
-      >
-        {value === 'both' && (
-          <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
-        )}
-        <div className="relative shrink-0 size-[16px] flex items-center justify-center">
-          <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 13.334 12">
-            <path d={SPLIT_ICON_PATH} fill={value === 'both' ? '#3C4242' : '#888E8E'} />
-          </svg>
-        </div>
-      </button>
-      <button
-        onClick={() => onChange('code')}
-        className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
-          value === 'code' ? 'bg-white' : ''
-        }`}
-      >
-        {value === 'code' && (
-          <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
-        )}
-        <p className={`t-small whitespace-nowrap ${value === 'code' ? 'text-[#3C4242]' : 'text-[#888E8E]'}`}>
-          {docType === 'listing' ? 'Code' : 'Code'}
-        </p>
-      </button>
+      <TooltipText label="Show Shell">
+        <button
+          onClick={() => onChange('shell')}
+          className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
+            value === 'shell' ? 'bg-white' : ''
+          }`}
+        >
+          {value === 'shell' && (
+            <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
+          )}
+          <p className={`t-small whitespace-nowrap ${value === 'shell' ? 'text-[#3C4242]' : 'text-[#888E8E]'}`}>
+            {docType === 'listing' ? 'Preview' : 'Shell'}
+          </p>
+        </button>
+      </TooltipText>
+      <TooltipText label="Side-by-Side View">
+        <button
+          onClick={() => onChange('both')}
+          className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
+            value === 'both' ? 'bg-white' : ''
+          }`}
+        >
+          {value === 'both' && (
+            <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
+          )}
+          <div className="relative shrink-0 size-[16px] flex items-center justify-center">
+            <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 13.334 12">
+              <path d={SPLIT_ICON_PATH} fill={value === 'both' ? '#3C4242' : '#888E8E'} />
+            </svg>
+          </div>
+        </button>
+      </TooltipText>
+      <TooltipText label="Show Code Only">
+        <button
+          onClick={() => onChange('code')}
+          className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
+            value === 'code' ? 'bg-white' : ''
+          }`}
+        >
+          {value === 'code' && (
+            <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
+          )}
+          <p className={`t-small whitespace-nowrap ${value === 'code' ? 'text-[#3C4242]' : 'text-[#888E8E]'}`}>
+            {docType === 'listing' ? 'Code' : 'Code'}
+          </p>
+        </button>
+      </TooltipText>
     </div>
   );
 }
@@ -849,11 +906,11 @@ function ViewToggleBar({
               <p className="t-small truncate font-medium text-[#3C4242]">AZE2001-301</p>
               <p className="truncate text-[10px] leading-[15px] text-[#888E8E]">{currentEvent}</p>
             </div>
-            <TooltipText label="Expand tree list">
+            <TooltipText label="Open Tree List">
               <button
                 onClick={onToggleTreeList}
                 className="h-[24px] w-[24px] flex items-center justify-center hover:bg-black/5 rounded-[4px] active:scale-[0.96]"
-                aria-label="Expand tree list"
+                aria-label="Open tree list"
               >
                 <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
               </button>
@@ -975,7 +1032,7 @@ function TreeStatusControl({
     }
 
     return (
-      <TooltipText label="Unlock Code">
+      <TooltipText label="Unlock Table Code">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -996,7 +1053,7 @@ function TreeStatusControl({
 
   if (isHovered && item.status === 'pending' && !isProgram) {
     return (
-      <TooltipText label="Lock Code">
+      <TooltipText label="Lock Table Code">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -1588,7 +1645,7 @@ function ListingPreview({
   
           {/* Metadata toggle button - per Figma: selected state shows pink bg */}
           {onMetadataClick && (
-            <TooltipText label="Metadata">
+            <TooltipText label="Open Metadata">
               <button
                 onClick={onMetadataClick}
                 className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
@@ -1596,9 +1653,7 @@ function ListingPreview({
                 }`}
                 aria-label="Toggle metadata"
               >
-                <SvgIcon className="h-[16px] w-[16px]">
-                  <path d="M6 3H15L19 7V21H6V3ZM14 5V8H17L14 5ZM8 5V19H17V10H12V5H8ZM9 12H16V13.5H9V12ZM9 15H16V16.5H9V15Z" fill={metadataOpen ? "#830051" : "#888E8E"} />
-                </SvgIcon>
+                <LocalIcon src={fileInfoIconUrl} className="h-[16px] w-[16px]" color={metadataOpen ? "#830051" : "#888E8E"} />
               </button>
             </TooltipText>
           )}
@@ -2064,7 +2119,7 @@ function ShellPreview({
         title="Shell preview"
         noBorder
         actions={
-          <TooltipText label="Metadata">
+          <TooltipText label="Open Metadata">
             <button
               onClick={onMetadataClick}
               className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
@@ -2072,9 +2127,7 @@ function ShellPreview({
               }`}
               aria-label="Toggle metadata"
             >
-              <SvgIcon className="h-[16px] w-[16px]">
-                <path d="M6 3H15L19 7V21H6V3ZM14 5V8H17L14 5ZM8 5V19H17V10H12V5H8ZM9 12H16V13.5H9V12ZM9 15H16V16.5H9V15Z" fill={metadataOpen ? "#830051" : "#888E8E"} />
-              </SvgIcon>
+              <LocalIcon src={fileInfoIconUrl} className="h-[16px] w-[16px]" color={metadataOpen ? "#830051" : "#888E8E"} />
             </button>
           </TooltipText>
         }
@@ -2307,9 +2360,11 @@ function MetadataPanel({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <div className="flex items-center pr-[12px] gap-[4px]">
-          <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Batch edit">
-            <LocalIcon src={batchMicroIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
-          </button>
+          <TooltipText label="Batch Edit Macro">
+            <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Batch edit">
+              <LocalIcon src={batchMicroIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+            </button>
+          </TooltipText>
         </div>
       </div>
 
@@ -2391,14 +2446,17 @@ function CodePanel({
   docType,
   freezeCols,
   pageCols,
+  isLocked,
+  onToggleLock,
 }: {
   selectedItem: string;
   docType?: DocumentType;
   freezeCols?: number;
   pageCols?: number;
+  isLocked: boolean;
+  onToggleLock: () => void;
 }) {
   const [activeCodeTab, setActiveCodeTab] = useState<'listing' | 'program'>('listing');
-  const [codeLocked, setCodeLocked] = useState(false);
 
   const listingCodeContent = `%s_listing(
   inda = adsl
@@ -2449,14 +2507,14 @@ quit;
 
   const toolbarButtons = (
     <>
-      <TooltipText label="Save">
+      <TooltipText label="Save Code">
         <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Save">
           <LocalIcon src={saveIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
         </button>
       </TooltipText>
       {[
-        { label: "Copy", icon: copyIconUrl },
-        { label: "History", icon: historyIconUrl },
+        { label: "Copy Code", icon: copyIconUrl },
+        { label: "Version History", icon: historyIconUrl },
       ].map(({ label, icon }) => (
         <TooltipText key={label} label={label}>
           <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label={label}>
@@ -2464,14 +2522,14 @@ quit;
           </button>
         </TooltipText>
       ))}
-      <TooltipText label={codeLocked ? "Unlock Code" : "Lock Code"}>
+      <TooltipText label={isLocked ? "Unlock Table Code" : "Lock Table Code"}>
         <button
-          onClick={() => setCodeLocked((v) => !v)}
-          className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-          aria-label={codeLocked ? "Unlock code" : "Lock code"}
+          onClick={onToggleLock}
+          className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${isLocked ? "bg-[#F4E8EE]" : "hover:bg-black/5"}`}
+          aria-label={isLocked ? "Unlock code" : "Lock code"}
         >
-          {codeLocked
-            ? <LockTreeIcon className="h-[16px] w-[16px]" color="#888E8E" />
+          {isLocked
+            ? <LockTreeIcon className="h-[16px] w-[16px]" color="#830051" />
             : <UnlockTreeIcon className="h-[16px] w-[16px]" color="#888E8E" />}
         </button>
       </TooltipText>
@@ -2780,6 +2838,15 @@ function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
   };
   const selectedTable = getSelectedTable();
   const docType = selectedTable?.docType || 'table';
+  const selectedTableProgram = programs.find((program) =>
+    program.tables.some((table) => table.id === selectedId)
+  );
+  const selectedTableLocked = selectedTable?.status === 'locked';
+  const handleCodePanelToggleLock = () => {
+    if (selectedTableProgram && selectedTable) {
+      handleToggleLock(selectedTableProgram.id, selectedTable.id);
+    }
+  };
 
   const isModified = frozenColumnCount !== savedFreezeCols || pageDividerIndex !== savedPageCols;
 
@@ -2905,15 +2972,15 @@ function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
                 <p className="t-small truncate font-medium text-[#3C4242]">AZE2001-301</p>
                 <p className="truncate text-[10px] leading-[15px] text-[#888E8E]">{currentEvent}</p>
               </div>
-              <TooltipText label="Study information">
+              <TooltipText label="Event Information">
                 <button
                   className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                  aria-label="Study information"
+                  aria-label="Event information"
                 >
                   <InfoIcon />
                 </button>
               </TooltipText>
-              <TooltipText label="Collapse tree list">
+              <TooltipText label="Collapse Tree List">
                 <button
                   onClick={() => setTreeListOpen(false)}
                   className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
@@ -3004,6 +3071,8 @@ function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
                         docType="listing"
                         freezeCols={savedFreezeCols}
                         pageCols={savedPageCols}
+                        isLocked={selectedTableLocked}
+                        onToggleLock={handleCodePanelToggleLock}
                       />
                     </div>
                   )}
@@ -3079,7 +3148,7 @@ function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
 
                 {codeOpen && (
                   <div className={`min-w-[360px] flex-1 overflow-hidden ${aiCopilotOpen ? 'border-r border-[#EBECEC]' : ''}`}>
-                    <CodePanel selectedItem={getSelectedItemName()} />
+                    <CodePanel selectedItem={getSelectedItemName()} isLocked={selectedTableLocked} onToggleLock={handleCodePanelToggleLock} />
                   </div>
                 )}
 
