@@ -1,6 +1,7 @@
 // AI Copilot Chat Window - Design Tokens & Visual Specs
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, Suspense, lazy } from "react";
 import atlasLogoUrl from "../../icons/Atlas-Logo.svg";
+import atlasLogoFullUrl from "../../icons/Atlas-Logo-Full.svg";
 import aiSubmitIconUrl from "../../icons/AI-submit.svg";
 import checkIconUrl from "../../icons/check-line.svg";
 import closeIconUrl from "../../icons/close-line.svg";
@@ -25,17 +26,21 @@ import aiProcessingIconUrl from "../../icons/Status label/Status=AI Processing.s
 import wipStatusIconUrl from "../../icons/Status label/Status=WIP.svg";
 import completedStatusIconUrl from "../../icons/Status label/Status=Completed.svg";
 import untouchedStatusIconUrl from "../../icons/Status label/Status=Untouched.svg";
+import errorStatusIconUrl from "../../icons/Status label/Status=Error.svg";
 import dashboardIconUrl from "../../icons/dashboard-3-line.svg";
 import taskIconUrl from "../../icons/task-line.svg";
 import stackIconUrl from "../../icons/stack-line.svg";
 import capsuleIconUrl from "../../icons/capsule-line.svg";
 import microscopeIconUrl from "../../icons/microscope-line.svg";
+import homeIconUrl from "../../icons/home-5-line.svg";
 import teamIconUrl from "../../icons/team-line.svg";
 import searchLineIconUrl from "../../icons/search-line.svg";
 import filterIconUrl from "../../icons/filter-line.svg";
 import addLineIconUrl from "../../icons/add-line.svg";
 import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 // Lazy-loaded low-frequency components
 const MarkdownTable = lazy(() => import("./components/MarkdownTable"));
@@ -1093,14 +1098,13 @@ function TreeItem({
   return (
     <div className="flex w-full flex-col gap-[2px]">
       <div
-        className={`relative h-[28px] w-full cursor-pointer transition-colors ${
+        className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors ${
           selectedId === program.id ? 'bg-[#F4E8EE]' : isProgramHovered ? 'bg-[#F8F7F7]' : ''
         }`}
         onClick={() => onSelect(program.id)}
         onMouseEnter={() => setHoveredId(program.id)}
         onMouseLeave={() => setHoveredId(null)}
       >
-        {selectedId === program.id && <div className="absolute inset-0 border-l-2 border-[#830051]" aria-hidden="true" />}
         <div className="flex h-full items-center justify-between px-[12px]">
           <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
             <button
@@ -1111,9 +1115,9 @@ function TreeItem({
               className="flex h-[16px] w-[16px] shrink-0 items-center justify-center active:scale-[0.96]"
               aria-label={program.isExpanded ? 'Collapse' : 'Expand'}
             >
-              <ChevronRightTreeIcon isExpanded={program.isExpanded} color={isProgramLocked ? "#B2B4B4" : "#888E8E"} />
+              <ChevronRightTreeIcon isExpanded={program.isExpanded} color={isProgramLocked ? "#B2B4B4" : selectedId === program.id ? "#830051" : "#888E8E"} />
             </button>
-            <p className={`t-small min-w-0 flex-1 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : 'text-[#3C4242]'}`}>
+            <p className={`t-small min-w-0 flex-1 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : selectedId === program.id ? 'text-[#830051]' : 'text-[#3C4242]'}`}>
               {program.name}
             </p>
           </div>
@@ -1140,22 +1144,21 @@ function TreeItem({
             return (
               <div
                 key={table.id}
-                className={`relative h-[28px] w-full cursor-pointer transition-colors ${
+                className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors ${
                   isTableSelected ? 'bg-[#F4E8EE]' : isTableHovered ? 'bg-[#F8F7F7]' : ''
                 }`}
                 onClick={() => onSelect(table.id)}
                 onMouseEnter={() => setHoveredId(table.id)}
                 onMouseLeave={() => setHoveredId(null)}
               >
-                {isTableSelected && <div className="absolute inset-0 border-l-2 border-[#830051]" aria-hidden="true" />}
                 <div className="flex h-full items-center justify-between pl-[24px] pr-[12px]">
                   <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
                     {table.docType === 'listing' ? (
-                      <ListingTreeIcon color={isProgramLocked ? "#B2B4B4" : "#656969"} />
+                      <ListingTreeIcon color={isProgramLocked ? "#B2B4B4" : isTableSelected ? "#830051" : "#888E8E"} />
                     ) : (
-                      <TableTreeIcon color={isProgramLocked ? "#B2B4B4" : "#656969"} />
+                      <TableTreeIcon color={isProgramLocked ? "#B2B4B4" : isTableSelected ? "#830051" : "#888E8E"} />
                     )}
-                    <p className={`t-small min-w-0 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : 'text-[#3C4242]'}`}>
+                    <p className={`t-small min-w-0 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : isTableSelected ? 'text-[#830051]' : 'text-[#3C4242]'}`}>
                       {table.name}
                     </p>
                   </div>
@@ -2631,7 +2634,19 @@ function FloatingAICopilotButton({
   );
 }
 
-function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
+function WorkspaceContent({
+  onNavigateHome,
+  treeListOpen,
+  setTreeListOpen,
+  treeListWidth,
+  setTreeListWidth,
+}: {
+  onNavigateHome: () => void;
+  treeListOpen: boolean;
+  setTreeListOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  treeListWidth: number;
+  setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const [programs, setPrograms] = useState<ProgramItem[]>([
     {
       id: 'p1',
@@ -2656,13 +2671,11 @@ function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
     type: 'locked-by-parent' | null;
     programName?: string;
   }>({ type: null });
-  const [treeListOpen, setTreeListOpen] = useState(true);
   const [shellPreviewOpen, setShellPreviewOpen] = useState(true);
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [codeOpen, setCodeOpen] = useState(true);
   const [aiCopilotOpen, setAiCopilotOpen] = useState(false);
   const [panelView, setPanelView] = useState<PanelView>('both');
-  const [treeListWidth, setTreeListWidth] = useState(240);
   const [shellPreviewWidth, setShellPreviewWidth] = useState(560);
   const [metadataWidth, setMetadataWidth] = useState(320);
   const [aiCopilotWidth, setAiCopilotWidth] = useState(360);
@@ -2871,8 +2884,6 @@ function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
     setSavedPageCols(pageDividerIndex);
   };
 
-  const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
-
   const handleToggleLock = (programId: string, tableId?: string) => {
     if (!tableId) return;
     setPrograms((prevPrograms) =>
@@ -2961,13 +2972,16 @@ function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
         >
           <div className="flex h-full w-full flex-col bg-[#F8F7F7]">
             <div className="flex h-[48px] shrink-0 items-center gap-[8px] px-[10px]">
-              <button
-                onClick={onNavigateHome}
-                className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                aria-label="Go to Home"
-              >
-                <AtlasLogoIcon />
-              </button>
+              <TooltipText label="Back to Home">
+                <button
+                  onClick={onNavigateHome}
+                  className="group flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                  aria-label="Go to Home"
+                >
+                  <AtlasLogoIcon className="group-hover:hidden" />
+                  <LocalIcon src={homeIconUrl} className="hidden h-[16px] w-[16px] group-hover:block" color="#888E8E" />
+                </button>
+              </TooltipText>
               <div className="min-w-0 flex-1">
                 <p className="t-small truncate font-medium text-[#3C4242]">AZE2001-301</p>
                 <p className="truncate text-[10px] leading-[15px] text-[#888E8E]">{currentEvent}</p>
@@ -2992,7 +3006,7 @@ function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
             </div>
             <SearchBar />
             <div className="min-h-0 flex-1 overflow-auto">
-              <div className="flex flex-col gap-[12px] py-[8px]">
+              <div className="flex flex-col gap-[4px] py-[4px] pr-[4px]">
                 {filteredPrograms.map((program) => (
                   <TreeItem
                     key={program.id}
@@ -3195,7 +3209,7 @@ function WorkspaceContent({ onNavigateHome }: { onNavigateHome: () => void }) {
 
 // ===================== HomePage =====================
 
-type EventStatus = 'ai-processing' | 'in-progress' | 'completed' | 'to-do';
+type EventStatus = 'ai-processing' | 'in-progress' | 'completed' | 'to-do' | 'error';
 
 interface EventCardData {
   id: string;
@@ -3207,6 +3221,7 @@ interface EventCardData {
   createdDate: string;
   status: EventStatus;
   progress?: { completed: number; total: number };
+  errorMessage?: string;
 }
 
 const homeEvents: EventCardData[] = [
@@ -3253,6 +3268,93 @@ const homeEvents: EventCardData[] = [
     status: 'to-do',
     progress: { completed: 0, total: 12 },
   },
+  {
+    id: 'e5',
+    name: 'PK Analysis Report',
+    version: '2.2',
+    project: 'PRO001',
+    study: 'AZE2001-301',
+    creator: 'Tom',
+    createdDate: '2025-11-11',
+    status: 'error',
+    errorMessage: 'Shell file parsing failed. Outputs cannot be generated until the issue is resolved.',
+  },
+  {
+    id: 'e6',
+    name: 'Adverse Event Summary',
+    version: '1.0',
+    project: 'PRO002',
+    study: 'AZE2001-302',
+    creator: 'Sarah',
+    createdDate: '2025-11-09',
+    status: 'in-progress',
+    progress: { completed: 6, total: 20 },
+  },
+  {
+    id: 'e7',
+    name: 'Demographics Table Generation',
+    version: '3.1',
+    project: 'PRO002',
+    study: 'AZE2001-302',
+    creator: 'Sarah',
+    createdDate: '2025-11-08',
+    status: 'completed',
+    progress: { completed: 12, total: 12 },
+  },
+  {
+    id: 'e8',
+    name: 'Efficacy Endpoint Analysis',
+    version: '2.0',
+    project: 'PRO003',
+    study: 'AZE2001-303',
+    creator: 'James',
+    createdDate: '2025-11-07',
+    status: 'ai-processing',
+  },
+  {
+    id: 'e9',
+    name: 'Concomitant Medications Listing',
+    version: '1.5',
+    project: 'PRO003',
+    study: 'AZE2001-303',
+    creator: 'James',
+    createdDate: '2025-11-05',
+    status: 'to-do',
+    progress: { completed: 0, total: 8 },
+  },
+  {
+    id: 'e10',
+    name: 'Lab Data Outlier Review',
+    version: '2.2',
+    project: 'PRO001',
+    study: 'AZE2001-301',
+    creator: 'Tom',
+    createdDate: '2025-11-03',
+    status: 'in-progress',
+    progress: { completed: 3, total: 10 },
+  },
+  {
+    id: 'e11',
+    name: 'Vital Signs Summary Table',
+    version: '1.0',
+    project: 'PRO004',
+    study: 'AZE2001-401',
+    creator: 'Emily',
+    createdDate: '2025-11-01',
+    status: 'completed',
+    progress: { completed: 15, total: 15 },
+  },
+  {
+    id: 'e12',
+    name: 'Protocol Deviations Report',
+    version: '2.2',
+    project: 'PRO004',
+    study: 'AZE2001-401',
+    creator: 'Emily',
+    createdDate: '2025-10-28',
+    status: 'error',
+    errorMessage: 'SAS macro execution failed. Please verify the input dataset structure.',
+  },
 ];
 
 const homeNavItems = [
@@ -3273,172 +3375,251 @@ const homeMetrics = [
   { label: 'Created by Me', value: '2' },
 ];
 
-const statusConfig: Record<EventStatus, { icon: string; label: string }> = {
-  'ai-processing': { icon: aiProcessingIconUrl, label: 'AI Processing' },
-  'in-progress': { icon: wipStatusIconUrl, label: 'In Progress' },
-  'completed': { icon: completedStatusIconUrl, label: 'Completed' },
-  'to-do': { icon: untouchedStatusIconUrl, label: 'To do' },
+const statusConfig: Record<EventStatus, { icon: string; label: string; color: string }> = {
+  'ai-processing': { icon: aiProcessingIconUrl, label: 'AI Processing', color: '#3C4242' },
+  'in-progress': { icon: wipStatusIconUrl, label: 'In Progress', color: '#3C4242' },
+  'completed': { icon: completedStatusIconUrl, label: 'Completed', color: '#3C4242' },
+  'to-do': { icon: untouchedStatusIconUrl, label: 'To do', color: '#3C4242' },
+  'error': { icon: errorStatusIconUrl, label: 'Parse Failed', color: '#CC2C3C' },
 };
 
-function HomePage({ onEventClick }: { onEventClick: () => void }) {
+function StatusTag({ status }: { status: EventStatus }) {
+  const config = statusConfig[status];
+  return (
+    <div className="flex items-center gap-[4px] rounded-[4px]">
+      <img src={config.icon} alt="" className="h-[16px] w-[16px] block shrink-0" />
+      <span className="t-small" style={{ color: config.color }}>{config.label}</span>
+    </div>
+  );
+}
+
+function HomePage({
+  onEventClick,
+  treeListOpen,
+  setTreeListOpen,
+  treeListWidth,
+  setTreeListWidth,
+}: {
+  onEventClick: () => void;
+  treeListOpen: boolean;
+  setTreeListOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  treeListWidth: number;
+  setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const [searchValue, setSearchValue] = useState('');
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#F8F7F7]">
-      {/* Sidebar */}
-      <div className="flex w-[240px] shrink-0 flex-col bg-[#F8F7F7]">
-        {/* Sidebar header */}
-        <div className="flex h-[48px] shrink-0 items-center justify-between px-[8px] pt-[4px]">
-          <div className="flex items-center gap-[7.5px] px-[2.25px]">
-            <AtlasLogoIcon className="h-[18px] w-[18px]" color="#830051" />
-            <span className="text-[14px] font-bold tracking-[0.05em] text-[#830051]">ATLAS</span>
-          </div>
-          <button
-            className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-            aria-label="Collapse sidebar"
-          >
-            <LocalIcon src={collapseIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
-          </button>
-        </div>
-        {/* Nav items */}
-        <div className="flex flex-1 flex-col gap-[2px] pt-[8px] pr-[4px]">
-          {homeNavItems.map((item) => (
-            <div
-              key={item.id}
-              className={`flex h-[32px] items-center gap-[4px] rounded-[4px] px-[12px] ${
-                item.active ? 'bg-[#F4E8EE]' : 'hover:bg-black/5'
-              }`}
-            >
-              <LocalIcon src={item.icon} className="h-[16px] w-[16px]" color={item.active ? '#830051' : '#888E8E'} />
-              <span
-                className={`t-small font-medium ${item.active ? 'text-[#830051]' : 'text-[#3C4242]'}`}
-              >
-                {item.label}
-              </span>
-            </div>
-          ))}
-        </div>
-        {/* User account */}
-        <div className="flex items-end gap-[8px] px-[12px] pb-[16px]">
-          <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#9DB0AC]">
-            <span className="text-[12px] font-medium text-white">U</span>
-          </div>
-          <span className="t-small text-[#3C4242]">User account</span>
-        </div>
-      </div>
-
-      {/* Main Container */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-[#EBECEC] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] my-[4px] mr-[4px]">
-        {/* Top section: Overview + metrics */}
-        <div className="flex flex-col gap-[12px] px-[28px] py-[12px]">
-          <h2 className="t-heading text-[#3C4242]">Overview</h2>
-          <div className="flex items-center gap-[20px]">
-            {homeMetrics.map((m) => (
-              <div
-                key={m.label}
-                className="flex flex-col gap-[4px] rounded-[4px] border-[0.6px] border-[#D8DADA] px-[16px] py-[8px]"
-              >
-                <span className="text-[14px] font-medium leading-[20px] text-[#888E8E]">{m.label}</span>
-                <span className="text-[36px] font-semibold leading-[1] text-[#3C4242]">{m.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Event list */}
-        <div className="flex min-h-0 flex-1 flex-col gap-[12px] px-[28px] pt-[28px]">
-          {/* Event list header */}
-          <div className="flex items-center justify-between">
-            <div className="flex h-[36px] w-[320px] items-center gap-[6px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[6px] py-[2px]">
-              <LocalIcon src={searchLineIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
-              <input
-                type="text"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder="Search..."
-                className="t-small min-w-0 flex-1 bg-transparent text-[#3C4242] outline-none placeholder:text-[#888E8E]"
-              />
-            </div>
-            <div className="flex items-center gap-[16px]">
-              <button className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] hover:bg-black/5 active:scale-[0.96]">
-                <LocalIcon src={filterIconUrl} className="h-[16px] w-[16px]" color="#3C4242" />
-                <span className="text-[14px] leading-[20px] text-[#3C4242]">Filter</span>
-              </button>
-              <button className="flex items-center gap-[4px] rounded-[4px] bg-[#830051] px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96]">
-                <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
-                <span className="text-[14px] leading-[20px] text-white">New Event</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Event cards */}
-          <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-auto">
-            {homeEvents.map((event) => {
-              const sc = statusConfig[event.status];
-              return (
-                <div
-                  key={event.id}
-                  onClick={onEventClick}
-                  className="flex h-[92px] cursor-pointer items-center justify-between rounded-[4px] border border-[#EBECEC] bg-white px-[16px] py-[10px] transition-all hover:border-[#830051]/30 hover:shadow-[0_2px_8px_rgba(131,0,81,0.08)]"
+      <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
+        {/* Tree list sidebar */}
+        <div
+          className="shrink-0 overflow-hidden"
+          style={{
+            width: treeListOpen ? `${treeListWidth}px` : "0px",
+            opacity: treeListOpen ? 1 : 0,
+            transition: treeListOpen ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
+          }}
+        >
+          <div className="flex h-full w-full flex-col bg-[#F8F7F7]">
+            {/* Sidebar header */}
+            <div className="flex h-[48px] shrink-0 items-center justify-between px-[10px]">
+              <img src={atlasLogoFullUrl} alt="" className="h-[24px] block shrink-0" />
+              <TooltipText label="Collapse Tree List">
+                <button
+                  onClick={() => setTreeListOpen(false)}
+                  className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                  aria-label="Collapse tree list"
                 >
-                  {/* Left section */}
-                  <div className="flex flex-col gap-[8px]">
-                    {/* Main contents */}
-                    <div className="flex flex-col gap-[8px]">
-                      <div className="flex items-center gap-[12px]">
-                        <span className="t-heading text-[#3C4242]">{event.name}</span>
-                        <span className="flex h-[16px] items-center justify-center rounded-[2px] border-[0.6px] border-[#888E8E] px-[6px] text-[10px] leading-[12px] text-[#888E8E]">
-                          {event.version}
-                        </span>
+                  <LocalIcon src={collapseIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+                </button>
+              </TooltipText>
+            </div>
+            {/* Nav items */}
+            <div className="flex flex-1 flex-col gap-[2px] pt-[8px] pr-[4px]">
+              {homeNavItems.map((item) => (
+                <div
+                  key={item.id}
+                  className={`flex h-[32px] items-center gap-[4px] rounded-[4px] px-[12px] ${
+                    item.active ? 'bg-[#F4E8EE]' : 'hover:bg-black/5'
+                  }`}
+                >
+                  <LocalIcon src={item.icon} className="h-[16px] w-[16px]" color={item.active ? '#830051' : '#888E8E'} />
+                  <span
+                    className={`font-normal ${item.active ? 'text-[#830051]' : 'text-[#3C4242]'}`}
+                    style={{ fontSize: '14px', lineHeight: '20px' }}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {/* User account */}
+            <div className="flex items-center gap-[8px] px-[12px] pb-[16px]">
+              <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#9DB0AC]">
+                <span className="text-[12px] font-medium text-white">U</span>
+              </div>
+              <span className="font-normal text-[#3C4242]" style={{ fontSize: '14px', lineHeight: '20px' }}>User account</span>
+            </div>
+          </div>
+        </div>
+
+        {/* TreeList ↔ Main panel divider */}
+        {treeListOpen && (
+          <WorkspaceDivider
+            onDrag={(delta) => setTreeListWidth((width) => clamp(width + delta, 180, 320))}
+          />
+        )}
+
+        {/* Main Container */}
+        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-[#EBECEC] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] my-[4px] mr-[4px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
+          {/* Expand tree list button when collapsed */}
+          {!treeListOpen && (
+            <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-[#d8dada]">
+              <TooltipText label="Expand tree list">
+                <button
+                  onClick={() => setTreeListOpen(true)}
+                  className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                  aria-label="Expand tree list"
+                >
+                  <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+                </button>
+              </TooltipText>
+            </div>
+          )}
+          {/* Top section: Overview + metrics */}
+          <div className="flex flex-col justify-center gap-[12px] px-[28px] py-[12px]">
+            <h2 className="t-heading text-[#3C4242]">Overview</h2>
+            <div className="flex w-full items-center gap-[20px]">
+              {homeMetrics.map((m) => (
+                <div
+                  key={m.label}
+                  className="flex flex-1 flex-col gap-[4px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] py-[8px]"
+                >
+                  <span className="text-[14px] font-medium leading-[20px] text-[#888E8E]">{m.label}</span>
+                  <span className="text-[36px] font-semibold leading-[1] text-[#3C4242]">{m.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Event list */}
+          <div className="flex min-h-0 flex-1 flex-col gap-[12px] px-[28px] pt-[28px]">
+            {/* Event list header */}
+            <div className="flex items-center justify-between">
+              <div className="flex h-[36px] w-[320px] items-center gap-[6px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[6px] py-[2px]">
+                <LocalIcon src={searchLineIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+                <input
+                  type="text"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  placeholder="Search..."
+                  className="t-small min-w-0 flex-1 bg-transparent text-[#3C4242] outline-none placeholder:text-[#888E8E]"
+                />
+              </div>
+              <div className="flex items-center gap-[16px]">
+                <button className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] hover:bg-black/5 active:scale-[0.96]">
+                  <LocalIcon src={filterIconUrl} className="h-[16px] w-[16px]" color="#3C4242" />
+                  <span className="text-[14px] leading-[20px] text-[#3C4242]">Filter</span>
+                </button>
+                <button className="flex items-center gap-[4px] rounded-[4px] bg-[#830051] px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96]">
+                  <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
+                  <span className="text-[14px] leading-[20px] text-white">New Event</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Event cards */}
+            <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-auto">
+              {homeEvents.map((event) => {
+                const isError = event.status === 'error';
+                return (
+                  <div
+                    key={event.id}
+                    onClick={onEventClick}
+                    className={`flex h-[92px] cursor-pointer items-center justify-between rounded-[4px] border px-[16px] py-[10px] transition-colors ${
+                      isError ? 'border-[#CC2C3C] bg-white' : 'border-[#EBECEC] bg-white hover:bg-[#F8F7F7]'
+                    }`}
+                  >
+                    {/* Left section */}
+                    <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
+                      {/* Main contents */}
+                      <div className="flex flex-col gap-[8px]">
+                        <div className="flex items-center gap-[12px]">
+                          <span className="t-heading text-[#3C4242]">{event.name}</span>
+                          <span className="flex h-[16px] items-center justify-center rounded-[2px] border-[0.6px] border-[#888E8E] px-[6px] text-[10px] leading-[12px] text-[#888E8E]">
+                            {event.version}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-[4px]">
+                          <span className="t-small text-[#666666]">{event.project}</span>
+                          <span className="t-small font-medium text-[#888E8E]">/</span>
+                          <span className="t-small text-[#666666]">{event.study}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-[4px]">
-                        <span className="t-small text-[#666666]">{event.project}</span>
-                        <span className="t-small font-medium text-[#888E8E]">/</span>
-                        <span className="t-small text-[#666666]">{event.study}</span>
+                      {/* Meta */}
+                      <div className="flex items-center gap-[16px]">
+                        <span className="t-small text-[#666666]">Created by: {event.creator}</span>
+                        <span className="t-small text-[#666666]">Created: {event.createdDate}</span>
                       </div>
                     </div>
-                    {/* Meta */}
-                    <div className="flex items-center gap-[16px]">
-                      <span className="t-small text-[#666666]">Created by: {event.creator}</span>
-                      <span className="t-small text-[#666666]">Created: {event.createdDate}</span>
-                    </div>
-                  </div>
-                  {/* Right section */}
-                  <div className="flex items-center gap-[40px]">
-                    <div className="flex flex-col items-end gap-[8px]">
-                      <div className="flex items-center gap-[4px]">
-                        <img src={sc.icon} alt="" className="h-[16px] w-[16px] block shrink-0" />
-                        <span className="t-small text-[#3C4242]">{sc.label}</span>
-                      </div>
-                      {event.progress && (
-                        <span className="text-[12px] leading-[20px]">
-                          <span className="font-medium text-[#3C4242]">{event.progress.completed}/{event.progress.total}</span>{' '}
-                          <span className="text-[#666666]">Tables Completed</span>
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-[6px]">
-                      {[
-                        { icon: barChartIconUrl, label: 'View charts' },
-                        { icon: toolCallIconUrl, label: 'AI edit' },
-                        { icon: downloadIconUrl, label: 'Download' },
-                        { icon: codeIconUrl, label: 'Code' },
-                        { icon: moreIconUrl, label: 'More' },
-                      ].map((btn, i) => (
+                    {/* Right section */}
+                    {isError ? (
+                      <div className="flex shrink-0 items-center gap-[40px]">
+                        <div className="flex flex-col items-end gap-[8px]">
+                          <StatusTag status={event.status} />
+                          {event.errorMessage && (
+                            <span className="t-small text-[#666666]">{event.errorMessage}</span>
+                          )}
+                        </div>
                         <button
-                          key={i}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-[4px] rounded-[4px] bg-[#F4E8EE] px-[8px] py-[4px] hover:opacity-90 active:scale-[0.96]"
+                        >
+                          <span className="t-small text-[#830051]">Re-upload Files</span>
+                        </button>
+                        <button
                           onClick={(e) => e.stopPropagation()}
                           className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                          aria-label={btn.label}
+                          aria-label="Delete"
                         >
-                          <LocalIcon src={btn.icon} className="h-[16px] w-[16px]" color="#888E8E" />
+                          <LocalIcon src={closeIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
                         </button>
-                      ))}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="flex shrink-0 items-center gap-[40px]">
+                        <div className="flex flex-col items-end gap-[8px]">
+                          <StatusTag status={event.status} />
+                          {event.progress && (
+                            <span className="text-[12px] leading-[20px]">
+                              <span className="font-medium text-[#3C4242]">{event.progress.completed}/{event.progress.total}</span>{' '}
+                              <span className="text-[#666666]">TLF Completed</span>
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-[6px]">
+                          {[
+                            { icon: barChartIconUrl, label: 'View charts' },
+                            { icon: toolCallIconUrl, label: 'AI edit' },
+                            { icon: downloadIconUrl, label: 'Download' },
+                            { icon: codeIconUrl, label: 'Code' },
+                            { icon: moreIconUrl, label: 'More' },
+                          ].map((btn, i) => (
+                            <button
+                              key={i}
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                              aria-label={btn.label}
+                            >
+                              <LocalIcon src={btn.icon} className="h-[16px] w-[16px]" color="#888E8E" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -3448,12 +3629,26 @@ function HomePage({ onEventClick }: { onEventClick: () => void }) {
 
 export default function Main() {
   const [page, setPage] = useState<'home' | 'event'>('event');
+  const [treeListOpen, setTreeListOpen] = useState(true);
+  const [treeListWidth, setTreeListWidth] = useState(240);
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {page === 'home' ? (
-        <HomePage onEventClick={() => setPage('event')} />
+        <HomePage
+          onEventClick={() => setPage('event')}
+          treeListOpen={treeListOpen}
+          setTreeListOpen={setTreeListOpen}
+          treeListWidth={treeListWidth}
+          setTreeListWidth={setTreeListWidth}
+        />
       ) : (
-        <WorkspaceContent onNavigateHome={() => setPage('home')} />
+        <WorkspaceContent
+          onNavigateHome={() => setPage('home')}
+          treeListOpen={treeListOpen}
+          setTreeListOpen={setTreeListOpen}
+          treeListWidth={treeListWidth}
+          setTreeListWidth={setTreeListWidth}
+        />
       )}
     </div>
   );
