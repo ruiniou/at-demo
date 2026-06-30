@@ -1,5 +1,6 @@
 // AI Copilot Chat Window - Design Tokens & Visual Specs
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, Suspense, lazy } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Suspense, lazy } from "react";
+import { createPortal } from "react-dom";
 import atlasLogoUrl from "../../icons/Atlas-Logo.svg";
 import atlasLogoFullUrl from "../../icons/Atlas-Logo-Full.svg";
 import aiSubmitIconUrl from "../../icons/AI-submit.svg";
@@ -27,6 +28,7 @@ import wipStatusIconUrl from "../../icons/Status label/Status=WIP.svg";
 import completedStatusIconUrl from "../../icons/Status label/Status=Completed.svg";
 import untouchedStatusIconUrl from "../../icons/Status label/Status=Untouched.svg";
 import errorStatusIconUrl from "../../icons/Status label/Status=Error.svg";
+import addMetadiffIconUrl from "../../icons/Add metadiff.svg";
 import dashboardIconUrl from "../../icons/dashboard-3-line.svg";
 import taskIconUrl from "../../icons/task-line.svg";
 import stackIconUrl from "../../icons/stack-line.svg";
@@ -39,6 +41,7 @@ import filterIconUrl from "../../icons/filter-line.svg";
 import addLineIconUrl from "../../icons/add-line.svg";
 import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
+import snowflakeIconUrl from "../../icons/snowflake-line.svg";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -488,11 +491,7 @@ function FigureTreeIcon({ color = "#656969" }) {
 }
 
 function FreezeIcon({ color = "#888E8E" }) {
-  return (
-    <SvgIcon className="w-[16px] h-[16px]">
-      <path d="M12 2L14.09 4.55L17 3L16 6.18L19 7L16.45 9.09L18 12L15.45 13.09L17 16L14 15.18L12 18L10 15.18L7 16L8.55 13.09L6 12L7.55 9.09L5 7L8 6.18L7 3L9.91 4.55L12 2ZM12 6L11 8.5H8.5L10.5 10.25L9.75 12.75L12 11.25L14.25 12.75L13.5 10.25L15.5 8.5H13L12 6Z" fill={color} />
-    </SvgIcon>
-  );
+  return <LocalIcon src={snowflakeIconUrl} className="w-[16px] h-[16px]" color={color} />;
 }
 
 function SyncIcon({ color = "white" }) {
@@ -779,16 +778,21 @@ function WorkspaceModal({
 }
 
 type PanelView = 'shell' | 'both' | 'code';
+type PanelLayout = 'vertical' | 'horizontal';
 
 const SPLIT_ICON_PATH = "M4.66699 1.33398H1.33398V10.667H5V12H1.33398C0.597712 12 0.000176632 11.4032 0 10.667V1.33398C0 0.597605 0.597605 0 1.33398 0H4.66699V1.33398ZM7.33398 12H6V0H7.33398V12ZM12 0C12.7361 0.000175088 13.3338 0.596888 13.334 1.33301V10.666C13.334 11.4023 12.7362 11.9998 12 12H8.33398V10.666H12V1.33301H8.33398V0H12Z";
 
 function PanelViewToggle({
   value,
   onChange,
+  layout,
+  onLayoutChange,
   docType = 'table',
 }: {
   value: PanelView;
   onChange: (v: PanelView) => void;
+  layout: PanelLayout;
+  onLayoutChange: (l: PanelLayout) => void;
   docType?: DocumentType;
 }) {
   return (
@@ -804,13 +808,19 @@ function PanelViewToggle({
             <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
           )}
           <p className={`t-small whitespace-nowrap ${value === 'shell' ? 'text-[#3C4242]' : 'text-[#888E8E]'}`}>
-            {docType === 'listing' ? 'Preview' : 'Shell'}
+            Shell
           </p>
         </button>
       </TooltipText>
-      <TooltipText label="Side-by-Side View">
+      <TooltipText label={layout === 'vertical' ? "Stack View" : "Side-by-Side View"}>
         <button
-          onClick={() => onChange('both')}
+          onClick={() => {
+            if (value === 'both') {
+              onLayoutChange(layout === 'vertical' ? 'horizontal' : 'vertical');
+            } else {
+              onChange('both');
+            }
+          }}
           className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
             value === 'both' ? 'bg-white' : ''
           }`}
@@ -818,7 +828,7 @@ function PanelViewToggle({
           {value === 'both' && (
             <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
           )}
-          <div className="relative shrink-0 size-[16px] flex items-center justify-center">
+          <div className={`relative shrink-0 size-[16px] flex items-center justify-center ${layout === 'vertical' && value === 'both' ? 'rotate-90' : ''}`}>
             <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 13.334 12">
               <path d={SPLIT_ICON_PATH} fill={value === 'both' ? '#3C4242' : '#888E8E'} />
             </svg>
@@ -836,7 +846,7 @@ function PanelViewToggle({
             <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
           )}
           <p className={`t-small whitespace-nowrap ${value === 'code' ? 'text-[#3C4242]' : 'text-[#888E8E]'}`}>
-            {docType === 'listing' ? 'Code' : 'Code'}
+            Code
           </p>
         </button>
       </TooltipText>
@@ -851,6 +861,8 @@ function ViewToggleBar({
   currentEvent,
   panelView,
   onPanelViewChange,
+  panelLayout,
+  onPanelLayoutChange,
   docType = 'table',
 }: {
   treeListOpen: boolean;
@@ -859,20 +871,13 @@ function ViewToggleBar({
   currentEvent: string;
   panelView: PanelView;
   onPanelViewChange: (v: PanelView) => void;
+  panelLayout: PanelLayout;
+  onPanelLayoutChange: (l: PanelLayout) => void;
   docType?: DocumentType;
 }) {
   const [activeView, setActiveView] = useState<ActiveView>('table');
 
-  const viewTabs = docType === 'listing' ? (
-    <button
-      onClick={() => setActiveView('listing')}
-      className="w-[120px] h-full flex items-center justify-center gap-[4px] px-[16px] relative active:scale-[0.96] bg-white"
-    >
-      <div aria-hidden className="absolute border-[#830051] border-b-2 border-solid inset-0 pointer-events-none" />
-      <ListingTreeIcon color="#830051" />
-      <p className="t-small font-medium text-[#830051]">Listing View</p>
-    </button>
-  ) : (
+  const viewTabs = docType === 'listing' ? null : (
     <>
       <button
         onClick={() => setActiveView('table')}
@@ -922,7 +927,7 @@ function ViewToggleBar({
             </TooltipText>
           </div>
           <div className="flex items-stretch gap-[4px] h-full">{viewTabs}</div>
-          <PanelViewToggle value={panelView} onChange={onPanelViewChange} docType={docType} />
+          <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
         </div>
       </div>
     );
@@ -936,7 +941,7 @@ function ViewToggleBar({
           {viewTabs}
         </div>
         <div className="absolute right-[12px] top-[14px]">
-          <PanelViewToggle value={panelView} onChange={onPanelViewChange} docType={docType} />
+          <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
         </div>
       </div>
     </div>
@@ -1357,87 +1362,1126 @@ function HorizontalWorkspaceDivider({ onDrag }: { onDrag: (delta: number) => voi
 }
 
 const listingData = [
-  { subject: "101-01", sex: "F", age: 54, race: "White", treatment: "Drug A 10mg", visit: "Baseline", studyDay: 1, lesionNo: "L1", lesionSite: "Liver", diameter: 12, response: "PR", method: "CT", assessor: "Dr. Smith", status: "Confirmed" },
-  { subject: "101-01", sex: "F", age: 54, race: "White", treatment: "Drug A 10mg", visit: "Week 4", studyDay: 28, lesionNo: "L1", lesionSite: "Liver", diameter: 10, response: "PR", method: "CT", assessor: "Dr. Smith", status: "Confirmed" },
-  { subject: "101-01", sex: "F", age: 54, race: "White", treatment: "Drug A 10mg", visit: "Week 8", studyDay: 56, lesionNo: "L1", lesionSite: "Liver", diameter: 8, response: "CR", method: "CT", assessor: "Dr. Smith", status: "Confirmed" },
-  { subject: "101-02", sex: "M", age: 43, race: "Asian", treatment: "Drug A 10mg", visit: "Baseline", studyDay: 1, lesionNo: "L1", lesionSite: "Lung", diameter: 15, response: "SD", method: "CT", assessor: "Dr. Jones", status: "Confirmed" },
-  { subject: "101-02", sex: "M", age: 43, race: "Asian", treatment: "Drug A 10mg", visit: "Week 4", studyDay: 29, lesionNo: "L1", lesionSite: "Lung", diameter: 14, response: "SD", method: "CT", assessor: "Dr. Jones", status: "Pending" },
-  { subject: "101-02", sex: "M", age: 43, race: "Asian", treatment: "Drug A 10mg", visit: "Week 8", studyDay: 57, lesionNo: "L1", lesionSite: "Lung", diameter: 18, response: "PD", method: "CT", assessor: "Dr. Jones", status: "Confirmed" },
-  { subject: "101-03", sex: "F", age: 67, race: "Black", treatment: "Placebo", visit: "Baseline", studyDay: 1, lesionNo: "L1", lesionSite: "Lymph Node", diameter: 22, response: "SD", method: "MRI", assessor: "Dr. Smith", status: "Confirmed" },
-  { subject: "101-03", sex: "F", age: 67, race: "Black", treatment: "Placebo", visit: "Week 4", studyDay: 28, lesionNo: "L1", lesionSite: "Lymph Node", diameter: 24, response: "PD", method: "MRI", assessor: "Dr. Smith", status: "Confirmed" },
-  { subject: "102-01", sex: "M", age: 58, race: "White", treatment: "Drug B 20mg", visit: "Baseline", studyDay: 1, lesionNo: "L1", lesionSite: "Liver", diameter: 19, response: "PR", method: "CT", assessor: "Dr. Jones", status: "Confirmed" },
-  { subject: "102-01", sex: "M", age: 58, race: "White", treatment: "Drug B 20mg", visit: "Week 4", studyDay: 30, lesionNo: "L1", lesionSite: "Liver", diameter: 15, response: "PR", method: "CT", assessor: "Dr. Jones", status: "Confirmed" },
-  { subject: "102-01", sex: "M", age: 58, race: "White", treatment: "Drug B 20mg", visit: "Week 8", studyDay: 60, lesionNo: "L1", lesionSite: "Liver", diameter: 11, response: "PR", method: "CT", assessor: "Dr. Jones", status: "Confirmed" },
-  { subject: "102-02", sex: "F", age: 51, race: "White", treatment: "Drug B 20mg", visit: "Baseline", studyDay: 1, lesionNo: "L1", lesionSite: "Lung", diameter: 14, response: "SD", method: "CT", assessor: "Dr. Smith", status: "Confirmed" },
-  { subject: "102-02", sex: "F", age: 51, race: "White", treatment: "Drug B 20mg", visit: "Week 4", studyDay: 28, lesionNo: "L1", lesionSite: "Lung", diameter: 13, response: "SD", method: "CT", assessor: "Dr. Smith", status: "Confirmed" },
-  { subject: "102-02", sex: "F", age: 51, race: "White", treatment: "Drug B 20mg", visit: "Week 8", studyDay: 56, lesionNo: "L1", lesionSite: "Lung", diameter: 12, response: "PR", method: "CT", assessor: "Dr. Smith", status: "Confirmed" }
+  { subject: "E0001001", age: "29/F/White", region: "xx/xx/xx", ethnicity: "Xxxxxxx", country: "Xxxxxxx", weight: "xx", height: "xx", bmi: "xx.x", nicotine: "Xxxxx", alcohol: "Xxxxx", ecog: "(0) Fully active" },
+  { subject: "E0001002", age: "30/F/White", region: "xx/xx/xx", ethnicity: "Xxxxxxx", country: "Xxxxxxx", weight: "xx", height: "xx", bmi: "xx.x", nicotine: "Xxxxx", alcohol: "Xxxxx", ecog: "(1) Fully active" },
+  { subject: "E0001003", age: "31/F/White", region: "xx/xx/xx", ethnicity: "Xxxxxxx", country: "Xxxxxxx", weight: "xx", height: "xx", bmi: "xx.x", nicotine: "Xxxxx", alcohol: "Xxxxx", ecog: "(2) Fully active" },
+  { subject: "E0001004", age: "32/F/White", region: "xx/xx/xx", ethnicity: "Xxxxxxx", country: "Xxxxxxx", weight: "xx", height: "xx", bmi: "xx.x", nicotine: "Xxxxx", alcohol: "Xxxxx", ecog: "(3) Fully active" },
 ];
 
 const listingColumns = [
-  { key: "subject", label: "Subject", width: 90 },
-  { key: "sex", label: "Sex", width: 60 },
-  { key: "age", label: "Age", width: 60 },
-  { key: "race", label: "Race", width: 100 },
-  { key: "treatment", label: "Treatment", width: 110 },
-  { key: "visit", label: "Visit", width: 100 },
-  { key: "studyDay", label: "Study Day", width: 80 },
-  { key: "lesionNo", label: "Lesion No", width: 90 },
-  { key: "lesionSite", label: "Lesion Site", width: 110 },
-  { key: "diameter", label: "Diameter (mm)", width: 110 },
-  { key: "response", label: "Response", width: 90 },
-  { key: "method", label: "Method", width: 80 },
-  { key: "assessor", label: "Assessor", width: 100 },
-  { key: "status", label: "Status", width: 90 },
-];
+  { key: "subject", label: "Subject identifier", width: 112, widthPx: 112 },
+  { key: "age", label: "Age/Sex/Race [a]", width: 118, widthPx: 118 },
+  { key: "region", label: "Geographical region/Prior gastrectomy/Line of therapy", width: 205, widthPx: 205 },
+  { key: "ethnicity", label: "Ethnicity", width: 86, widthPx: 86 },
+  { key: "country", label: "Country/Area", width: 96, widthPx: 96 },
+  { key: "weight", label: "Baseline weight (kg)", width: 108, widthPx: 108 },
+  { key: "height", label: "Baseline height (cm)", width: 112, widthPx: 112 },
+  { key: "bmi", label: "Baseline body mass index (kg/m2)", width: 124, widthPx: 124 },
+  { key: "nicotine", label: "Nicotine use", width: 92, widthPx: 92 },
+  { key: "alcohol", label: "Alcohol use", width: 88, widthPx: 88 },
+  { key: "ecog", label: "ECOG performance status", width: 132, widthPx: 132 },
+] as const;
 
-const colGroups = {
-  subject: "Demographic Info",
-  sex: "Demographic Info",
-  age: "Demographic Info",
-  race: "Demographic Info",
-  treatment: "Study Details",
-  visit: "Study Details",
-  studyDay: "Study Details",
-  lesionNo: "Lesion Measurement",
-  lesionSite: "Lesion Measurement",
-  diameter: "Lesion Measurement",
-  response: "Lesion Measurement",
-  method: "Assessment Info",
-  assessor: "Assessment Info",
-  status: "Assessment Info",
-};
+// Print preview constants
+const A4_LANDSCAPE_WIDTH_PX = 1123;
+const A4_LANDSCAPE_HEIGHT_PX = 794;
+const A4_HORIZONTAL_PADDING_PX = 96;
+const PRINT_PADDING_TOP_PX = 64;
+const PRINT_PADDING_BOTTOM_PX = 48;
+const PRINT_HEADER_BLOCK_HEIGHT_PX = 62;
+const PRINT_TABLE_HEAD_HEIGHT_PX = 28;
+const PRINT_TABLE_ROW_HEIGHT_PX = 28;
+const PRINT_ROWS_PER_PAGE = Math.max(
+  1,
+  Math.floor(
+    (A4_LANDSCAPE_HEIGHT_PX
+      - PRINT_PADDING_TOP_PX
+      - PRINT_PADDING_BOTTOM_PX
+      - PRINT_HEADER_BLOCK_HEIGHT_PX
+      - PRINT_TABLE_HEAD_HEIGHT_PX) / PRINT_TABLE_ROW_HEIGHT_PX
+  )
+);
 
-interface ListingPreviewProps {
-  frozenColumnCount: number;
-  setFrozenColumnCount: (c: number) => void;
-  pageDividerIndex: number;
-  setPageDividerIndex: (c: number) => void;
-  isPaginationMode: boolean;
-  setIsPaginationMode: (m: boolean) => void;
-  currentPage: number;
-  setCurrentPage: (p: number) => void;
-  onSync: () => void;
-  isModified: boolean;
-  listingName?: string;
-  metadataOpen?: boolean;
-  onMetadataClick?: () => void;
+const METADATA_MIN_W = 280;
+const METADATA_MAX_W = 420;
+
+// ─── ColumnDivider ─────────────────────────────────────────────────────────
+// Pill sits just above the thead row.
+const TABLE_TOP = 0;
+const PILL_BOTTOM_Y = -4;
+
+interface ColumnDividerProps {
+  gapX: number;
+  label: string;
+  isDragging?: boolean;
+  dragGapX?: number;
+  onRemove: () => void;
+  onDragStart?: (e: React.MouseEvent) => void;
+  type?: 'page-break' | 'freeze';
 }
 
-function ListingPreview({
-  frozenColumnCount,
-  setFrozenColumnCount,
-  pageDividerIndex,
-  setPageDividerIndex,
-  isPaginationMode,
-  setIsPaginationMode,
-  currentPage,
-  setCurrentPage,
-  onSync,
-  isModified,
-  listingName,
-  metadataOpen,
+function ColumnDivider({
+  gapX,
+  label,
+  isDragging = false,
+  dragGapX = gapX,
+  onRemove,
+  onDragStart,
+  type = 'page-break',
+}: ColumnDividerProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isFreeze = type === 'freeze';
+
+  const variant =
+    isDragging ? 'drag'
+    : isHovered ? 'hover'
+    : 'default';
+
+  const lineWidth = variant === 'hover' || variant === 'drag' ? 3 : 2;
+  const lineSolid = isFreeze || variant !== 'default';
+
+  const lineColor = isFreeze ? '#830051' : '#F0AB00';
+  const ghostColor = isFreeze ? 'rgba(131,0,81,0.2)' : 'rgba(240,171,0,0.2)';
+  const pillBg = isFreeze ? '#F4E8EE' : '#FCEECC';
+  const pillTextColor = isFreeze ? '#830051' : '#3C4242';
+
+  const posX = isDragging ? dragGapX : gapX;
+
+  const content = (
+    <>
+      {/* Ghost — original position while dragging; clipped to table height */}
+      {isDragging && (
+        <div
+          className="absolute bottom-0 pointer-events-none"
+          style={{ left: isFreeze ? `${gapX - posX}px` : `${gapX}px`, top: `${TABLE_TOP}px`, width: '2px', backgroundColor: ghostColor, zIndex: 28 }}
+        />
+      )}
+
+      {/* Hit area — covers table area only (top = TABLE_TOP) */}
+      <div
+        className="absolute bottom-0 pointer-events-auto"
+        style={{
+          left: isFreeze ? '-6px' : `${posX - 6}px`,
+          top: `${TABLE_TOP}px`,
+          width: '12px',
+          cursor: onDragStart ? 'col-resize' : 'default',
+          zIndex: isFreeze ? 24 : 10,
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onMouseDown={onDragStart}
+      >
+        {/* Visual line — centered in the 12px hit area, full table height */}
+        <div
+          className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 pointer-events-none transition-[width] duration-[120ms]"
+          style={{
+            width: `${lineWidth}px`,
+            ...(lineSolid
+              ? { backgroundColor: lineColor }
+              : { borderLeft: `2px dashed ${isFreeze ? 'rgba(131,0,81,0.8)' : 'rgba(240,171,0,0.8)'}` }),
+          }}
+        />
+      </div>
+
+      {/* Pill label */}
+      <div
+        className="absolute pointer-events-auto"
+        style={{
+          left: isFreeze ? '0px' : `${posX}px`,
+          top: `${PILL_BOTTOM_Y}px`,
+          transform: 'translateX(-50%) translateY(-100%)',
+          zIndex: isFreeze ? 24 : 12,
+        }}
+      >
+        <div
+          className="flex items-center gap-[4px] font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
+          style={{
+            background: pillBg,
+            color: pillTextColor,
+            padding: '2px 2px 2px 6px',
+            border: '1px solid transparent',
+          }}
+        >
+          <span>{label}</span>
+          <button
+            type="button"
+            className="flex items-center justify-center rounded-[4px] hover:bg-black/10 transition-colors active:scale-[0.96] shrink-0"
+            style={{ width: '20px', height: '20px' }}
+            onClick={(e) => { e.stopPropagation(); onRemove(); }}
+            aria-label={`Remove ${label}`}
+          >
+            <LocalIcon src={closeIconUrl} className="w-[12px] h-[12px]" color={pillTextColor} />
+          </button>
+        </div>
+      </div>
+    </>
+  );
+
+  if (isFreeze) {
+    return (
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 24 }}>
+        <div
+          className="sticky"
+          style={{
+            left: `${posX}px`,
+            top: 0,
+            bottom: 0,
+            width: 0,
+            height: '100%',
+          }}
+        >
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return content;
+}
+
+interface ListingShellPreviewProps {
+  selectedItemName: string;
+  onBlockClick: () => void;
+  onMetadataClick: () => void;
+  metadataOpen: boolean;
+  onCloseMetadata: () => void;
+  isLocked?: boolean;
+  onPagePreviewChange?: (active: boolean) => void;
+  onOpenAICopilot?: () => void;
+  frozenUntilIndex: number | null;
+  setFrozenUntilIndex: (n: number | null) => void;
+  pageSepActive: boolean;
+  setPageSepActive: (b: boolean) => void;
+  pageColumnCounts: Record<string, number>;
+  setPageColumnCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  idpageBaseline: { frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> } | null;
+  idlistBaseline: { frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> } | null;
+  onIdpageBaselineChange: (b: { frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> }) => void;
+  onIdlistBaselineChange: (b: { frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> }) => void;
+  metadataWidth: number;
+  onMetadataResize: (delta: number) => void;
+}
+
+function ListingShellPreview({
+  selectedItemName,
+  onBlockClick,
   onMetadataClick,
-}: ListingPreviewProps) {
+  metadataOpen,
+  onCloseMetadata,
+  isLocked,
+  onPagePreviewChange,
+  onOpenAICopilot,
+  frozenUntilIndex,
+  setFrozenUntilIndex,
+  pageSepActive,
+  setPageSepActive,
+  pageColumnCounts,
+  setPageColumnCounts,
+  idpageBaseline,
+  idlistBaseline,
+  onIdpageBaselineChange,
+  onIdlistBaselineChange,
+  metadataWidth,
+  onMetadataResize,
+}: ListingShellPreviewProps) {
+  const [pageScale] = useState(100);
+  const [selectedPrintPageIndex, setSelectedPrintPageIndex] = useState(0);
+  const [pageSelectionDraft, setPageSelectionDraft] = useState('1');
+  const [metadataPending, setMetadataPending] = useState(false);
+
+  const [pageBreakColumns, setPageBreakColumns] = useState<number[]>([]);
+  const [repeatColumnBaseline, setRepeatColumnBaseline] = useState<{ frozenUntilIndex: number | null }>({ frozenUntilIndex: 2 });
+  const [pageBreakColumnBaseline, setPageBreakColumnBaseline] = useState<{ pageSepActive: boolean; pageColumnCounts: Record<string, number>; pageBreakColumns: number[] }>({
+    pageSepActive: false,
+    pageColumnCounts: {},
+    pageBreakColumns: [],
+  });
+  const [draggingBreak, setDraggingBreak] = useState<{ colIdx: number; currentGap: number } | null>(null);
+  const [draggingFreeze, setDraggingFreeze] = useState<{ currentGap: number } | null>(null);
+  const [hoveredGap, setHoveredGap] = useState<number | null>(null);
+  const [hoveredFreezeColumn, setHoveredFreezeColumn] = useState<number | null>(null);
+  const [gapXPositions, setGapXPositions] = useState<number[]>([]);
+
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const thRefs = useRef<Array<HTMLTableCellElement | null>>([]);
+  const gapXPositionsRef = useRef<number[]>([]);
+
+  const previousPageSepActiveRef = useRef(pageSepActive);
+  const pageCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const pagePreviewScrollRef = useRef<HTMLDivElement>(null);
+  const suppressPageSyncRef = useRef(false);
+  const suppressPageSyncTimerRef = useRef<number | null>(null);
+
+  const handleMetadataDividerDrag = (delta: number) => {
+    onMetadataResize(-delta);
+  };
+
+  // Measure actual rendered column right-edges relative to the table container.
+  useEffect(() => {
+    const measure = () => {
+      const container = tableContainerRef.current;
+      if (!container) return;
+      const containerLeft = container.getBoundingClientRect().left;
+      const positions = Array.from({ length: listingColumns.length - 1 }, (_, i) => {
+        const th = thRefs.current[i];
+        if (!th) return 0;
+        return th.getBoundingClientRect().right - containerLeft;
+      });
+      gapXPositionsRef.current = positions;
+      setGapXPositions(positions);
+    };
+    measure();
+    const container = tableContainerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [listingColumns]);
+
+  // Rule 3 + 4: when freeze expands and would overlap a page break, push it right.
+  useEffect(() => {
+    if (frozenUntilIndex === null) return;
+    setPageBreakColumns(prev => {
+      const frozen = prev.filter(c => c <= frozenUntilIndex).sort((a, b) => a - b);
+      if (frozen.length === 0) return prev;
+      // Occupied gaps that must not be reused
+      const occupied = new Set(prev.filter(c => c > frozenUntilIndex));
+      const pushed: number[] = [];
+      for (const _ of frozen) {
+        let slot = frozenUntilIndex + 1;
+        while ((occupied.has(slot) || pushed.includes(slot)) && slot < listingColumns.length - 1) slot++;
+        if (slot <= listingColumns.length - 2) pushed.push(slot);
+      }
+      return [...occupied, ...pushed].sort((a, b) => a - b);
+    });
+  }, [frozenUntilIndex]);
+
+  // Recalculate red-dot pending state
+  useEffect(() => {
+    const load = <T,>(key: string, fallback: T): T => {
+      try {
+        const raw = sessionStorage.getItem(key);
+        return raw ? (JSON.parse(raw) as T) : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+    
+    // For listing:
+    const lBlocks = load<{ fields: { id: string; status: string; confirmed: boolean }[] }[]>('metadataBlocks_listing', []);
+    const lBlockFields = load<{ status: string; confirmed: boolean }[]>('metadataBlockFields_listing', []);
+    
+    const areColumnCountsEqual = (a: Record<string, number>, b: Record<string, number>) => {
+      const keysA = Object.keys(a);
+      const keysB = Object.keys(b);
+      if (keysA.length !== keysB.length) return false;
+      return keysA.every(key => a[key] === b[key]);
+    };
+    const arePageBreakColumnsEqual = (a: number[] = [], b: number[] = []) => {
+      if (a.length !== b.length) return false;
+      const sortedA = [...a].sort((x, y) => x - y);
+      const sortedB = [...b].sort((x, y) => x - y);
+      return sortedA.every((value, index) => value === sortedB[index]);
+    };
+
+    const hasRepeatColumnChange = repeatColumnBaseline.frozenUntilIndex !== (frozenUntilIndex ?? null);
+    const hasPageBreakColumnChange =
+      pageBreakColumnBaseline.pageSepActive !== pageSepActive ||
+      !areColumnCountsEqual(pageBreakColumnBaseline.pageColumnCounts, pageColumnCounts) ||
+      !arePageBreakColumnsEqual(pageBreakColumnBaseline.pageBreakColumns, pageBreakColumns);
+
+    const hasEditedFieldListing =
+      lBlocks.some(b => b.fields.some(f => {
+        if (f.id === 'idlist') return hasRepeatColumnChange;
+        if (f.id === 'idpage') return hasPageBreakColumnChange;
+        return f.status === 'edited' && !f.confirmed;
+      })) ||
+      lBlockFields.some(f => f.status === 'edited' && !f.confirmed);
+
+    // Table pending calculation
+    const blocks = load<{ fields: { id: string; status: string; confirmed: boolean }[] }[]>('metadataBlocks', []);
+    const blockFields = load<{ id: string; status: string; confirmed: boolean }[]>('metadataBlockFields', []);
+    const groupStatus = load<string>('metadataGroupStatus', 'default');
+    const groupConfirmed = load<boolean>('metadataGroupConfirmed', false);
+    const isGroupPending = groupStatus === 'edited' && !groupConfirmed;
+
+    const idpagePending = idpageBaseline !== null && (
+      idpageBaseline.frozenUntilIndex !== frozenUntilIndex ||
+      idpageBaseline.pageSepActive !== pageSepActive ||
+      !areColumnCountsEqual(idpageBaseline.pageColumnCounts, pageColumnCounts)
+    );
+    const idlistPending = idlistBaseline !== null && (
+      idlistBaseline.frozenUntilIndex !== frozenUntilIndex ||
+      idlistBaseline.pageSepActive !== pageSepActive ||
+      !areColumnCountsEqual(idlistBaseline.pageColumnCounts, pageColumnCounts)
+    );
+
+    const hasEditedFieldTable =
+      isGroupPending ||
+      blocks.some(b => b.fields.some(f => {
+        if (f.id === 'idlist') return idlistPending;
+        if (f.id === 'idpage') return idpagePending;
+        return f.status === 'edited' && !f.confirmed;
+      })) ||
+      blockFields.some(f => {
+        if (f.id === 'idlist') return idlistPending;
+        if (f.id === 'idpage') return idpagePending;
+        return f.status === 'edited' && !f.confirmed;
+      });
+
+    setMetadataPending(
+      hasEditedFieldListing ||
+      hasRepeatColumnChange ||
+      hasPageBreakColumnChange ||
+      hasEditedFieldTable
+    );
+  }, [
+    metadataOpen,
+    frozenUntilIndex,
+    pageSepActive,
+    pageColumnCounts,
+    pageBreakColumns,
+    idpageBaseline,
+    idlistBaseline,
+    repeatColumnBaseline,
+    pageBreakColumnBaseline
+  ]);
+
+  useEffect(() => {
+    if (previousPageSepActiveRef.current === pageSepActive) return;
+    previousPageSepActiveRef.current = pageSepActive;
+    onPagePreviewChange?.(pageSepActive);
+  }, [pageSepActive, onPagePreviewChange]);
+
+  const handlePagePreviewToggle = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (metadataOpen) {
+      onCloseMetadata();
+    }
+    setPageSepActive(!pageSepActive);
+  };
+
+  const getFrozenLeft = (columnIndex: number) =>
+    listingColumns.slice(0, columnIndex).reduce((sum, column) => sum + column.widthPx, 0);
+
+  const isColumnFrozen = (columnIndex: number) =>
+    frozenUntilIndex !== null && columnIndex <= frozenUntilIndex;
+
+  const getGapX = (afterColumnIndex: number) =>
+    listingColumns.slice(0, afterColumnIndex + 1).reduce((sum, col) => sum + col.widthPx, 0);
+
+  const isGapInteractive = (afterColumnIndex: number) =>
+    frozenUntilIndex === null || afterColumnIndex > frozenUntilIndex;
+
+  const addPageBreak = (afterColumnIndex: number) => {
+    setPageBreakColumns(prev =>
+      prev.includes(afterColumnIndex) ? prev : [...prev, afterColumnIndex]
+    );
+  };
+
+  const handlePageBreakDragStart = (colIdx: number) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const containerEl = tableContainerRef.current;
+    if (!containerEl) return;
+
+    const frozenSnapshot = frozenUntilIndex;
+    setDraggingBreak({ colIdx, currentGap: colIdx });
+
+    // Calculate neighbors and boundaries
+    const sortedBreaks = [...pageBreakColumns].sort((a, b) => a - b);
+    const selfIndex = sortedBreaks.indexOf(colIdx);
+    const otherBreaks = sortedBreaks.filter(c => c !== colIdx);
+    
+    // P_min: at least 1 column space from left neighbor (or Freeze line)
+    const pMin = selfIndex > 0 ? otherBreaks[selfIndex - 1] + 1 : (frozenSnapshot !== null ? frozenSnapshot + 1 : 0);
+    // P_max: at least 1 column space from right neighbor (or last available gap)
+    const pMax = selfIndex < otherBreaks.length ? otherBreaks[selfIndex] - 1 : listingColumns.length - 2;
+
+    const snapToNearest = (mouseX: number): number => {
+      let nearest = colIdx;
+      let minDist = Infinity;
+      for (let i = 0; i < listingColumns.length - 1; i++) {
+        const gx = gapXPositionsRef.current[i] ?? listingColumns.slice(0, i + 1).reduce((s, c) => s + c.widthPx, 0);
+        const dist = Math.abs(mouseX - gx);
+        if (dist < minDist) { minDist = dist; nearest = i; }
+      }
+      return nearest;
+    };
+
+    const onMove = (ev: MouseEvent) => {
+      const rect = containerEl.getBoundingClientRect();
+      const mouseX = ev.clientX - rect.left;
+      const nearestRaw = snapToNearest(mouseX);
+
+      // Cursor: forbidden style when entering the freeze zone
+      const inFreezeZone = frozenSnapshot !== null && nearestRaw <= frozenSnapshot;
+      if (inFreezeZone) {
+        document.body.style.cursor = 'not-allowed';
+      } else {
+        document.body.style.cursor = 'col-resize';
+      }
+
+      // Clamp to boundaries
+      const clamped = Math.max(pMin, Math.min(pMax, nearestRaw));
+      setDraggingBreak(prev => prev ? { ...prev, currentGap: clamped } : null);
+    };
+
+    const onUp = () => {
+      setDraggingBreak(prev => {
+        if (!prev) return null;
+        setPageBreakColumns(old => {
+          const without = old.filter(c => c !== prev.colIdx);
+          if (without.includes(prev.currentGap)) return without;
+          return [...without, prev.currentGap].sort((a, b) => a - b);
+        });
+        return null;
+      });
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'col-resize';
+  };
+
+  const handleFreezeDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const containerEl = tableContainerRef.current;
+    if (!containerEl) return;
+
+    const initialFreeze = frozenUntilIndex;
+    if (initialFreeze === null) return;
+
+    setDraggingFreeze({ currentGap: initialFreeze });
+
+    const onMove = (ev: MouseEvent) => {
+      const rect = containerEl.getBoundingClientRect();
+      const mouseX = ev.clientX - rect.left;
+
+      let nearest = initialFreeze;
+      let minDist = Infinity;
+      // Max freeze gap index is: listingColumns.length - 2 - pageBreakColumns.length
+      const maxFreeze = listingColumns.length - 2 - pageBreakColumns.length;
+
+      for (let i = 0; i <= Math.max(0, maxFreeze); i++) {
+        const gx = gapXPositionsRef.current[i] ?? listingColumns.slice(0, i + 1).reduce((s, c) => s + c.widthPx, 0);
+        const dist = Math.abs(mouseX - gx);
+        if (dist < minDist) { minDist = dist; nearest = i; }
+      }
+
+      const clamped = Math.max(0, Math.min(maxFreeze, nearest));
+      setDraggingFreeze({ currentGap: clamped });
+      setFrozenUntilIndex(clamped);
+
+      // Push page breaks to the right dynamically
+      setPageBreakColumns(prev => {
+        const sorted = [...prev].sort((a, b) => a - b);
+        let changed = false;
+        const nextBreaks = sorted.map((p, idx) => {
+          const minAllowed = clamped + 1 + idx;
+          if (p < minAllowed) {
+            changed = true;
+            return minAllowed;
+          }
+          return p;
+        });
+        return changed ? nextBreaks : prev;
+      });
+    };
+
+    const onUp = () => {
+      setDraggingFreeze(null);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.body.style.cursor = 'col-resize';
+  };
+
+  const pageWidthPx = A4_LANDSCAPE_WIDTH_PX;
+  const pageHeightPx = A4_LANDSCAPE_HEIGHT_PX;
+  const printableWidthPx = pageWidthPx - A4_HORIZONTAL_PADDING_PX;
+
+  const printRowPages = Array.from(
+    { length: Math.ceil(listingData.length / PRINT_ROWS_PER_PAGE) },
+    (_, pageIndex) => listingData.slice(pageIndex * PRINT_ROWS_PER_PAGE, (pageIndex + 1) * PRINT_ROWS_PER_PAGE)
+  );
+
+  const frozenPrintColumns = listingColumns.filter((_, columnIndex) => isColumnFrozen(columnIndex));
+  const scrollPrintColumns = listingColumns.filter((_, columnIndex) => !isColumnFrozen(columnIndex));
+  const frozenColumnCount = frozenPrintColumns.length;
+  const minColumnsPerPage = Math.min(listingColumns.length, frozenColumnCount + 1);
+  const maxColumnsPerPage = listingColumns.length;
+  const frozenPrintWidth = frozenPrintColumns.reduce((sum, column) => sum + column.widthPx, 0);
+  const availableScrollPrintWidth = Math.max(120, printableWidthPx - frozenPrintWidth);
+
+  const autoColumnPageTotals = useMemo(() => {
+    if (scrollPrintColumns.length === 0) {
+      return [frozenPrintColumns.length > 0 ? frozenPrintColumns.length : listingColumns.length];
+    }
+    const autoPages: number[] = [];
+    let currentWidth = 0;
+    let currentScrollColumns = 0;
+    scrollPrintColumns.forEach((column) => {
+      const nextWidth = currentWidth + column.widthPx;
+      if (currentScrollColumns > 0 && nextWidth > availableScrollPrintWidth) {
+        autoPages.push(frozenPrintColumns.length + currentScrollColumns);
+        currentScrollColumns = 0;
+        currentWidth = 0;
+      }
+      currentScrollColumns += 1;
+      currentWidth += column.widthPx;
+    });
+    if (currentScrollColumns > 0) {
+      autoPages.push(frozenPrintColumns.length + currentScrollColumns);
+    }
+    return autoPages;
+  }, [availableScrollPrintWidth, listingColumns.length, frozenPrintColumns.length, scrollPrintColumns]);
+
+  const printPages = useMemo(() => {
+    const pages: Array<{
+      id: string;
+      pageRows: typeof listingData;
+      pageColumns: typeof listingColumns[number][];
+      pageScrollColumns: typeof listingColumns[number][];
+      rowPageIndex: number;
+      columnPageIndex: number;
+    }> = [];
+
+    // Filter active page breaks: must be greater than frozenUntilIndex and less than listingColumns.length - 1
+    const activeBreaks = pageBreakColumns
+      .filter(c => frozenUntilIndex === null || c > frozenUntilIndex)
+      .sort((a, b) => a - b);
+
+    printRowPages.forEach((pageRows, rowPageIndex) => {
+      if (scrollPrintColumns.length === 0) {
+        const pageColumns = frozenPrintColumns.length > 0 ? [...frozenPrintColumns] : [...listingColumns];
+        pages.push({
+          id: `${rowPageIndex}-0`,
+          pageRows,
+          pageColumns,
+          pageScrollColumns: pageColumns.filter((pageColumn) => !frozenPrintColumns.some((frozenColumn) => frozenColumn.key === pageColumn.key)),
+          rowPageIndex,
+          columnPageIndex: 0,
+        });
+        return;
+      }
+
+      if (activeBreaks.length > 0) {
+        let currentStartIdx = 0;
+        let columnPageIndex = 0;
+        
+        activeBreaks.forEach((breakColIdx) => {
+          // Find where this breakColIdx is in scrollPrintColumns
+          const breakInScrollIdx = scrollPrintColumns.findIndex(c => {
+            const mainIdx = listingColumns.findIndex(mc => mc.key === c.key);
+            return mainIdx === breakColIdx;
+          });
+          
+          if (breakInScrollIdx >= currentStartIdx) {
+            const pageScrollColumns = scrollPrintColumns.slice(currentStartIdx, breakInScrollIdx + 1);
+            if (pageScrollColumns.length > 0) {
+              const pageColumns = [...frozenPrintColumns, ...pageScrollColumns];
+              pages.push({
+                id: `${rowPageIndex}-${columnPageIndex}`,
+                pageRows,
+                pageColumns,
+                pageScrollColumns,
+                rowPageIndex,
+                columnPageIndex,
+              });
+              currentStartIdx = breakInScrollIdx + 1;
+              columnPageIndex += 1;
+            }
+          }
+        });
+        
+        // Add the remaining columns after the last page break
+        if (currentStartIdx < scrollPrintColumns.length) {
+          const pageScrollColumns = scrollPrintColumns.slice(currentStartIdx);
+          const pageColumns = [...frozenPrintColumns, ...pageScrollColumns];
+          pages.push({
+            id: `${rowPageIndex}-${columnPageIndex}`,
+            pageRows,
+            pageColumns,
+            pageScrollColumns,
+            rowPageIndex,
+            columnPageIndex,
+          });
+        }
+      } else {
+        let remainingScrollColumns = [...scrollPrintColumns];
+        let columnPageIndex = 0;
+        while (remainingScrollColumns.length > 0) {
+          const pageKey = `${rowPageIndex}-${columnPageIndex}`;
+          const defaultTotalColumns = autoColumnPageTotals[columnPageIndex] ?? (frozenPrintColumns.length + remainingScrollColumns.length);
+          const configuredTotalColumns = pageColumnCounts[pageKey] ?? defaultTotalColumns;
+          const normalizedTotalColumns = Math.max(minColumnsPerPage, Math.min(maxColumnsPerPage, configuredTotalColumns));
+          const scrollColumnCount = Math.max(1, Math.min(normalizedTotalColumns - frozenPrintColumns.length, remainingScrollColumns.length));
+          const pageScrollColumns = remainingScrollColumns.slice(0, scrollColumnCount);
+          const pageColumns = [...frozenPrintColumns, ...pageScrollColumns];
+          pages.push({
+            id: pageKey,
+            pageRows,
+            pageColumns,
+            pageScrollColumns,
+            rowPageIndex,
+            columnPageIndex,
+          });
+          remainingScrollColumns = remainingScrollColumns.slice(scrollColumnCount);
+          columnPageIndex += 1;
+        }
+      }
+    });
+    return pages;
+  }, [autoColumnPageTotals, listingColumns, frozenPrintColumns, maxColumnsPerPage, minColumnsPerPage, pageColumnCounts, printRowPages, scrollPrintColumns, pageBreakColumns, frozenUntilIndex]);
+
+  useEffect(() => {
+    setSelectedPrintPageIndex((current) => Math.min(current, Math.max(printPages.length - 1, 0)));
+  }, [printPages.length]);
+
+  useEffect(() => {
+    setPageSelectionDraft(String(selectedPrintPageIndex + 1));
+  }, [selectedPrintPageIndex]);
+
+  const selectedPrintPage = printPages[selectedPrintPageIndex] ?? printPages[0] ?? null;
+
+  useEffect(() => {
+    if (!pageSepActive) return;
+    if (suppressPageSyncRef.current) return;
+    const scrollContainer = pagePreviewScrollRef.current;
+    if (!scrollContainer) return;
+    let frameId = 0;
+    const syncCurrentPageFromScroll = () => {
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const viewportCenter = containerRect.top + containerRect.height / 2;
+      let nearestPageIndex = 0;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+      printPages.forEach((page, pageIndex) => {
+        const pageElement = pageCardRefs.current[page.id];
+        if (!pageElement) return;
+        const pageRect = pageElement.getBoundingClientRect();
+        const pageCenter = pageRect.top + pageRect.height / 2;
+        const distance = Math.abs(pageCenter - viewportCenter);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestPageIndex = pageIndex;
+        }
+      });
+      setSelectedPrintPageIndex((current) => (current === nearestPageIndex ? current : nearestPageIndex));
+    };
+    const handleScroll = () => {
+      cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(syncCurrentPageFromScroll);
+    };
+    syncCurrentPageFromScroll();
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frameId);
+      scrollContainer.removeEventListener('scroll', handleScroll);
+    };
+  }, [pageSepActive, printPages]);
+
+  const selectedPageColumnTotal = selectedPrintPage
+    ? Math.max(minColumnsPerPage, Math.min(maxColumnsPerPage, pageColumnCounts[selectedPrintPage.id] ?? selectedPrintPage.pageColumns.length))
+    : minColumnsPerPage;
+
+  const updateSelectedPageColumnTotal = (nextTotalColumns: number) => {
+    if (!selectedPrintPage) return;
+    const normalizedTotalColumns = Math.max(minColumnsPerPage, Math.min(maxColumnsPerPage, nextTotalColumns));
+    setPageColumnCounts((prev) => ({ ...prev, [selectedPrintPage.id]: normalizedTotalColumns }));
+  };
+
+  const handlePageSelectionChange = (nextPageIndex: number) => {
+    const nextPage = printPages[nextPageIndex];
+    if (!nextPage) return;
+    suppressPageSyncRef.current = true;
+    if (suppressPageSyncTimerRef.current !== null) {
+      window.clearTimeout(suppressPageSyncTimerRef.current);
+    }
+    setSelectedPrintPageIndex(nextPageIndex);
+    pageCardRefs.current[nextPage.id]?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    suppressPageSyncTimerRef.current = window.setTimeout(() => {
+      suppressPageSyncRef.current = false;
+      suppressPageSyncTimerRef.current = null;
+    }, 300);
+  };
+
+  const handlePageSelectionByNumber = (nextPageNumber: number) => {
+    const normalizedPageNumber = Math.max(1, Math.min(printPages.length, nextPageNumber));
+    handlePageSelectionChange(normalizedPageNumber - 1);
+  };
+
+  const commitPageSelectionDraft = () => {
+    const nextValue = Number(pageSelectionDraft);
+    if (Number.isNaN(nextValue)) {
+      setPageSelectionDraft(String(selectedPrintPageIndex + 1));
+      return;
+    }
+    handlePageSelectionByNumber(nextValue);
+  };
+
+  return (
+    <div className="h-full bg-white flex flex-col overflow-hidden">
+      {/* Top Bar */}
+      <div className="bg-white h-[40px] shrink-0 w-full flex items-center justify-between px-[12px] border-b border-[#EBECEC]">
+        <p className="t-small truncate text-black">{selectedItemName || 'Shell preview'}</p>
+        <div className="flex items-center gap-[10px]">
+          <div className="flex items-center gap-[8px]">
+            {/* Page separator / Preview button */}
+            <TooltipText label="Print Preview">
+              <button
+                type="button"
+                onClick={handlePagePreviewToggle}
+                className={`h-[24px] flex items-center justify-center gap-[4px] rounded-[4px] px-[4px] transition-colors duration-[180ms] active:scale-[0.96] ${
+                  pageSepActive ? 'bg-[#F4E8EE] text-[#830051]' : 'text-[#888E8E] hover:bg-black/5'
+                }`}
+                aria-label={pageSepActive ? 'Exit page preview' : 'Enter page preview'}
+                aria-pressed={pageSepActive}
+              >
+                <span className="t-small whitespace-nowrap">Preview</span>
+                <span className="relative shrink-0 size-[16px]">
+                  <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
+                    <path d="M11.3333 14V11.3333H4.66667V14H3.33333V10.6667C3.33333 10.2985 3.63181 10 4 10H12C12.3682 10 12.6667 10.2985 12.6667 10.6667V14H11.3333ZM4.66667 2V4.66667H11.3333V2H12.6667V5.33333C12.6667 5.70152 12.3682 6 12 6H4C3.63181 6 3.33333 5.70152 3.33333 5.33333V2H4.66667ZM1.33333 6L4 8L1.33333 10V6ZM14.6667 6V10L12 8L14.6667 6Z" fill="currentColor" />
+                  </svg>
+                </span>
+              </button>
+            </TooltipText>
+
+            {/* Metadata button */}
+            <TooltipText label="Open Metadata">
+              <button
+                type="button"
+                disabled={pageSepActive}
+                onClick={(event) => {
+                  if (pageSepActive) { event.preventDefault(); return; }
+                  onMetadataClick();
+                }}
+                className={`relative size-[24px] flex items-center justify-center rounded-[4px] transition-colors duration-[180ms] active:scale-[0.96] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${
+                  pageSepActive ? 'text-[#c4c8c8]' : metadataOpen ? 'bg-[#F4E8EE]' : 'hover:bg-black/5'
+                }`}
+                aria-label="Toggle metadata"
+              >
+                <LocalIcon src={fileInfoIconUrl} className="h-[16px] w-[16px]" color={pageSepActive ? '#c4c8c8' : metadataOpen ? '#830051' : '#888E8E'} />
+                {metadataPending && <span className="absolute top-[2px] right-[2px] w-[4px] h-[4px] rounded-full bg-[#D0006F] z-10" />}
+              </button>
+            </TooltipText>
+
+
+          </div>
+        </div>
+      </div>
+
+      {/* Content row: shell table + metadata overlay */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Shell content */}
+        <div className={`relative flex-1 overflow-auto ${pageSepActive ? 'bg-[#f2f3f3]' : 'bg-white'}`}>
+          {pageSepActive && createPortal(
+            <div className="fixed inset-0 z-[100] bg-[#D8DADA]">
+              {/* Scroll container */}
+              <div ref={pagePreviewScrollRef} className="absolute inset-0 overflow-y-auto pt-[52px] z-10">
+                {/* Print page cards */}
+                <div className="py-[32px] px-[20px] flex flex-col items-center gap-[24px]">
+                  {printPages.map((page, pageIndex) => (
+                    <div
+                      key={page.id}
+                      ref={(node) => { pageCardRefs.current[page.id] = node; }}
+                      onClick={() => handlePageSelectionChange(pageIndex)}
+                      className={`relative overflow-hidden bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)] border border-[#cfd2d2] transition-shadow duration-[180ms]`}
+                      style={{ width: `${pageWidthPx}px`, height: `${pageHeightPx}px` }}
+                    >
+                      <div style={{ transform: `scale(${pageScale / 100})`, transformOrigin: 'top left' }} className="relative">
+                        <div className="absolute right-[32px] top-[28px] rounded-[4px] bg-[#F4E8EE] px-[6px] py-0 font-['PingFang_SC',sans-serif] text-[12px] leading-[20px] text-[#830051]">{pageIndex + 1}/{printPages.length}</div>
+                        <div className="p-[48px] pt-[64px]">
+                          <div className="border-b-2 border-black pb-[14px] mb-[10px] text-center">
+                            <h1 className="font-['Inter',sans-serif] text-[13px] leading-[18px] font-bold tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
+                            <p className="mt-[4px] font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676]">
+                              Rows {page.rowPageIndex * PRINT_ROWS_PER_PAGE + 1}-{page.rowPageIndex * PRINT_ROWS_PER_PAGE + page.pageRows.length} · Columns {page.pageScrollColumns[0] ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[0].key) + 1 : 1}-{page.pageScrollColumns.length ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[page.pageScrollColumns.length - 1].key) + 1 : frozenPrintColumns.length}{frozenPrintColumns.length > 0 ? ` · frozen 1-${frozenPrintColumns.length} repeated` : ''}
+                            </p>
+                          </div>
+                          <table className="w-full table-fixed border-collapse font-['Inter',sans-serif] text-black">
+                            <colgroup>
+                              {page.pageColumns.map((column) => (
+                                <col key={column.key} style={{ width: `${(column.widthPx / page.pageColumns.reduce((sum, item) => sum + item.widthPx, 0)) * 100}%` }} />
+                              ))}
+                            </colgroup>
+                            <thead>
+                              <tr className="border-b-2 border-black">
+                                {page.pageColumns.map((column) => (
+                                  <th key={column.key} className="border-r border-[#d9d9d9] px-[4px] py-[6px] text-left align-middle text-[10px] leading-[14px] font-bold whitespace-normal break-words last:border-r-0">{column.label}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {page.pageRows.map((row) => (
+                                <tr key={row.subject} className="border-b border-[#d9d9d9] last:border-b-2 last:border-black">
+                                  {page.pageColumns.map((column) => (
+                                    <td key={`${row.subject}-${column.key}`} className="border-r border-[#d9d9d9] px-[4px] py-[6px] align-middle text-[10px] leading-[15px] font-normal whitespace-normal break-words last:border-r-0">{(row as Record<string, string>)[column.key]}</td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Print preview top bar */}
+              <div className="absolute top-0 left-0 right-0 z-20 h-[52px] bg-white/90 backdrop-blur-[8px] border-b border-[#cfd2d2] flex items-center justify-between px-[24px] py-[8px]">
+                <span className="t-heading text-[#3C4242]">Appendix 16.2.4</span>
+                <button type="button" onClick={() => setPageSepActive(false)} className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] transition-colors hover:bg-black/5">
+                  <CloseIcon className="h-[16px] w-[16px]" color="#3C4242" />
+                  <span className="font-['PingFang_SC',sans-serif] text-[14px] leading-[20px] font-normal text-[#3C4242]">Exit Preview</span>
+                </button>
+              </div>
+            </div>,
+            document.body
+          )}
+
+          {/* Normal (non-preview) table view */}
+          <div className={`min-w-max p-[16px] ${pageSepActive ? 'hidden' : ''}`}>
+            <div className="w-max bg-white text-black">
+              <div className="relative">
+                {/* Title header */}
+                <div className="h-[72px] min-w-max border-b-2 border-black flex items-start justify-center px-[16px] pt-[24px]">
+                  <h1 className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
+                </div>
+                <div ref={tableContainerRef} className="relative inline-block min-w-max">
+                  <table className="table-auto border-collapse min-w-max font-['Inter',sans-serif] text-black">
+                    <thead>
+                      <tr className="border-b-2 border-black">
+                        {listingColumns.map((column, columnIndex) => {
+                          const frozen = isColumnFrozen(columnIndex);
+                          const frozenBoundary = frozenUntilIndex === columnIndex;
+                          const shadows: string[] = [];
+                          if (frozenBoundary) shadows.push('4px 0 0 rgba(0,0,0,0.08)');
+                          const cellStyle: React.CSSProperties = {};
+                          if (frozen) { cellStyle.left = `${getFrozenLeft(columnIndex)}px`; cellStyle.zIndex = 22; cellStyle.backgroundColor = 'white'; }
+                          if (shadows.length) cellStyle.boxShadow = shadows.join(', ');
+                          return (
+                            <th
+                              key={column.key}
+                              ref={(node) => { thRefs.current[columnIndex] = node; }}
+                              style={cellStyle}
+                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r px-[4px] py-[6px] text-left align-middle text-[12px] leading-[18px] font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-[#830051] after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
+                              onMouseEnter={() => setHoveredFreezeColumn(columnIndex)}
+                              onMouseLeave={() => setHoveredFreezeColumn(null)}
+                            >
+                              {/* Hover tooltip for Add Freeze */}
+                              {hoveredFreezeColumn === columnIndex && frozenUntilIndex === null && hoveredGap === null && !pageSepActive && (
+                                <div
+                                  className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full z-[60] pb-[6px] cursor-pointer active:scale-[0.96] transition-transform pointer-events-auto"
+                                  onClick={(e) => { e.stopPropagation(); setFrozenUntilIndex(columnIndex); setHoveredFreezeColumn(null); }}
+                                >
+                                  <div className="flex items-center gap-[4px] bg-[#3C4242] text-[#F8F7F7] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
+                                    <FreezeIcon color="white" />
+                                    <span className="font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px]">Repeat Columns</span>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Gap hit zone for page break insertion */}
+                              {columnIndex < listingColumns.length - 1 && isGapInteractive(columnIndex) && (
+                                <div
+                                  className="absolute top-0 bottom-0 z-50"
+                                  style={{ right: '-10px', width: '20px', cursor: 'col-resize' }}
+                                  onMouseEnter={() => setHoveredGap(columnIndex)}
+                                  onMouseLeave={() => setHoveredGap(null)}
+                                />
+                              )}
+                              <div className="flex w-full items-center justify-between gap-[4px] rounded-[3px] overflow-hidden">
+                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} className="flex-1 min-w-0 truncate rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#830051] focus-visible:outline-offset-1" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
+                              </div>
+                              
+                              {frozenBoundary && (
+                                <>
+                                  {/* Pill label — positioned at the top right of the th */}
+                                  <div
+                                    className="absolute pointer-events-auto"
+                                    style={{
+                                      right: '0px',
+                                      top: '-4px',
+                                      transform: 'translateX(50%) translateY(-100%)',
+                                      zIndex: 40,
+                                    }}
+                                  >
+                                    <div
+                                      className="flex items-center gap-[4px] font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
+                                      style={{
+                                        background: '#F4E8EE',
+                                        color: '#830051',
+                                        padding: '2px 2px 2px 6px',
+                                        border: '1px solid transparent',
+                                      }}
+                                    >
+                                      <span>{`Repeat C1-C${columnIndex + 1}`}</span>
+                                      <button
+                                        type="button"
+                                        className="flex items-center justify-center rounded-[4px] hover:bg-black/10 transition-colors active:scale-[0.96] shrink-0"
+                                        style={{ width: '20px', height: '20px' }}
+                                        onClick={(e) => { e.stopPropagation(); setFrozenUntilIndex(null); }}
+                                        aria-label="Unfreeze"
+                                      >
+                                        <LocalIcon src={closeIconUrl} className="w-[12px] h-[12px]" color="#830051" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Drag hit area — positioned at the right edge of the th */}
+                                  <div
+                                    className="absolute top-0 bottom-0 pointer-events-auto"
+                                    style={{
+                                      right: '-6px',
+                                      width: '12px',
+                                      cursor: 'col-resize',
+                                      zIndex: 32,
+                                    }}
+                                    onMouseDown={handleFreezeDragStart}
+                                  />
+                                </>
+                              )}
+                            </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listingData.map((row) => (
+                      <tr key={row.subject} className="border-b border-[#d9d9d9] last:border-b-2 last:border-black">
+                        {listingColumns.map((column, columnIndex) => {
+                          const frozen = isColumnFrozen(columnIndex);
+                          const frozenBoundary = frozenUntilIndex === columnIndex;
+                          const shadows: string[] = [];
+                          if (frozenBoundary) shadows.push('4px 0 0 rgba(0,0,0,0.08)');
+                          const cellStyle: React.CSSProperties = {};
+                          if (frozen) { cellStyle.left = `${getFrozenLeft(columnIndex)}px`; cellStyle.zIndex = 20; cellStyle.backgroundColor = 'white'; }
+                          if (shadows.length) cellStyle.boxShadow = shadows.join(', ');
+                          return (
+                            <td key={`${row.subject}-${column.key}`} style={cellStyle} className={`border-r border-[#d9d9d9] px-[4px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-normal break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-[#830051] after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
+                              <div className="w-full overflow-hidden truncate">
+                                {(row as Record<string, string>)[column.key]}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                  </table>
+
+                  {/* Frozen zone tint — purple wash over the locked columns area */}
+                  {frozenUntilIndex !== null && (
+                    <div
+                      className="absolute bottom-0 pointer-events-none"
+                      style={{
+                        top: 0,
+                        left: 0,
+                        width: `${gapXPositions[frozenUntilIndex] ?? getGapX(frozenUntilIndex)}px`,
+                        backgroundColor: 'rgba(216, 207, 221, 0.08)',
+                        zIndex: 5,
+                      }}
+                    />
+                  )}
+
+
+
+                  {/* Page break insertion preview (while hovering a gap) */}
+                  {hoveredGap !== null && !pageBreakColumns.includes(hoveredGap) && (
+                    <>
+                      <div
+                        className="absolute bottom-0 pointer-events-none"
+                        style={{ left: `${(gapXPositions[hoveredGap] ?? getGapX(hoveredGap)) - 1}px`, top: 0, width: '2px', borderLeft: '2px dashed rgba(240,171,0,0.65)', zIndex: 35 }}
+                      />
+                      <div
+                        className="absolute z-[60] cursor-pointer pointer-events-auto pb-[6px] active:scale-[0.96] transition-transform"
+                        style={{ left: `${gapXPositions[hoveredGap] ?? getGapX(hoveredGap)}px`, top: '0', transform: 'translateX(-50%) translateY(-100%)' }}
+                        onMouseEnter={() => setHoveredGap(hoveredGap)}
+                        onMouseLeave={() => setHoveredGap(null)}
+                        onClick={() => { addPageBreak(hoveredGap); setHoveredGap(null); }}
+                      >
+                        <div className="flex items-center gap-[4px] bg-[#3C4242] text-[#F8F7F7] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
+                          <LocalIcon src={addLineIconUrl} className="w-[14px] h-[14px]" color="white" />
+                          <span className="font-['PingFang_SC:Regular',sans-serif] text-[12px] leading-[20px]">Add page break</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Permanent page break dividers */}
+                  {[...pageBreakColumns].sort((a, b) => a - b).map((colIdx, i) => {
+                    const measuredX = gapXPositions[colIdx] ?? getGapX(colIdx);
+                    const isDragging = draggingBreak?.colIdx === colIdx;
+                    const dragGapX = isDragging
+                      ? (gapXPositions[draggingBreak!.currentGap] ?? getGapX(draggingBreak!.currentGap))
+                      : measuredX;
+                    return (
+                      <ColumnDivider
+                        key={colIdx}
+                        gapX={measuredX}
+                        label={`P${i + 1}`}
+                        isDragging={isDragging}
+                        dragGapX={dragGapX}
+                        onRemove={() => setPageBreakColumns(prev => prev.filter(c => c !== colIdx))}
+                        onDragStart={handlePageBreakDragStart(colIdx)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Metadata overlay */}
+        {metadataOpen && (
+          <>
+            <WorkspaceDivider onDrag={handleMetadataDividerDrag} />
+            <div className="shrink-0 h-full overflow-hidden py-[4px] pr-[4px]" style={{ width: `${metadataWidth}px` }}>
+              <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-[#EBECEC] bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)]">
+                <MetadataPanel
+                  onClose={onCloseMetadata}
+                  isLocked={isLocked}
+                  docType="listing"
+                  frozenUntilIndex={frozenUntilIndex}
+                  pageSepActive={pageSepActive}
+                  pageColumnCounts={pageColumnCounts}
+                  pageBreakColumns={pageBreakColumns}
+                  columnCount={listingColumns.length}
+                  repeatColumnBaseline={repeatColumnBaseline}
+                  onRepeatColumnBaselineChange={setRepeatColumnBaseline}
+                  pageBreakColumnBaseline={pageBreakColumnBaseline}
+                  onPageBreakColumnBaselineChange={setPageBreakColumnBaseline}
+                  idpageBaseline={idpageBaseline}
+                  idlistBaseline={idlistBaseline}
+                  onIdpageBaselineChange={onIdpageBaselineChange}
+                  onIdlistBaselineChange={onIdlistBaselineChange}
+                  onAddChangesToChat={(text) => {
+                    onOpenAICopilot?.(text);
+                  }}
+                />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ListingPreview(props: any): null { return null; }
+function _DEAD_LISTING_PREVIEW_BODY() {
+  const colGroups: any = {};
   const [hoveredColKey, setHoveredColKey] = useState<string | null>(null);
   const [showFreezeDropdown, setShowFreezeDropdown] = useState(false);
   const [contextMenu, setContextMenu] = useState<{
@@ -1666,7 +2710,7 @@ function ListingPreview({
       {/* Main Table Scroll Area */}
       <div
         ref={tableContainerRef}
-        className="min-h-0 flex-1 overflow-auto relative scrollbar-colored animate-fade-in"
+        className="min-h-0 flex-1 overflow-auto relative animate-fade-in"
       >
         <div style={{ width: `${totalRenderedPageWidth}px`, position: 'relative' }}>
           <table className="border-collapse select-none" style={{ tableLayout: 'fixed', width: `${totalRenderedPageWidth}px` }}>
@@ -1730,7 +2774,7 @@ function ListingPreview({
                         </span>
                         
                         {(hoveredColKey === col.key || isColSticky) && (
-                          <TooltipText label={isColSticky ? "Unfreeze Columns" : "Freeze up to here"}>
+                          <TooltipText label={isColSticky ? "Stop Repeating" : "Repeat Columns"}>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2231,13 +3275,14 @@ function ShellPreview({
   );
 }
 
-type FieldStatus = "unconfirmed" | "confirmed" | "edited";
+type FieldStatus = "default" | "edited";
 
 interface MetadataField {
   id: string;
   label: string;
   value: string;
   status: FieldStatus;
+  confirmed: boolean;
 }
 
 interface MetadataBlock {
@@ -2245,90 +3290,601 @@ interface MetadataBlock {
   fields: MetadataField[];
 }
 
-function MetadataPanel({ onClose }: { onClose: () => void }) {
+const GROUP_OPTIONS = [
+  {
+    name: 'SAFT01aL1_3_12_123NP',
+    lines: [
+      "proc format;", "  value gpT01aG5L1_3_12_123f", "  1 = 'AZD999(*ESC*)n1 mg/kg'",
+      "  2 = 'AZD999(*ESC*)n2 mg/kg'", "  3 = 'AZD999(*ESC*)nTotal'",
+      "  4 = 'Investigator choice of therapy'", "  5 = 'Total'", "  ;", "quit;", "",
+      "%m_u_popn(", "    inds=adam.adsl", "    ,pop_flag=SAF3LFL='Y'", "    ,trtgrpn=TRT01AN",
+      "    ,trtlev=1|2|1 2|3|1 2 3", "    ,UniqueIDVars=usubjid",
+      "    ,trtfmtC=gpT01aG5L1_3_12_123f", "    ,gmacro=SAF3LT01aL1_3_12_123NP",
+      "    ,BigN=Y", "    ,nformat=%str(n (%%))", "    );",
+    ],
+  },
+  {
+    name: 'SAFT01bL2_5_8_456NP',
+    lines: [
+      "proc format;", "  value gpT01bG3L2_5_8_456f", "  1 = 'Treatment A 100mg'",
+      "  2 = 'Treatment B 200mg'", "  3 = 'Placebo'", "  4 = 'Total'", "  ;", "quit;", "",
+      "%m_u_popn(", "    inds=adam.adsl", "    ,pop_flag=SAF1LFL='Y'", "    ,trtgrpn=TRT01AN",
+      "    ,UniqueIDVars=usubjid", "    ,trtfmtC=gpT01bG3L2_5_8_456f",
+      "    ,gmacro=SAF1LT01bL2_5_8_456NP", "    ,BigN=Y", "    );",
+    ],
+  },
+  {
+    name: 'SAFT02aL1_7_3_789NP',
+    lines: [
+      "proc format;", "  value gpT02aG2L1_7_3_789f", "  1 = 'Active'",
+      "  2 = 'Control'", "  3 = 'Total'", "  ;", "quit;", "",
+      "%m_u_popn(", "    inds=adam.adsl", "    ,pop_flag=ITT1FL='Y'", "    ,trtgrpn=TRT02AN",
+      "    ,UniqueIDVars=usubjid", "    ,trtfmtC=gpT02aG2L1_7_3_789f",
+      "    ,gmacro=ITT1T02aL1_7_3_789NP", "    ,BigN=Y", "    );",
+    ],
+  },
+];
+
+function GroupCodeViewer({ lines }: { lines: string[] }) {
+  const [expanded, setExpanded] = useState(true);
+  return (
+    <div className="relative rounded-[2px] w-full mt-[4px]">
+      <div className="overflow-clip rounded-[2px] border-[0.6px] border-[#D8DADA]">
+        <button onClick={() => setExpanded(v => !v)} className="w-full flex items-center gap-[4px] px-[10px] py-[8px] bg-white hover:bg-[#F8F7F7] transition-colors active:scale-[0.99]" aria-expanded={expanded}>
+          <span className="t-small text-[#3C4242]">Group Code</span>
+          <div className="shrink-0 size-[16px] flex items-center justify-center transition-transform duration-150" style={{ transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+            <SvgIcon className="h-[8px] w-[9px]" viewBox="0 0 8.49 5.19"><path d="M0.75 0.75L4.24 4.24L7.72 0.75" stroke="#888E8E" strokeWidth="1.5" fill="none" /></SvgIcon>
+          </div>
+        </button>
+        {expanded && (
+          <div className="relative border-t-[0.6px] border-[#D8DADA]">
+            <div className="overflow-auto bg-[#F8F7F7]" style={{ maxHeight: '220px' }}>
+              <div className="py-[4px]" style={{ minWidth: 'max-content' }}>
+                {lines.map((line, i) => (
+                  <div key={i} className="flex items-start h-[20px] px-[10px]">
+                    <div className="shrink-0 w-[24px] h-[20px] relative">
+                      <p className="absolute left-0 top-px whitespace-nowrap select-none text-[12px] leading-[20px] text-[#B2B4B4]" style={{ fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{i + 1}</p>
+                    </div>
+                    <div className="flex-1 min-w-px h-full flex items-center">
+                      <p className="whitespace-nowrap text-[13px] leading-[1.25] text-[#888E8E]" style={{ fontFamily: "'Menlo','Consolas',monospace" }}>{line}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Block Items Data for Blocks Tab Two-Column Layout ──
+const METADATA_BLOCK_ITEMS_DATA = [
+  {
+    id: 'nicotine',
+    name: 'Nicotine use',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true },
+      { id: 'variable', label: 'Variable', value: 'NICSTT', type: 'tag' as const, required: true },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true },
+      { id: 'formatName', label: 'Format Name', value: 'nicstt_cat', type: 'text' as const, hasLink: true },
+    ],
+  },
+  {
+    id: 'alcohol',
+    name: 'Alcohol use',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true },
+      { id: 'variable', label: 'Variable', value: 'ALCSTT', type: 'tag' as const, required: true },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true },
+      { id: 'formatName', label: 'Format Name', value: 'alcstt_cat', type: 'text' as const, hasLink: true },
+    ],
+  },
+  {
+    id: 'nicotine_current',
+    name: 'Any current use of nicotine products',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true },
+      { id: 'variable', label: 'Variable', value: 'NICSYN', type: 'tag' as const, required: true },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true },
+      { id: 'formatName', label: 'Format Name', value: 'ny_cat', type: 'text' as const, hasLink: true },
+    ],
+  },
+  {
+    id: 'cigarette_pack',
+    name: 'Number of cigarette pack years',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true },
+      { id: 'variable', label: 'Variable', value: 'CIGPKYR', type: 'tag' as const, required: true },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true },
+      { id: 'formatName', label: 'Format Name', value: 'cigpkyr_cat', type: 'text' as const, hasLink: true },
+    ],
+  },
+  {
+    id: 'nicotine_pack',
+    name: 'Number of nicotine pack years',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true },
+      { id: 'variable', label: 'Variable', value: 'NICPKYR', type: 'tag' as const, required: true },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true },
+      { id: 'formatName', label: 'Format Name', value: 'nicpkyr_cat', type: 'text' as const, hasLink: true },
+    ],
+  },
+  {
+    id: 'nicotine_type',
+    name: 'Nicotine type',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true },
+      { id: 'variable', label: 'Variable', value: 'NICTYP', type: 'tag' as const, required: true },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true },
+      { id: 'formatName', label: 'Format Name', value: 'nictyp_cat', type: 'text' as const, hasLink: true },
+    ],
+  },
+];
+
+function BlocksTabContent({
+  blocks,
+  confirmedBlocks,
+  onToggleConfirm,
+  isLocked,
+}: {
+  blocks: typeof METADATA_BLOCK_ITEMS_DATA;
+  confirmedBlocks: Record<string, boolean>;
+  onToggleConfirm: (blockId: string) => void;
+  isLocked?: boolean;
+}) {
+  const [selectedBlockId, setSelectedBlockId] = useState(blocks[0]?.id || '');
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isScrollSyncActive = useRef(true);
+
+  const handleSidebarClick = (blockId: string) => {
+    setSelectedBlockId(blockId);
+    isScrollSyncActive.current = false;
+    sectionRefs.current[blockId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => { isScrollSyncActive.current = true; }, 600);
+  };
+
+  // Scroll-sync: update selected sidebar item based on scroll position
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      if (!isScrollSyncActive.current) return;
+      const containerRect = container.getBoundingClientRect();
+      let closestId = blocks[0]?.id || '';
+      let closestDist = Infinity;
+      for (const block of blocks) {
+        const el = sectionRefs.current[block.id];
+        if (!el) continue;
+        const dist = Math.abs(el.getBoundingClientRect().top - containerRect.top);
+        if (dist < closestDist) { closestDist = dist; closestId = block.id; }
+      }
+      setSelectedBlockId(closestId);
+    };
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [blocks]);
+
+  const LinkIcon = () => (
+    <SvgIcon className="h-[12px] w-[12px] inline-block ml-[4px]" viewBox="0 0 24 24">
+      <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" fill="#830051" />
+    </SvgIcon>
+  );
+
+  return (
+    <div className="flex min-h-0 flex-1 overflow-hidden">
+      {/* Left sidebar — block navigation */}
+      <div className="w-[160px] shrink min-w-[90px] border-r border-[#E5E8E8] overflow-y-auto bg-white">
+        {blocks.map((block) => (
+          <button
+            key={block.id}
+            onClick={() => handleSidebarClick(block.id)}
+            className={`w-full text-left px-[12px] py-[10px] t-small leading-[1.3] transition-colors truncate ${
+              selectedBlockId === block.id
+                ? 'bg-[#F4E8EE] text-[#830051] font-medium border-l-[3px] border-l-[#830051] pl-[9px]'
+                : 'text-[#3C4242] hover:bg-[#F8F7F7] border-l-[3px] border-l-transparent pl-[9px]'
+            }`}
+            title={block.name}
+          >
+            {block.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Right content — scrollable block sections */}
+      <div ref={scrollContainerRef} className="flex-1 min-w-[180px] overflow-y-auto">
+        {blocks.map((block, blockIndex) => (
+          <div
+            key={block.id}
+            ref={(el) => { sectionRefs.current[block.id] = el; }}
+            data-block-id={block.id}
+            className={`px-[16px] py-[14px] ${blockIndex !== blocks.length - 1 ? 'border-b border-[#E5E8E8]' : ''}`}
+          >
+            <p className="text-[14px] font-bold text-[#3C4242] mb-[12px]">{block.name}</p>
+            <div className="flex flex-col gap-[12px]">
+              {block.fields.map((field) => (
+                <div key={field.id}>
+                  <p className="t-small text-[#888E8E] mb-[4px]">
+                    {field.required && <span className="text-[#D32F2F]">* </span>}
+                    {field.label}
+                    {field.hasLink && <LinkIcon />}
+                  </p>
+                  {field.type === 'tag' ? (
+                    <div className={`flex flex-wrap gap-[4px] min-h-[32px] px-[8px] py-[4px] rounded-[4px] border items-center ${
+                      isLocked ? 'border-transparent bg-[#F8F7F7]' : 'border-[#D8DADA] bg-white'
+                    }`}>
+                      <span className={`inline-flex items-center gap-[6px] h-[24px] px-[8px] rounded-[12px] t-small ${
+                        isLocked ? 'bg-[#EBEBEB] text-[#B2B4B4]' : 'bg-[#F0F0F0] text-[#3C4242]'
+                      }`}>
+                        {field.value}
+                        {!isLocked && (
+                          <button className="flex items-center justify-center h-[14px] w-[14px] rounded-full text-[#888E8E] hover:text-[#3C4242] text-[13px] leading-none">×</button>
+                        )}
+                      </span>
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      value={field.value}
+                      readOnly
+                      className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[4px] border t-small outline-none focus:outline-none ${
+                        isLocked
+                          ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed'
+                          : 'bg-white border-[#D8DADA] text-[#3C4242]'
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface MetadataPanelProps {
+  onClose: () => void;
+  isLocked?: boolean;
+  docType?: string;
+  frozenUntilIndex?: number | null;
+  pageSepActive?: boolean;
+  pageColumnCounts?: Record<string, number>;
+  pageBreakColumns?: number[];
+  columnCount?: number;
+  repeatColumnBaseline?: { frozenUntilIndex: number | null } | null;
+  onRepeatColumnBaselineChange?: (baseline: { frozenUntilIndex: number | null }) => void;
+  idpageBaseline?: { frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> } | null;
+  idlistBaseline?: { frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> } | null;
+  onIdpageBaselineChange?: (b: { frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> }) => void;
+  onIdlistBaselineChange?: (b: { frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> }) => void;
+  pageBreakColumnBaseline?: { pageSepActive: boolean; pageColumnCounts: Record<string, number>; pageBreakColumns: number[] } | null;
+  onPageBreakColumnBaselineChange?: (baseline: { pageSepActive: boolean; pageColumnCounts: Record<string, number>; pageBreakColumns: number[] }) => void;
+  onAddChangesToChat?: (text: string) => void;
+}
+
+function MetadataPanel({
+  onClose, docType = 'table', isLocked, frozenUntilIndex, pageSepActive, pageColumnCounts = {},
+  pageBreakColumns = [], columnCount = 11,
+  repeatColumnBaseline = null, onRepeatColumnBaselineChange,
+  pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
+  idpageBaseline = null, idlistBaseline = null, onIdpageBaselineChange, onIdlistBaselineChange,
+  onAddChangesToChat,
+}: MetadataPanelProps) {
   const [activeTab, setActiveTab] = useState<"basic" | "blocks">("basic");
-  const [blocks, setBlocks] = useState<MetadataBlock[]>([
-    {
-      id: "block1",
-      fields: [
-        { id: "f1", label: "Input Dataset(s)", value: "ADSL", status: "unconfirmed" },
-        { id: "f2", label: "Program Name", value: "t_dm", status: "unconfirmed" },
-        { id: "f3", label: "Output Dataset", value: "ADEFF", status: "unconfirmed" },
-        { id: "f4", label: "Population", value: "Safety", status: "unconfirmed" },
-      ],
-    },
-  ]);
+  const loadFromSession = <T,>(key: string, fallback: T): T => { try { const raw = sessionStorage.getItem(key); return raw ? (JSON.parse(raw) as T) : fallback; } catch { return fallback; } };
 
-  const totalFields = blocks.reduce((sum, block) => sum + block.fields.length, 0);
-  const confirmedCount = blocks.reduce(
-    (sum, block) => sum + block.fields.filter((f) => f.status === "confirmed").length, 0
-  );
-  const hasAnyEdits = blocks.some((block) => block.fields.some((f) => f.status === "edited"));
-  const confirmableFields = blocks.reduce(
-    (sum, block) => sum + block.fields.filter((f) => f.status !== "edited").length, 0
-  );
-  const selectAllState: "empty" | "indeterminate" | "checked" =
-    confirmedCount === 0 ? "empty" : confirmedCount === confirmableFields ? "checked" : "indeterminate";
+  const migrateFields = (stored: any[]): any[] => {
+    return stored.map(f => {
+      let status: 'default' | 'edited' = 'default';
+      let confirmed = false;
+      if (f.status === 'edited') {
+        status = 'edited';
+        confirmed = f.confirmed ?? true;
+      } else if (f.status === 'confirmed') {
+        status = 'default';
+        confirmed = true;
+      } else if (f.status === 'unconfirmed') {
+        status = 'default';
+        confirmed = false;
+      } else {
+        status = f.status === 'edited' ? 'edited' : 'default';
+        confirmed = f.confirmed !== undefined ? !!f.confirmed : false;
+      }
+      return { id: f.id, label: f.label, value: f.value, status, confirmed };
+    });
+  };
 
+  // ── Table States (Original) ──
+  const [blockFields, setBlockFields] = useState<{ id: string; label: string; value: string; status: FieldStatus; confirmed: boolean }[]>(() => {
+    const fallback = [
+      { id: 'blockTitle', label: 'Block Title', value: 'Demographics Summary', status: 'default' as FieldStatus, confirmed: false },
+      { id: 'blockType', label: 'Block Type', value: 'table', status: 'default' as FieldStatus, confirmed: false },
+      { id: 'idpage', label: 'idpage', value: '1', status: 'default' as FieldStatus, confirmed: false },
+      { id: 'idlist', label: 'idlist', value: '1', status: 'default' as FieldStatus, confirmed: false },
+      { id: 'filterCondition', label: 'Filter Condition', value: "SAFFL='Y'", status: 'default' as FieldStatus, confirmed: false },
+    ];
+    const stored = loadFromSession('metadataBlockFields', fallback);
+    if (!Array.isArray(stored)) return fallback;
+    return migrateFields(stored);
+  });
+  useEffect(() => { sessionStorage.setItem('metadataBlockFields', JSON.stringify(blockFields)); }, [blockFields]);
+
+  const [blocks, setBlocks] = useState<MetadataBlock[]>(() => {
+    const fallback = [
+      { id: 'block1', fields: [
+        { id: 'f1', label: 'Input Dataset(s)', value: 'ADSL', status: 'default' as FieldStatus, confirmed: false },
+        { id: 'f2', label: 'Program Name', value: 't_dm', status: 'default' as FieldStatus, confirmed: false },
+        { id: 'f3', label: 'Output Dataset', value: 'ADEFF', status: 'default' as FieldStatus, confirmed: false },
+        { id: 'f4', label: 'Population', value: 'Safety', status: 'default' as FieldStatus, confirmed: false },
+      ] },
+    ];
+    const stored = loadFromSession('metadataBlocks', fallback);
+    if (!Array.isArray(stored)) return fallback;
+    return stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
+  });
+  useEffect(() => { sessionStorage.setItem('metadataBlocks', JSON.stringify(blocks)); }, [blocks]);
+
+  const [selectedGroupIdx, setSelectedGroupIdx] = useState(() => loadFromSession('metadataSelectedGroupIdx', 0));
+  const [groupStatus, setGroupStatus] = useState<FieldStatus>(() => loadFromSession('metadataGroupStatus', 'default'));
+  const [groupConfirmed, setGroupConfirmed] = useState(() => loadFromSession('metadataGroupConfirmed', false));
+  const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
+  const [blockItemConfirmed, setBlockItemConfirmed] = useState<Record<string, boolean>>({});
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { sessionStorage.setItem('metadataSelectedGroupIdx', JSON.stringify(selectedGroupIdx)); }, [selectedGroupIdx]);
+  useEffect(() => { sessionStorage.setItem('metadataGroupStatus', JSON.stringify(groupStatus)); }, [groupStatus]);
+  useEffect(() => { sessionStorage.setItem('metadataGroupConfirmed', JSON.stringify(groupConfirmed)); }, [groupConfirmed]);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setGroupDropdownOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleGroupSelect = (idx: number) => {
+    if (idx !== selectedGroupIdx) {
+      setSelectedGroupIdx(idx);
+      setGroupStatus('edited');
+      setGroupConfirmed(true);
+    }
+    setGroupDropdownOpen(false);
+  };
+
+  // ── Listing States (New) ──
+  const [listingBlocks, setListingBlocks] = useState<MetadataBlock[]>(() => {
+    const fallback = [
+      {
+        id: 'dataProgramSetup',
+        fields: [
+          { id: 'inputDatasets', label: 'Input Dataset(s)', value: 'ADSL', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'pageBy', label: 'Page by', value: 'USUBJID', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'programName', label: 'Program Name', value: 'l_safety', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'suffix', label: 'Suffix', value: '', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'macrosUsed', label: 'Macro(s) used', value: '%s_listing', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'generalFilter', label: 'General Filter', value: '', status: 'default' as FieldStatus, confirmed: false },
+        ],
+      },
+      {
+        id: 'layoutRepetitionSorting',
+        fields: [
+          { id: 'orderlist', label: 'orderlist', value: 'Y#N#N#N#N#N#N#N#N#N#N', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'idlist', label: 'idlist', value: '', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'idpage', label: 'idpage', value: '', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'sort', label: 'Sort', value: 'USUBJID', status: 'default' as FieldStatus, confirmed: false },
+        ],
+      },
+    ];
+    const stored = loadFromSession('metadataBlocks_listing', fallback);
+    if (!Array.isArray(stored)) return fallback;
+    return stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
+  });
+  useEffect(() => { sessionStorage.setItem('metadataBlocks_listing', JSON.stringify(listingBlocks)); }, [listingBlocks]);
+
+  const [listingColumnFields, setListingColumnFields] = useState<{ id: string; label: string; value: string; status: FieldStatus; confirmed: boolean }[]>(() => {
+    const fallback = [
+      { id: 'columnXLabel', label: 'Column X Label', value: 'Age', status: 'default' as FieldStatus, confirmed: false },
+      { id: 'sourceDatasets', label: 'Source Dataset(s)', value: 'ADSL', status: 'default' as FieldStatus, confirmed: false },
+      { id: 'sourceVariables', label: 'Source Variable(s)', value: 'AGE', status: 'default' as FieldStatus, confirmed: false },
+      { id: 'outputVariableName', label: 'Output variable name', value: 'AGE', status: 'default' as FieldStatus, confirmed: false },
+      { id: 'derivationRule', label: 'Derivation Rule', value: 'Direct copy from ADSL.AGE', status: 'default' as FieldStatus, confirmed: false },
+    ];
+    const stored = loadFromSession('metadataBlockFields_listing', fallback);
+    if (!Array.isArray(stored)) return fallback;
+    return migrateFields(stored);
+  });
+  useEffect(() => { sessionStorage.setItem('metadataBlockFields_listing', JSON.stringify(listingColumnFields)); }, [listingColumnFields]);
+
+  // Helper functions for configuration changes
+  const areColumnCountsEqual = (a: Record<string, number>, b: Record<string, number>) => {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    if (keysA.length !== keysB.length) return false;
+    return keysA.every(key => a[key] === b[key]);
+  };
+
+  const arePageBreakColumnsEqual = (a: number[] = [], b: number[] = []) => {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort((x, y) => x - y);
+    const sortedB = [...b].sort((x, y) => x - y);
+    return sortedA.every((value, index) => value === sortedB[index]);
+  };
+
+  const isRepeatColumnEdited = repeatColumnBaseline != null && repeatColumnBaseline.frozenUntilIndex !== (frozenUntilIndex ?? null);
+  const isPageBreakColumnEdited = pageBreakColumnBaseline != null && (
+    pageBreakColumnBaseline.pageSepActive !== (pageSepActive ?? false) ||
+    !areColumnCountsEqual(pageBreakColumnBaseline.pageColumnCounts ?? {}, pageColumnCounts) ||
+    !arePageBreakColumnsEqual(pageBreakColumnBaseline.pageBreakColumns ?? [], pageBreakColumns)
+  );
+
+  // ── Stats ──
+  const isBasicTab = activeTab === 'basic';
+  
+  // Table stats
+  const basicTotalFields = blocks.reduce((s, b) => s + b.fields.length, 0) + 1;
+  const basicConfirmedCount = blocks.reduce((s, b) => s + b.fields.filter(f => f.confirmed).length, 0) + (groupConfirmed ? 1 : 0);
+  const blocksTotalFields = METADATA_BLOCK_ITEMS_DATA.length;
+  const blocksConfirmedCount = METADATA_BLOCK_ITEMS_DATA.filter(b => blockItemConfirmed[b.id]).length;
+
+  // Listing stats
+  const listingTotalFields = listingBlocks.reduce((s, b) => s + b.fields.length, 0);
+  const listingConfirmedCount = listingBlocks.reduce((s, b) => s + b.fields.filter(f => {
+    if (f.id === 'idlist') return !isRepeatColumnEdited && f.confirmed;
+    if (f.id === 'idpage') return !isPageBreakColumnEdited && f.confirmed;
+    return f.confirmed;
+  }).length, 0);
+  const listingColumnTotalFields = listingColumnFields.length;
+  const listingColumnConfirmedCount = listingColumnFields.filter(f => f.confirmed).length;
+
+  const totalFields = docType === 'listing'
+    ? (isBasicTab ? listingTotalFields : listingColumnTotalFields)
+    : (isBasicTab ? basicTotalFields : blocksTotalFields);
+
+  const confirmedCount = docType === 'listing'
+    ? (isBasicTab ? listingConfirmedCount : listingColumnConfirmedCount)
+    : (isBasicTab ? basicConfirmedCount : blocksConfirmedCount);
+
+  const confirmableFields = totalFields;
+
+  // ── Edits ──
+  const hasListingBasicEdits = listingBlocks.some(b => b.fields.some(f => {
+    if (f.id === 'idlist') return isRepeatColumnEdited;
+    if (f.id === 'idpage') return isPageBreakColumnEdited;
+    return f.status === 'edited' && !f.confirmed;
+  }));
+  const hasListingColumnEdits = listingColumnFields.some(f => f.status === 'edited' && !f.confirmed);
+
+  const hasAnyEdits = docType === 'listing'
+    ? (hasListingBasicEdits || hasListingColumnEdits)
+    : (groupStatus === 'edited' || blockFields.some(f => f.status === 'edited') || blocks.some(b => b.fields.some(f => f.status === 'edited')));
+
+  const selectAllState: "empty" | "indeterminate" | "checked" = confirmedCount === 0 ? "empty" : confirmedCount === confirmableFields ? "checked" : "indeterminate";
+
+  // ── Confirms & Edits Handlers ──
   const handleConfirm = (blockId: string, fieldId: string) => {
-    setBlocks((prev) =>
-      prev.map((block) =>
-        block.id === blockId
-          ? { ...block, fields: block.fields.map((field) =>
-              field.id === fieldId
-                ? { ...field, status: field.status === "confirmed" ? "unconfirmed" as FieldStatus : "confirmed" as FieldStatus }
-                : field
-            )}
-          : block
-      )
-    );
+    if (docType === 'listing') {
+      if (fieldId === 'idlist') {
+        const field = listingBlocks.find(b => b.id === blockId)?.fields.find(f => f.id === fieldId);
+        const isCurrentlyConfirmed = isRepeatColumnEdited ? false : !!field?.confirmed;
+        const nextConfirmed = !isCurrentlyConfirmed;
+        if (nextConfirmed) {
+          onRepeatColumnBaselineChange?.({ frozenUntilIndex: frozenUntilIndex ?? null });
+        }
+        setListingBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, confirmed: nextConfirmed }) }));
+      } else if (fieldId === 'idpage') {
+        const field = listingBlocks.find(b => b.id === blockId)?.fields.find(f => f.id === fieldId);
+        const isCurrentlyConfirmed = isPageBreakColumnEdited ? false : !!field?.confirmed;
+        const nextConfirmed = !isCurrentlyConfirmed;
+        if (nextConfirmed) {
+          onPageBreakColumnBaselineChange?.({ pageSepActive: pageSepActive ?? false, pageColumnCounts, pageBreakColumns: [...pageBreakColumns] });
+        }
+        setListingBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, confirmed: nextConfirmed }) }));
+      } else {
+        setListingBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, confirmed: !f.confirmed }) }));
+      }
+    } else {
+      setBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, confirmed: !f.confirmed }) }));
+    }
+  };
+
+  const handleBlockFieldConfirm = (fieldId: string) => {
+    setBlockFields(prev => prev.map(f => f.id !== fieldId ? f : { ...f, confirmed: !f.confirmed }));
+  };
+
+  const handleIdFieldConfirm = (fieldId: string) => {
+    const isIdpage = fieldId === 'idpage';
+    const baseline = isIdpage ? idpageBaseline : idlistBaseline;
+    const areEqual = (a: Record<string, number>, b: Record<string, number>) => { const ka = Object.keys(a), kb = Object.keys(b); return ka.length === kb.length && ka.every(k => a[k] === b[k]); };
+    const pending = baseline !== null && (baseline.frozenUntilIndex !== frozenUntilIndex || baseline.pageSepActive !== pageSepActive || !areEqual(baseline.pageColumnCounts, pageColumnCounts));
+    const field = blockFields.find(f => f.id === fieldId)!;
+    const isCurrentlyConfirmed = pending ? false : field.confirmed;
+    const nextConfirmed = !isCurrentlyConfirmed;
+    if (nextConfirmed) {
+      const newBaseline = { frozenUntilIndex: frozenUntilIndex ?? null, pageSepActive: pageSepActive ?? false, pageColumnCounts };
+      if (isIdpage) onIdpageBaselineChange?.(newBaseline); else onIdlistBaselineChange?.(newBaseline);
+    }
+    setBlockFields(prev => prev.map(f => f.id !== fieldId ? f : { ...f, confirmed: nextConfirmed }));
+  };
+
+  const handleBlockFieldEdit = (fieldId: string, value: string) => {
+    setBlockFields(prev => prev.map(f => f.id !== fieldId ? f : { ...f, value, status: 'edited', confirmed: true }));
+  };
+
+  const handleListingColumnFieldEdit = (fieldId: string, value: string) => {
+    setListingColumnFields(prev => prev.map(f => f.id !== fieldId ? f : { ...f, value, status: 'edited', confirmed: true }));
   };
 
   const handleSelectAll = () => {
-    const shouldConfirmAll = selectAllState === "empty" || selectAllState === "indeterminate";
-    setBlocks((prev) =>
-      prev.map((block) => ({
-        ...block,
-        fields: block.fields.map((field) => {
-          if (field.status === "edited") return field;
-          return { ...field, status: shouldConfirmAll ? "confirmed" as FieldStatus : "unconfirmed" as FieldStatus };
-        }),
-      }))
-    );
+    const confirm = selectAllState === 'empty' || selectAllState === 'indeterminate';
+    if (docType === 'listing') {
+      if (isBasicTab) {
+        if (confirm) {
+          if (isRepeatColumnEdited) {
+            onRepeatColumnBaselineChange?.({ frozenUntilIndex: frozenUntilIndex ?? null });
+          }
+          if (isPageBreakColumnEdited) {
+            onPageBreakColumnBaselineChange?.({ pageSepActive: pageSepActive ?? false, pageColumnCounts, pageBreakColumns: [...pageBreakColumns] });
+          }
+        }
+        setListingBlocks(prev => prev.map(b => ({
+          ...b,
+          fields: b.fields.map(f => ({ ...f, confirmed: confirm }))
+        })));
+      } else {
+        setListingColumnFields(prev => prev.map(f => ({ ...f, confirmed: confirm })));
+      }
+    } else {
+      if (isBasicTab) {
+        if (groupStatus !== 'edited') setGroupConfirmed(confirm);
+        setBlocks(prev => prev.map(b => ({ ...b, fields: b.fields.map(f => ({ ...f, confirmed: confirm })) })));
+      } else {
+        const newConfirmed: Record<string, boolean> = {};
+        METADATA_BLOCK_ITEMS_DATA.forEach(b => { newConfirmed[b.id] = confirm; });
+        setBlockItemConfirmed(newConfirmed);
+      }
+    }
   };
 
-  const handleFieldEdit = (blockId: string, fieldId: string, newValue: string) => {
-    setBlocks((prev) =>
-      prev.map((block) =>
-        block.id === blockId
-          ? { ...block, fields: block.fields.map((field) =>
-              field.id === fieldId ? { ...field, value: newValue, status: "edited" as FieldStatus } : field
-            )}
-          : block
-      )
-    );
+  const handleFieldEdit = (blockId: string, fieldId: string, value: string) => {
+    if (docType === 'listing') {
+      setListingBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, value, status: 'edited', confirmed: true }) }));
+    } else {
+      setBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, value, status: 'edited', confirmed: true }) }));
+    }
   };
 
   const handleUpdateCode = () => {
-    setBlocks((prev) =>
-      prev.map((block) => ({
-        ...block,
-        fields: block.fields.map((field) =>
-          field.status === "edited" ? { ...field, status: "unconfirmed" as FieldStatus } : field
-        ),
-      }))
-    );
+    if (docType === 'listing') {
+      setListingBlocks(prev => prev.map(b => ({
+        ...b,
+        fields: b.fields.map(f => f.status === 'edited' ? { ...f, status: 'default' } : f)
+      })));
+      setListingColumnFields(prev => prev.map(f => f.status === 'edited' ? { ...f, status: 'default' } : f));
+    } else {
+      if (groupStatus === 'edited') setGroupStatus('default');
+      setBlocks(prev => prev.map(b => ({ ...b, fields: b.fields.map(f => f.status === 'edited' ? { ...f, status: 'default' } : f) })));
+      setBlockFields(prev => prev.map(f => f.status === 'edited' ? { ...f, status: 'default' } : f));
+    }
   };
 
-  const getFieldStyles = (status: FieldStatus) => {
-    switch (status) {
-      case "unconfirmed":
-        return { containerBg: "bg-white", containerBorder: "border-transparent", inputBorder: "border-[#999]", checkboxColor: "#888E8E", showDropdown: true, isChecked: false };
-      case "edited":
-        return { containerBg: "bg-[#FCEECC]", containerBorder: "border-[#F0AB00]", inputBorder: "border-transparent", checkboxColor: "#F0AB00", showDropdown: false, isChecked: true };
-      case "confirmed":
-        return { containerBg: "bg-[#F3F7CC]", containerBorder: "border-[#C4D600]", inputBorder: "border-transparent", checkboxColor: "#1E7E34", showDropdown: false, isChecked: true };
+  const getFieldStyles = (status: FieldStatus, isReadOnlyField: boolean = false) => {
+    if (isReadOnlyField) {
+      if (status === 'edited') {
+        return { containerBg: "bg-[#FCEECC]", containerBorder: "border-[#F0AB00]", inputBorder: "border-transparent" };
+      }
+      return { containerBg: "bg-transparent", containerBorder: "border-transparent", inputBorder: "border-transparent" };
     }
+    if (status === "edited") {
+      return { containerBg: "bg-[#FCEECC]", containerBorder: "border-[#F0AB00]", inputBorder: "border-transparent" };
+    }
+    return { containerBg: "bg-white", containerBorder: "border-transparent", inputBorder: "border-[#999]" };
   };
 
   const selectAllCheckboxIcon = () => {
@@ -2337,11 +3893,12 @@ function MetadataPanel({ onClose }: { onClose: () => void }) {
     return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 20 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
   };
 
-  const fieldCheckboxIcon = (status: FieldStatus) => {
-    if (status === "unconfirmed") return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 20 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
-    if (status === "edited") return <><rect width="20" height="20" rx="1" fill="#D8DADA" /><path d="M15.3135 7.41406L9.65625 13.0703L9.65723 13.0713L8.24219 14.4854L6.82812 13.0713V13.0703L4 10.2422L5.41406 8.82812L8.24219 11.6562L13.8994 6L15.3135 7.41406Z" fill="white" /></>;
+  const fieldCheckboxIcon = (confirmed: boolean) => {
+    if (!confirmed) return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 20 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
     return <><rect width="20" height="20" rx="1" fill="#830051" /><path d="M15.6567 7.58563L9.99951 13.2419L10.0005 13.2429L8.58545 14.6569L7.17139 13.2429V13.2419L4.34326 10.4138L5.75732 8.99969L8.58545 11.8278L14.2427 6.17157L15.6567 7.58563Z" fill="white" /></>;
   };
+
+  const groupStyles = getFieldStyles(groupStatus, false);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
@@ -2349,16 +3906,19 @@ function MetadataPanel({ onClose }: { onClose: () => void }) {
       <div className="flex h-[40px] shrink-0 items-center justify-between border-b border-[#D8DADA] bg-white">
         <div className="flex h-full items-center">
           {(["basic", "blocks"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex h-full items-center justify-center border-b-2 px-[16px] active:scale-[0.96] ${
-                activeTab === tab ? "border-[#830051]" : "border-transparent"
-              }`}
-            >
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`relative flex h-full items-center justify-center border-b-2 px-[16px] active:scale-[0.96] ${activeTab === tab ? "border-[#830051]" : "border-transparent"}`}>
               <p className={`t-small font-medium ${activeTab === tab ? "text-[#830051]" : "text-[#3C4242]"}`}>
-                {tab === "basic" ? "Basic info" : "Blocks"}
+                {tab === "basic" ? (docType === 'listing' ? "Basic info" : "Basic Information") : (docType === 'listing' ? "Column" : "Blocks")}
               </p>
+              {/* Red dot on the upper right corner of the tab text */}
+              {docType === 'listing' && (
+                tab === 'basic' ? (
+                  hasListingBasicEdits && <span className="absolute right-[6px] top-[8px] w-[4px] h-[4px] rounded-full bg-[#D0006F] z-10" />
+                ) : (
+                  hasListingColumnEdits && <span className="absolute right-[6px] top-[8px] w-[4px] h-[4px] rounded-full bg-[#D0006F] z-10" />
+                )
+              )}
             </button>
           ))}
         </div>
@@ -2374,7 +3934,9 @@ function MetadataPanel({ onClose }: { onClose: () => void }) {
       {/* Status Bar */}
       <div className="flex items-center justify-end bg-[#F8F7F7] px-[12px] py-[8px]">
         <div className="flex items-center gap-[6px]">
-          <button onClick={handleSelectAll} className="flex h-[16px] w-[16px] items-center justify-center hover:bg-black/5 active:scale-[0.96]" aria-label="Select all">
+          <button onClick={isLocked ? undefined : handleSelectAll} disabled={isLocked}
+            className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+            aria-label="Select all">
             <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{selectAllCheckboxIcon()}</SvgIcon>
           </button>
           <p className="t-small text-[#3C4242]">{confirmedCount}/{totalFields} confirmed</p>
@@ -2382,60 +3944,197 @@ function MetadataPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Content */}
-      <div className="min-h-0 flex-1 overflow-auto p-[4px]">
+      <div className={`min-h-0 flex-1 overflow-auto p-[4px]`}>
         {activeTab === "basic" && (
           <div className="flex flex-col gap-[4px]">
-            {blocks.map((block) =>
-              block.fields.map((field) => {
-                const styles = getFieldStyles(field.status);
+            {docType === 'listing' ? (
+              // Listing Basic Tab
+              listingBlocks.map((block) => (
+                <div key={block.id} className="flex flex-col gap-[4px]">
+                  {block.fields.map((field) => {
+                    const isFieldRepeatEdited = field.id === 'idlist' && isRepeatColumnEdited;
+                    const isFieldPageBreakEdited = field.id === 'idpage' && isPageBreakColumnEdited;
+                    const isFieldLayoutEdited = isFieldRepeatEdited || isFieldPageBreakEdited;
+
+                    const fieldStatus = isFieldLayoutEdited ? 'edited' : field.status;
+                    const isConfirmed = isFieldLayoutEdited ? false : field.confirmed;
+                    const isReadOnlyField = field.id === 'idlist' || field.id === 'idpage';
+
+                    const styles = getFieldStyles(fieldStatus, isReadOnlyField);
+
+                    // Compute values for idlist and idpage
+                    let displayValue = field.value;
+
+                    if (field.id === 'idlist') {
+                      displayValue = Array.from({ length: columnCount }, (_, i) => frozenUntilIndex !== null && i <= frozenUntilIndex ? 'Y' : 'N').join('#');
+                    } else if (field.id === 'idpage') {
+                      displayValue = Array.from({ length: columnCount }, (_, i) => pageBreakColumns.includes(i - 1) ? 'Y' : 'N').join('#');
+                    }
+
+                    return (
+                      <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
+                        <div className="flex flex-col gap-[4px] p-[8px]">
+                          <div className="flex h-[20px] items-center justify-between">
+                            <p className="t-small text-[#3C4242]">{field.label}</p>
+                            <button
+                              onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)}
+                              disabled={isLocked}
+                              className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                              aria-label={isConfirmed ? "Unconfirm" : "Confirm"}
+                            >
+                              <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(isConfirmed)}</SvgIcon>
+                            </button>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={displayValue}
+                              readOnly={isLocked || isReadOnlyField}
+                              onChange={isLocked || isReadOnlyField ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
+                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${
+                                isReadOnlyField
+                                  ? 'border-transparent bg-transparent pl-0 text-[#3C4242]' // Hide border and style nicely for read-only config fields
+                                  : isLocked
+                                    ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed'
+                                    : `bg-white ${styles.inputBorder || 'border-[#D8DADA]'}`
+                              }`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))
+            ) : (
+              // Table Basic Tab (Original)
+              <>
+                {blocks.map((block) =>
+                  block.fields.map((field) => {
+                    const styles = getFieldStyles(field.status, false);
+                    return (
+                      <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
+                        <div className="flex flex-col gap-[4px] p-[8px]">
+                          <div className="flex h-[20px] items-center justify-between">
+                            <p className="t-small text-[#3C4242]">{field.label}</p>
+                            <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                              className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                              aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                              <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                            </button>
+                          </div>
+                          <div className="relative">
+                            <input type="text" value={field.value} readOnly={isLocked}
+                              onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
+                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${isLocked ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-[#D8DADA]'}`}`} />
+                            {!isLocked && field.status === 'default' && (
+                              <div className="absolute right-[8px] top-[8px] pointer-events-none">
+                                <SvgIcon className="h-[16px] w-[16px]"><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                {/* Group Name */}
+                <div className={`${groupStyles.containerBg} rounded-[4px] border ${groupStyles.containerBorder}`}>
+                  <div className="flex flex-col gap-[4px] p-[8px]">
+                    <div className="flex h-[20px] items-center justify-between">
+                      <p className="t-small text-[#3C4242]">Group Name</p>
+                      <button onClick={isLocked ? undefined : () => { if (groupStatus !== 'edited') setGroupConfirmed(!groupConfirmed); }} disabled={isLocked}
+                        className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                        aria-label={groupConfirmed ? "Unconfirm" : "Confirm"}>
+                        <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(groupConfirmed)}</SvgIcon>
+                      </button>
+                    </div>
+                    <div className="relative" ref={dropdownRef}>
+                      <button onClick={isLocked ? undefined : () => setGroupDropdownOpen(!groupDropdownOpen)} disabled={isLocked}
+                        className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-left flex items-center justify-between ${isLocked ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${groupStyles.inputBorder || 'border-[#D8DADA]'} text-[#3C4242]`}`}>
+                        <span className="truncate">{GROUP_OPTIONS[selectedGroupIdx]?.name || 'Select...'}</span>
+                        {!isLocked && <SvgIcon className="h-[16px] w-[16px]" shrink-0><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>}
+                      </button>
+                      {groupDropdownOpen && !isLocked && (
+                        <div className="absolute top-full left-0 right-0 mt-[2px] bg-white border border-[#D8DADA] rounded-[4px] shadow-lg z-[60] max-h-[200px] overflow-auto">
+                          {GROUP_OPTIONS.map((opt, idx) => (
+                            <button key={idx} onClick={() => handleGroupSelect(idx)}
+                              className={`w-full text-left px-[8px] py-[6px] t-small hover:bg-[#F8F7F7] ${idx === selectedGroupIdx ? 'text-[#830051] font-medium' : 'text-[#3C4242]'}`}>{opt.name}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <GroupCodeViewer lines={GROUP_OPTIONS[selectedGroupIdx]?.lines || []} />
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        {activeTab === "blocks" && (
+          docType === 'listing' ? (
+            // Listing Column Tab
+            <div className="flex flex-col gap-[4px]">
+              {listingColumnFields.map((field) => {
+                const styles = getFieldStyles(field.status, false);
                 return (
                   <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                     <div className="flex flex-col gap-[4px] p-[8px]">
                       <div className="flex h-[20px] items-center justify-between">
                         <p className="t-small text-[#3C4242]">{field.label}</p>
-                        <button onClick={() => handleConfirm(block.id, field.id)} className="flex h-[16px] w-[16px] items-center justify-center hover:bg-black/5 active:scale-[0.96]" aria-label={field.status === "confirmed" ? "Unconfirm" : "Confirm"}>
-                          <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.status)}</SvgIcon>
+                        <button
+                          onClick={isLocked ? undefined : () => {
+                            setListingColumnFields(prev => prev.map(f =>
+                              f.id !== field.id ? f : { ...f, confirmed: !f.confirmed }
+                            ));
+                          }}
+                          disabled={isLocked}
+                          className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                          aria-label={field.confirmed ? 'Unconfirm' : 'Confirm'}
+                        >
+                          <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
                         </button>
                       </div>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={field.value}
-                          onChange={(e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                          className={`w-full min-h-[32px] px-[8px] py-[4px] bg-white rounded-[2px] border ${styles.inputBorder} t-small text-[#3C4242] outline-none focus:outline-none`}
-                        />
-                        {styles.showDropdown && (
-                          <div className="absolute right-[8px] top-[8px] pointer-events-none">
-                            <SvgIcon className="h-[16px] w-[16px]">
-                              <path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" />
-                            </SvgIcon>
-                          </div>
-                        )}
-                      </div>
+                      <input
+                        type="text"
+                        value={field.value}
+                        onChange={isLocked ? undefined : (e) => handleListingColumnFieldEdit(field.id, e.target.value)}
+                        readOnly={isLocked}
+                        className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${
+                          isLocked ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-[#D8DADA]'}`
+                        }`}
+                      />
                     </div>
                   </div>
                 );
-              })
-            )}
-          </div>
-        )}
-        {activeTab === "blocks" && (
-          <div className="flex flex-col gap-[8px] p-[4px]">
-            <p className="t-small text-[#656969]">Block information will appear here</p>
-          </div>
+              })}
+            </div>
+          ) : (
+            // Table Blocks Tab (Original)
+            <BlocksTabContent
+              blocks={METADATA_BLOCK_ITEMS_DATA}
+              confirmedBlocks={blockItemConfirmed}
+              onToggleConfirm={(blockId) => setBlockItemConfirmed(prev => ({ ...prev, [blockId]: !prev[blockId] }))}
+            />
+          )
         )}
       </div>
 
-      {/* Update Code Button */}
+      {/* Add Changes to Chat Button */}
       {hasAnyEdits && (
-        <div className="border-t border-[#D8DADA] p-[12px]">
+        <div className="border-t border-[#D8DADA] p-[12px] flex justify-start">
           <button
-            onClick={handleUpdateCode}
-            className="flex h-[32px] w-full items-center justify-center gap-[4px] rounded-[4px] bg-[#830051] px-[12px] t-small font-medium text-white hover:bg-[#6D0043] active:scale-[0.98]"
+            onClick={isLocked ? undefined : () => {
+              if (docType === 'listing') {
+                const text = `You are given metadata changes for this listing. Apply these changes to update the code accordingly.\n\n====================\nLISTING LEVEL CHANGES`;
+                onAddChangesToChat?.(text);
+              }
+              handleUpdateCode();
+            }}
+            disabled={isLocked}
+            className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isLocked ? 'bg-[#D8DADA] text-[#888E8E] cursor-not-allowed' : 'bg-[#830051] text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
           >
-            <SvgIcon className="h-[16px] w-[16px]">
-              <path d="M13 3C8.58 3 5 6.58 5 11H2.5L6 14.5L9.5 11H7C7 7.69 9.69 5 13 5C16.31 5 19 7.69 19 11C19 14.31 16.31 17 13 17C11.34 17 9.84 16.33 8.75 15.24L7.34 16.65C8.79 18.1 10.79 19 13 19C17.42 19 21 15.42 21 11C21 6.58 17.42 3 13 3ZM12 7V12L16.2 14.5L17 13.2L13.5 11.1V7H12Z" fill="white" />
-            </SvgIcon>
+            <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={isLocked ? '#888E8E' : 'white'} />
             Add Changes to Chat
           </button>
         </div>
@@ -2459,8 +4158,6 @@ function CodePanel({
   isLocked: boolean;
   onToggleLock: () => void;
 }) {
-  const [activeCodeTab, setActiveCodeTab] = useState<'listing' | 'program'>('listing');
-
   const listingCodeContent = `%s_listing(
   inda = adsl
 , cols = USUBJID SUBJID SITEID AGE SEX RACE TRT01A VISIT ASTDY AEDECOD
@@ -2502,9 +4199,7 @@ quit;
 , popgrp = SAFFL(a.1_2_123
   ustgrp =`;
 
-  const codeContent = docType === 'listing'
-    ? (activeCodeTab === 'listing' ? listingCodeContent : programCodeContent)
-    : programCodeContent;
+  const codeContent = docType === 'listing' ? listingCodeContent : programCodeContent;
 
   const codeLines = codeContent.split('\n');
 
@@ -2541,47 +4236,10 @@ quit;
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-white">
-      {docType === 'listing' ? (
-        /* Per Figma: Tab switch with "Listing Code" / "Program Code" + toolbar */
-        <div className="flex h-[40px] w-full shrink-0 items-center justify-between border-b-[0.6px] border-[#D8DADA] bg-white pl-[8px] pr-[16px]">
-          <div className="flex h-full items-stretch gap-[4px]">
-            <button
-              onClick={() => setActiveCodeTab('listing')}
-              className={`flex h-full items-center gap-[4px] px-[8px] py-[2px] relative ${
-                activeCodeTab === 'listing' ? '' : ''
-              }`}
-            >
-              {activeCodeTab === 'listing' && (
-                <div aria-hidden className="absolute bottom-0 left-0 right-0 border-b-2 border-[#830051]" />
-              )}
-              <SvgIcon className="h-[16px] w-[16px]">
-                <path d="M16 4H2v16h14V4zm-2 2v12H4V6h10z" fill={activeCodeTab === 'listing' ? '#830051' : '#888E8E'} />
-                <path d="M7 8h6v2H7V8zm0 4h6v2H7v-2z" fill={activeCodeTab === 'listing' ? '#830051' : '#888E8E'} />
-              </SvgIcon>
-              <span className={`t-small font-medium ${activeCodeTab === 'listing' ? 'text-[#830051]' : 'text-[#888E8E]'}`}>Listing Code</span>
-            </button>
-            <button
-              onClick={() => setActiveCodeTab('program')}
-              className={`flex h-full items-center gap-[4px] px-[8px] py-[2px] relative ${
-                activeCodeTab === 'program' ? '' : ''
-              }`}
-            >
-              {activeCodeTab === 'program' && (
-                <div aria-hidden className="absolute bottom-0 left-0 right-0 border-b-2 border-[#830051]" />
-              )}
-              <span className={`t-small font-medium ${activeCodeTab === 'program' ? 'text-[#830051]' : 'text-[#888E8E]'}`}>Program Code</span>
-            </button>
-          </div>
-          <div className="flex items-center gap-[4px]">
-            {toolbarButtons}
-          </div>
-        </div>
-      ) : (
-        <PanelHeader
-          title={selectedItem || "Code"}
-          actions={toolbarButtons}
-        />
-      )}
+      <PanelHeader
+        title={selectedItem || "Code"}
+        actions={toolbarButtons}
+      />
       <div className="min-h-0 flex-1 overflow-auto">
         <div className="flex min-w-max font-mono text-[13px] leading-[20px]">
           <div className="select-none bg-[#F8F7F7] px-[8px] py-[16px] text-right text-[#999999] shrink-0">
@@ -2677,7 +4335,7 @@ function WorkspaceContent({
   const [aiCopilotOpen, setAiCopilotOpen] = useState(false);
   const [panelView, setPanelView] = useState<PanelView>('both');
   const [shellPreviewWidth, setShellPreviewWidth] = useState(560);
-  const [metadataWidth, setMetadataWidth] = useState(320);
+  const [metadataWidth, setMetadataWidth] = useState(380);
   const [aiCopilotWidth, setAiCopilotWidth] = useState(360);
 
   // Ref to measure content area for adaptive panel sizing
@@ -2694,22 +4352,25 @@ function WorkspaceContent({
   const treeListWidthRef = useRef(treeListWidth);
   treeListWidthRef.current = treeListWidth;
 
+  // Panel layout: vertical = top/bottom split, horizontal = left/right split
+  const [panelLayout, setPanelLayout] = useState<PanelLayout>('horizontal');
+  const [shellHeight, setShellHeight] = useState(488);
   // Listing view specific states
-  const [listingHeight, setListingHeight] = useState(380);
   const [categoryFilter, setCategoryFilter] = useState<"all" | "table" | "listing" | "figure">("all");
-  const [frozenColumnCount, setFrozenColumnCount] = useState(2);
-  const [pageDividerIndex, setPageDividerIndex] = useState(5);
-  const [isPaginationMode, setIsPaginationMode] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [savedFreezeCols, setSavedFreezeCols] = useState(2);
-  const [savedPageCols, setSavedPageCols] = useState(5);
+  const [frozenUntilIndex, setFrozenUntilIndex] = useState<number | null>(2);
+  const [pageSepActive, setPageSepActive] = useState(false);
+  const [pageColumnCounts, setPageColumnCounts] = useState<Record<string, number>>({});
+  const [idpageBaseline, setIdpageBaseline] = useState<{ frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> } | null>(null);
+  const [idlistBaseline, setIdlistBaseline] = useState<{ frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> } | null>(null);
   const [aiInputValue, setAiInputValue] = useState("");
   const [aiInputFocusTrigger, setAiInputFocusTrigger] = useState(0);
 
   const constraints = {
     treeList: { min: 180, max: 320 },
     shellPreview: { min: 320, max: 800 },
-    metadata: { min: 280, max: 520 },
+    metadata: panelView === 'shell'
+      ? { min: 320, max: 640 }
+      : { min: 280, max: 520 },
     code: { min: 360 },
     aiCopilot: { min: 300, max: 460 },
   };
@@ -2756,7 +4417,7 @@ function WorkspaceContent({
     if (metadataWidth > maxAllowed) {
       setMetadataWidth(Math.max(constraints.metadata.min, maxAllowed));
     }
-  }, [shellPreviewWidth]);
+  }, [shellPreviewWidth, panelView]);
 
   // Measure content area width via ResizeObserver
   useEffect(() => {
@@ -2861,27 +4522,21 @@ function WorkspaceContent({
     }
   };
 
-  const isModified = frozenColumnCount !== savedFreezeCols || pageDividerIndex !== savedPageCols;
+  // Set default panel layout based on doc type (listing=vertical, table=horizontal)
+  useEffect(() => {
+    setPanelLayout(docType === 'listing' ? 'vertical' : 'horizontal');
+  }, [docType]);
 
-  const handleSyncToCode = () => {
-    const diffText = `Please update the SAS macro call parameters for listing configuration:
+  const handleShellPagePreviewChange = (_active: boolean) => {
+    // Page preview mode change callback — could trigger AI Copilot or other actions
+  };
 
-\`\`\`diff
-  %s_listing(
-    inda = adsl
-  , cols = USUBJID SUBJID SITEID AGE SEX RACE TRT01A VISIT ASTDY AEDECOD
-- , freeze_cols = ${savedFreezeCols}
-- , page_cols = ${savedPageCols}
-+ , freeze_cols = ${frozenColumnCount}
-+ , page_cols = ${pageDividerIndex}
-  , page_num = 1
-  );
-\`\`\``;
-    setAiInputValue(diffText);
+  const handleOpenAICopilotFromShell = (initialInput?: string) => {
     setAiCopilotOpen(true);
-    setAiInputFocusTrigger(prev => prev + 1);
-    setSavedFreezeCols(frozenColumnCount);
-    setSavedPageCols(pageDividerIndex);
+    if (initialInput && typeof initialInput === 'string') {
+      setAiInputValue(initialInput);
+      setAiInputFocusTrigger((prev) => prev + 1);
+    }
   };
 
   const handleToggleLock = (programId: string, tableId?: string) => {
@@ -3038,53 +4693,75 @@ function WorkspaceContent({
             currentEvent={currentEvent}
             panelView={panelView}
             onPanelViewChange={handlePanelViewChange}
+            panelLayout={panelLayout}
+            onPanelLayoutChange={setPanelLayout}
             docType={docType}
           />
           <div ref={contentAreaRef} className="relative flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
             {docType === 'listing' ? (
-              // Listing layout!
-              <div className="flex min-w-0 flex-1 flex-row overflow-hidden">
-                {/* Listing + Code vertical stack */}
-                <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+              // Listing layout with configurable panel direction (vertical = top/bottom, horizontal = left/right)
+              <div className="flex min-w-0 flex-1 overflow-hidden">
+                {/* Shell + Code area — direction depends on panelLayout */}
+                <div className="flex min-w-0 flex-1 overflow-hidden" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}>
                   {panelView !== 'code' && (
                     <div
-                      style={{
-                        height: panelView === 'shell' ? '100%' : `${listingHeight}px`,
-                        minHeight: '150px',
-                      }}
-                      className="w-full shrink-0 overflow-hidden flex flex-col"
+                      style={panelLayout === 'vertical'
+                        ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
+                        : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
+                      }
+                      className={`overflow-hidden flex flex-col ${panelView === 'both' ? 'shrink-0' : ''} ${
+                        panelLayout === 'vertical'
+                          ? (panelView === 'both' ? 'border-b border-[#EBECEC]' : '')
+                          : (panelView === 'both' || aiCopilotOpen ? 'border-r border-[#EBECEC]' : '')
+                      }`}
                     >
-                      <ListingPreview
-                        frozenColumnCount={frozenColumnCount}
-                        setFrozenColumnCount={setFrozenColumnCount}
-                        pageDividerIndex={pageDividerIndex}
-                        setPageDividerIndex={setPageDividerIndex}
-                        isPaginationMode={isPaginationMode}
-                        setIsPaginationMode={setIsPaginationMode}
-                        currentPage={currentPage}
-                        setCurrentPage={setCurrentPage}
-                        onSync={handleSyncToCode}
-                        isModified={isModified}
-                        listingName={getSelectedItemName()}
-                        metadataOpen={metadataOpen}
+                      <ListingShellPreview
+                        selectedItemName={getSelectedItemName()}
+                        onBlockClick={() => setMetadataOpen(true)}
                         onMetadataClick={() => setMetadataOpen((open) => !open)}
+                        metadataOpen={metadataOpen}
+                        onCloseMetadata={() => setMetadataOpen(false)}
+                        isLocked={selectedTableLocked}
+                        onPagePreviewChange={handleShellPagePreviewChange}
+                        onOpenAICopilot={handleOpenAICopilotFromShell}
+                        frozenUntilIndex={frozenUntilIndex}
+                        setFrozenUntilIndex={setFrozenUntilIndex}
+                        pageSepActive={pageSepActive}
+                        setPageSepActive={setPageSepActive}
+                        pageColumnCounts={pageColumnCounts}
+                        setPageColumnCounts={setPageColumnCounts}
+                        idpageBaseline={idpageBaseline}
+                        idlistBaseline={idlistBaseline}
+                        onIdpageBaselineChange={setIdpageBaseline}
+                        onIdlistBaselineChange={setIdlistBaseline}
+                        metadataWidth={metadataWidth}
+                        onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
                       />
                     </div>
                   )}
 
                   {panelView === 'both' && (
-                    <HorizontalWorkspaceDivider
-                      onDrag={(delta) => setListingHeight((h) => clamp(h + delta, 150, window.innerHeight - 150))}
-                    />
+                    panelLayout === 'vertical' ? (
+                      <HorizontalWorkspaceDivider
+                        onDrag={(delta) => setShellHeight((h) => {
+                          const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
+                          const minH = 240;
+                          const maxH = containerHeight - 240 - 4;
+                          return clamp(h + delta, minH, Math.max(minH, maxH));
+                        })}
+                      />
+                    ) : (
+                      <WorkspaceDivider
+                        onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, constraints.shellPreview.max))}
+                      />
+                    )
                   )}
 
                   {panelView !== 'shell' && (
-                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col">
+                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
                       <CodePanel
                         selectedItem={getSelectedItemName()}
                         docType="listing"
-                        freezeCols={savedFreezeCols}
-                        pageCols={savedPageCols}
                         isLocked={selectedTableLocked}
                         onToggleLock={handleCodePanelToggleLock}
                       />
@@ -3092,7 +4769,7 @@ function WorkspaceContent({
                   )}
                 </div>
 
-                {/* AI Copilot Panel (on the right) */}
+                {/* AI Copilot Panel (always on the right) */}
                 {aiCopilotOpen && (
                   <WorkspaceDivider
                     onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, constraints.aiCopilot.max))}
@@ -3100,7 +4777,7 @@ function WorkspaceContent({
                 )}
 
                 <div
-                  className="shrink-0 overflow-hidden"
+                  className={`shrink-0 overflow-hidden ${aiCopilotOpen ? 'border-l border-[#EBECEC]' : ''}`}
                   style={{
                     width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
                     opacity: aiCopilotOpen ? 1 : 0,
@@ -3121,49 +4798,68 @@ function WorkspaceContent({
                 {!aiCopilotOpen && <FloatingAICopilotButton onClick={handleOpenAICopilot} />}
               </div>
             ) : (
-              // Original Table Layout — wrapped in inner div with minWidth for horizontal scroll
-              <div className="flex h-full flex-1" style={{ minWidth: `${tableTotalMinWidth}px` }}>
-                {/* Shell Preview with subordinate Metadata card */}
-                {shellPreviewOpen && (
-                  <div
-                    className={`overflow-hidden ${panelView === 'shell' ? 'flex-1' : 'shrink-0'} ${codeOpen || aiCopilotOpen ? 'border-r border-[#EBECEC]' : ''}`}
-                    style={{
-                      width: panelView === 'shell' ? undefined : `${shellPreviewWidth}px`,
-                    }}
-                  >
-                    <ShellPreview
-                      onBlockClick={() => setMetadataOpen(true)}
-                      onMetadataClick={() => setMetadataOpen((open) => !open)}
-                      metadataOpen={metadataOpen}
-                      onMetadataClose={() => setMetadataOpen(false)}
-                      metadataWidth={metadataWidth}
-                      onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
-                      metadataMaxWidth={metadataMaxWidth}
-                      shellPreviewWidth={shellPreviewWidth}
-                      onShellPreviewResize={(newWidth) => setShellPreviewWidth(newWidth)}
-                      shellPreviewMinWidth={constraints.shellPreview.min}
-                      shellPreviewMaxWidth={constraints.shellPreview.max}
-                      isShellFlex={panelView === 'shell'}
-                      selectedItemName={getSelectedItemName()}
-                    />
-                  </div>
-                )}
+              // Table Layout — supports both horizontal (default) and vertical panel layout
+              <div className="flex h-full flex-1" style={{ minWidth: panelLayout === 'vertical' ? undefined : `${tableTotalMinWidth}px` }}>
+                {/* Shell + Code area — direction depends on panelLayout */}
+                <div className="flex min-w-0 flex-1 overflow-hidden" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}>
+                  {/* Shell Preview with subordinate Metadata card */}
+                  {shellPreviewOpen && (
+                    <div
+                      className={`overflow-hidden ${panelView === 'shell' ? 'flex-1' : 'shrink-0'} ${
+                        panelLayout === 'vertical'
+                          ? (codeOpen ? 'border-b border-[#EBECEC]' : '')
+                          : (codeOpen || aiCopilotOpen ? 'border-r border-[#EBECEC]' : '')
+                      }`}
+                      style={panelLayout === 'vertical'
+                        ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
+                        : { width: panelView === 'shell' ? undefined : `${shellPreviewWidth}px` }
+                      }
+                    >
+                      <ShellPreview
+                        onBlockClick={() => setMetadataOpen(true)}
+                        onMetadataClick={() => setMetadataOpen((open) => !open)}
+                        metadataOpen={metadataOpen}
+                        onMetadataClose={() => setMetadataOpen(false)}
+                        metadataWidth={metadataWidth}
+                        onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
+                        metadataMaxWidth={metadataMaxWidth}
+                        shellPreviewWidth={shellPreviewWidth}
+                        onShellPreviewResize={(newWidth) => setShellPreviewWidth(newWidth)}
+                        shellPreviewMinWidth={constraints.shellPreview.min}
+                        shellPreviewMaxWidth={constraints.shellPreview.max}
+                        isShellFlex={panelView === 'shell'}
+                        selectedItemName={getSelectedItemName()}
+                      />
+                    </div>
+                  )}
 
-                {/* Shell ↔ Code divider (when both are open) */}
-                {shellPreviewOpen && codeOpen && (
-                  <WorkspaceDivider onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, Math.min(constraints.shellPreview.max, dynamicShellMax)))} />
-                )}
+                  {/* Shell ↔ Code divider (when both are open) */}
+                  {shellPreviewOpen && codeOpen && (
+                    panelLayout === 'vertical' ? (
+                      <HorizontalWorkspaceDivider
+                        onDrag={(delta) => setShellHeight((h) => {
+                          const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
+                          const minH = 240;
+                          const maxH = containerHeight - 240 - 4;
+                          return clamp(h + delta, minH, Math.max(minH, maxH));
+                        })}
+                      />
+                    ) : (
+                      <WorkspaceDivider onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, Math.min(constraints.shellPreview.max, dynamicShellMax)))} />
+                    )
+                  )}
+
+                  {codeOpen && (
+                    <div className="min-w-0 flex-1 overflow-hidden" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
+                      <CodePanel selectedItem={getSelectedItemName()} isLocked={selectedTableLocked} onToggleLock={handleCodePanelToggleLock} />
+                    </div>
+                  )}
+                </div>
 
                 {/* Shell ↔ AI divider (when Shell is open, Code is closed, AI is open) */}
                 {/* Adjusts AI width since Shell is flex-1 in this view */}
                 {shellPreviewOpen && !codeOpen && aiCopilotOpen && (
                   <WorkspaceDivider onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, Math.min(constraints.aiCopilot.max, dynamicAiMax)))} />
-                )}
-
-                {codeOpen && (
-                  <div className={`min-w-[360px] flex-1 overflow-hidden ${aiCopilotOpen ? 'border-r border-[#EBECEC]' : ''}`}>
-                    <CodePanel selectedItem={getSelectedItemName()} isLocked={selectedTableLocked} onToggleLock={handleCodePanelToggleLock} />
-                  </div>
                 )}
 
                 {/* Code ↔ AI divider */}
