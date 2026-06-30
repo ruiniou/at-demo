@@ -92,10 +92,19 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #D8DADA;
+  background-color: rgba(216, 218, 218, 0.75);
   border-radius: 8px;
-  border: 2px solid transparent;
+  border: 3px solid transparent;
   background-clip: content-box;
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: rgba(216, 218, 218, 0.75) transparent;
+}
+*:hover {
+  scrollbar-color: #B2B4B4 transparent;
 }
 
 ::-webkit-scrollbar-thumb:hover {
