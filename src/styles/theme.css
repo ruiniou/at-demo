@@ -79,6 +79,40 @@
 }
 
 @theme inline {
+  --color-brand-1: #830051;
+  --color-az-secondary: #F4E8EE;
+  --color-text-primary: #3C4242;
+  --color-text-secondary: #888E8E;
+  --color-graphite-10: #EBECEC;
+  --color-bg-light: #F8F7F7;
+  --color-border-default: #D8DADA;
+  --color-status-error: #CC2C3C;
+  --color-status-success: #1E7E34;
+
+  /* Typography: Font Families */
+  --font-sans: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Menlo', 'Courier New', Courier, monospace;
+  --font-numeric: 'Inter', sans-serif;
+
+  /* Typography: Font Sizes */
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 24px;
+  --text-4xl: 28px;
+  --text-5xl: 36px;
+
+  /* Typography: Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -117,6 +151,27 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* Atlas Design System Color Tokens */
+/* Based on guidelines/Style/color.json */
+@theme {
+  --color-brand-1: #830051;
+  --color-brand-1-hover: #9A3374;
+  --color-brand-1-disabled: #E6CCDC;
+  --color-az-secondary: #F4E8EE;
+  --color-az-secondary-hover: #E6CCDC;
+  --color-graphite-10: #EBECEC;
+  --color-graphite-20: #D8DADA;
+  --color-graphite-40: #B2B4B4;
+  --color-graphite-60: #888E8E;
+  --color-graphite-80: #656969;
+  --color-graphite-100: #3C4242;
+  --color-text-primary: #3C4242;
+  --color-text-secondary: #888E8E;
+  --color-bg-light: #F8F7F7;
+  --color-status-error: #CC2C3C;
+  --color-status-success: #C4D600;
 }
 
 @layer base {

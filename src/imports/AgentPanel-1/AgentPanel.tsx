@@ -22,7 +22,7 @@ function AgentChatHeader() {
           <div className="overflow-clip relative shrink-0 size-[16px]" data-name="close-line">
             <div className="absolute inset-[23.49%_23.48%_23.48%_23.48%]" data-name="Vector">
               <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 8.48531 8.48525">
-                <path d={svgPaths.pd28a400} fill="var(--fill-0, #9DB0AC)" id="Vector" />
+                <path d={svgPaths.pd28a400} fill="var(--fill-0, var(--color-text-secondary))" id="Vector" />
               </svg>
             </div>
           </div>
@@ -34,15 +34,15 @@ function AgentChatHeader() {
 
 function Tag() {
   return (
-    <div className="bg-[#f4e8ee] content-stretch flex gap-[4px] h-[20px] items-center justify-center max-w-[240px] pl-[2px] pr-[6px] relative rounded-[4px] shrink-0" data-name="Tag">
+    <div className="bg-az-secondary content-stretch flex gap-[4px] h-[20px] items-center justify-center max-w-[240px] pl-[2px] pr-[6px] relative rounded-[4px] shrink-0" data-name="Tag">
       <div className="overflow-clip relative shrink-0 size-[16px]" data-name="code-line">
         <div className="absolute inset-[20.54%_4.17%]" data-name="Vector">
           <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 14.6667 9.42809">
-            <path d={svgPaths.p4accf00} fill="var(--fill-0, #830051)" id="Vector" />
+            <path d={svgPaths.p4accf00} fill="var(--fill-0, var(--color-brand-1))" id="Vector" />
           </svg>
         </div>
       </div>
-      <div className="flex flex-[1_0_0] flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-[#830051] text-[13px]">
+      <div className="flex flex-[1_0_0] flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-brand-1 text-[13px]">
         <p className="leading-[20px]">Table.1(290-321)</p>
       </div>
     </div>
@@ -55,11 +55,11 @@ function AiThinking() {
       <div className="overflow-clip relative shrink-0 size-[16px]" data-name="Tool call/edit-2-line">
         <div className="absolute inset-[12.16%_12.5%_12.96%_12.5%]" data-name="Vector">
           <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 12 11.9804">
-            <path d={svgPaths.p243c4800} fill="var(--fill-0, #888E8E)" id="Vector" />
+            <path d={svgPaths.p243c4800} fill="var(--fill-0, var(--color-text-secondary))" id="Vector" />
           </svg>
         </div>
       </div>
-      <p className="font-['PingFang_SC:Regular',sans-serif] leading-[18px] not-italic relative shrink-0 text-[#3c4242] text-[14px] whitespace-nowrap">Tool name</p>
+      <p className="font-['PingFang_SC:Regular',sans-serif] leading-[18px] not-italic relative shrink-0 text-text-primary text-[14px] whitespace-nowrap">Tool name</p>
     </div>
   );
 }
@@ -67,7 +67,7 @@ function AiThinking() {
 function Container1() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#3c4242] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">Lines 3-7</p>
       </div>
     </div>
@@ -80,7 +80,7 @@ function Container() {
       <div className="overflow-clip relative shrink-0 size-[16px]" data-name="arrow-down-s-line">
         <div className="absolute inset-[34.26%_23.48%_33.33%_23.48%]" data-name="Vector">
           <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 8.48527 5.18548">
-            <path d={svgPaths.p3cfa0180} fill="var(--fill-0, #888E8E)" id="Vector" />
+            <path d={svgPaths.p3cfa0180} fill="var(--fill-0, var(--color-text-secondary))" id="Vector" />
           </svg>
         </div>
       </div>
@@ -92,10 +92,10 @@ function Container() {
 function Changes() {
   return (
     <div className="content-stretch flex font-['PingFang_SC:Medium',sans-serif] gap-[4px] items-center justify-end leading-[0] not-italic relative shrink-0 text-[12px] whitespace-nowrap" data-name="Changes">
-      <div className="flex flex-col justify-center relative shrink-0 text-[#1e7e34]">
+      <div className="flex flex-col justify-center relative shrink-0 text-status-success">
         <p className="leading-[18px]">+1</p>
       </div>
-      <div className="flex flex-col justify-center relative shrink-0 text-[#cc2c3c]">
+      <div className="flex flex-col justify-center relative shrink-0 text-status-error">
         <p className="leading-[18px]">-9</p>
       </div>
     </div>
@@ -121,7 +121,7 @@ function SlotSummary() {
             <div className="absolute inset-[16.67%] overflow-clip" data-name="file-copy-line">
               <div className="absolute inset-[8.33%_12.5%]" data-name="Vector">
                 <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 11.9999 13.3333">
-                  <path d={svgPaths.p20344280} fill="var(--fill-0, #888E8E)" id="Vector" />
+                  <path d={svgPaths.p20344280} fill="var(--fill-0, var(--color-text-secondary))" id="Vector" />
                 </svg>
               </div>
             </div>
@@ -135,7 +135,7 @@ function SlotSummary() {
 function Container4() {
   return (
     <div className="content-stretch flex flex-col items-start justify-center relative self-stretch shrink-0 w-[16px]" data-name="Container">
-      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#888e8e] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-text-secondary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">-</p>
       </div>
     </div>
@@ -145,11 +145,11 @@ function Container4() {
 function Code() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#1e7e34] text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
-          <span className="leading-[1.25] text-[#888e8e]">1</span>
-          <span className="leading-[1.25] text-[#3c4242]">{` = `}</span>
-          <span className="leading-[1.25] text-[#830051]">{`'AZD999(*ESC*)n1 mg/kg'`}</span>
+          <span className="leading-[1.25] text-text-secondary">1</span>
+          <span className="leading-[1.25] text-text-primary">{` = `}</span>
+          <span className="leading-[1.25] text-brand-1">{`'AZD999(*ESC*)n1 mg/kg'`}</span>
         </p>
       </div>
     </div>
@@ -170,7 +170,7 @@ function Container3() {
 function Container6() {
   return (
     <div className="content-stretch flex flex-col items-start relative self-stretch shrink-0 w-[16px]" data-name="Container">
-      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#888e8e] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-text-secondary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">-</p>
       </div>
     </div>
@@ -180,11 +180,11 @@ function Container6() {
 function Code1() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#1e7e34] text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
-          <span className="leading-[1.25] text-[#888e8e]">2</span>
-          <span className="leading-[1.25] text-[#3c4242]">{` = `}</span>
-          <span className="leading-[1.25] text-[#830051]">{`'AZD999(*ESC*)n2 mg/kg'`}</span>
+          <span className="leading-[1.25] text-text-secondary">2</span>
+          <span className="leading-[1.25] text-text-primary">{` = `}</span>
+          <span className="leading-[1.25] text-brand-1">{`'AZD999(*ESC*)n2 mg/kg'`}</span>
         </p>
       </div>
     </div>
@@ -205,7 +205,7 @@ function Container5() {
 function Container8() {
   return (
     <div className="content-stretch flex flex-col items-start relative self-stretch shrink-0 w-[16px]" data-name="Container">
-      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#888e8e] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-text-secondary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">-</p>
       </div>
     </div>
@@ -215,11 +215,11 @@ function Container8() {
 function Code2() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#1e7e34] text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
-          <span className="leading-[1.25] text-[#888e8e]">3</span>
-          <span className="leading-[1.25] text-[#3c4242]">{` = `}</span>
-          <span className="leading-[1.25] text-[#830051]">{`'AZD999(*ESC*)nTotal'`}</span>
+          <span className="leading-[1.25] text-text-secondary">3</span>
+          <span className="leading-[1.25] text-text-primary">{` = `}</span>
+          <span className="leading-[1.25] text-brand-1">{`'AZD999(*ESC*)nTotal'`}</span>
         </p>
       </div>
     </div>
@@ -240,7 +240,7 @@ function Container7() {
 function Container10() {
   return (
     <div className="content-stretch flex flex-col items-start relative self-stretch shrink-0 w-[16px]" data-name="Container">
-      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#888e8e] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-text-secondary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">-</p>
       </div>
     </div>
@@ -250,11 +250,11 @@ function Container10() {
 function Code3() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#1e7e34] text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
-          <span className="leading-[1.25] text-[#888e8e]">4</span>
-          <span className="leading-[1.25] text-[#3c4242]">{` = `}</span>
-          <span className="leading-[1.25] text-[#830051]">{`'Investigator choice of therapy'`}</span>
+          <span className="leading-[1.25] text-text-secondary">4</span>
+          <span className="leading-[1.25] text-text-primary">{` = `}</span>
+          <span className="leading-[1.25] text-brand-1">{`'Investigator choice of therapy'`}</span>
         </p>
       </div>
     </div>
@@ -275,7 +275,7 @@ function Container9() {
 function Container12() {
   return (
     <div className="content-stretch flex flex-col items-start relative self-stretch shrink-0 w-[16px]" data-name="Container">
-      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#888e8e] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-text-secondary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">-</p>
       </div>
     </div>
@@ -285,11 +285,11 @@ function Container12() {
 function Code4() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#1e7e34] text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
-          <span className="leading-[1.25] text-[#888e8e]">5</span>
-          <span className="leading-[1.25] text-[#3c4242]">{` = `}</span>
-          <span className="leading-[1.25] text-[#830051]">{`'Total'`}</span>
+          <span className="leading-[1.25] text-text-secondary">5</span>
+          <span className="leading-[1.25] text-text-primary">{` = `}</span>
+          <span className="leading-[1.25] text-brand-1">{`'Total'`}</span>
         </p>
       </div>
     </div>
@@ -310,7 +310,7 @@ function Container11() {
 function DeletionSection() {
   return (
     <div className="bg-[#fdecea] content-stretch flex flex-col items-start pl-[3px] py-[4px] relative shrink-0 w-full" data-name="Deletion Section">
-      <div aria-hidden="true" className="absolute border-[#830051] border-l-3 border-solid inset-0 pointer-events-none" />
+      <div aria-hidden="true" className="absolute border-brand-1 border-l-3 border-solid inset-0 pointer-events-none" />
       <Container3 />
       <Container5 />
       <Container7 />
@@ -323,7 +323,7 @@ function DeletionSection() {
 function Container14() {
   return (
     <div className="content-stretch flex flex-col items-start relative self-stretch shrink-0 w-[16px]" data-name="Container">
-      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#888e8e] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-text-secondary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">+</p>
       </div>
     </div>
@@ -333,11 +333,11 @@ function Container14() {
 function Code5() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#1e7e34] text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
-          <span className="leading-[1.25] text-[#888e8e]">1</span>
-          <span className="leading-[1.25] text-[#3c4242]">{` = `}</span>
-          <span className="leading-[1.25] text-[#830051]">{`'AZD999(*ESC*)n1 mg/kg'`}</span>
+          <span className="leading-[1.25] text-text-secondary">1</span>
+          <span className="leading-[1.25] text-text-primary">{` = `}</span>
+          <span className="leading-[1.25] text-brand-1">{`'AZD999(*ESC*)n1 mg/kg'`}</span>
         </p>
       </div>
     </div>
@@ -358,7 +358,7 @@ function Container13() {
 function Container16() {
   return (
     <div className="content-stretch flex flex-col items-start relative self-stretch shrink-0 w-[16px]" data-name="Container">
-      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#888e8e] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-text-secondary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">+</p>
       </div>
     </div>
@@ -368,11 +368,11 @@ function Container16() {
 function Code6() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#1e7e34] text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
-          <span className="leading-[1.25] text-[#888e8e]">2</span>
-          <span className="leading-[1.25] text-[#3c4242]">{` = `}</span>
-          <span className="leading-[1.25] text-[#830051]">{`'AZD999(*ESC*)n2 mg/kg'`}</span>
+          <span className="leading-[1.25] text-text-secondary">2</span>
+          <span className="leading-[1.25] text-text-primary">{` = `}</span>
+          <span className="leading-[1.25] text-brand-1">{`'AZD999(*ESC*)n2 mg/kg'`}</span>
         </p>
       </div>
     </div>
@@ -393,7 +393,7 @@ function Container15() {
 function Container18() {
   return (
     <div className="content-stretch flex flex-col items-start relative self-stretch shrink-0 w-[16px]" data-name="Container">
-      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#888e8e] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-text-secondary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">+</p>
       </div>
     </div>
@@ -403,11 +403,11 @@ function Container18() {
 function Code7() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#1e7e34] text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
-          <span className="leading-[1.25] text-[#888e8e]">4</span>
-          <span className="leading-[1.25] text-[#3c4242]">{` = `}</span>
-          <span className="leading-[1.25] text-[#830051]">{`'Investigator choice of therapy'`}</span>
+          <span className="leading-[1.25] text-text-secondary">4</span>
+          <span className="leading-[1.25] text-text-primary">{` = `}</span>
+          <span className="leading-[1.25] text-brand-1">{`'Investigator choice of therapy'`}</span>
         </p>
       </div>
     </div>
@@ -428,7 +428,7 @@ function Container17() {
 function Container20() {
   return (
     <div className="content-stretch flex flex-col items-start relative self-stretch shrink-0 w-[16px]" data-name="Container">
-      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-[#888e8e] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['JetBrains_Mono:Regular',sans-serif] font-normal justify-center leading-[0] relative shrink-0 text-text-secondary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">+</p>
       </div>
     </div>
@@ -438,11 +438,11 @@ function Container20() {
 function Code8() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#1e7e34] text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
-          <span className="leading-[1.25] text-[#888e8e]">5</span>
-          <span className="leading-[1.25] text-[#3c4242]">{` = `}</span>
-          <span className="leading-[1.25] text-[#830051]">{`'Total'`}</span>
+          <span className="leading-[1.25] text-text-secondary">5</span>
+          <span className="leading-[1.25] text-text-primary">{` = `}</span>
+          <span className="leading-[1.25] text-brand-1">{`'Total'`}</span>
         </p>
       </div>
     </div>
@@ -540,7 +540,7 @@ function AiThinking1() {
           </svg>
         </div>
       </div>
-      <p className="font-['PingFang_SC:Regular',sans-serif] leading-[18px] not-italic relative shrink-0 text-[#cc2c3c] text-[14px] whitespace-nowrap">{`Error: Error reason summary `}</p>
+      <p className="font-['PingFang_SC:Regular',sans-serif] leading-[18px] not-italic relative shrink-0 text-status-error text-[14px] whitespace-nowrap">{`Error: Error reason summary `}</p>
     </div>
   );
 }
@@ -548,7 +548,7 @@ function AiThinking1() {
 function AiThinking2() {
   return (
     <div className="content-stretch flex items-center relative shrink-0 w-full" data-name="AI Thinking">
-      <p className="flex-[1_0_0] font-['PingFang_SC:Regular',sans-serif] leading-[20px] min-w-px not-italic relative text-[#cc2c3c] text-[12px]">Error reason details here.</p>
+      <p className="flex-[1_0_0] font-['PingFang_SC:Regular',sans-serif] leading-[20px] min-w-px not-italic relative text-status-error text-[12px]">Error reason details here.</p>
     </div>
   );
 }
@@ -567,15 +567,15 @@ function OneRound() {
     <div className="content-stretch flex flex-col gap-[12px] items-start p-[10px] relative shrink-0 w-[360px]" data-name="One round">
       <div className="bg-[#fafafa] content-stretch flex flex-col gap-[4px] items-start justify-end px-[10px] py-[8px] relative rounded-[8px] shrink-0 w-[340px]" data-name="User Prompt">
         <Tag />
-        <p className="font-['PingFang_SC:Regular',sans-serif] leading-[24px] min-w-full not-italic relative shrink-0 text-[#888e8e] text-[14px] w-[min-content]">User prompt.</p>
+        <p className="font-['PingFang_SC:Regular',sans-serif] leading-[24px] min-w-full not-italic relative shrink-0 text-text-secondary text-[14px] w-[min-content]">User prompt.</p>
       </div>
       <AiOutput />
-      <div className="bg-[#f4e8ee] content-stretch flex gap-[8px] items-start px-[10px] py-[8px] relative rounded-[4px] shrink-0 w-[340px]" data-name="Error">
+      <div className="bg-az-secondary content-stretch flex gap-[8px] items-start px-[10px] py-[8px] relative rounded-[4px] shrink-0 w-[340px]" data-name="Error">
         <div aria-hidden="true" className="absolute border-[#cc2c3c] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[4px]" />
         <ErrorMessage />
         <div className="bg-white content-stretch flex gap-[4px] items-center px-[8px] py-[4px] relative rounded-[4px] shrink-0" data-name="Secondary-Button">
           <div aria-hidden="true" className="absolute border-[#d8dada] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[4px]" />
-          <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#3c4242] text-[12px] whitespace-nowrap">
+          <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[12px] whitespace-nowrap">
             <p className="leading-[20px]">Retry</p>
           </div>
         </div>
@@ -618,7 +618,7 @@ function Div() {
   return (
     <div className="content-stretch flex gap-[16px] items-center relative shrink-0 w-full" data-name="Div">
       <Input1 />
-      <div className="bg-[#830051] relative rounded-[4px] shrink-0 size-[24px]" data-name="send">
+      <div className="bg-brand-1 relative rounded-[4px] shrink-0 size-[24px]" data-name="send">
         <Group />
       </div>
     </div>
@@ -671,7 +671,7 @@ function Svg() {
 function Container21() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#3c4242] text-[14px] whitespace-nowrap">
+      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[14px] whitespace-nowrap">
         <p className="leading-[18px]">Questions</p>
       </div>
     </div>
@@ -694,7 +694,7 @@ function LeftIconLabel() {
 function Container22() {
   return (
     <div className="content-stretch flex flex-col items-center min-w-[32px] px-[3.36px] relative shrink-0" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#888e8e] text-[13px] text-center whitespace-nowrap">
+      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-secondary text-[13px] text-center whitespace-nowrap">
         <p className="leading-[20px]">1 / 3</p>
       </div>
     </div>
@@ -716,7 +716,7 @@ function RightNavArrowsWithPageNumberBetween() {
         <div className="overflow-clip relative shrink-0 size-[20px]" data-name="arrow-right-s-line">
           <div className="absolute inset-[23.49%_33.33%_23.48%_34.26%]" data-name="Vector">
             <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 6.48182 10.6066">
-              <path d={svgPaths.p1b88b80} fill="var(--fill-0, #888E8E)" id="Vector" />
+              <path d={svgPaths.p1b88b80} fill="var(--fill-0, var(--color-text-secondary))" id="Vector" />
             </svg>
           </div>
         </div>
@@ -742,7 +742,7 @@ function Header() {
 function Heading() {
   return (
     <div className="content-stretch flex flex-col items-start pb-[8px] relative shrink-0 w-full" data-name="Heading 3">
-      <div className="flex flex-col font-['PingFang_SC:Semibold',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#3c4242] text-[16px] w-full">
+      <div className="flex flex-col font-['PingFang_SC:Semibold',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[16px] w-full">
         <p className="leading-[22px]">Question heading?</p>
       </div>
     </div>
@@ -752,7 +752,7 @@ function Heading() {
 function Container24() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#3c4242] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">Planning / Task Breakdown</p>
       </div>
     </div>
@@ -762,7 +762,7 @@ function Container24() {
 function Container25() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#3c4242] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">Planning / Task Breakdown</p>
       </div>
     </div>
@@ -772,7 +772,7 @@ function Container25() {
 function Container26() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#3c4242] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[13px] whitespace-nowrap">
         <p className="leading-[20px]">Planning / Task Breakdown</p>
       </div>
     </div>
@@ -797,11 +797,11 @@ function Container23() {
           <div className="content-stretch flex gap-[8px] items-center p-[8px] relative size-full">
             <div className="relative shrink-0 size-[16px]" data-name="Radio Button">
               <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-                <circle cx="8" cy="8" fill="var(--fill-0, white)" id="Outer" r="7" stroke="var(--stroke-0, #830051)" strokeWidth="2" />
+                <circle cx="8" cy="8" fill="var(--fill-0, white)" id="Outer" r="7" stroke="var(--stroke-0, var(--color-brand-1))" strokeWidth="2" />
               </svg>
               <div className="absolute inset-[30%]" data-name="Center">
                 <svg className="absolute block inset-0 size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 6.4 6.4">
-                  <circle cx="3.2" cy="3.2" fill="var(--fill-0, #830051)" id="Center" r="3.2" />
+                  <circle cx="3.2" cy="3.2" fill="var(--fill-0, var(--color-brand-1))" id="Center" r="3.2" />
                 </svg>
               </div>
             </div>
@@ -867,7 +867,7 @@ function ActionButtons() {
         <div className="bg-clip-padding border-0 border-[transparent] border-solid content-stretch flex gap-[8px] items-start justify-end px-[10px] py-[8px] relative size-full">
           <div className="bg-white content-stretch flex gap-[4px] items-center px-[8px] py-[4px] relative rounded-[4px] shrink-0" data-name="Secondary-Button">
             <div aria-hidden="true" className="absolute border-[#d8dada] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[4px]" />
-            <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#3c4242] text-[12px] whitespace-nowrap">
+            <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[12px] whitespace-nowrap">
               <p className="leading-[20px]">Skip</p>
             </div>
           </div>

@@ -42,6 +42,7 @@ import addLineIconUrl from "../../icons/add-line.svg";
 import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
 import snowflakeIconUrl from "../../icons/snowflake-line.svg";
+import CreateEventModal from "./components/CreateEventModal";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -94,7 +95,7 @@ function IconButton({
     <button
       onClick={onClick}
       aria-label={ariaLabel}
-      className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-[#EBECEC] transition-colors shrink-0"
+      className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-graphite-10 transition-colors shrink-0"
     >
       {children}
     </button>
@@ -116,13 +117,13 @@ function StatusLabel({ children, icon }: { children: React.ReactNode; icon?: Rea
 
 function Tag({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-[#F4E8EE] inline-flex gap-[4px] h-[20px] items-center max-w-[152px] pl-[2px] pr-[6px] rounded-[4px]">
+    <div className="bg-az-secondary inline-flex gap-[4px] h-[20px] items-center max-w-[152px] pl-[2px] pr-[6px] rounded-[4px]">
       <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
         <svg className="w-full h-full" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M15.3332 7.99992L10.6191 12.714L9.6763 11.7712L13.4476 7.99992L9.6763 4.2287L10.6191 3.28589L15.3332 7.99992ZM2.55212 7.99992L6.32336 11.7712L5.38055 12.714L0.666504 7.99992L5.38055 3.28589L6.32336 4.2287L2.55212 7.99992Z" fill="#830051"/>
+          <path d="M15.3332 7.99992L10.6191 12.714L9.6763 11.7712L13.4476 7.99992L9.6763 4.2287L10.6191 3.28589L15.3332 7.99992ZM2.55212 7.99992L6.32336 11.7712L5.38055 12.714L0.666504 7.99992L5.38055 3.28589L6.32336 4.2287L2.55212 7.99992Z" fill="var(--color-brand-1)"/>
         </svg>
       </div>
-      <p className="t-small text-[#830051] truncate">
+      <p className="t-small text-brand-1 truncate">
         {children}
       </p>
     </div>
@@ -136,20 +137,20 @@ function ToolCallCard({ toolName, children }: { toolName: string; children?: Rea
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`border-[0.6px] border-[#EBECEC] rounded-[4px] px-[12px] py-[8px] w-full transition-colors ${
-        hovered ? 'bg-[#F8F7F7]' : 'bg-transparent'
+      className={`border-[0.6px] border-graphite-10 rounded-[4px] px-[12px] py-[8px] w-full transition-colors ${
+        hovered ? 'bg-bg-light' : 'bg-transparent'
       }`}
     >
       <div className="flex items-center gap-[4px] h-[30px]">
         <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
-          <ToolCallIcon className="w-full h-full" color="#888E8E" />
+          <ToolCallIcon className="w-full h-full" color="var(--color-text-secondary)" />
         </div>
-        <p className="t-body-compact text-[#3C4242]">
+        <p className="t-body-compact text-text-primary">
           {toolName}
         </p>
       </div>
       {children && (
-        <div className="mt-[8px] t-body text-[#3C4242]">
+        <div className="mt-[8px] t-body text-text-primary">
           {children}
         </div>
       )}
@@ -161,13 +162,13 @@ function ErrorMessageWithRetry() {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="bg-[#F4E8EE] border-[0.6px] border-[#CC2C3C] rounded-[4px] px-[10px] py-[8px] w-full flex gap-[8px] items-start">
+    <div className="bg-az-secondary border-[0.6px] border-status-error rounded-[4px] px-[10px] py-[8px] w-full flex gap-[8px] items-start">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-[6px] h-[30px] mb-[2px]">
           <div className="w-[16px] h-[16px] shrink-0">
             <ErrorWarningIcon className="w-full h-full" color="#CC2C3C" />
           </div>
-          <p className="t-body text-[#CC2C3C] font-semibold truncate">
+          <p className="t-body text-status-error font-semibold truncate">
             Error: Error reason summary
           </p>
         </div>
@@ -175,7 +176,7 @@ function ErrorMessageWithRetry() {
         {/* Collapsible details */}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-[4px] t-small text-[#CC2C3C] hover:underline active:scale-[0.98] mb-[2px]"
+          className="flex items-center gap-[4px] t-small text-status-error hover:underline active:scale-[0.98] mb-[2px]"
         >
           <span>{expanded ? 'Hide details' : 'View details'}</span>
           <SvgIcon className="h-[12px] w-[12px]">
@@ -190,14 +191,14 @@ function ErrorMessageWithRetry() {
         </button>
 
         {expanded && (
-          <p className="t-small text-[#CC2C3C] break-words whitespace-pre-wrap leading-[18px]">
+          <p className="t-small text-status-error break-words whitespace-pre-wrap leading-[18px]">
             Error reason details here. This section can contain very long error messages including stack traces, variable states, and other diagnostic information that helps identify the root cause of the failure.
           </p>
         )}
       </div>
 
-      <button className="shrink-0 bg-white border-[0.6px] border-[#D8DADA] hover:bg-[#F8F7F7] px-[8px] py-[4px] rounded-[4px] transition-colors flex items-center gap-[4px]">
-        <span className="t-small text-[#3C4242]">Retry</span>
+      <button className="shrink-0 bg-white border-[0.6px] border-border-default hover:bg-bg-light px-[8px] py-[4px] rounded-[4px] transition-colors flex items-center gap-[4px]">
+        <span className="t-small text-text-primary">Retry</span>
       </button>
     </div>
   );
@@ -207,7 +208,7 @@ function ErrorMessageWithRetry() {
 
 function InlineHighlight({ children }: { children: React.ReactNode }) {
   return (
-    <span className="bg-[#EBECEC] px-[4px] rounded-[4px] h-[20px] inline-flex items-center t-caption text-[#3C4242]">
+    <span className="bg-graphite-10 px-[4px] rounded-[4px] h-[20px] inline-flex items-center t-caption text-text-primary">
       {children}
     </span>
   );
@@ -223,8 +224,8 @@ function Hyperlink({ children, href = "#" }: { children: React.ReactNode; href?:
 
 function Blockquote({ children }: { children: React.ReactNode }) {
   return (
-    <blockquote className="border-l-[3px] border-[#D8DADA] bg-[#FAFAFA] pl-[12px] py-[8px] mb-[10px] rounded-r-[4px]">
-      <div className="t-body text-[#3C4242]">
+    <blockquote className="border-l-[3px] border-border-default bg-[#FAFAFA] pl-[12px] py-[8px] mb-[10px] rounded-r-[4px]">
+      <div className="t-body text-text-primary">
         {children}
       </div>
     </blockquote>
@@ -232,7 +233,7 @@ function Blockquote({ children }: { children: React.ReactNode }) {
 }
 
 function Divider() {
-  return <div className="h-[0.5px] bg-[#D8DADA] w-full my-[12px]" />;
+  return <div className="h-[0.5px] bg-border-default w-full my-[12px]" />;
 }
 
 // ==================== Chat Conversation & Main Panel ====================
@@ -251,13 +252,13 @@ function ChatConversation({ messages }: { messages: Message[] }) {
       {messages.map((msg, i) => (
         <div key={i} className="flex flex-col w-full gap-[12px]">
           {msg.type === 'user' && (
-            <div className="bg-[#F8F7F7] px-[10px] py-[8px] rounded-[8px] w-full flex flex-col gap-[4px]">
+            <div className="bg-bg-light px-[10px] py-[8px] rounded-[8px] w-full flex flex-col gap-[4px]">
               {msg.hasTag && (
                 <div className="flex">
                   <Tag>Table.14.1.1 (Lines 290-321)</Tag>
                 </div>
               )}
-              <div className="flex flex-col gap-[4px] t-body text-[#888E8E] font-normal">
+              <div className="flex flex-col gap-[4px] t-body text-text-secondary font-normal">
                 {msg.content?.split('\n').map((para, pIdx) => (
                   <p key={pIdx} className="font-normal">{para}</p>
                 ))}
@@ -266,13 +267,13 @@ function ChatConversation({ messages }: { messages: Message[] }) {
           )}
           
           {msg.type === 'ask_user_result' && (
-            <div className="bg-[#F8F7F7] px-[10px] py-[8px] rounded-[8px] w-full">
+            <div className="bg-bg-light px-[10px] py-[8px] rounded-[8px] w-full">
               {msg.isSkipped ? (
-                <p className="t-body text-[#888E8E] italic">Skipped question</p>
+                <p className="t-body text-text-secondary italic">Skipped question</p>
               ) : (
                 <div className="flex flex-col gap-[4px]">
                   {msg.answers?.map((ans, idx) => (
-                    <div key={idx} className="t-body text-[#888E8E]">
+                    <div key={idx} className="t-body text-text-secondary">
                       <p className="font-normal">Q: {truncateText(ans.q)}</p>
                       <p className="font-normal">A: {ans.a}</p>
                     </div>
@@ -290,8 +291,8 @@ function ChatConversation({ messages }: { messages: Message[] }) {
               
               {/* Markdown Render Container */}
               <div className="flex flex-col w-full px-[10px]">
-                <h1 className="t-heading text-[#3C4242] mb-[10px]">Analysis Results Summary</h1>
-                <p className="t-body text-[#3C4242] mb-[10px]">
+                <h1 className="t-heading text-text-primary mb-[10px]">Analysis Results Summary</h1>
+                <p className="t-body text-text-primary mb-[10px]">
                   Generated Kaplan-Meier survival plot for <InlineHighlight>OS (Overall Survival)</InlineHighlight> using the ITT population. 
                   Reference the <Hyperlink>Analysis Plan v1.2</Hyperlink> for further details.
                 </p>
@@ -300,12 +301,12 @@ function ChatConversation({ messages }: { messages: Message[] }) {
                   <MarkdownTable />
                 </Suspense>
                 
-                <p className="t-body text-[#3C4242] mb-[10px]">
+                <p className="t-body text-text-primary mb-[10px]">
                   Key observations from the data cohort:
                 </p>
                 <ul className="list-disc pl-[24px] mb-[10px] flex flex-col gap-[4px]">
-                  <li className="t-body text-[#3C4242]">High survival rate in early stages.</li>
-                  <li className="t-body text-[#3C4242]">Significant variance in treatment line 3.</li>
+                  <li className="t-body text-text-primary">High survival rate in early stages.</li>
+                  <li className="t-body text-text-primary">Significant variance in treatment line 3.</li>
                 </ul>
 
                 <Blockquote>
@@ -314,10 +315,10 @@ function ChatConversation({ messages }: { messages: Message[] }) {
 
                 <Divider />
 
-                <h3 className="t-heading text-[#3C4242] mb-[10px]">SAS Logic</h3>
-                <div className="border-[0.6px] border-[#D8DADA] rounded-[4px] overflow-hidden mb-[10px]">
-                  <pre className="bg-[#F8F7F7] px-[16px] py-[12px] overflow-x-auto">
-                    <code className="t-code text-[#3C4242] whitespace-pre">
+                <h3 className="t-heading text-text-primary mb-[10px]">SAS Logic</h3>
+                <div className="border-[0.6px] border-border-default rounded-[4px] overflow-hidden mb-[10px]">
+                  <pre className="bg-bg-light px-[16px] py-[12px] overflow-x-auto">
+                    <code className="t-code text-text-primary whitespace-pre">
                       <span className="text-[#005CC5]">proc sql</span>;{'\n'}
                       {'  '}<span className="text-[#005CC5]">select</span> * <span className="text-[#005CC5]">from</span> itt_pop;{'\n'}
                       <span className="text-[#005CC5]">quit</span>;
@@ -404,15 +405,15 @@ function AICopilotPanel({
       style={{ width: panelWidth }}
     >
       {/* Header */}
-      <div className="bg-white h-[40px] flex items-center justify-between px-[12px] border-b border-[#EBECEC]">
-        <AtlasLogoIcon className="h-[16px] w-[16px]" color="#830051" />
+      <div className="bg-white h-[40px] flex items-center justify-between px-[12px] border-b border-graphite-10">
+        <AtlasLogoIcon className="h-[16px] w-[16px]" color="var(--color-brand-1)" />
         <button
           onClick={onClose}
           aria-label="Close AI Copilot"
           title="Close AI Copilot"
           className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
         >
-          <CloseIcon className="w-[16px] h-[16px]" color="#888E8E" />
+          <CloseIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
         </button>
       </div>
 
@@ -437,7 +438,7 @@ function AICopilotPanel({
             e.preventDefault();
             handleSubmit();
           }}
-          className="bg-white border-[0.6px] border-[#D8DADA] flex items-center gap-[16px] px-[10px] py-[8px] rounded-[8px] h-[40px] shadow-sm"
+          className="bg-white border-[0.6px] border-border-default flex items-center gap-[16px] px-[10px] py-[8px] rounded-[8px] h-[40px] shadow-sm"
         >
           <input
             ref={inputRef}
@@ -445,11 +446,11 @@ function AICopilotPanel({
             value={currentVal}
             onChange={(e) => setCurrentVal(e.target.value)}
             placeholder="Ask me anything..."
-            className="flex-1 t-input text-[#3C4242] placeholder:text-[#B2B4B4] bg-transparent border-none outline-none"
+            className="flex-1 t-input text-text-primary placeholder:text-[#B2B4B4] bg-transparent border-none outline-none"
           />
           <button
             type="submit"
-            className="bg-[#830051] w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-[#6a0042] transition-colors"
+            className="bg-brand-1 w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-[#6a0042] transition-colors"
           >
             <SubmitIcon className="w-[11px] h-[12px]" color="white" />
           </button>
@@ -530,12 +531,16 @@ const iconFilters: Record<string, string> = {
   "#FFFFFF": "brightness(0) invert(1)",
   white: "brightness(0) invert(1)",
   "#830051": "brightness(0) saturate(100%) invert(13%) sepia(85%) saturate(2902%) hue-rotate(309deg) brightness(77%) contrast(111%)",
+  "var(--color-brand-1)": "brightness(0) saturate(100%) invert(13%) sepia(85%) saturate(2902%) hue-rotate(309deg) brightness(77%) contrast(111%)",
   "#3C4242": "brightness(0) saturate(100%) invert(22%) sepia(8%) saturate(525%) hue-rotate(131deg) brightness(92%) contrast(88%)",
+  "var(--color-text-primary)": "brightness(0) saturate(100%) invert(22%) sepia(8%) saturate(525%) hue-rotate(131deg) brightness(92%) contrast(88%)",
   "#656969": "brightness(0) saturate(100%) invert(42%) sepia(6%) saturate(255%) hue-rotate(131deg) brightness(92%) contrast(87%)",
   "#888E8E": "brightness(0) saturate(100%) invert(58%) sepia(7%) saturate(174%) hue-rotate(131deg) brightness(94%) contrast(88%)",
+  "var(--color-text-secondary)": "brightness(0) saturate(100%) invert(58%) sepia(7%) saturate(174%) hue-rotate(131deg) brightness(94%) contrast(88%)",
   "#9DB0AC": "brightness(0) saturate(100%) invert(72%) sepia(10%) saturate(322%) hue-rotate(122deg) brightness(89%) contrast(84%)",
   "#B2B4B4": "brightness(0) saturate(100%) invert(75%) sepia(5%) saturate(100%) hue-rotate(131deg) brightness(94%) contrast(88%)",
   "#CC2C3C": "brightness(0) saturate(100%) invert(24%) sepia(91%) saturate(1782%) hue-rotate(336deg) brightness(89%) contrast(88%)",
+  "var(--color-status-error)": "brightness(0) saturate(100%) invert(24%) sepia(91%) saturate(1782%) hue-rotate(336deg) brightness(89%) contrast(88%)",
   "#666666": "brightness(0) invert(40%)",
 };
 
@@ -745,14 +750,14 @@ function WorkspaceModal({
         <div className="flex items-center justify-between border-b border-[#E5E8E8] px-[24px] pb-[17px] pt-[16px]">
           <div className="flex min-w-0 items-center gap-[8px]">
             <ErrorWarningIcon className="w-[20px] h-[20px] shrink-0" color="#F0AB00" />
-            <h2 className="t-heading text-[#3C4242]">{title}</h2>
+            <h2 className="t-heading text-text-primary">{title}</h2>
           </div>
           <button
             onClick={onClose}
-            className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-[#EBECEC] active:scale-[0.96]"
+            className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-graphite-10 active:scale-[0.96]"
             aria-label="Close"
           >
-            <CloseIcon className="w-[16px] h-[16px]" color="#888E8E" />
+            <CloseIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
           </button>
         </div>
         <div className="px-[24px] py-[20px]">
@@ -761,13 +766,13 @@ function WorkspaceModal({
         <div className="flex items-center justify-end gap-[12px] border-t border-[#E5E8E8] px-[24px] pb-[20px] pt-[21px]">
           <button
             onClick={onSecondary}
-            className="h-[36px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[12px] t-body-secondary text-[#3C4242] hover:bg-[#F8F7F7] active:scale-[0.96]"
+            className="h-[36px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-light active:scale-[0.96]"
           >
             {secondaryLabel}
           </button>
           <button
             onClick={onPrimary}
-            className="h-[36px] rounded-[4px] bg-[#830051] px-[12px] t-body-secondary text-white hover:bg-[#6D0043] active:scale-[0.96]"
+            className="h-[36px] rounded-[4px] bg-brand-1 px-[12px] t-body-secondary text-white hover:bg-[#6D0043] active:scale-[0.96]"
           >
             {primaryLabel}
           </button>
@@ -796,7 +801,7 @@ function PanelViewToggle({
   docType?: DocumentType;
 }) {
   return (
-    <div className="bg-[#F8F7F7] flex items-center rounded-[4px]">
+    <div className="bg-bg-light flex items-center rounded-[4px]">
       <TooltipText label="Show Shell">
         <button
           onClick={() => onChange('shell')}
@@ -805,9 +810,9 @@ function PanelViewToggle({
           }`}
         >
           {value === 'shell' && (
-            <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
+            <div aria-hidden className="absolute border-border-default border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
           )}
-          <p className={`t-small whitespace-nowrap ${value === 'shell' ? 'text-[#3C4242]' : 'text-[#888E8E]'}`}>
+          <p className={`t-small whitespace-nowrap ${value === 'shell' ? 'text-text-primary' : 'text-text-secondary'}`}>
             Shell
           </p>
         </button>
@@ -826,7 +831,7 @@ function PanelViewToggle({
           }`}
         >
           {value === 'both' && (
-            <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
+            <div aria-hidden className="absolute border-border-default border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
           )}
           <div className={`relative shrink-0 size-[16px] flex items-center justify-center ${layout === 'vertical' && value === 'both' ? 'rotate-90' : ''}`}>
             <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 13.334 12">
@@ -843,9 +848,9 @@ function PanelViewToggle({
           }`}
         >
           {value === 'code' && (
-            <div aria-hidden className="absolute border-[#D8DADA] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
+            <div aria-hidden className="absolute border-border-default border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
           )}
-          <p className={`t-small whitespace-nowrap ${value === 'code' ? 'text-[#3C4242]' : 'text-[#888E8E]'}`}>
+          <p className={`t-small whitespace-nowrap ${value === 'code' ? 'text-text-primary' : 'text-text-secondary'}`}>
             Code
           </p>
         </button>
@@ -886,10 +891,10 @@ function ViewToggleBar({
         }`}
       >
         {activeView === 'table' && (
-          <div aria-hidden className="absolute border-[#830051] border-b-2 border-solid inset-0 pointer-events-none" />
+          <div aria-hidden className="absolute border-brand-1 border-b-2 border-solid inset-0 pointer-events-none" />
         )}
         <TableTreeIcon color={activeView === 'table' ? '#830051' : '#3C4242'} />
-        <p className={`t-small font-medium ${activeView === 'table' ? 'text-[#830051]' : 'text-[#3C4242]'}`}>Table View</p>
+        <p className={`t-small font-medium ${activeView === 'table' ? 'text-brand-1' : 'text-text-primary'}`}>Table View</p>
       </button>
       <button
         onClick={() => setActiveView('group')}
@@ -898,10 +903,10 @@ function ViewToggleBar({
         }`}
       >
         {activeView === 'group' && (
-          <div aria-hidden className="absolute border-[#830051] border-b-2 border-solid inset-0 pointer-events-none" />
+          <div aria-hidden className="absolute border-brand-1 border-b-2 border-solid inset-0 pointer-events-none" />
         )}
         <FolderIcon color={activeView === 'group' ? '#830051' : '#3C4242'} />
-        <p className={`t-small font-medium ${activeView === 'group' ? 'text-[#830051]' : 'text-[#3C4242]'}`}>Group View</p>
+        <p className={`t-small font-medium ${activeView === 'group' ? 'text-brand-1' : 'text-text-primary'}`}>Group View</p>
       </button>
     </>
   );
@@ -910,11 +915,11 @@ function ViewToggleBar({
     // Collapsed: single row with study info + view tabs + panel toggle
     return (
       <div className="shrink-0 w-full bg-white">
-        <div className="h-[48px] w-full border-b-[0.6px] border-[#d8dada] flex items-center px-[12px] justify-between">
+        <div className="h-[48px] w-full border-b-[0.6px] border-border-default flex items-center px-[12px] justify-between">
           <div className="flex items-center gap-[8px]">
             <div className="min-w-0">
-              <p className="t-small truncate font-medium text-[#3C4242]">AZE2001-301</p>
-              <p className="truncate text-[10px] leading-[15px] text-[#888E8E]">{currentEvent}</p>
+              <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
+              <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
             </div>
             <TooltipText label="Open Tree List">
               <button
@@ -922,7 +927,7 @@ function ViewToggleBar({
                 className="h-[24px] w-[24px] flex items-center justify-center hover:bg-black/5 rounded-[4px] active:scale-[0.96]"
                 aria-label="Open tree list"
               >
-                <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+                <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
               </button>
             </TooltipText>
           </div>
@@ -936,7 +941,7 @@ function ViewToggleBar({
   // Expanded: view tabs row only
   return (
     <div className="shrink-0 w-full bg-white">
-      <div className="h-[48px] w-full border-b-[0.6px] border-[#d8dada] flex items-center bg-white relative">
+      <div className="h-[48px] w-full border-b-[0.6px] border-border-default flex items-center bg-white relative">
         <div className="flex items-stretch justify-center flex-1 h-full">
           {viewTabs}
         </div>
@@ -952,11 +957,11 @@ function SearchBar() {
   return (
     <div className="h-[40px] w-full">
       <div className="flex h-full items-center gap-[4px] px-[8px] py-[4px]">
-        <div className="flex-1 rounded-[6px] bg-[#EBECEC]">
+        <div className="flex-1 rounded-[6px] bg-graphite-10">
           <div className="flex items-center justify-between px-[8px] py-[4px]">
             <div className="flex items-center gap-[6px]">
               <SearchIcon />
-              <p className="t-small text-[#888E8E]">Search</p>
+              <p className="t-small text-text-secondary">Search</p>
             </div>
           </div>
         </div>
@@ -1035,7 +1040,7 @@ function TreeStatusControl({
             className="flex h-[20px] w-[20px] cursor-not-allowed items-center justify-center rounded-[4px]"
             aria-label="Locked by parent"
           >
-            <LockTreeIcon color="#888E8E" />
+            <LockTreeIcon color="var(--color-text-secondary)" />
           </button>
         </TooltipText>
       );
@@ -1055,7 +1060,7 @@ function TreeStatusControl({
           className="flex h-[20px] w-[20px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
           aria-label="Unlock code"
         >
-          <LockTreeIcon color="#888E8E" />
+          <LockTreeIcon color="var(--color-text-secondary)" />
         </button>
       </TooltipText>
     );
@@ -1072,7 +1077,7 @@ function TreeStatusControl({
           className="flex h-[20px] w-[20px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
           aria-label="Lock code"
         >
-          <UnlockTreeIcon color="#888E8E" />
+          <UnlockTreeIcon color="var(--color-text-secondary)" />
         </button>
       </TooltipText>
     );
@@ -1104,7 +1109,7 @@ function TreeItem({
     <div className="flex w-full flex-col gap-[2px]">
       <div
         className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors ${
-          selectedId === program.id ? 'bg-[#F4E8EE]' : isProgramHovered ? 'bg-[#F8F7F7]' : ''
+          selectedId === program.id ? 'bg-az-secondary' : isProgramHovered ? 'bg-bg-light' : ''
         }`}
         onClick={() => onSelect(program.id)}
         onMouseEnter={() => setHoveredId(program.id)}
@@ -1122,7 +1127,7 @@ function TreeItem({
             >
               <ChevronRightTreeIcon isExpanded={program.isExpanded} color={isProgramLocked ? "#B2B4B4" : selectedId === program.id ? "#830051" : "#888E8E"} />
             </button>
-            <p className={`t-small min-w-0 flex-1 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : selectedId === program.id ? 'text-[#830051]' : 'text-[#3C4242]'}`}>
+            <p className={`t-small min-w-0 flex-1 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : selectedId === program.id ? 'text-brand-1' : 'text-text-primary'}`}>
               {program.name}
             </p>
           </div>
@@ -1150,7 +1155,7 @@ function TreeItem({
               <div
                 key={table.id}
                 className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors ${
-                  isTableSelected ? 'bg-[#F4E8EE]' : isTableHovered ? 'bg-[#F8F7F7]' : ''
+                  isTableSelected ? 'bg-az-secondary' : isTableHovered ? 'bg-bg-light' : ''
                 }`}
                 onClick={() => onSelect(table.id)}
                 onMouseEnter={() => setHoveredId(table.id)}
@@ -1163,7 +1168,7 @@ function TreeItem({
                     ) : (
                       <TableTreeIcon color={isProgramLocked ? "#B2B4B4" : isTableSelected ? "#830051" : "#888E8E"} />
                     )}
-                    <p className={`t-small min-w-0 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : isTableSelected ? 'text-[#830051]' : 'text-[#3C4242]'}`}>
+                    <p className={`t-small min-w-0 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : isTableSelected ? 'text-brand-1' : 'text-text-primary'}`}>
                       {table.name}
                     </p>
                   </div>
@@ -1187,7 +1192,15 @@ function TreeItem({
   );
 }
 
-function WorkspaceDivider({ onDrag }: { onDrag: (delta: number) => void }) {
+function WorkspaceDivider({
+  onDrag,
+  onDragStart,
+  onDragEnd,
+}: {
+  onDrag: (delta: number) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+}) {
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const startXRef = useRef(0);
@@ -1205,6 +1218,7 @@ function WorkspaceDivider({ onDrag }: { onDrag: (delta: number) => void }) {
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      onDragEnd?.();
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
@@ -1218,7 +1232,7 @@ function WorkspaceDivider({ onDrag }: { onDrag: (delta: number) => void }) {
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
-  }, [isDragging]);
+  }, [isDragging, onDragEnd]);
 
   return (
     <div
@@ -1226,6 +1240,7 @@ function WorkspaceDivider({ onDrag }: { onDrag: (delta: number) => void }) {
       onMouseDown={(event) => {
         event.preventDefault();
         setIsDragging(true);
+        onDragStart?.();
         startXRef.current = event.clientX;
         document.body.style.cursor = "col-resize";
         document.body.style.userSelect = "none";
@@ -1234,7 +1249,7 @@ function WorkspaceDivider({ onDrag }: { onDrag: (delta: number) => void }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="absolute inset-y-0 -left-[3px] -right-[3px]" />
-      {(isHovered || isDragging) && <div className="absolute inset-y-0 left-[-1px] w-[3px] bg-[#830051]" />}
+      {(isHovered || isDragging) && <div className="absolute inset-y-0 left-[-1px] w-[3px] bg-brand-1" />}
     </div>
   );
 }
@@ -1249,8 +1264,8 @@ function CategoryFilter({
   const categories: Array<{ id: "all" | "table" | "listing" | "figure"; label: string; icon?: React.ReactNode }> = [
     { id: "all", label: "All" },
     { id: "table", label: "Table", icon: <TableTreeIcon /> },
-    { id: "listing", label: "Listing", icon: <ListingTreeIcon color="#888E8E" /> },
-    { id: "figure", label: "Figure", icon: <FigureTreeIcon color="#888E8E" /> },
+    { id: "listing", label: "Listing", icon: <ListingTreeIcon color="var(--color-text-secondary)" /> },
+    { id: "figure", label: "Figure", icon: <FigureTreeIcon color="var(--color-text-secondary)" /> },
   ];
 
   return (
@@ -1263,11 +1278,11 @@ function CategoryFilter({
               key={category.id}
               onClick={() => onChange(category.id)}
               className={`flex h-[24px] items-center gap-[2px] rounded-[4px] px-[4px] active:scale-[0.96] ${
-                isSelected ? "bg-[#EBECEC]" : "hover:bg-[#EBECEC]"
+                isSelected ? "bg-graphite-10" : "hover:bg-graphite-10"
               }`}
             >
               {category.icon}
-              <p className="t-small whitespace-nowrap text-[#3C4242]">{category.label}</p>
+              <p className="t-small whitespace-nowrap text-text-primary">{category.label}</p>
             </button>
           );
         })}
@@ -1286,7 +1301,7 @@ function PanelHeader({
   noBorder?: boolean;
 }) {
   return (
-    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between bg-white px-[12px] ${noBorder ? '' : 'border-b border-[#D8DADA]'}`}>
+    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between bg-white px-[12px] ${noBorder ? '' : 'border-b border-border-default'}`}>
       <p className="t-small truncate text-black">{title}</p>
       {actions && <div className="flex items-center gap-[4px]">{actions}</div>}
     </div>
@@ -1309,7 +1324,15 @@ function ChevronRightIcon({ color = "#888E8E" }) {
   );
 }
 
-function HorizontalWorkspaceDivider({ onDrag }: { onDrag: (delta: number) => void }) {
+function HorizontalWorkspaceDivider({
+  onDrag,
+  onDragStart,
+  onDragEnd,
+}: {
+  onDrag: (delta: number) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+}) {
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const startYRef = useRef(0);
@@ -1327,6 +1350,7 @@ function HorizontalWorkspaceDivider({ onDrag }: { onDrag: (delta: number) => voi
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      onDragEnd?.();
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
@@ -1340,7 +1364,7 @@ function HorizontalWorkspaceDivider({ onDrag }: { onDrag: (delta: number) => voi
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
-  }, [isDragging]);
+  }, [isDragging, onDragEnd]);
 
   return (
     <div
@@ -1348,6 +1372,7 @@ function HorizontalWorkspaceDivider({ onDrag }: { onDrag: (delta: number) => voi
       onMouseDown={(event) => {
         event.preventDefault();
         setIsDragging(true);
+        onDragStart?.();
         startYRef.current = event.clientY;
         document.body.style.cursor = "row-resize";
         document.body.style.userSelect = "none";
@@ -1356,7 +1381,7 @@ function HorizontalWorkspaceDivider({ onDrag }: { onDrag: (delta: number) => voi
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="absolute inset-x-0 -top-[3px] -bottom-[3px]" />
-      {(isHovered || isDragging) && <div className="absolute inset-x-0 top-[-1px] h-[3px] bg-[#830051]" />}
+      {(isHovered || isDragging) && <div className="absolute inset-x-0 top-[-1px] h-[3px] bg-brand-1" />}
     </div>
   );
 }
@@ -1438,12 +1463,12 @@ function ColumnDivider({
     : 'default';
 
   const lineWidth = variant === 'hover' || variant === 'drag' ? 3 : 2;
-  const lineSolid = isFreeze || variant !== 'default';
+  const lineSolid = true;
 
   const lineColor = isFreeze ? '#830051' : '#F0AB00';
   const ghostColor = isFreeze ? 'rgba(131,0,81,0.2)' : 'rgba(240,171,0,0.2)';
   const pillBg = isFreeze ? '#F4E8EE' : '#FCEECC';
-  const pillTextColor = isFreeze ? '#830051' : '#3C4242';
+  const pillTextColor = isFreeze ? "var(--color-brand-1)" : "var(--color-text-primary)";
 
   const posX = isDragging ? dragGapX : gapX;
 
@@ -1452,17 +1477,27 @@ function ColumnDivider({
       {/* Ghost — original position while dragging; clipped to table height */}
       {isDragging && (
         <div
-          className="absolute bottom-0 pointer-events-none"
-          style={{ left: isFreeze ? `${gapX - posX}px` : `${gapX}px`, top: `${TABLE_TOP}px`, width: '2px', backgroundColor: ghostColor, zIndex: 28 }}
+          className="absolute pointer-events-none"
+          style={{
+            left: isFreeze ? `${gapX - posX}px` : `${gapX}px`,
+            top: `${TABLE_TOP}px`,
+            bottom: '2px',
+            width: '0px',
+            borderLeft: isFreeze
+              ? '2px solid rgba(131, 0, 81, 0.4)'
+              : '2px solid rgba(240, 171, 0, 0.5)',
+            zIndex: 28,
+          }}
         />
       )}
 
       {/* Hit area — covers table area only (top = TABLE_TOP) */}
       <div
-        className="absolute bottom-0 pointer-events-auto"
+        className="absolute pointer-events-auto"
         style={{
           left: isFreeze ? '-6px' : `${posX - 6}px`,
           top: `${TABLE_TOP}px`,
+          bottom: '2px',
           width: '12px',
           cursor: onDragStart ? 'col-resize' : 'default',
           zIndex: isFreeze ? 24 : 10,
@@ -1598,6 +1633,8 @@ function ListingShellPreview({
   });
   const [draggingBreak, setDraggingBreak] = useState<{ colIdx: number; currentGap: number } | null>(null);
   const [draggingFreeze, setDraggingFreeze] = useState<{ currentGap: number } | null>(null);
+  const [freezeDragOriginX, setFreezeDragOriginX] = useState<number | null>(null);
+  const [pageDragOriginX, setPageDragOriginX] = useState<number | null>(null);
   const [hoveredGap, setHoveredGap] = useState<number | null>(null);
   const [hoveredFreezeColumn, setHoveredFreezeColumn] = useState<number | null>(null);
   const [gapXPositions, setGapXPositions] = useState<number[]>([]);
@@ -1611,6 +1648,8 @@ function ListingShellPreview({
   const pagePreviewScrollRef = useRef<HTMLDivElement>(null);
   const suppressPageSyncRef = useRef(false);
   const suppressPageSyncTimerRef = useRef<number | null>(null);
+
+  const totalListingWidth = useMemo(() => listingColumns.reduce((sum, col) => sum + col.widthPx, 0), [listingColumns]);
 
   const handleMetadataDividerDrag = (delta: number) => {
     onMetadataResize(-delta);
@@ -1803,7 +1842,7 @@ function ListingShellPreview({
       let nearest = colIdx;
       let minDist = Infinity;
       for (let i = 0; i < listingColumns.length - 1; i++) {
-        const gx = gapXPositionsRef.current[i] ?? listingColumns.slice(0, i + 1).reduce((s, c) => s + c.widthPx, 0);
+        const gx = gapXPositionsRef.current[i] || getGapX(i);
         const dist = Math.abs(mouseX - gx);
         if (dist < minDist) { minDist = dist; nearest = i; }
       }
@@ -1858,6 +1897,8 @@ function ListingShellPreview({
     if (initialFreeze === null) return;
 
     setDraggingFreeze({ currentGap: initialFreeze });
+    const initialLeft = initialFreeze === null ? 0 : (gapXPositionsRef.current[initialFreeze] || getGapX(initialFreeze));
+    setFreezeDragOriginX(initialLeft);
 
     const onMove = (ev: MouseEvent) => {
       const rect = containerEl.getBoundingClientRect();
@@ -1869,7 +1910,7 @@ function ListingShellPreview({
       const maxFreeze = listingColumns.length - 2 - pageBreakColumns.length;
 
       for (let i = 0; i <= Math.max(0, maxFreeze); i++) {
-        const gx = gapXPositionsRef.current[i] ?? listingColumns.slice(0, i + 1).reduce((s, c) => s + c.widthPx, 0);
+        const gx = gapXPositionsRef.current[i] || getGapX(i);
         const dist = Math.abs(mouseX - gx);
         if (dist < minDist) { minDist = dist; nearest = i; }
       }
@@ -1896,6 +1937,7 @@ function ListingShellPreview({
 
     const onUp = () => {
       setDraggingFreeze(null);
+      setFreezeDragOriginX(null);
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       document.body.style.cursor = '';
@@ -2132,7 +2174,7 @@ function ListingShellPreview({
   return (
     <div className="h-full bg-white flex flex-col overflow-hidden">
       {/* Top Bar */}
-      <div className="bg-white h-[40px] shrink-0 w-full flex items-center justify-between px-[12px] border-b border-[#EBECEC]">
+      <div className="bg-white h-[40px] shrink-0 w-full flex items-center justify-between px-[12px] border-b border-graphite-10">
         <p className="t-small truncate text-black">{selectedItemName || 'Shell preview'}</p>
         <div className="flex items-center gap-[10px]">
           <div className="flex items-center gap-[8px]">
@@ -2142,7 +2184,7 @@ function ListingShellPreview({
                 type="button"
                 onClick={handlePagePreviewToggle}
                 className={`h-[24px] flex items-center justify-center gap-[4px] rounded-[4px] px-[4px] transition-colors duration-[180ms] active:scale-[0.96] ${
-                  pageSepActive ? 'bg-[#F4E8EE] text-[#830051]' : 'text-[#888E8E] hover:bg-black/5'
+                  pageSepActive ? 'bg-az-secondary text-brand-1' : 'text-text-secondary hover:bg-black/5'
                 }`}
                 aria-label={pageSepActive ? 'Exit page preview' : 'Enter page preview'}
                 aria-pressed={pageSepActive}
@@ -2166,7 +2208,7 @@ function ListingShellPreview({
                   onMetadataClick();
                 }}
                 className={`relative size-[24px] flex items-center justify-center rounded-[4px] transition-colors duration-[180ms] active:scale-[0.96] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${
-                  pageSepActive ? 'text-[#c4c8c8]' : metadataOpen ? 'bg-[#F4E8EE]' : 'hover:bg-black/5'
+                  pageSepActive ? 'text-[#c4c8c8]' : metadataOpen ? 'bg-az-secondary' : 'hover:bg-black/5'
                 }`}
                 aria-label="Toggle metadata"
               >
@@ -2185,7 +2227,7 @@ function ListingShellPreview({
         {/* Shell content */}
         <div className={`relative flex-1 overflow-auto ${pageSepActive ? 'bg-[#f2f3f3]' : 'bg-white'}`}>
           {pageSepActive && createPortal(
-            <div className="fixed inset-0 z-[100] bg-[#D8DADA]">
+            <div className="fixed inset-0 z-[100] bg-border-default">
               {/* Scroll container */}
               <div ref={pagePreviewScrollRef} className="absolute inset-0 overflow-y-auto pt-[52px] z-10">
                 {/* Print page cards */}
@@ -2199,7 +2241,7 @@ function ListingShellPreview({
                       style={{ width: `${pageWidthPx}px`, height: `${pageHeightPx}px` }}
                     >
                       <div style={{ transform: `scale(${pageScale / 100})`, transformOrigin: 'top left' }} className="relative">
-                        <div className="absolute right-[32px] top-[28px] rounded-[4px] bg-[#F4E8EE] px-[6px] py-0 font-['PingFang_SC',sans-serif] text-[12px] leading-[20px] text-[#830051]">{pageIndex + 1}/{printPages.length}</div>
+                        <div className="absolute right-[32px] top-[28px] rounded-[4px] bg-az-secondary px-[6px] py-0 font-['PingFang_SC',sans-serif] text-[12px] leading-[20px] text-brand-1">{pageIndex + 1}/{printPages.length}</div>
                         <div className="p-[48px] pt-[64px]">
                           <div className="border-b-2 border-black pb-[14px] mb-[10px] text-center">
                             <h1 className="font-['Inter',sans-serif] text-[13px] leading-[18px] font-bold tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
@@ -2216,15 +2258,15 @@ function ListingShellPreview({
                             <thead>
                               <tr className="border-b-2 border-black">
                                 {page.pageColumns.map((column) => (
-                                  <th key={column.key} className="border-r border-[#d9d9d9] px-[4px] py-[6px] text-left align-middle text-[10px] leading-[14px] font-bold whitespace-normal break-words last:border-r-0">{column.label}</th>
+                                  <th key={column.key} className="border-r border-border-default px-[4px] py-[6px] text-left align-middle text-[10px] leading-[14px] font-bold whitespace-normal break-words last:border-r-0">{column.label}</th>
                                 ))}
                               </tr>
                             </thead>
                             <tbody>
                               {page.pageRows.map((row) => (
-                                <tr key={row.subject} className="border-b border-[#d9d9d9] last:border-b-2 last:border-black">
+                                <tr key={row.subject} className="border-b border-border-default last:border-b-2 last:border-black">
                                   {page.pageColumns.map((column) => (
-                                    <td key={`${row.subject}-${column.key}`} className="border-r border-[#d9d9d9] px-[4px] py-[6px] align-middle text-[10px] leading-[15px] font-normal whitespace-normal break-words last:border-r-0">{(row as Record<string, string>)[column.key]}</td>
+                                    <td key={`${row.subject}-${column.key}`} className="border-r border-border-default px-[4px] py-[6px] align-middle text-[10px] leading-[15px] font-normal whitespace-normal break-words last:border-r-0">{(row as Record<string, string>)[column.key]}</td>
                                   ))}
                                 </tr>
                               ))}
@@ -2239,10 +2281,10 @@ function ListingShellPreview({
 
               {/* Print preview top bar */}
               <div className="absolute top-0 left-0 right-0 z-20 h-[52px] bg-white/90 backdrop-blur-[8px] border-b border-[#cfd2d2] flex items-center justify-between px-[24px] py-[8px]">
-                <span className="t-heading text-[#3C4242]">Appendix 16.2.4</span>
+                <span className="t-heading text-text-primary">Appendix 16.2.4</span>
                 <button type="button" onClick={() => setPageSepActive(false)} className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] transition-colors hover:bg-black/5">
-                  <CloseIcon className="h-[16px] w-[16px]" color="#3C4242" />
-                  <span className="font-['PingFang_SC',sans-serif] text-[14px] leading-[20px] font-normal text-[#3C4242]">Exit Preview</span>
+                  <CloseIcon className="h-[16px] w-[16px]" color="var(--color-text-primary)" />
+                  <span className="font-['PingFang_SC',sans-serif] text-[14px] leading-[20px] font-normal text-text-primary">Exit Preview</span>
                 </button>
               </div>
             </div>,
@@ -2258,9 +2300,14 @@ function ListingShellPreview({
                   <h1 className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
                 </div>
                 <div ref={tableContainerRef} className="relative inline-block min-w-max">
-                  <table className="table-auto border-collapse min-w-max font-['Inter',sans-serif] text-black">
+                  <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-black" style={{ width: `${totalListingWidth}px` }}>
+                    <colgroup>
+                      {listingColumns.map((col) => (
+                        <col key={col.key} style={{ width: `${col.widthPx}px`, minWidth: `${col.widthPx}px` }} />
+                      ))}
+                    </colgroup>
                     <thead>
-                      <tr className="border-b-2 border-black">
+                      <tr>
                         {listingColumns.map((column, columnIndex) => {
                           const frozen = isColumnFrozen(columnIndex);
                           const frozenBoundary = frozenUntilIndex === columnIndex;
@@ -2274,7 +2321,7 @@ function ListingShellPreview({
                               key={column.key}
                               ref={(node) => { thRefs.current[columnIndex] = node; }}
                               style={cellStyle}
-                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r px-[4px] py-[6px] text-left align-middle text-[12px] leading-[18px] font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-[#830051] after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
+                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-black border-r-graphite-10 px-[4px] py-[6px] text-left align-middle text-[12px] leading-[18px] font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
                               onMouseEnter={() => setHoveredFreezeColumn(columnIndex)}
                               onMouseLeave={() => setHoveredFreezeColumn(null)}
                             >
@@ -2290,18 +2337,9 @@ function ListingShellPreview({
                                   </div>
                                 </div>
                               )}
-                              
-                              {/* Gap hit zone for page break insertion */}
-                              {columnIndex < listingColumns.length - 1 && isGapInteractive(columnIndex) && (
-                                <div
-                                  className="absolute top-0 bottom-0 z-50"
-                                  style={{ right: '-10px', width: '20px', cursor: 'col-resize' }}
-                                  onMouseEnter={() => setHoveredGap(columnIndex)}
-                                  onMouseLeave={() => setHoveredGap(null)}
-                                />
-                              )}
-                              <div className="flex w-full items-center justify-between gap-[4px] rounded-[3px] overflow-hidden">
-                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} className="flex-1 min-w-0 truncate rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#830051] focus-visible:outline-offset-1" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
+                              {/* Button area */}
+                              <div className="flex w-full items-center justify-between gap-[4px] rounded-[3px]">
+                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} className="flex-1 min-w-0 whitespace-normal break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#830051] focus-visible:outline-offset-1" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
                               </div>
                               
                               {frozenBoundary && (
@@ -2320,7 +2358,7 @@ function ListingShellPreview({
                                       className="flex items-center gap-[4px] font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
                                       style={{
                                         background: '#F4E8EE',
-                                        color: '#830051',
+                                        color: "var(--color-brand-1)",
                                         padding: '2px 2px 2px 6px',
                                         border: '1px solid transparent',
                                       }}
@@ -2333,7 +2371,7 @@ function ListingShellPreview({
                                         onClick={(e) => { e.stopPropagation(); setFrozenUntilIndex(null); }}
                                         aria-label="Unfreeze"
                                       >
-                                        <LocalIcon src={closeIconUrl} className="w-[12px] h-[12px]" color="#830051" />
+                                        <LocalIcon src={closeIconUrl} className="w-[12px] h-[12px]" color="var(--color-brand-1)" />
                                       </button>
                                     </div>
                                   </div>
@@ -2358,7 +2396,7 @@ function ListingShellPreview({
                   </thead>
                   <tbody>
                     {listingData.map((row) => (
-                      <tr key={row.subject} className="border-b border-[#d9d9d9] last:border-b-2 last:border-black">
+                      <tr key={row.subject} className="group">
                         {listingColumns.map((column, columnIndex) => {
                           const frozen = isColumnFrozen(columnIndex);
                           const frozenBoundary = frozenUntilIndex === columnIndex;
@@ -2368,7 +2406,7 @@ function ListingShellPreview({
                           if (frozen) { cellStyle.left = `${getFrozenLeft(columnIndex)}px`; cellStyle.zIndex = 20; cellStyle.backgroundColor = 'white'; }
                           if (shadows.length) cellStyle.boxShadow = shadows.join(', ');
                           return (
-                            <td key={`${row.subject}-${column.key}`} style={cellStyle} className={`border-r border-[#d9d9d9] px-[4px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-normal break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-[#830051] after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
+                            <td key={`${row.subject}-${column.key}`} style={cellStyle} className={`border-r border-b border-b-border-default group-last:border-b-2 group-last:border-b-black border-border-default px-[4px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-normal break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
                               <div className="w-full overflow-hidden truncate">
                                 {(row as Record<string, string>)[column.key]}
                               </div>
@@ -2383,29 +2421,44 @@ function ListingShellPreview({
                   {/* Frozen zone tint — purple wash over the locked columns area */}
                   {frozenUntilIndex !== null && (
                     <div
-                      className="absolute bottom-0 pointer-events-none"
+                       className="absolute bottom-0 pointer-events-none"
+                       style={{
+                         top: 0,
+                         left: 0,
+                         width: `${gapXPositions[frozenUntilIndex] || getGapX(frozenUntilIndex)}px`,
+                         backgroundColor: 'rgba(216, 207, 221, 0.08)',
+                         zIndex: 5,
+                       }}
+                     />
+                   )}
+
+
+
+                  {/* Freeze Column Divider Ghost Line */}
+                  {freezeDragOriginX !== null && (
+                    <div
+                      className="absolute pointer-events-none"
                       style={{
+                        left: `${freezeDragOriginX}px`,
                         top: 0,
-                        left: 0,
-                        width: `${gapXPositions[frozenUntilIndex] ?? getGapX(frozenUntilIndex)}px`,
-                        backgroundColor: 'rgba(216, 207, 221, 0.08)',
-                        zIndex: 5,
+                        bottom: '2px',
+                        width: '0px',
+                        borderLeft: '2px solid rgba(131, 0, 81, 0.4)',
+                        zIndex: 28,
                       }}
                     />
                   )}
-
-
 
                   {/* Page break insertion preview (while hovering a gap) */}
                   {hoveredGap !== null && !pageBreakColumns.includes(hoveredGap) && (
                     <>
                       <div
                         className="absolute bottom-0 pointer-events-none"
-                        style={{ left: `${(gapXPositions[hoveredGap] ?? getGapX(hoveredGap)) - 1}px`, top: 0, width: '2px', borderLeft: '2px dashed rgba(240,171,0,0.65)', zIndex: 35 }}
+                        style={{ left: `${(gapXPositions[hoveredGap] || getGapX(hoveredGap)) - 1}px`, top: 0, width: '2px', borderLeft: '2px dashed rgba(240,171,0,0.65)', zIndex: 35 }}
                       />
                       <div
                         className="absolute z-[60] cursor-pointer pointer-events-auto pb-[6px] active:scale-[0.96] transition-transform"
-                        style={{ left: `${gapXPositions[hoveredGap] ?? getGapX(hoveredGap)}px`, top: '0', transform: 'translateX(-50%) translateY(-100%)' }}
+                        style={{ left: `${gapXPositions[hoveredGap] || getGapX(hoveredGap)}px`, top: '0', transform: 'translateX(-50%) translateY(-100%)' }}
                         onMouseEnter={() => setHoveredGap(hoveredGap)}
                         onMouseLeave={() => setHoveredGap(null)}
                         onClick={() => { addPageBreak(hoveredGap); setHoveredGap(null); }}
@@ -2418,12 +2471,35 @@ function ListingShellPreview({
                     </>
                   )}
 
+                  {/* Full-height interactive gap hit zones for adding page breaks */}
+                  {listingColumns.map((_, columnIndex) => {
+                    if (columnIndex >= listingColumns.length - 1 || !isGapInteractive(columnIndex) || pageBreakColumns.includes(columnIndex)) {
+                      return null;
+                    }
+                    const gapX = gapXPositions[columnIndex] || getGapX(columnIndex);
+                    return (
+                      <div
+                        key={`gap-hit-${columnIndex}`}
+                        className="absolute z-30 pointer-events-auto"
+                        style={{
+                          left: `${gapX - 10}px`,
+                          top: 0,
+                          bottom: '2px',
+                          width: '20px',
+                          cursor: 'col-resize',
+                        }}
+                        onMouseEnter={() => setHoveredGap(columnIndex)}
+                        onMouseLeave={() => setHoveredGap(null)}
+                      />
+                    );
+                  })}
+
                   {/* Permanent page break dividers */}
                   {[...pageBreakColumns].sort((a, b) => a - b).map((colIdx, i) => {
-                    const measuredX = gapXPositions[colIdx] ?? getGapX(colIdx);
+                    const measuredX = gapXPositions[colIdx] || getGapX(colIdx);
                     const isDragging = draggingBreak?.colIdx === colIdx;
                     const dragGapX = isDragging
-                      ? (gapXPositions[draggingBreak!.currentGap] ?? getGapX(draggingBreak!.currentGap))
+                      ? (gapXPositions[draggingBreak!.currentGap] || getGapX(draggingBreak!.currentGap))
                       : measuredX;
                     return (
                       <ColumnDivider
@@ -2443,12 +2519,11 @@ function ListingShellPreview({
           </div>
         </div>
 
-        {/* Metadata overlay */}
         {metadataOpen && (
           <>
             <WorkspaceDivider onDrag={handleMetadataDividerDrag} />
-            <div className="shrink-0 h-full overflow-hidden py-[4px] pr-[4px]" style={{ width: `${metadataWidth}px` }}>
-              <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-[#EBECEC] bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)]">
+            <div className="shrink-0 h-full py-[4px] pr-[4px] relative z-20" style={{ width: `${metadataWidth}px` }}>
+              <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)]">
                 <MetadataPanel
                   onClose={onCloseMetadata}
                   isLocked={isLocked}
@@ -2633,14 +2708,14 @@ function _DEAD_LISTING_PREVIEW_BODY() {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white relative">
       {/* Header - per Figma: "Listing name" + toolbar with icon buttons + metadata toggle */}
-      <div className="flex h-[40px] w-full shrink-0 items-center justify-between border-b-[0.6px] border-[#D8DADA] bg-white px-[12px]">
-        <p className="t-small truncate text-[#3C4242]">{listingName || "Listing name"}</p>
+      <div className="flex h-[40px] w-full shrink-0 items-center justify-between border-b-[0.6px] border-border-default bg-white px-[12px]">
+        <p className="t-small truncate text-text-primary">{listingName || "Listing name"}</p>
         <div className="flex items-center gap-[4px]">
           {/* Sync to Code in Header (Unsynced marker) */}
           {isModified && (
             <button
               onClick={onSync}
-              className="flex h-[24px] items-center gap-[4px] rounded-[4px] bg-[#830051] text-white px-[8px] hover:bg-[#6D0043] active:scale-[0.96] mr-[4px]"
+              className="flex h-[24px] items-center gap-[4px] rounded-[4px] bg-brand-1 text-white px-[8px] hover:bg-[#6D0043] active:scale-[0.96] mr-[4px]"
             >
               <SyncIcon color="white" />
               <span className="t-small font-semibold">Sync</span>
@@ -2651,15 +2726,15 @@ function _DEAD_LISTING_PREVIEW_BODY() {
           <div className="relative">
             <button
               onClick={() => setShowFreezeDropdown((prev) => !prev)}
-              className="flex h-[24px] items-center gap-[4px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[8px] hover:bg-[#F8F7F7] active:scale-[0.96]"
+              className="flex h-[24px] items-center gap-[4px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[8px] hover:bg-bg-light active:scale-[0.96]"
             >
-              <FreezeIcon color="#888E8E" />
-              <span className="t-small text-[#3C4242]">
+              <FreezeIcon color="var(--color-text-secondary)" />
+              <span className="t-small text-text-primary">
                 Freeze: {frozenColumnCount === 0 ? "None" : `${frozenColumnCount} Col${frozenColumnCount > 1 ? "s" : ""}`}
               </span>
             </button>
             {showFreezeDropdown && (
-              <div className="absolute right-0 mt-[4px] bg-white border border-[#D8DADA] rounded-[4px] shadow-lg py-[4px] w-[150px] z-[60]">
+              <div className="absolute right-0 mt-[4px] bg-white border border-border-default rounded-[4px] shadow-lg py-[4px] w-[150px] z-[60]">
                 {[0, 1, 2, 3, 4].map((count) => (
                   <button
                     key={count}
@@ -2667,8 +2742,8 @@ function _DEAD_LISTING_PREVIEW_BODY() {
                       setFrozenColumnCount(count);
                       setShowFreezeDropdown(false);
                     }}
-                    className={`w-full text-left px-[12px] py-[6px] t-small text-[#3C4242] hover:bg-[#F8F7F7] ${
-                      frozenColumnCount === count ? "font-bold text-[#830051]" : ""
+                    className={`w-full text-left px-[12px] py-[6px] t-small text-text-primary hover:bg-bg-light ${
+                      frozenColumnCount === count ? "font-bold text-brand-1" : ""
                     }`}
                   >
                     {count === 0 ? "None" : `${count} Column${count > 1 ? "s" : ""}`}
@@ -2683,7 +2758,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
             <button
               onClick={() => setIsPaginationMode(!isPaginationMode)}
               className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
-                isPaginationMode ? "bg-[#F4E8EE]" : "hover:bg-black/5"
+                isPaginationMode ? "bg-az-secondary" : "hover:bg-black/5"
               }`}
             >
               <PaginationIcon color={isPaginationMode ? "#830051" : "#888E8E"} />
@@ -2696,7 +2771,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
               <button
                 onClick={onMetadataClick}
                 className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
-                  metadataOpen ? "bg-[#F4E8EE]" : "hover:bg-black/5"
+                  metadataOpen ? "bg-az-secondary" : "hover:bg-black/5"
                 }`}
                 aria-label="Toggle metadata"
               >
@@ -2723,7 +2798,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
             {/* Table Header */}
             <thead>
               {/* Spanning Group Headers Row */}
-              <tr className="bg-[#F8F7F7] border-b border-[#D8DADA]">
+              <tr className="bg-bg-light border-b border-border-default">
                 {spanningGroups.map((group, groupIdx) => {
                   const isGroupSticky = group.startIndex < F;
                   const groupLeft = isGroupSticky ? getRenderedColLeft(group.startIndex) : undefined;
@@ -2732,7 +2807,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
                     <th
                       key={`${group.label}-${groupIdx}`}
                       colSpan={group.span}
-                      className="border-r border-[#EBECEC] text-left px-[8px] py-[6px] h-[30px]"
+                      className="border-r border-graphite-10 text-left px-[8px] py-[6px] h-[30px]"
                       style={{
                         position: isGroupSticky ? 'sticky' : undefined,
                         left: isGroupSticky ? `${groupLeft}px` : undefined,
@@ -2740,7 +2815,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
                         backgroundColor: '#F8F7F7',
                       }}
                     >
-                      <span className="text-[11px] font-bold text-[#888E8E] uppercase tracking-wider truncate block">
+                      <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider truncate block">
                         {group.label}
                       </span>
                     </th>
@@ -2749,7 +2824,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
               </tr>
 
               {/* Individual Column Names Row */}
-              <tr className="bg-[#F8F7F7] border-b border-[#D8DADA]">
+              <tr className="bg-bg-light border-b border-border-default">
                 {renderedCols.map((col, colIdx) => {
                   const isColSticky = colIdx < F;
                   const colLeft = isColSticky ? getRenderedColLeft(colIdx) : undefined;
@@ -2760,7 +2835,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
                       onMouseEnter={() => setHoveredColKey(col.key)}
                       onMouseLeave={() => setHoveredColKey(null)}
                       onContextMenu={(e) => handleContextMenu(e, colIdx)}
-                      className="border-r border-[#EBECEC] text-left align-middle relative h-[32px] hover:bg-black/[0.02] cursor-pointer"
+                      className="border-r border-graphite-10 text-left align-middle relative h-[32px] hover:bg-black/[0.02] cursor-pointer"
                       style={{
                         position: isColSticky ? 'sticky' : undefined,
                         left: isColSticky ? `${colLeft}px` : undefined,
@@ -2769,7 +2844,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
                       }}
                     >
                       <div className="flex items-center justify-between w-full px-[8px] py-[4px] gap-[2px]">
-                        <span className="t-small font-semibold text-[#3C4242] truncate block select-none">
+                        <span className="t-small font-semibold text-text-primary truncate block select-none">
                           {col.label}
                         </span>
                         
@@ -2800,7 +2875,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
             {/* Table Body */}
             <tbody>
               {listingData.map((row, rowIdx) => (
-                <tr key={rowIdx} className="hover:bg-[#F8F7F7] transition-colors border-b border-[#EBECEC]">
+                <tr key={rowIdx} className="hover:bg-bg-light transition-colors border-b border-graphite-10">
                   {renderedCols.map((col, colIdx) => {
                     const isColSticky = colIdx < F;
                     const colLeft = isColSticky ? getRenderedColLeft(colIdx) : undefined;
@@ -2809,7 +2884,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
                     return (
                       <td
                         key={col.key}
-                        className="px-[8px] py-[6px] t-table text-[#3C4242] border-r border-[#EBECEC] truncate whitespace-nowrap h-[28px]"
+                        className="px-[8px] py-[6px] t-table text-text-primary border-r border-graphite-10 truncate whitespace-nowrap h-[28px]"
                         style={{
                           position: isColSticky ? 'sticky' : undefined,
                           left: isColSticky ? `${colLeft}px` : undefined,
@@ -2826,6 +2901,22 @@ function _DEAD_LISTING_PREVIEW_BODY() {
             </tbody>
           </table>
 
+          {/* 3px Solid Freeze Column Divider Ghost Line */}
+          {freezeDragOriginX !== null && !isPaginationMode && (
+            <div
+              style={{
+                position: 'absolute',
+                left: `${freezeDragOriginX - 1}px`,
+                top: 0,
+                bottom: '2px',
+                width: '2px',
+                backgroundColor: 'rgba(131, 0, 81, 0.3)',
+                zIndex: 28,
+                pointerEvents: 'none',
+              }}
+            />
+          )}
+
           {/* 3px Solid Freeze Column Divider */}
           {F > 0 && !isPaginationMode && (
             <div
@@ -2833,20 +2924,22 @@ function _DEAD_LISTING_PREVIEW_BODY() {
                 position: 'absolute',
                 left: `${dividerLeft - 1.5}px`,
                 top: 0,
-                bottom: 0,
+                bottom: '2px',
                 width: '3px',
                 cursor: 'col-resize',
                 zIndex: 30,
               }}
-              className="bg-[#D8DADA] hover:bg-[#830051] active:bg-[#830051] transition-colors"
+              className="bg-border-default hover:bg-brand-1 active:bg-brand-1 transition-colors"
               onMouseDown={(e) => {
                 e.preventDefault();
                 const startX = e.clientX;
+                setFreezeDragOriginX(dividerLeft);
                 const handleMouseMove = (moveEvent: MouseEvent) => {
                   const delta = moveEvent.clientX - startX;
                   handleDividerDrag(startX + delta);
                 };
                 const handleMouseUp = () => {
+                  setFreezeDragOriginX(null);
                   document.removeEventListener('mousemove', handleMouseMove);
                   document.removeEventListener('mouseup', handleMouseUp);
                 };
@@ -2857,6 +2950,22 @@ function _DEAD_LISTING_PREVIEW_BODY() {
             />
           )}
 
+          {/* Draggable vertical page divider Ghost Line */}
+          {pageDragOriginX !== null && isPaginationMode && (
+            <div
+              style={{
+                position: 'absolute',
+                left: `${pageDragOriginX - 1}px`,
+                top: 0,
+                bottom: '2px',
+                width: '0px',
+                borderLeft: '2px dashed rgba(131, 0, 81, 0.4)',
+                zIndex: 28,
+                pointerEvents: 'none',
+              }}
+            />
+          )}
+
           {/* Draggable vertical page divider in Pagination view */}
           {isPaginationMode && (
             <div
@@ -2864,20 +2973,22 @@ function _DEAD_LISTING_PREVIEW_BODY() {
                 position: 'absolute',
                 left: `${totalRenderedPageWidth - 1.5}px`,
                 top: 0,
-                bottom: 0,
+                bottom: '2px',
                 width: '3px',
                 cursor: 'col-resize',
                 zIndex: 30,
               }}
-              className="border-l-2 border-dashed border-[#888E8E] hover:border-[#830051] active:border-[#830051]"
+              className="border-l-2 border-dashed border-[#888E8E] hover:border-brand-1 active:border-brand-1"
               onMouseDown={(e) => {
                 e.preventDefault();
                 const startX = e.clientX;
+                setPageDragOriginX(totalRenderedPageWidth);
                 const handleMouseMove = (moveEvent: MouseEvent) => {
                   const delta = moveEvent.clientX - startX;
                   handlePageDividerDrag(startX + delta);
                 };
                 const handleMouseUp = () => {
+                  setPageDragOriginX(null);
                   document.removeEventListener('mousemove', handleMouseMove);
                   document.removeEventListener('mouseup', handleMouseUp);
                 };
@@ -2892,11 +3003,11 @@ function _DEAD_LISTING_PREVIEW_BODY() {
 
       {/* Floating Sync to Code Panel at bottom */}
       {isModified && (
-        <div className="absolute bottom-[56px] left-1/2 -translate-x-1/2 z-40 bg-white border border-[#D8DADA] rounded-[8px] px-[16px] py-[8px] shadow-xl flex items-center gap-[12px] animate-slide-in-up">
-          <span className="t-small text-[#3C4242] font-medium">Unsynced listing changes</span>
+        <div className="absolute bottom-[56px] left-1/2 -translate-x-1/2 z-40 bg-white border border-border-default rounded-[8px] px-[16px] py-[8px] shadow-xl flex items-center gap-[12px] animate-slide-in-up">
+          <span className="t-small text-text-primary font-medium">Unsynced listing changes</span>
           <button
             onClick={onSync}
-            className="flex h-[28px] items-center gap-[6px] rounded-[6px] bg-[#830051] text-white px-[12px] hover:bg-[#6D0043] active:scale-[0.96] shadow-sm"
+            className="flex h-[28px] items-center gap-[6px] rounded-[6px] bg-brand-1 text-white px-[12px] hover:bg-[#6D0043] active:scale-[0.96] shadow-sm"
           >
             <SyncIcon color="white" />
             <span className="t-small font-semibold">Sync to Code</span>
@@ -2906,8 +3017,8 @@ function _DEAD_LISTING_PREVIEW_BODY() {
 
       {/* Pagination Controls Bar */}
       {isPaginationMode && (
-        <div className="h-[40px] shrink-0 border-t border-[#D8DADA] bg-[#F8F8F8] flex items-center justify-between px-[16px]">
-          <span className="t-small text-[#888E8E]">
+        <div className="h-[40px] shrink-0 border-t border-border-default bg-[#F8F8F8] flex items-center justify-between px-[16px]">
+          <span className="t-small text-text-secondary">
             Page displays {F} frozen + {S} active = {renderedCols.length} columns. (Total {listingColumns.length})
           </span>
           <div className="flex items-center gap-[8px]">
@@ -2918,7 +3029,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
             >
               <ChevronLeftIcon />
             </button>
-            <span className="t-small font-medium text-[#3C4242]">
+            <span className="t-small font-medium text-text-primary">
               Page {currentPage} of {totalPages}
             </span>
             <button
@@ -2936,7 +3047,7 @@ function _DEAD_LISTING_PREVIEW_BODY() {
       {contextMenu && (
         <div
           style={{ top: contextMenu.y, left: contextMenu.x, position: 'fixed', zIndex: 100 }}
-          className="bg-white border border-[#D8DADA] rounded-[4px] shadow-lg py-[4px] w-[180px]"
+          className="bg-white border border-border-default rounded-[4px] shadow-lg py-[4px] w-[180px]"
         >
           <button
             onClick={() => {
@@ -2948,9 +3059,9 @@ function _DEAD_LISTING_PREVIEW_BODY() {
               }
               setContextMenu(null);
             }}
-            className="w-full text-left px-[12px] py-[6px] t-small text-[#3C4242] hover:bg-[#F8F7F7] flex items-center gap-[6px]"
+            className="w-full text-left px-[12px] py-[6px] t-small text-text-primary hover:bg-bg-light flex items-center gap-[6px]"
           >
-            <FreezeIcon color="#888E8E" />
+            <FreezeIcon color="var(--color-text-secondary)" />
             {contextMenu.colIndex < F ? "Unfreeze columns" : "Freeze up to this column"}
           </button>
         </div>
@@ -3170,7 +3281,7 @@ function ShellPreview({
             <button
               onClick={onMetadataClick}
               className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
-                metadataOpen ? "bg-[#F4E8EE]" : "hover:bg-black/5"
+                metadataOpen ? "bg-az-secondary" : "hover:bg-black/5"
               }`}
               aria-label="Toggle metadata"
             >
@@ -3183,22 +3294,22 @@ function ShellPreview({
         <div className="min-h-0 min-w-0 flex-1 overflow-auto p-[16px]">
           {/* Shell preview table */}
           <div className="mb-[12px]">
-            <p className="t-small font-semibold text-[#3C4242] mb-[2px]">{shellData.tableNumber}. {shellData.tableTitle}</p>
-            <p className="t-small text-[#888E8E]">{shellData.population}</p>
+            <p className="t-small font-semibold text-text-primary mb-[2px]">{shellData.tableNumber}. {shellData.tableTitle}</p>
+            <p className="t-small text-text-secondary">{shellData.population}</p>
           </div>
-          <div className="overflow-x-auto border-[0.6px] border-[#D8DADA] rounded-[4px]">
+          <div className="overflow-x-auto border-[0.6px] border-border-default rounded-[4px]">
             <table className="w-full border-collapse">
               {/* Column group header */}
               <thead>
-                <tr className="border-b-[0.5px] border-[#D8DADA] bg-[#F8F7F7]">
-                  <th className="sticky left-0 z-10 bg-[#F8F7F7] text-left t-table font-semibold py-[6px] px-[8px] whitespace-nowrap border-r-[0.5px] border-[#D8DADA] min-w-[180px]">
+                <tr className="border-b-[0.5px] border-border-default bg-bg-light">
+                  <th className="sticky left-0 z-10 bg-bg-light text-left t-table font-semibold py-[6px] px-[8px] whitespace-nowrap border-r-[0.5px] border-border-default min-w-[180px]">
                     {selectedItemName.startsWith('Listing') ? 'Subject ID' : 'Parameter'}
                   </th>
                   {shellData.columnGroups.map((group, gi) => (
                     <th
                       key={gi}
                       colSpan={group.span}
-                      className="text-center t-table font-semibold py-[6px] px-[8px] whitespace-nowrap border-r-[0.5px] border-[#D8DADA]"
+                      className="text-center t-table font-semibold py-[6px] px-[8px] whitespace-nowrap border-r-[0.5px] border-border-default"
                       style={{ whiteSpace: 'pre-line' }}
                     >
                       {group.name}
@@ -3206,14 +3317,14 @@ function ShellPreview({
                   ))}
                 </tr>
                 {/* Sub-column header */}
-                <tr className="border-b-[0.5px] border-[#D8DADA] bg-[#F8F7F7]">
-                  <th className="sticky left-0 z-10 bg-[#F8F7F7] text-left t-small font-medium py-[4px] px-[8px] whitespace-nowrap border-r-[0.5px] border-[#D8DADA]">
+                <tr className="border-b-[0.5px] border-border-default bg-bg-light">
+                  <th className="sticky left-0 z-10 bg-bg-light text-left t-small font-medium py-[4px] px-[8px] whitespace-nowrap border-r-[0.5px] border-border-default">
                     
                   </th>
                   {shellData.columns.map((col, ci) => (
                     <th
                       key={ci}
-                      className="text-center t-small font-medium py-[4px] px-[6px] whitespace-nowrap border-r-[0.5px] border-[#D8DADA] last:border-r-0"
+                      className="text-center t-small font-medium py-[4px] px-[6px] whitespace-nowrap border-r-[0.5px] border-border-default last:border-r-0"
                     >
                       {col}
                     </th>
@@ -3224,11 +3335,11 @@ function ShellPreview({
                 {shellData.rows.map((row, ri) => (
                   <tr
                     key={ri}
-                    className={`border-b-[0.5px] border-[#D8DADA] last:border-0 ${row.isHeader ? 'bg-[#F8F7F7]' : 'bg-white'} hover:bg-[#F4E8EE] cursor-pointer`}
+                    className={`border-b-[0.5px] border-border-default last:border-0 ${row.isHeader ? 'bg-bg-light' : 'bg-white'} hover:bg-az-secondary cursor-pointer`}
                     onClick={onBlockClick}
                   >
                     <td
-                      className={`sticky left-0 z-10 ${row.isHeader ? 'bg-[#F8F7F7]' : 'bg-white'} text-left t-table py-[6px] px-[8px] whitespace-nowrap border-r-[0.5px] border-[#D8DADA] ${row.isHeader ? 'font-semibold text-[#3C4242]' : 'text-[#3C4242]'}`}
+                      className={`sticky left-0 z-10 ${row.isHeader ? 'bg-bg-light' : 'bg-white'} text-left t-table py-[6px] px-[8px] whitespace-nowrap border-r-[0.5px] border-border-default ${row.isHeader ? 'font-semibold text-text-primary' : 'text-text-primary'}`}
                       style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
                     >
                       {row.category}
@@ -3236,7 +3347,7 @@ function ShellPreview({
                     {row.values.map((val, vi) => (
                       <td
                         key={vi}
-                        className={`text-center t-table py-[6px] px-[6px] whitespace-nowrap border-r-[0.5px] border-[#D8DADA] last:border-r-0 ${row.isHeader ? 'font-semibold' : ''}`}
+                        className={`text-center t-table py-[6px] px-[6px] whitespace-nowrap border-r-[0.5px] border-border-default last:border-r-0 ${row.isHeader ? 'font-semibold' : ''}`}
                       >
                         {val}
                       </td>
@@ -3248,8 +3359,8 @@ function ShellPreview({
           </div>
           {/* Shell note */}
           <div className="mt-[12px] flex items-center gap-[4px]">
-            <div className="h-[6px] w-[6px] rounded-full bg-[#830051]" />
-            <p className="t-small text-[#888E8E]">Shell preview — data shown is illustrative structure. Click a row to view metadata.</p>
+            <div className="h-[6px] w-[6px] rounded-full bg-brand-1" />
+            <p className="t-small text-text-secondary">Shell preview — data shown is illustrative structure. Click a row to view metadata.</p>
           </div>
         </div>
         {/* Metadata left-edge drag handle — uses WorkspaceDivider pattern */}
@@ -3257,7 +3368,7 @@ function ShellPreview({
           <WorkspaceDivider onDrag={(delta) => onMetadataResize(-delta)} />
         )}
         <div
-          className="shrink-0 overflow-hidden py-[4px] pr-[4px]"
+          className={`shrink-0 py-[4px] pr-[4px] relative z-20 ${metadataOpen ? '' : 'overflow-hidden'}`}
           style={{
             width: metadataOpen ? `${metadataWidth}px` : "0px",
             opacity: metadataOpen ? 1 : 0,
@@ -3265,7 +3376,7 @@ function ShellPreview({
           }}
         >
           {metadataOpen && (
-            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-[#EBECEC] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)]">
               <MetadataPanel onClose={onMetadataClose} />
             </div>
           )}
@@ -3329,16 +3440,16 @@ function GroupCodeViewer({ lines }: { lines: string[] }) {
   const [expanded, setExpanded] = useState(true);
   return (
     <div className="relative rounded-[2px] w-full mt-[4px]">
-      <div className="overflow-clip rounded-[2px] border-[0.6px] border-[#D8DADA]">
-        <button onClick={() => setExpanded(v => !v)} className="w-full flex items-center gap-[4px] px-[10px] py-[8px] bg-white hover:bg-[#F8F7F7] transition-colors active:scale-[0.99]" aria-expanded={expanded}>
-          <span className="t-small text-[#3C4242]">Group Code</span>
+      <div className="overflow-clip rounded-[2px] border-[0.6px] border-border-default">
+        <button onClick={() => setExpanded(v => !v)} className="w-full flex items-center gap-[4px] px-[10px] py-[8px] bg-white hover:bg-bg-light transition-colors active:scale-[0.99]" aria-expanded={expanded}>
+          <span className="t-small text-text-primary">Group Code</span>
           <div className="shrink-0 size-[16px] flex items-center justify-center transition-transform duration-150" style={{ transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
             <SvgIcon className="h-[8px] w-[9px]" viewBox="0 0 8.49 5.19"><path d="M0.75 0.75L4.24 4.24L7.72 0.75" stroke="#888E8E" strokeWidth="1.5" fill="none" /></SvgIcon>
           </div>
         </button>
         {expanded && (
-          <div className="relative border-t-[0.6px] border-[#D8DADA]">
-            <div className="overflow-auto bg-[#F8F7F7]" style={{ maxHeight: '220px' }}>
+          <div className="relative border-t-[0.6px] border-border-default">
+            <div className="overflow-auto bg-bg-light" style={{ maxHeight: '220px' }}>
               <div className="py-[4px]" style={{ minWidth: 'max-content' }}>
                 {lines.map((line, i) => (
                   <div key={i} className="flex items-start h-[20px] px-[10px]">
@@ -3346,7 +3457,7 @@ function GroupCodeViewer({ lines }: { lines: string[] }) {
                       <p className="absolute left-0 top-px whitespace-nowrap select-none text-[12px] leading-[20px] text-[#B2B4B4]" style={{ fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{i + 1}</p>
                     </div>
                     <div className="flex-1 min-w-px h-full flex items-center">
-                      <p className="whitespace-nowrap text-[13px] leading-[1.25] text-[#888E8E]" style={{ fontFamily: "'Menlo','Consolas',monospace" }}>{line}</p>
+                      <p className="whitespace-nowrap text-[13px] leading-[1.25] text-text-secondary" style={{ fontFamily: "'Menlo','Consolas',monospace" }}>{line}</p>
                     </div>
                   </div>
                 ))}
@@ -3475,7 +3586,7 @@ function BlocksTabContent({
 
   const LinkIcon = () => (
     <SvgIcon className="h-[12px] w-[12px] inline-block ml-[4px]" viewBox="0 0 24 24">
-      <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" fill="#830051" />
+      <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" fill="var(--color-brand-1)" />
     </SvgIcon>
   );
 
@@ -3489,8 +3600,8 @@ function BlocksTabContent({
             onClick={() => handleSidebarClick(block.id)}
             className={`w-full text-left px-[12px] py-[10px] t-small leading-[1.3] transition-colors truncate ${
               selectedBlockId === block.id
-                ? 'bg-[#F4E8EE] text-[#830051] font-medium border-l-[3px] border-l-[#830051] pl-[9px]'
-                : 'text-[#3C4242] hover:bg-[#F8F7F7] border-l-[3px] border-l-transparent pl-[9px]'
+                ? 'bg-az-secondary text-brand-1 font-medium border-l-[3px] border-l-brand-1 pl-[9px]'
+                : 'text-text-primary hover:bg-bg-light border-l-[3px] border-l-transparent pl-[9px]'
             }`}
             title={block.name}
           >
@@ -3508,25 +3619,25 @@ function BlocksTabContent({
             data-block-id={block.id}
             className={`px-[16px] py-[14px] ${blockIndex !== blocks.length - 1 ? 'border-b border-[#E5E8E8]' : ''}`}
           >
-            <p className="text-[14px] font-bold text-[#3C4242] mb-[12px]">{block.name}</p>
+            <p className="text-[14px] font-bold text-text-primary mb-[12px]">{block.name}</p>
             <div className="flex flex-col gap-[12px]">
               {block.fields.map((field) => (
                 <div key={field.id}>
-                  <p className="t-small text-[#888E8E] mb-[4px]">
+                  <p className="t-small text-text-secondary mb-[4px]">
                     {field.required && <span className="text-[#D32F2F]">* </span>}
                     {field.label}
                     {field.hasLink && <LinkIcon />}
                   </p>
                   {field.type === 'tag' ? (
                     <div className={`flex flex-wrap gap-[4px] min-h-[32px] px-[8px] py-[4px] rounded-[4px] border items-center ${
-                      isLocked ? 'border-transparent bg-[#F8F7F7]' : 'border-[#D8DADA] bg-white'
+                      isLocked ? 'border-transparent bg-bg-light' : 'border-border-default bg-white'
                     }`}>
                       <span className={`inline-flex items-center gap-[6px] h-[24px] px-[8px] rounded-[12px] t-small ${
-                        isLocked ? 'bg-[#EBEBEB] text-[#B2B4B4]' : 'bg-[#F0F0F0] text-[#3C4242]'
+                        isLocked ? 'bg-[#EBEBEB] text-[#B2B4B4]' : 'bg-[#F0F0F0] text-text-primary'
                       }`}>
                         {field.value}
                         {!isLocked && (
-                          <button className="flex items-center justify-center h-[14px] w-[14px] rounded-full text-[#888E8E] hover:text-[#3C4242] text-[13px] leading-none">×</button>
+                          <button className="flex items-center justify-center h-[14px] w-[14px] rounded-full text-text-secondary hover:text-text-primary text-[13px] leading-none">×</button>
                         )}
                       </span>
                     </div>
@@ -3537,8 +3648,8 @@ function BlocksTabContent({
                       readOnly
                       className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[4px] border t-small outline-none focus:outline-none ${
                         isLocked
-                          ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed'
-                          : 'bg-white border-[#D8DADA] text-[#3C4242]'
+                          ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed'
+                          : 'bg-white border-border-default text-text-primary'
                       }`}
                     />
                   )}
@@ -3724,6 +3835,21 @@ function MetadataPanel({
     !arePageBreakColumnsEqual(pageBreakColumnBaseline.pageBreakColumns ?? [], pageBreakColumns)
   );
 
+  // Refs and Auto-scrolling to the first affected field on mount
+  const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (docType === 'listing') {
+      setTimeout(() => {
+        if (isRepeatColumnEdited && fieldRefs.current['idlist']) {
+          fieldRefs.current['idlist'].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (isPageBreakColumnEdited && fieldRefs.current['idpage']) {
+          fieldRefs.current['idpage'].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+    }
+  }, []);
+
   // ── Stats ──
   const isBasicTab = activeTab === 'basic';
   
@@ -3862,6 +3988,12 @@ function MetadataPanel({
 
   const handleUpdateCode = () => {
     if (docType === 'listing') {
+      if (isRepeatColumnEdited) {
+        onRepeatColumnBaselineChange?.({ frozenUntilIndex: frozenUntilIndex ?? null });
+      }
+      if (isPageBreakColumnEdited) {
+        onPageBreakColumnBaselineChange?.({ pageSepActive: pageSepActive ?? false, pageColumnCounts, pageBreakColumns: [...pageBreakColumns] });
+      }
       setListingBlocks(prev => prev.map(b => ({
         ...b,
         fields: b.fields.map(f => f.status === 'edited' ? { ...f, status: 'default' } : f)
@@ -3888,14 +4020,14 @@ function MetadataPanel({
   };
 
   const selectAllCheckboxIcon = () => {
-    if (selectAllState === "checked") return <><rect width="20" height="20" rx="1" fill="#830051" /><path d="M15.6567 7.58563L9.99951 13.2419L10.0005 13.2429L8.58545 14.6569L7.17139 13.2429V13.2419L4.34326 10.4138L5.75732 8.99969L8.58545 11.8278L14.2427 6.17157L15.6567 7.58563Z" fill="white" /></>;
-    if (selectAllState === "indeterminate") return <><rect width="20" height="20" rx="1" fill="#830051" /><rect x="5" y="9" width="10" height="2" fill="white" /></>;
+    if (selectAllState === "checked") return <><rect width="20" height="20" rx="1" fill="var(--color-brand-1)" /><path d="M15.6567 7.58563L9.99951 13.2419L10.0005 13.2429L8.58545 14.6569L7.17139 13.2429V13.2419L4.34326 10.4138L5.75732 8.99969L8.58545 11.8278L14.2427 6.17157L15.6567 7.58563Z" fill="white" /></>;
+    if (selectAllState === "indeterminate") return <><rect width="20" height="20" rx="1" fill="var(--color-brand-1)" /><rect x="5" y="9" width="10" height="2" fill="white" /></>;
     return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 20 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
   };
 
   const fieldCheckboxIcon = (confirmed: boolean) => {
     if (!confirmed) return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 20 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
-    return <><rect width="20" height="20" rx="1" fill="#830051" /><path d="M15.6567 7.58563L9.99951 13.2419L10.0005 13.2429L8.58545 14.6569L7.17139 13.2429V13.2419L4.34326 10.4138L5.75732 8.99969L8.58545 11.8278L14.2427 6.17157L15.6567 7.58563Z" fill="white" /></>;
+    return <><rect width="20" height="20" rx="1" fill="var(--color-brand-1)" /><path d="M15.6567 7.58563L9.99951 13.2419L10.0005 13.2429L8.58545 14.6569L7.17139 13.2429V13.2419L4.34326 10.4138L5.75732 8.99969L8.58545 11.8278L14.2427 6.17157L15.6567 7.58563Z" fill="white" /></>;
   };
 
   const groupStyles = getFieldStyles(groupStatus, false);
@@ -3903,12 +4035,12 @@ function MetadataPanel({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       {/* Top Bar */}
-      <div className="flex h-[40px] shrink-0 items-center justify-between border-b border-[#D8DADA] bg-white">
+      <div className="flex h-[40px] shrink-0 items-center justify-between border-b border-border-default bg-white">
         <div className="flex h-full items-center">
           {(["basic", "blocks"] as const).map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`relative flex h-full items-center justify-center border-b-2 px-[16px] active:scale-[0.96] ${activeTab === tab ? "border-[#830051]" : "border-transparent"}`}>
-              <p className={`t-small font-medium ${activeTab === tab ? "text-[#830051]" : "text-[#3C4242]"}`}>
+              className={`relative flex h-full items-center justify-center border-b-2 px-[16px] active:scale-[0.96] ${activeTab === tab ? "border-brand-1" : "border-transparent"}`}>
+              <p className={`t-small font-medium ${activeTab === tab ? "text-brand-1" : "text-text-primary"}`}>
                 {tab === "basic" ? (docType === 'listing' ? "Basic info" : "Basic Information") : (docType === 'listing' ? "Column" : "Blocks")}
               </p>
               {/* Red dot on the upper right corner of the tab text */}
@@ -3925,21 +4057,21 @@ function MetadataPanel({
         <div className="flex items-center pr-[12px] gap-[4px]">
           <TooltipText label="Batch Edit Macro">
             <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Batch edit">
-              <LocalIcon src={batchMicroIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+              <LocalIcon src={batchMicroIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
             </button>
           </TooltipText>
         </div>
       </div>
 
       {/* Status Bar */}
-      <div className="flex items-center justify-end bg-[#F8F7F7] px-[12px] py-[8px]">
+      <div className="flex items-center justify-end bg-bg-light px-[12px] py-[8px]">
         <div className="flex items-center gap-[6px]">
           <button onClick={isLocked ? undefined : handleSelectAll} disabled={isLocked}
             className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
             aria-label="Select all">
             <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{selectAllCheckboxIcon()}</SvgIcon>
           </button>
-          <p className="t-small text-[#3C4242]">{confirmedCount}/{totalFields} confirmed</p>
+          <p className="t-small text-text-primary">{confirmedCount}/{totalFields} confirmed</p>
         </div>
       </div>
 
@@ -3972,10 +4104,10 @@ function MetadataPanel({
                     }
 
                     return (
-                      <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
+                      <div key={field.id} ref={el => { fieldRefs.current[field.id] = el; }} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                         <div className="flex flex-col gap-[4px] p-[8px]">
                           <div className="flex h-[20px] items-center justify-between">
-                            <p className="t-small text-[#3C4242]">{field.label}</p>
+                            <p className="t-small text-text-primary">{field.label}</p>
                             <button
                               onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)}
                               disabled={isLocked}
@@ -3991,12 +4123,12 @@ function MetadataPanel({
                               value={displayValue}
                               readOnly={isLocked || isReadOnlyField}
                               onChange={isLocked || isReadOnlyField ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${
+                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${
                                 isReadOnlyField
-                                  ? 'border-transparent bg-transparent pl-0 text-[#3C4242]' // Hide border and style nicely for read-only config fields
+                                  ? 'border-transparent bg-transparent pl-0 text-text-primary' // Hide border and style nicely for read-only config fields
                                   : isLocked
-                                    ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed'
-                                    : `bg-white ${styles.inputBorder || 'border-[#D8DADA]'}`
+                                    ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed'
+                                    : `bg-white ${styles.inputBorder || 'border-border-default'}`
                               }`}
                             />
                           </div>
@@ -4016,7 +4148,7 @@ function MetadataPanel({
                       <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                         <div className="flex flex-col gap-[4px] p-[8px]">
                           <div className="flex h-[20px] items-center justify-between">
-                            <p className="t-small text-[#3C4242]">{field.label}</p>
+                            <p className="t-small text-text-primary">{field.label}</p>
                             <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
                               className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
                               aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
@@ -4026,7 +4158,7 @@ function MetadataPanel({
                           <div className="relative">
                             <input type="text" value={field.value} readOnly={isLocked}
                               onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${isLocked ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-[#D8DADA]'}`}`} />
+                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
                             {!isLocked && field.status === 'default' && (
                               <div className="absolute right-[8px] top-[8px] pointer-events-none">
                                 <SvgIcon className="h-[16px] w-[16px]"><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>
@@ -4042,7 +4174,7 @@ function MetadataPanel({
                 <div className={`${groupStyles.containerBg} rounded-[4px] border ${groupStyles.containerBorder}`}>
                   <div className="flex flex-col gap-[4px] p-[8px]">
                     <div className="flex h-[20px] items-center justify-between">
-                      <p className="t-small text-[#3C4242]">Group Name</p>
+                      <p className="t-small text-text-primary">Group Name</p>
                       <button onClick={isLocked ? undefined : () => { if (groupStatus !== 'edited') setGroupConfirmed(!groupConfirmed); }} disabled={isLocked}
                         className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
                         aria-label={groupConfirmed ? "Unconfirm" : "Confirm"}>
@@ -4051,15 +4183,15 @@ function MetadataPanel({
                     </div>
                     <div className="relative" ref={dropdownRef}>
                       <button onClick={isLocked ? undefined : () => setGroupDropdownOpen(!groupDropdownOpen)} disabled={isLocked}
-                        className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-left flex items-center justify-between ${isLocked ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${groupStyles.inputBorder || 'border-[#D8DADA]'} text-[#3C4242]`}`}>
+                        className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-left flex items-center justify-between ${isLocked ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${groupStyles.inputBorder || 'border-border-default'} text-text-primary`}`}>
                         <span className="truncate">{GROUP_OPTIONS[selectedGroupIdx]?.name || 'Select...'}</span>
                         {!isLocked && <SvgIcon className="h-[16px] w-[16px]" shrink-0><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>}
                       </button>
                       {groupDropdownOpen && !isLocked && (
-                        <div className="absolute top-full left-0 right-0 mt-[2px] bg-white border border-[#D8DADA] rounded-[4px] shadow-lg z-[60] max-h-[200px] overflow-auto">
+                        <div className="absolute top-full left-0 right-0 mt-[2px] bg-white border border-border-default rounded-[4px] shadow-lg z-[60] max-h-[200px] overflow-auto">
                           {GROUP_OPTIONS.map((opt, idx) => (
                             <button key={idx} onClick={() => handleGroupSelect(idx)}
-                              className={`w-full text-left px-[8px] py-[6px] t-small hover:bg-[#F8F7F7] ${idx === selectedGroupIdx ? 'text-[#830051] font-medium' : 'text-[#3C4242]'}`}>{opt.name}</button>
+                              className={`w-full text-left px-[8px] py-[6px] t-small hover:bg-bg-light ${idx === selectedGroupIdx ? 'text-brand-1 font-medium' : 'text-text-primary'}`}>{opt.name}</button>
                           ))}
                         </div>
                       )}
@@ -4078,10 +4210,10 @@ function MetadataPanel({
               {listingColumnFields.map((field) => {
                 const styles = getFieldStyles(field.status, false);
                 return (
-                  <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
+                  <div key={field.id} ref={el => { fieldRefs.current[field.id] = el; }} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                     <div className="flex flex-col gap-[4px] p-[8px]">
                       <div className="flex h-[20px] items-center justify-between">
-                        <p className="t-small text-[#3C4242]">{field.label}</p>
+                        <p className="t-small text-text-primary">{field.label}</p>
                         <button
                           onClick={isLocked ? undefined : () => {
                             setListingColumnFields(prev => prev.map(f =>
@@ -4100,8 +4232,8 @@ function MetadataPanel({
                         value={field.value}
                         onChange={isLocked ? undefined : (e) => handleListingColumnFieldEdit(field.id, e.target.value)}
                         readOnly={isLocked}
-                        className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${
-                          isLocked ? 'bg-[#F8F7F7] border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-[#D8DADA]'}`
+                        className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${
+                          isLocked ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`
                         }`}
                       />
                     </div>
@@ -4122,17 +4254,44 @@ function MetadataPanel({
 
       {/* Add Changes to Chat Button */}
       {hasAnyEdits && (
-        <div className="border-t border-[#D8DADA] p-[12px] flex justify-start">
+        <div className="border-t border-border-default p-[12px] flex justify-start">
           <button
             onClick={isLocked ? undefined : () => {
               if (docType === 'listing') {
-                const text = `You are given metadata changes for this listing. Apply these changes to update the code accordingly.\n\n====================\nLISTING LEVEL CHANGES`;
+                const changes: string[] = [];
+                listingBlocks.forEach(b => {
+                  b.fields.forEach(f => {
+                    if (f.id === 'idlist' && isRepeatColumnEdited) {
+                      const displayValue = Array.from({ length: columnCount }, (_, i) => frozenUntilIndex !== null && i <= frozenUntilIndex ? 'Y' : 'N').join('#');
+                      changes.push(`- ${f.label}: ${displayValue}`);
+                    } else if (f.id === 'idpage' && isPageBreakColumnEdited) {
+                      const displayValue = Array.from({ length: columnCount }, (_, i) => pageBreakColumns.includes(i - 1) ? 'Y' : 'N').join('#');
+                      changes.push(`- ${f.label}: ${displayValue}`);
+                    } else if (f.status === 'edited' && f.id !== 'idlist' && f.id !== 'idpage') {
+                      changes.push(`- ${f.label}: ${f.value}`);
+                    }
+                  });
+                });
+                const columnChanges: string[] = [];
+                listingColumnFields.forEach(f => {
+                  if (f.status === 'edited') {
+                    columnChanges.push(`- ${f.label}: ${f.value}`);
+                  }
+                });
+
+                let text = `You are given metadata changes for this listing. Apply these changes to update the code accordingly.`;
+                if (changes.length > 0) {
+                  text += `\n\n====================\nLISTING LEVEL CHANGES\n` + changes.join('\n');
+                }
+                if (columnChanges.length > 0) {
+                  text += `\n\n====================\nCOLUMN LEVEL CHANGES\n` + columnChanges.join('\n');
+                }
                 onAddChangesToChat?.(text);
               }
               handleUpdateCode();
             }}
             disabled={isLocked}
-            className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isLocked ? 'bg-[#D8DADA] text-[#888E8E] cursor-not-allowed' : 'bg-[#830051] text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
+            className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isLocked ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
           >
             <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={isLocked ? '#888E8E' : 'white'} />
             Add Changes to Chat
@@ -4207,7 +4366,7 @@ quit;
     <>
       <TooltipText label="Save Code">
         <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Save">
-          <LocalIcon src={saveIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+          <LocalIcon src={saveIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
         </button>
       </TooltipText>
       {[
@@ -4216,19 +4375,19 @@ quit;
       ].map(({ label, icon }) => (
         <TooltipText key={label} label={label}>
           <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label={label}>
-            <LocalIcon src={icon} className="h-[16px] w-[16px]" color="#888E8E" />
+            <LocalIcon src={icon} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
           </button>
         </TooltipText>
       ))}
       <TooltipText label={isLocked ? "Unlock Table Code" : "Lock Table Code"}>
         <button
           onClick={onToggleLock}
-          className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${isLocked ? "bg-[#F4E8EE]" : "hover:bg-black/5"}`}
+          className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${isLocked ? "bg-az-secondary" : "hover:bg-black/5"}`}
           aria-label={isLocked ? "Unlock code" : "Lock code"}
         >
           {isLocked
-            ? <LockTreeIcon className="h-[16px] w-[16px]" color="#830051" />
-            : <UnlockTreeIcon className="h-[16px] w-[16px]" color="#888E8E" />}
+            ? <LockTreeIcon className="h-[16px] w-[16px]" color="var(--color-brand-1)" />
+            : <UnlockTreeIcon className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />}
         </button>
       </TooltipText>
     </>
@@ -4242,10 +4401,10 @@ quit;
       />
       <div className="min-h-0 flex-1 overflow-auto">
         <div className="flex min-w-max font-mono text-[13px] leading-[20px]">
-          <div className="select-none bg-[#F8F7F7] px-[8px] py-[16px] text-right text-[#999999] shrink-0">
+          <div className="select-none bg-bg-light px-[8px] py-[16px] text-right text-[#999999] shrink-0">
             {codeLines.map((_, index) => <div key={index}>{index + 1}</div>)}
           </div>
-          <pre className="px-[16px] py-[16px] text-[#3C4242]">
+          <pre className="px-[16px] py-[16px] text-text-primary">
             <code>{codeContent}</code>
           </pre>
         </div>
@@ -4268,7 +4427,7 @@ function FloatingAICopilotButton({
       disabled={disabled}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group absolute bottom-[24px] right-[24px] z-50 flex h-[40px] items-center justify-center overflow-hidden rounded-full bg-[#830051] shadow-[0px_2px_3px_rgba(0,0,0,0.05),0px_4px_8px_rgba(0,0,0,0.1)] transition-all duration-200 active:scale-[0.96] disabled:pointer-events-none disabled:bg-[#D8DADA]"
+      className="group absolute bottom-[24px] right-[24px] z-50 flex h-[40px] items-center justify-center overflow-hidden rounded-full bg-brand-1 shadow-[0px_2px_3px_rgba(0,0,0,0.05),0px_4px_8px_rgba(0,0,0,0.1)] transition-all duration-200 active:scale-[0.96] disabled:pointer-events-none disabled:bg-border-default"
       style={{
         width: isHovered ? 86 : 40,
         paddingLeft: isHovered ? 12 : 0,
@@ -4333,6 +4492,7 @@ function WorkspaceContent({
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [codeOpen, setCodeOpen] = useState(true);
   const [aiCopilotOpen, setAiCopilotOpen] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [panelView, setPanelView] = useState<PanelView>('both');
   const [shellPreviewWidth, setShellPreviewWidth] = useState(560);
   const [metadataWidth, setMetadataWidth] = useState(380);
@@ -4341,6 +4501,7 @@ function WorkspaceContent({
   // Ref to measure content area for adaptive panel sizing
   const contentAreaRef = useRef<HTMLDivElement>(null);
   const [contentAreaWidth, setContentAreaWidth] = useState(0);
+  const [contentAreaHeight, setContentAreaHeight] = useState(0);
 
   // Refs for panel widths — used by compression effect to read latest values without re-running on width changes
   const metadataWidthRef = useRef(metadataWidth);
@@ -4419,15 +4580,27 @@ function WorkspaceContent({
     }
   }, [shellPreviewWidth, panelView]);
 
-  // Measure content area width via ResizeObserver
+  // Measure content area dimensions via ResizeObserver
   useEffect(() => {
     if (!contentAreaRef.current) return;
     const observer = new ResizeObserver((entries) => {
       setContentAreaWidth(entries[0].contentRect.width);
+      setContentAreaHeight(entries[0].contentRect.height);
     });
     observer.observe(contentAreaRef.current);
     return () => observer.disconnect();
   }, []);
+
+  const lastPanelLayoutRef = useRef<PanelLayout>('horizontal');
+  useEffect(() => {
+    if (panelLayout === 'vertical' && contentAreaHeight > 0) {
+      if (lastPanelLayoutRef.current !== 'vertical') {
+        const halfHeight = Math.floor((contentAreaHeight - 4) / 2);
+        setShellHeight(halfHeight);
+      }
+    }
+    lastPanelLayoutRef.current = panelLayout;
+  }, [panelLayout, contentAreaHeight]);
 
   // Adaptive panel compression: when Code < min, compress panels in order meta → shell → tree → AI
   // Only runs on structural changes (content area resize, panel open/close), NOT on width changes from dragging
@@ -4615,17 +4788,17 @@ function WorkspaceContent({
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-1 bg-[#F8F7F7]">
+    <div className="flex h-full min-w-0 flex-1 bg-bg-light">
       <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         <div
           className="shrink-0 overflow-hidden"
           style={{
             width: treeListOpen ? `${treeListWidth}px` : "0px",
             opacity: treeListOpen ? 1 : 0,
-            transition: treeListOpen ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
+            transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
           }}
         >
-          <div className="flex h-full w-full flex-col bg-[#F8F7F7]">
+          <div className="flex h-full w-full flex-col bg-bg-light">
             <div className="flex h-[48px] shrink-0 items-center gap-[8px] px-[10px]">
               <TooltipText label="Back to Home">
                 <button
@@ -4634,12 +4807,12 @@ function WorkspaceContent({
                   aria-label="Go to Home"
                 >
                   <AtlasLogoIcon className="group-hover:hidden" />
-                  <LocalIcon src={homeIconUrl} className="hidden h-[16px] w-[16px] group-hover:block" color="#888E8E" />
+                  <LocalIcon src={homeIconUrl} className="hidden h-[16px] w-[16px] group-hover:block" color="var(--color-text-secondary)" />
                 </button>
               </TooltipText>
               <div className="min-w-0 flex-1">
-                <p className="t-small truncate font-medium text-[#3C4242]">AZE2001-301</p>
-                <p className="truncate text-[10px] leading-[15px] text-[#888E8E]">{currentEvent}</p>
+                <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
+                <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
               </div>
               <TooltipText label="Event Information">
                 <button
@@ -4655,7 +4828,7 @@ function WorkspaceContent({
                   className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                   aria-label="Collapse tree list"
                 >
-                  <LocalIcon src={collapseIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+                  <LocalIcon src={collapseIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
                 </button>
               </TooltipText>
             </div>
@@ -4681,11 +4854,13 @@ function WorkspaceContent({
         {/* TreeList ↔ Main panel divider */}
         {treeListOpen && (
           <WorkspaceDivider
+            onDragStart={() => setIsResizing(true)}
+            onDragEnd={() => setIsResizing(false)}
             onDrag={(delta) => setTreeListWidth((width) => clamp(width + delta, constraints.treeList.min, constraints.treeList.max))}
           />
         )}
 
-        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-[#EBECEC] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] my-[4px] mr-[4px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
+        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] my-[4px] mr-[4px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
           <ViewToggleBar
             treeListOpen={treeListOpen}
             onToggleTreeList={() => setTreeListOpen(true)}
@@ -4711,8 +4886,8 @@ function WorkspaceContent({
                       }
                       className={`overflow-hidden flex flex-col ${panelView === 'both' ? 'shrink-0' : ''} ${
                         panelLayout === 'vertical'
-                          ? (panelView === 'both' ? 'border-b border-[#EBECEC]' : '')
-                          : (panelView === 'both' || aiCopilotOpen ? 'border-r border-[#EBECEC]' : '')
+                          ? (panelView === 'both' ? 'border-b border-graphite-10' : '')
+                          : (panelView === 'both' || aiCopilotOpen ? 'border-r border-graphite-10' : '')
                       }`}
                     >
                       <ListingShellPreview
@@ -4743,6 +4918,8 @@ function WorkspaceContent({
                   {panelView === 'both' && (
                     panelLayout === 'vertical' ? (
                       <HorizontalWorkspaceDivider
+                        onDragStart={() => setIsResizing(true)}
+                        onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellHeight((h) => {
                           const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
                           const minH = 240;
@@ -4752,6 +4929,8 @@ function WorkspaceContent({
                       />
                     ) : (
                       <WorkspaceDivider
+                        onDragStart={() => setIsResizing(true)}
+                        onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, constraints.shellPreview.max))}
                       />
                     )
@@ -4772,16 +4951,18 @@ function WorkspaceContent({
                 {/* AI Copilot Panel (always on the right) */}
                 {aiCopilotOpen && (
                   <WorkspaceDivider
+                    onDragStart={() => setIsResizing(true)}
+                    onDragEnd={() => setIsResizing(false)}
                     onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, constraints.aiCopilot.max))}
                   />
                 )}
 
                 <div
-                  className={`shrink-0 overflow-hidden ${aiCopilotOpen ? 'border-l border-[#EBECEC]' : ''}`}
+                  className={`shrink-0 overflow-hidden ${aiCopilotOpen ? 'border-l border-graphite-10' : ''}`}
                   style={{
                     width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
                     opacity: aiCopilotOpen ? 1 : 0,
-                    transition: aiCopilotOpen ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
+                    transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
                   }}
                 >
                   {aiCopilotOpen && (
@@ -4807,8 +4988,8 @@ function WorkspaceContent({
                     <div
                       className={`overflow-hidden ${panelView === 'shell' ? 'flex-1' : 'shrink-0'} ${
                         panelLayout === 'vertical'
-                          ? (codeOpen ? 'border-b border-[#EBECEC]' : '')
-                          : (codeOpen || aiCopilotOpen ? 'border-r border-[#EBECEC]' : '')
+                          ? (codeOpen ? 'border-b border-graphite-10' : '')
+                          : (codeOpen || aiCopilotOpen ? 'border-r border-graphite-10' : '')
                       }`}
                       style={panelLayout === 'vertical'
                         ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
@@ -4837,6 +5018,8 @@ function WorkspaceContent({
                   {shellPreviewOpen && codeOpen && (
                     panelLayout === 'vertical' ? (
                       <HorizontalWorkspaceDivider
+                        onDragStart={() => setIsResizing(true)}
+                        onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellHeight((h) => {
                           const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
                           const minH = 240;
@@ -4845,7 +5028,11 @@ function WorkspaceContent({
                         })}
                       />
                     ) : (
-                      <WorkspaceDivider onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, Math.min(constraints.shellPreview.max, dynamicShellMax)))} />
+                      <WorkspaceDivider
+                        onDragStart={() => setIsResizing(true)}
+                        onDragEnd={() => setIsResizing(false)}
+                        onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, Math.min(constraints.shellPreview.max, dynamicShellMax)))}
+                      />
                     )
                   )}
 
@@ -4859,12 +5046,20 @@ function WorkspaceContent({
                 {/* Shell ↔ AI divider (when Shell is open, Code is closed, AI is open) */}
                 {/* Adjusts AI width since Shell is flex-1 in this view */}
                 {shellPreviewOpen && !codeOpen && aiCopilotOpen && (
-                  <WorkspaceDivider onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, Math.min(constraints.aiCopilot.max, dynamicAiMax)))} />
+                  <WorkspaceDivider
+                    onDragStart={() => setIsResizing(true)}
+                    onDragEnd={() => setIsResizing(false)}
+                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, Math.min(constraints.aiCopilot.max, dynamicAiMax)))}
+                  />
                 )}
 
                 {/* Code ↔ AI divider */}
                 {codeOpen && aiCopilotOpen && (
-                  <WorkspaceDivider onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, Math.min(constraints.aiCopilot.max, dynamicAiMax)))} />
+                  <WorkspaceDivider
+                    onDragStart={() => setIsResizing(true)}
+                    onDragEnd={() => setIsResizing(false)}
+                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, Math.min(constraints.aiCopilot.max, dynamicAiMax)))}
+                  />
                 )}
 
                 <div
@@ -4872,7 +5067,7 @@ function WorkspaceContent({
                   style={{
                     width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
                     opacity: aiCopilotOpen ? 1 : 0,
-                    transition: aiCopilotOpen ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
+                    transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
                   }}
                 >
                   {aiCopilotOpen && <AICopilotPanel panelWidth={aiCopilotWidth} onClose={handleCloseAICopilot} />}
@@ -5072,10 +5267,10 @@ const homeMetrics = [
 ];
 
 const statusConfig: Record<EventStatus, { icon: string; label: string; color: string }> = {
-  'ai-processing': { icon: aiProcessingIconUrl, label: 'AI Processing', color: '#3C4242' },
-  'in-progress': { icon: wipStatusIconUrl, label: 'In Progress', color: '#3C4242' },
-  'completed': { icon: completedStatusIconUrl, label: 'Completed', color: '#3C4242' },
-  'to-do': { icon: untouchedStatusIconUrl, label: 'To do', color: '#3C4242' },
+  'ai-processing': { icon: aiProcessingIconUrl, label: 'AI Processing', color: "var(--color-text-primary)" },
+  'in-progress': { icon: wipStatusIconUrl, label: 'In Progress', color: "var(--color-text-primary)" },
+  'completed': { icon: completedStatusIconUrl, label: 'Completed', color: "var(--color-text-primary)" },
+  'to-do': { icon: untouchedStatusIconUrl, label: 'To do', color: "var(--color-text-primary)" },
   'error': { icon: errorStatusIconUrl, label: 'Parse Failed', color: '#CC2C3C' },
 };
 
@@ -5091,21 +5286,24 @@ function StatusTag({ status }: { status: EventStatus }) {
 
 function HomePage({
   onEventClick,
+  onCreateEvent,
   treeListOpen,
   setTreeListOpen,
   treeListWidth,
   setTreeListWidth,
 }: {
   onEventClick: () => void;
+  onCreateEvent: () => void;
   treeListOpen: boolean;
   setTreeListOpen: React.Dispatch<React.SetStateAction<boolean>>;
   treeListWidth: number;
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const [searchValue, setSearchValue] = useState('');
+  const [isResizing, setIsResizing] = useState(false);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#F8F7F7]">
+    <div className="flex h-screen w-full overflow-hidden bg-bg-light">
       <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         {/* Tree list sidebar */}
         <div
@@ -5113,10 +5311,10 @@ function HomePage({
           style={{
             width: treeListOpen ? `${treeListWidth}px` : "0px",
             opacity: treeListOpen ? 1 : 0,
-            transition: treeListOpen ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
+            transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
           }}
         >
-          <div className="flex h-full w-full flex-col bg-[#F8F7F7]">
+          <div className="flex h-full w-full flex-col bg-bg-light">
             {/* Sidebar header */}
             <div className="flex h-[48px] shrink-0 items-center justify-between px-[10px]">
               <img src={atlasLogoFullUrl} alt="" className="h-[24px] block shrink-0" />
@@ -5126,7 +5324,7 @@ function HomePage({
                   className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                   aria-label="Collapse tree list"
                 >
-                  <LocalIcon src={collapseIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+                  <LocalIcon src={collapseIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
                 </button>
               </TooltipText>
             </div>
@@ -5136,12 +5334,12 @@ function HomePage({
                 <div
                   key={item.id}
                   className={`flex h-[32px] items-center gap-[4px] rounded-[4px] px-[12px] ${
-                    item.active ? 'bg-[#F4E8EE]' : 'hover:bg-black/5'
+                    item.active ? 'bg-az-secondary' : 'hover:bg-black/5'
                   }`}
                 >
                   <LocalIcon src={item.icon} className="h-[16px] w-[16px]" color={item.active ? '#830051' : '#888E8E'} />
                   <span
-                    className={`font-normal ${item.active ? 'text-[#830051]' : 'text-[#3C4242]'}`}
+                    className={`font-normal ${item.active ? 'text-brand-1' : 'text-text-primary'}`}
                     style={{ fontSize: '14px', lineHeight: '20px' }}
                   >
                     {item.label}
@@ -5154,7 +5352,7 @@ function HomePage({
               <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#9DB0AC]">
                 <span className="text-[12px] font-medium text-white">U</span>
               </div>
-              <span className="font-normal text-[#3C4242]" style={{ fontSize: '14px', lineHeight: '20px' }}>User account</span>
+              <span className="font-normal text-text-primary" style={{ fontSize: '14px', lineHeight: '20px' }}>User account</span>
             </div>
           </div>
         </div>
@@ -5162,37 +5360,39 @@ function HomePage({
         {/* TreeList ↔ Main panel divider */}
         {treeListOpen && (
           <WorkspaceDivider
+            onDragStart={() => setIsResizing(true)}
+            onDragEnd={() => setIsResizing(false)}
             onDrag={(delta) => setTreeListWidth((width) => clamp(width + delta, 180, 320))}
           />
         )}
 
         {/* Main Container */}
-        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-[#EBECEC] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] my-[4px] mr-[4px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
+        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] my-[4px] mr-[4px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
           {/* Expand tree list button when collapsed */}
           {!treeListOpen && (
-            <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-[#d8dada]">
+            <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-border-default">
               <TooltipText label="Expand tree list">
                 <button
                   onClick={() => setTreeListOpen(true)}
                   className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                   aria-label="Expand tree list"
                 >
-                  <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+                  <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
                 </button>
               </TooltipText>
             </div>
           )}
           {/* Top section: Overview + metrics */}
           <div className="flex flex-col justify-center gap-[12px] px-[28px] py-[12px]">
-            <h2 className="t-heading text-[#3C4242]">Overview</h2>
+            <h2 className="t-heading text-text-primary">Overview</h2>
             <div className="flex w-full items-center gap-[20px]">
               {homeMetrics.map((m) => (
                 <div
                   key={m.label}
-                  className="flex flex-1 flex-col gap-[4px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] py-[8px]"
+                  className="flex flex-1 flex-col gap-[4px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[16px] py-[8px]"
                 >
-                  <span className="text-[14px] font-medium leading-[20px] text-[#888E8E]">{m.label}</span>
-                  <span className="text-[36px] font-semibold leading-[1] text-[#3C4242]">{m.value}</span>
+                  <span className="text-[14px] font-medium leading-[20px] text-text-secondary">{m.label}</span>
+                  <span className="text-[36px] font-semibold leading-[1] text-text-primary">{m.value}</span>
                 </div>
               ))}
             </div>
@@ -5202,22 +5402,25 @@ function HomePage({
           <div className="flex min-h-0 flex-1 flex-col gap-[12px] px-[28px] pt-[28px]">
             {/* Event list header */}
             <div className="flex items-center justify-between">
-              <div className="flex h-[36px] w-[320px] items-center gap-[6px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[6px] py-[2px]">
-                <LocalIcon src={searchLineIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+              <div className="flex h-[36px] w-[320px] items-center gap-[6px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[6px] py-[2px]">
+                <LocalIcon src={searchLineIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
                 <input
                   type="text"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   placeholder="Search..."
-                  className="t-small min-w-0 flex-1 bg-transparent text-[#3C4242] outline-none placeholder:text-[#888E8E]"
+                  className="t-small min-w-0 flex-1 bg-transparent text-text-primary outline-none placeholder:text-text-secondary"
                 />
               </div>
               <div className="flex items-center gap-[16px]">
                 <button className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] hover:bg-black/5 active:scale-[0.96]">
-                  <LocalIcon src={filterIconUrl} className="h-[16px] w-[16px]" color="#3C4242" />
-                  <span className="text-[14px] leading-[20px] text-[#3C4242]">Filter</span>
+                  <LocalIcon src={filterIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-primary)" />
+                  <span className="text-[14px] leading-[20px] text-text-primary">Filter</span>
                 </button>
-                <button className="flex items-center gap-[4px] rounded-[4px] bg-[#830051] px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96]">
+                <button
+                  onClick={onCreateEvent}
+                  className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96]"
+                >
                   <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
                   <span className="text-[14px] leading-[20px] text-white">New Event</span>
                 </button>
@@ -5233,7 +5436,7 @@ function HomePage({
                     key={event.id}
                     onClick={onEventClick}
                     className={`flex h-[92px] cursor-pointer items-center justify-between rounded-[4px] border px-[16px] py-[10px] transition-colors ${
-                      isError ? 'border-[#CC2C3C] bg-white' : 'border-[#EBECEC] bg-white hover:bg-[#F8F7F7]'
+                      isError ? 'border-status-error bg-white' : 'border-graphite-10 bg-white hover:bg-bg-light'
                     }`}
                   >
                     {/* Left section */}
@@ -5241,14 +5444,14 @@ function HomePage({
                       {/* Main contents */}
                       <div className="flex flex-col gap-[8px]">
                         <div className="flex items-center gap-[12px]">
-                          <span className="t-heading text-[#3C4242]">{event.name}</span>
-                          <span className="flex h-[16px] items-center justify-center rounded-[2px] border-[0.6px] border-[#888E8E] px-[6px] text-[10px] leading-[12px] text-[#888E8E]">
+                          <span className="t-heading text-text-primary">{event.name}</span>
+                          <span className="flex h-[16px] items-center justify-center rounded-[2px] border-[0.6px] border-[#888E8E] px-[6px] text-[10px] leading-[12px] text-text-secondary">
                             {event.version}
                           </span>
                         </div>
                         <div className="flex items-center gap-[4px]">
                           <span className="t-small text-[#666666]">{event.project}</span>
-                          <span className="t-small font-medium text-[#888E8E]">/</span>
+                          <span className="t-small font-medium text-text-secondary">/</span>
                           <span className="t-small text-[#666666]">{event.study}</span>
                         </div>
                       </div>
@@ -5269,16 +5472,16 @@ function HomePage({
                         </div>
                         <button
                           onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-[4px] rounded-[4px] bg-[#F4E8EE] px-[8px] py-[4px] hover:opacity-90 active:scale-[0.96]"
+                          className="flex items-center gap-[4px] rounded-[4px] bg-az-secondary px-[8px] py-[4px] hover:opacity-90 active:scale-[0.96]"
                         >
-                          <span className="t-small text-[#830051]">Re-upload Files</span>
+                          <span className="t-small text-brand-1">Re-upload Files</span>
                         </button>
                         <button
                           onClick={(e) => e.stopPropagation()}
                           className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                           aria-label="Delete"
                         >
-                          <LocalIcon src={closeIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+                          <LocalIcon src={closeIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
                         </button>
                       </div>
                     ) : (
@@ -5287,7 +5490,7 @@ function HomePage({
                           <StatusTag status={event.status} />
                           {event.progress && (
                             <span className="text-[12px] leading-[20px]">
-                              <span className="font-medium text-[#3C4242]">{event.progress.completed}/{event.progress.total}</span>{' '}
+                              <span className="font-medium text-text-primary">{event.progress.completed}/{event.progress.total}</span>{' '}
                               <span className="text-[#666666]">TLF Completed</span>
                             </span>
                           )}
@@ -5306,7 +5509,7 @@ function HomePage({
                               className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                               aria-label={btn.label}
                             >
-                              <LocalIcon src={btn.icon} className="h-[16px] w-[16px]" color="#888E8E" />
+                              <LocalIcon src={btn.icon} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
                             </button>
                           ))}
                         </div>
@@ -5324,14 +5527,16 @@ function HomePage({
 }
 
 export default function Main() {
-  const [page, setPage] = useState<'home' | 'event'>('event');
+  const [page, setPage] = useState<'home' | 'event'>('home');
   const [treeListOpen, setTreeListOpen] = useState(true);
   const [treeListWidth, setTreeListWidth] = useState(240);
+  const [createEventModalOpen, setCreateEventModalOpen] = useState(false);
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {page === 'home' ? (
         <HomePage
           onEventClick={() => setPage('event')}
+          onCreateEvent={() => setCreateEventModalOpen(true)}
           treeListOpen={treeListOpen}
           setTreeListOpen={setTreeListOpen}
           treeListWidth={treeListWidth}
@@ -5346,6 +5551,10 @@ export default function Main() {
           setTreeListWidth={setTreeListWidth}
         />
       )}
+      <CreateEventModal
+        isOpen={createEventModalOpen}
+        onClose={() => setCreateEventModalOpen(false)}
+      />
     </div>
   );
 }
