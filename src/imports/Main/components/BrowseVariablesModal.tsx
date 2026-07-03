@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { SearchBar } from "../../../components/ui/SearchBar";
 
 // ==================== Types ====================
 
@@ -159,7 +160,7 @@ function InlineVariableList({ variables, selected, onToggle, onRemove, onBrowseA
         onClick={() => setIsOpen(!isOpen)}
       >
         {selected.length === 0 && (
-          <span className="t-small text-[#B2B4B4]">Select variables...</span>
+          <span className="t-small text-[#B2B4B4]">Select variables…</span>
         )}
         {selected.map((v) => (
           <span
@@ -172,7 +173,7 @@ function InlineVariableList({ variables, selected, onToggle, onRemove, onBrowseA
                 e.stopPropagation();
                 onRemove(v);
               }}
-              className="flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-black/5"
+              className="relative flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-black/5 after:content-[''] after:absolute after:-inset-[12px]"
             >
               <CloseIcon className="h-[10px] w-[10px]" color="#830051" />
             </button>
@@ -188,14 +189,12 @@ function InlineVariableList({ variables, selected, onToggle, onRemove, onBrowseA
       {isOpen && (
         <div className="absolute top-full left-0 z-50 mt-[4px] w-full rounded-[8px] border border-[#D8DADA] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.1)]">
           {/* Search */}
-          <div className="flex items-center gap-[6px] border-b border-[#EBECEC] px-[10px] py-[6px]">
-            <SearchIcon className="h-[14px] w-[14px]" />
-            <input
-              type="text"
+          <div className="p-[6px] border-b border-[#EBECEC]">
+            <SearchBar
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search variables..."
-              className="flex-1 t-small text-[#3C4242] placeholder:text-[#B2B4B4] bg-transparent border-none outline-none"
+              onChange={setSearch}
+              placeholder="Search variables…"
+              background="light"
               autoFocus
             />
           </div>
@@ -260,7 +259,7 @@ function DerivationCell({ text }: { text: string }) {
   return (
     <div>
       <p className="t-small text-[#3C4242] whitespace-normal">
-        {expanded ? text : text.slice(0, 80) + (text.length > 80 ? "..." : "")}
+        {expanded ? text : text.slice(0, 80) + (text.length > 80 ? "…" : "")}
       </p>
       {needsTruncate && (
         <button
@@ -367,7 +366,7 @@ function BrowseVariablesModal({
           <h2 className="t-heading text-[#3C4242]">Browse Variables</h2>
           <button
             onClick={onClose}
-            className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-[#EBECEC] active:scale-[0.96]"
+            className="relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-[#EBECEC] active:scale-[0.96] after:content-[''] after:absolute after:-inset-[8px]"
             aria-label="Close"
           >
             <CloseIcon className="h-[16px] w-[16px]" color="#888E8E" />
@@ -377,21 +376,13 @@ function BrowseVariablesModal({
         {/* Search + Tabs */}
         <div className="flex shrink-0 items-center gap-[12px] border-b border-[#D8DADA] px-[20px]">
           {/* Search */}
-          <div className="flex flex-1 items-center gap-[6px] py-[8px]">
-            <SearchIcon className="h-[16px] w-[16px] shrink-0" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search variables..."
-              className="flex-1 t-small text-[#3C4242] placeholder:text-[#B2B4B4] bg-transparent border-none outline-none"
-            />
-            {search && (
-              <button onClick={() => setSearch("")} className="flex h-[16px] w-[16px] items-center justify-center">
-                <CloseIcon className="h-[12px] w-[12px]" color="#888E8E" />
-              </button>
-            )}
-          </div>
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search variables…"
+            background="light"
+            className="flex-1 my-[4px]"
+          />
           {/* Tabs */}
           <div className="flex h-full items-center">
             {(["all", "vlm"] as const).map((tab) => {
@@ -468,9 +459,20 @@ function BrowseVariablesModal({
                 {filteredVariables.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-[20px] py-[32px] text-center">
-                      <p className="t-small text-[#888E8E]">
-                        当前 study 中未找到该变量，请确认 ADaM dataset 是否已包含
-                      </p>
+                      <div className="flex flex-col items-center gap-[8px]">
+                        <p className="t-small text-[#888E8E]">
+                          当前 study 中未找到该变量，请确认 ADaM dataset 是否已包含
+                        </p>
+                        {search && (
+                          <button
+                            type="button"
+                            onClick={() => setSearch("")}
+                            className="t-small text-brand-1 hover:underline font-medium"
+                          >
+                            清除搜索内容
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ) : (
