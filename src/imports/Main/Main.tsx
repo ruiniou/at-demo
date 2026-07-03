@@ -3883,11 +3883,7 @@ quit;
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-white">
       <PanelHeader
-        title={
-          docType === 'listing'
-            ? <LocalIcon src={codeSlashIconUrl} className="w-[20px] h-[20px]" color="#888E8E" />
-            : (selectedItem || "Code")
-        }
+        title={<LocalIcon src={codeSlashIconUrl} className="w-[20px] h-[20px]" color="#888E8E" />}
         actions={toolbarButtons}
       />
       <div className="min-h-0 flex-1 overflow-auto">
