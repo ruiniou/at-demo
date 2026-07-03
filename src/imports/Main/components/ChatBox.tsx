@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import aiSubmitIconUrl from "../../../icons/AI-submit.svg";
 
 // ==================== SVGs from Figma ====================
 
@@ -332,7 +333,13 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                 onClick={handleSend}
                 className="bg-brand-1 hover:opacity-90 transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95"
               >
-                <SendIcon className="size-[12px]" color="white" />
+                <img
+                  src={aiSubmitIconUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="w-[11px] h-[12px] block shrink-0"
+                  style={{ filter: "brightness(0) invert(1)" }}
+                />
               </button>
             </div>
           </div>

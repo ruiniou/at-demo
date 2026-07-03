@@ -596,7 +596,7 @@ function Input1() {
   return (
     <div className="content-stretch flex flex-[1_0_0] items-center justify-center min-w-px relative" data-name="Input">
       <div className="flex flex-[1_0_0] flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-[#b2b4b4] text-[14px]">
-        <p className="leading-[24px]">Ask me anything...</p>
+        <p className="leading-[24px]">Ask me anything…</p>
       </div>
     </div>
   );
@@ -783,7 +783,7 @@ function Container27() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0" data-name="Container">
       <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#b2b4b4] text-[13px] whitespace-nowrap">
-        <p className="leading-[20px]">Or, describe your needs...</p>
+        <p className="leading-[20px]">Or, describe your needs…</p>
       </div>
     </div>
   );

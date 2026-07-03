@@ -7,6 +7,7 @@ import aiSubmitIconUrl from "../../icons/AI-submit.svg";
 import checkIconUrl from "../../icons/check-line.svg";
 import closeIconUrl from "../../icons/close-line.svg";
 import codeIconUrl from "../../icons/code-line.svg";
+import codeSlashIconUrl from "../../icons/code-s-slash-line.svg";
 import collapseIconUrl from "../../icons/Icon-collapse.svg";
 import copyIconUrl from "../../icons/file-copy-line.svg";
 import editIconUrl from "../../icons/edit-2-line.svg";
@@ -42,7 +43,15 @@ import addLineIconUrl from "../../icons/add-line.svg";
 import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
 import snowflakeIconUrl from "../../icons/snowflake-line.svg";
+import deleteBinIconUrl from "../../icons/delete-bin-line.svg";
 import CreateEventModal from "./components/CreateEventModal";
+import { Button } from "../../components/ui/Button";
+import { AIInputBox } from "../../components/ui/AI-InputBox";
+import { AIUserPrompt } from "../../components/ui/AI-UserPrompt";
+import { AICodeDiff } from "../../components/ui/AI-CodeDiff";
+import { AIThinkingStatus } from "../../components/ui/AI-ThinkingStatus";
+import ChatBox from "./components/ChatBox";
+import { SearchBar } from "../../components/ui/SearchBar";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -239,33 +248,36 @@ function Divider() {
 // ==================== Chat Conversation & Main Panel ====================
 
 type Message = {
-  type: 'user' | 'ai' | 'ask_user_result';
+  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete';
   content?: string;
   hasTag?: boolean;
   answers?: { q: string; a: string }[];
   isSkipped?: boolean;
 };
 
-function ChatConversation({ messages }: { messages: Message[] }) {
+function ChatConversation({ messages, isPending }: { messages: Message[]; isPending: boolean }) {
+  const lastMessage = messages[messages.length - 1];
+  const showAskUser = lastMessage?.type === 'ai_ask_user';
+
   return (
     <div className="flex flex-col w-full p-[10px] gap-[12px]">
       {messages.map((msg, i) => (
         <div key={i} className="flex flex-col w-full gap-[12px]">
           {msg.type === 'user' && (
-            <div className="bg-bg-light px-[10px] py-[8px] rounded-[8px] w-full flex flex-col gap-[4px]">
-              {msg.hasTag && (
-                <div className="flex">
-                  <Tag>Table.14.1.1 (Lines 290-321)</Tag>
-                </div>
-              )}
-              <div className="flex flex-col gap-[4px] t-body text-text-secondary font-normal">
-                {msg.content?.split('\n').map((para, pIdx) => (
-                  <p key={pIdx} className="font-normal">{para}</p>
-                ))}
-              </div>
-            </div>
+            <AIUserPrompt
+              content={msg.content || ""}
+              tag={msg.hasTag ? "Table.14.1.1 (Lines 290-321)" : undefined}
+            />
           )}
-          
+
+          {msg.type === 'ai_thinking' && (
+            <AIThinkingStatus status={showAskUser ? "waiting" : "loading"} />
+          )}
+
+          {msg.type === 'ai_ask_user' && (
+            <AIThinkingStatus status="waiting" />
+          )}
+
           {msg.type === 'ask_user_result' && (
             <div className="bg-bg-light px-[10px] py-[8px] rounded-[8px] w-full">
               {msg.isSkipped ? (
@@ -283,11 +295,9 @@ function ChatConversation({ messages }: { messages: Message[] }) {
             </div>
           )}
 
-          {msg.type === 'ai' && (
+          {msg.type === 'ai_complete' && (
             <div className="flex flex-col gap-[12px] w-full">
-              <div className="px-[10px]">
-                <StatusLabel>Thinking...</StatusLabel>
-              </div>
+              <AIThinkingStatus status="completed" />
               
               {/* Markdown Render Container */}
               <div className="flex flex-col w-full px-[10px]">
@@ -329,9 +339,7 @@ function ChatConversation({ messages }: { messages: Message[] }) {
 
               {/* Other components (non-Markdown blocks) */}
               <ToolCallCard toolName="read_file" />
-              <Suspense fallback={<div className="h-10 animate-pulse bg-gray-50 rounded" />}>
-                <CodeDiffBlock />
-              </Suspense>
+              <AICodeDiff />
               <ErrorMessageWithRetry />
             </div>
           )}
@@ -354,11 +362,8 @@ function AICopilotPanel({
   onChangeInputValue?: (v: string) => void;
   focusTrigger?: number;
 }) {
-  const [showAskUser, setShowAskUser] = useState(true);
-  const [messages, setMessages] = useState<Message[]>([
-    { type: 'user', content: 'Generate comprehensive analysis with all components.', hasTag: true },
-    { type: 'ai' }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isPending, setIsPending] = useState(false);
 
   const [localInput, setLocalInput] = useState("");
   const isControlled = inputValue !== undefined && onChangeInputValue !== undefined;
@@ -379,24 +384,34 @@ function AICopilotPanel({
     }
   }, [focusTrigger]);
 
+  const lastMessage = messages[messages.length - 1];
+  const showAskUser = lastMessage?.type === 'ai_ask_user';
+  const hasCodeDiff = messages.some(m => m.type === 'ai_complete');
+
   const handleAskUserSubmit = (answers: { q: string; a: string }[]) => {
-    setMessages(prev => [...prev, { type: 'ask_user_result', answers }]);
-    setShowAskUser(false);
+    setMessages(prev => prev.filter(m => m.type !== 'ai_ask_user').concat([{ type: 'ask_user_result', answers }]));
+    setTimeout(() => {
+      setMessages(prev => [...prev, { type: 'ai_complete' }]);
+    }, 1500);
   };
 
   const handleAskUserSkip = () => {
-    setMessages(prev => [...prev, { type: 'ask_user_result', isSkipped: true }]);
-    setShowAskUser(false);
+    setMessages(prev => prev.filter(m => m.type !== 'ai_ask_user').concat([{ type: 'ask_user_result', isSkipped: true }]));
+    setTimeout(() => {
+      setMessages(prev => [...prev, { type: 'ai_complete' }]);
+    }, 1500);
   };
 
-  const handleSubmit = () => {
-    if (!currentVal.trim()) return;
-    setMessages(prev => [...prev, { type: 'user', content: currentVal }]);
+  const handleSubmit = (text: string) => {
+    if (!text.trim()) return;
+    (document.activeElement as HTMLElement)?.blur();
+    setMessages(prev => [...prev, { type: 'user', content: text }]);
     setCurrentVal("");
-    // Also simulate an AI response
+    setIsPending(true);
+    setMessages(prev => [...prev, { type: 'ai_thinking' }]);
     setTimeout(() => {
-      setMessages(prev => [...prev, { type: 'ai' }]);
-    }, 1000);
+      setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_ask_user' } : m));
+    }, 1500);
   };
 
   return (
@@ -411,7 +426,7 @@ function AICopilotPanel({
           onClick={onClose}
           aria-label="Close AI Copilot"
           title="Close AI Copilot"
-          className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+          className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
         >
           <CloseIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
         </button>
@@ -419,11 +434,18 @@ function AICopilotPanel({
 
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto">
-        <ChatConversation messages={messages} />
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full gap-[12px]">
+            <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
+            <span className="t-body text-text-secondary text-center">Automate TFLs. Accelerate Insights.</span>
+          </div>
+        ) : (
+          <ChatConversation messages={messages} isPending={isPending} />
+        )}
       </div>
 
       {/* Input Area */}
-      <div className="relative p-[8px]">
+      <div className="relative p-[8px] flex flex-col gap-[4px]">
         {showAskUser && (
           <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50 rounded" />}>
             <AskUserComponent 
@@ -433,28 +455,12 @@ function AICopilotPanel({
             />
           </Suspense>
         )}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-          className="bg-white border-[0.6px] border-border-default flex items-center gap-[16px] px-[10px] py-[8px] rounded-[8px] h-[40px] shadow-sm"
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            value={currentVal}
-            onChange={(e) => setCurrentVal(e.target.value)}
-            placeholder="Ask me anything..."
-            className="flex-1 t-input text-text-primary placeholder:text-[#B2B4B4] bg-transparent border-none outline-none"
-          />
-          <button
-            type="submit"
-            className="bg-brand-1 w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-[#6a0042] transition-colors"
-          >
-            <SubmitIcon className="w-[11px] h-[12px]" color="white" />
-          </button>
-        </form>
+        {hasCodeDiff ? (
+          <ChatBox onSubmit={handleSubmit} pending={true} />
+        ) : (
+          <AIInputBox disabled={isPending} onSubmit={handleSubmit} value={currentVal} onValueChange={setCurrentVal} focusTrigger={focusTrigger} />
+        )}
+        {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
       </div>
     </div>
   );
@@ -864,6 +870,8 @@ function ViewToggleBar({
   onToggleTreeList,
   onNavigateHome,
   currentEvent,
+  activeView,
+  onActiveViewChange,
   panelView,
   onPanelViewChange,
   panelLayout,
@@ -874,18 +882,19 @@ function ViewToggleBar({
   onToggleTreeList: () => void;
   onNavigateHome: () => void;
   currentEvent: string;
+  activeView: ActiveView;
+  onActiveViewChange: (v: ActiveView) => void;
   panelView: PanelView;
   onPanelViewChange: (v: PanelView) => void;
   panelLayout: PanelLayout;
   onPanelLayoutChange: (l: PanelLayout) => void;
   docType?: DocumentType;
 }) {
-  const [activeView, setActiveView] = useState<ActiveView>('table');
 
   const viewTabs = docType === 'listing' ? null : (
     <>
       <button
-        onClick={() => setActiveView('table')}
+        onClick={() => onActiveViewChange('table')}
         className={`w-[120px] h-full flex items-center justify-center gap-[4px] px-[16px] relative active:scale-[0.96] ${
           activeView === 'table' ? 'bg-white' : ''
         }`}
@@ -897,7 +906,7 @@ function ViewToggleBar({
         <p className={`t-small font-medium ${activeView === 'table' ? 'text-brand-1' : 'text-text-primary'}`}>Table View</p>
       </button>
       <button
-        onClick={() => setActiveView('group')}
+        onClick={() => onActiveViewChange('group')}
         className={`w-[120px] h-full flex items-center justify-center gap-[4px] px-[16px] relative active:scale-[0.96] ${
           activeView === 'group' ? 'bg-white' : ''
         }`}
@@ -953,22 +962,7 @@ function ViewToggleBar({
   );
 }
 
-function SearchBar() {
-  return (
-    <div className="h-[40px] w-full">
-      <div className="flex h-full items-center gap-[4px] px-[8px] py-[4px]">
-        <div className="flex-1 rounded-[6px] bg-graphite-10">
-          <div className="flex items-center justify-between px-[8px] py-[4px]">
-            <div className="flex items-center gap-[6px]">
-              <SearchIcon />
-              <p className="t-small text-text-secondary">Search</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+// SearchBar is imported from components/ui/SearchBar
 
 function TreeStatusControl({
   item,
@@ -1109,9 +1103,9 @@ function TreeItem({
     <div className="flex w-full flex-col gap-[2px]">
       <div
         className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors ${
-          selectedId === program.id ? 'bg-az-secondary' : isProgramHovered ? 'bg-bg-light' : ''
+          isProgramHovered ? 'bg-graphite-10' : ''
         }`}
-        onClick={() => onSelect(program.id)}
+        onClick={() => onToggleExpand(program.id)}
         onMouseEnter={() => setHoveredId(program.id)}
         onMouseLeave={() => setHoveredId(null)}
       >
@@ -1125,9 +1119,9 @@ function TreeItem({
               className="flex h-[16px] w-[16px] shrink-0 items-center justify-center active:scale-[0.96]"
               aria-label={program.isExpanded ? 'Collapse' : 'Expand'}
             >
-              <ChevronRightTreeIcon isExpanded={program.isExpanded} color={isProgramLocked ? "#B2B4B4" : selectedId === program.id ? "#830051" : "#888E8E"} />
+              <ChevronRightTreeIcon isExpanded={program.isExpanded} color={isProgramLocked ? "#B2B4B4" : "#888E8E"} />
             </button>
-            <p className={`t-small min-w-0 flex-1 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : selectedId === program.id ? 'text-brand-1' : 'text-text-primary'}`}>
+            <p className={`t-small min-w-0 flex-1 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : 'text-text-primary'}`}>
               {program.name}
             </p>
           </div>
@@ -1155,7 +1149,7 @@ function TreeItem({
               <div
                 key={table.id}
                 className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors ${
-                  isTableSelected ? 'bg-az-secondary' : isTableHovered ? 'bg-bg-light' : ''
+                  isTableSelected ? 'bg-az-secondary' : isTableHovered ? 'bg-graphite-10' : ''
                 }`}
                 onClick={() => onSelect(table.id)}
                 onMouseEnter={() => setHoveredId(table.id)}
@@ -1249,7 +1243,7 @@ function WorkspaceDivider({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="absolute inset-y-0 -left-[3px] -right-[3px]" />
-      {(isHovered || isDragging) && <div className="absolute inset-y-0 left-[-1px] w-[3px] bg-brand-1" />}
+      <div className={`absolute inset-y-0 left-[-1px] w-[3px] bg-brand-1 transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
 }
@@ -1296,13 +1290,13 @@ function PanelHeader({
   actions,
   noBorder = false,
 }: {
-  title: string;
+  title: React.ReactNode;
   actions?: React.ReactNode;
   noBorder?: boolean;
 }) {
   return (
-    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between bg-white px-[12px] ${noBorder ? '' : 'border-b border-border-default'}`}>
-      <p className="t-small truncate text-black">{title}</p>
+    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between bg-white px-[12px] ${noBorder ? '' : 'border-b border-graphite-10'}`}>
+      <div className="t-small truncate text-black flex items-center">{title}</div>
       {actions && <div className="flex items-center gap-[4px]">{actions}</div>}
     </div>
   );
@@ -1582,7 +1576,7 @@ interface ListingShellPreviewProps {
   onCloseMetadata: () => void;
   isLocked?: boolean;
   onPagePreviewChange?: (active: boolean) => void;
-  onOpenAICopilot?: () => void;
+  onOpenAICopilot?: (text?: string) => void;
   frozenUntilIndex: number | null;
   setFrozenUntilIndex: (n: number | null) => void;
   pageSepActive: boolean;
@@ -1625,7 +1619,7 @@ function ListingShellPreview({
   const [metadataPending, setMetadataPending] = useState(false);
 
   const [pageBreakColumns, setPageBreakColumns] = useState<number[]>([]);
-  const [repeatColumnBaseline, setRepeatColumnBaseline] = useState<{ frozenUntilIndex: number | null }>({ frozenUntilIndex: 2 });
+  const [repeatColumnBaseline, setRepeatColumnBaseline] = useState<{ frozenUntilIndex: number | null }>({ frozenUntilIndex: null });
   const [pageBreakColumnBaseline, setPageBreakColumnBaseline] = useState<{ pageSepActive: boolean; pageColumnCounts: Record<string, number>; pageBreakColumns: number[] }>({
     pageSepActive: false,
     pageColumnCounts: {},
@@ -2554,521 +2548,6 @@ function ListingShellPreview({
   );
 }
 
-function ListingPreview(props: any): null { return null; }
-function _DEAD_LISTING_PREVIEW_BODY() {
-  const colGroups: any = {};
-  const [hoveredColKey, setHoveredColKey] = useState<string | null>(null);
-  const [showFreezeDropdown, setShowFreezeDropdown] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-    colIndex: number;
-  } | null>(null);
-
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-
-  // Close context menu on window click
-  useEffect(() => {
-    const closeMenu = () => setContextMenu(null);
-    window.addEventListener('click', closeMenu);
-    return () => window.removeEventListener('click', closeMenu);
-  }, []);
-
-  const columnWidths = listingColumns.map((c) => c.width);
-  const cumulativeWidths = columnWidths.reduce((acc, w, i) => {
-    acc.push((acc[i - 1] || 0) + w);
-    return acc;
-  }, [] as number[]);
-
-  // Frozen boundary positions
-  const dividerLeft = frozenColumnCount === 0 ? 0 : cumulativeWidths[frozenColumnCount - 1];
-
-  // Pagination parameters
-  const F = frozenColumnCount;
-  const S = Math.max(1, pageDividerIndex - F);
-  const totalPages = Math.ceil((listingColumns.length - F) / S);
-
-  // Clamp current page
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages);
-    }
-  }, [totalPages, currentPage, setCurrentPage]);
-
-  // Construct actual columns rendered on screen
-  const getRenderedColumns = () => {
-    if (!isPaginationMode) {
-      return listingColumns;
-    }
-    const start = F + (currentPage - 1) * S;
-    const end = Math.min(listingColumns.length, start + S);
-    
-    const frozenCols = listingColumns.slice(0, F);
-    const pageCols = listingColumns.slice(start, end);
-    return [...frozenCols, ...pageCols];
-  };
-
-  const renderedCols = getRenderedColumns();
-  const renderedColWidths = renderedCols.map((c) => c.width);
-  const renderedColLefts = renderedColWidths.reduce((acc, w, i) => {
-    acc.push((acc[i - 1] || 0) + w);
-    return acc;
-  }, [] as number[]);
-
-  const getRenderedColLeft = (colIndex: number) => {
-    return colIndex === 0 ? 0 : renderedColLefts[colIndex - 1];
-  };
-
-  const totalRenderedPageWidth = renderedColWidths.reduce((sum, w) => sum + w, 0);
-
-  // Drag handlers
-  const handleDividerDrag = (clientX: number) => {
-    if (!tableContainerRef.current) return;
-    const rect = tableContainerRef.current.getBoundingClientRect();
-    const relativeX = clientX - rect.left + tableContainerRef.current.scrollLeft;
-
-    let closestColIndex = 0;
-    let minDiff = Math.abs(relativeX - 0);
-
-    for (let i = 0; i < columnWidths.length; i++) {
-      const colRight = cumulativeWidths[i];
-      const diff = Math.abs(relativeX - colRight);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestColIndex = i + 1;
-      }
-    }
-
-    const maxFreeze = Math.min(5, listingColumns.length - 2);
-    const newCount = Math.min(maxFreeze, closestColIndex);
-    setFrozenColumnCount(newCount);
-  };
-
-  const handlePageDividerDrag = (clientX: number) => {
-    if (!tableContainerRef.current) return;
-    const rect = tableContainerRef.current.getBoundingClientRect();
-    const relativeX = clientX - rect.left;
-
-    const frozenWidth = F === 0 ? 0 : cumulativeWidths[F - 1];
-    const remainingX = relativeX - frozenWidth;
-
-    let closestS = 1;
-    let minDiff = Infinity;
-
-    const maxS = listingColumns.length - F;
-    for (let s = 1; s <= maxS; s++) {
-      let widthOfS = 0;
-      for (let j = 0; j < s; j++) {
-        widthOfS += listingColumns[F + j].width;
-      }
-      const diff = Math.abs(remainingX - widthOfS);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestS = s;
-      }
-    }
-
-    setPageDividerIndex(F + closestS);
-  };
-
-  const handleContextMenu = (e: React.MouseEvent, colIndex: number) => {
-    e.preventDefault();
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      colIndex,
-    });
-  };
-
-  const spanningGroups = getSpanningGroups(renderedCols);
-
-  function getSpanningGroups(cols: typeof listingColumns) {
-    const groups: Array<{ label: string; span: number; startIndex: number }> = [];
-    if (cols.length === 0) return groups;
-
-    let currentGroup = colGroups[cols[0].key as keyof typeof colGroups];
-    let currentSpan = 1;
-    let startIndex = 0;
-
-    for (let i = 1; i < cols.length; i++) {
-      const groupName = colGroups[cols[i].key as keyof typeof colGroups];
-      if (groupName === currentGroup) {
-        currentSpan++;
-      } else {
-        groups.push({ label: currentGroup, span: currentSpan, startIndex });
-        currentGroup = groupName;
-        currentSpan = 1;
-        startIndex = i;
-      }
-    }
-    groups.push({ label: currentGroup, span: currentSpan, startIndex });
-    return groups;
-  }
-
-  return (
-    <div className="flex h-full flex-col overflow-hidden bg-white relative">
-      {/* Header - per Figma: "Listing name" + toolbar with icon buttons + metadata toggle */}
-      <div className="flex h-[40px] w-full shrink-0 items-center justify-between border-b-[0.6px] border-border-default bg-white px-[12px]">
-        <p className="t-small truncate text-text-primary">{listingName || "Listing name"}</p>
-        <div className="flex items-center gap-[4px]">
-          {/* Sync to Code in Header (Unsynced marker) */}
-          {isModified && (
-            <button
-              onClick={onSync}
-              className="flex h-[24px] items-center gap-[4px] rounded-[4px] bg-brand-1 text-white px-[8px] hover:bg-[#6D0043] active:scale-[0.96] mr-[4px]"
-            >
-              <SyncIcon color="white" />
-              <span className="t-small font-semibold">Sync</span>
-            </button>
-          )}
-  
-          {/* Freeze Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFreezeDropdown((prev) => !prev)}
-              className="flex h-[24px] items-center gap-[4px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[8px] hover:bg-bg-light active:scale-[0.96]"
-            >
-              <FreezeIcon color="var(--color-text-secondary)" />
-              <span className="t-small text-text-primary">
-                Freeze: {frozenColumnCount === 0 ? "None" : `${frozenColumnCount} Col${frozenColumnCount > 1 ? "s" : ""}`}
-              </span>
-            </button>
-            {showFreezeDropdown && (
-              <div className="absolute right-0 mt-[4px] bg-white border border-border-default rounded-[4px] shadow-lg py-[4px] w-[150px] z-[60]">
-                {[0, 1, 2, 3, 4].map((count) => (
-                  <button
-                    key={count}
-                    onClick={() => {
-                      setFrozenColumnCount(count);
-                      setShowFreezeDropdown(false);
-                    }}
-                    className={`w-full text-left px-[12px] py-[6px] t-small text-text-primary hover:bg-bg-light ${
-                      frozenColumnCount === count ? "font-bold text-brand-1" : ""
-                    }`}
-                  >
-                    {count === 0 ? "None" : `${count} Column${count > 1 ? "s" : ""}`}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-  
-          {/* Pagination Mode Button */}
-          <TooltipText label={isPaginationMode ? "Disable Pagination View" : "Enable Pagination View"}>
-            <button
-              onClick={() => setIsPaginationMode(!isPaginationMode)}
-              className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
-                isPaginationMode ? "bg-az-secondary" : "hover:bg-black/5"
-              }`}
-            >
-              <PaginationIcon color={isPaginationMode ? "#830051" : "#888E8E"} />
-            </button>
-          </TooltipText>
-  
-          {/* Metadata toggle button - per Figma: selected state shows pink bg */}
-          {onMetadataClick && (
-            <TooltipText label="Open Metadata">
-              <button
-                onClick={onMetadataClick}
-                className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
-                  metadataOpen ? "bg-az-secondary" : "hover:bg-black/5"
-                }`}
-                aria-label="Toggle metadata"
-              >
-                <LocalIcon src={fileInfoIconUrl} className="h-[16px] w-[16px]" color={metadataOpen ? "#830051" : "#888E8E"} />
-              </button>
-            </TooltipText>
-          )}
-        </div>
-      </div>
-
-      {/* Main Table Scroll Area */}
-      <div
-        ref={tableContainerRef}
-        className="min-h-0 flex-1 overflow-auto relative animate-fade-in"
-      >
-        <div style={{ width: `${totalRenderedPageWidth}px`, position: 'relative' }}>
-          <table className="border-collapse select-none" style={{ tableLayout: 'fixed', width: `${totalRenderedPageWidth}px` }}>
-            <colgroup>
-              {renderedCols.map((col) => (
-                <col key={col.key} style={{ width: `${col.width}px` }} />
-              ))}
-            </colgroup>
-            
-            {/* Table Header */}
-            <thead>
-              {/* Spanning Group Headers Row */}
-              <tr className="bg-bg-light border-b border-border-default">
-                {spanningGroups.map((group, groupIdx) => {
-                  const isGroupSticky = group.startIndex < F;
-                  const groupLeft = isGroupSticky ? getRenderedColLeft(group.startIndex) : undefined;
-                  
-                  return (
-                    <th
-                      key={`${group.label}-${groupIdx}`}
-                      colSpan={group.span}
-                      className="border-r border-graphite-10 text-left px-[8px] py-[6px] h-[30px]"
-                      style={{
-                        position: isGroupSticky ? 'sticky' : undefined,
-                        left: isGroupSticky ? `${groupLeft}px` : undefined,
-                        zIndex: isGroupSticky ? 25 : undefined,
-                        backgroundColor: '#F8F7F7',
-                      }}
-                    >
-                      <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider truncate block">
-                        {group.label}
-                      </span>
-                    </th>
-                  );
-                })}
-              </tr>
-
-              {/* Individual Column Names Row */}
-              <tr className="bg-bg-light border-b border-border-default">
-                {renderedCols.map((col, colIdx) => {
-                  const isColSticky = colIdx < F;
-                  const colLeft = isColSticky ? getRenderedColLeft(colIdx) : undefined;
-                  
-                  return (
-                    <th
-                      key={col.key}
-                      onMouseEnter={() => setHoveredColKey(col.key)}
-                      onMouseLeave={() => setHoveredColKey(null)}
-                      onContextMenu={(e) => handleContextMenu(e, colIdx)}
-                      className="border-r border-graphite-10 text-left align-middle relative h-[32px] hover:bg-black/[0.02] cursor-pointer"
-                      style={{
-                        position: isColSticky ? 'sticky' : undefined,
-                        left: isColSticky ? `${colLeft}px` : undefined,
-                        zIndex: isColSticky ? 20 : undefined,
-                        backgroundColor: '#F8F7F7',
-                      }}
-                    >
-                      <div className="flex items-center justify-between w-full px-[8px] py-[4px] gap-[2px]">
-                        <span className="t-small font-semibold text-text-primary truncate block select-none">
-                          {col.label}
-                        </span>
-                        
-                        {(hoveredColKey === col.key || isColSticky) && (
-                          <TooltipText label={isColSticky ? "Stop Repeating" : "Repeat Columns"}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (isColSticky) {
-                                  setFrozenColumnCount(colIdx);
-                                } else {
-                                  setFrozenColumnCount(colIdx + 1);
-                                }
-                              }}
-                              className="h-[18px] w-[18px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.9] shrink-0"
-                            >
-                              <FreezeIcon color={isColSticky ? "#830051" : "#888E8E"} />
-                            </button>
-                          </TooltipText>
-                        )}
-                      </div>
-                    </th>
-                  );
-                })}
-              </tr>
-            </thead>
-
-            {/* Table Body */}
-            <tbody>
-              {listingData.map((row, rowIdx) => (
-                <tr key={rowIdx} className="hover:bg-bg-light transition-colors border-b border-graphite-10">
-                  {renderedCols.map((col, colIdx) => {
-                    const isColSticky = colIdx < F;
-                    const colLeft = isColSticky ? getRenderedColLeft(colIdx) : undefined;
-                    const val = row[col.key as keyof typeof row];
-                    
-                    return (
-                      <td
-                        key={col.key}
-                        className="px-[8px] py-[6px] t-table text-text-primary border-r border-graphite-10 truncate whitespace-nowrap h-[28px]"
-                        style={{
-                          position: isColSticky ? 'sticky' : undefined,
-                          left: isColSticky ? `${colLeft}px` : undefined,
-                          zIndex: isColSticky ? 10 : undefined,
-                          backgroundColor: isColSticky ? 'white' : undefined,
-                        }}
-                      >
-                        {val}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* 3px Solid Freeze Column Divider Ghost Line */}
-          {freezeDragOriginX !== null && !isPaginationMode && (
-            <div
-              style={{
-                position: 'absolute',
-                left: `${freezeDragOriginX - 1}px`,
-                top: 0,
-                bottom: '2px',
-                width: '2px',
-                backgroundColor: 'rgba(131, 0, 81, 0.3)',
-                zIndex: 28,
-                pointerEvents: 'none',
-              }}
-            />
-          )}
-
-          {/* 3px Solid Freeze Column Divider */}
-          {F > 0 && !isPaginationMode && (
-            <div
-              style={{
-                position: 'absolute',
-                left: `${dividerLeft - 1.5}px`,
-                top: 0,
-                bottom: '2px',
-                width: '3px',
-                cursor: 'col-resize',
-                zIndex: 30,
-              }}
-              className="bg-border-default hover:bg-brand-1 active:bg-brand-1 transition-colors"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                const startX = e.clientX;
-                setFreezeDragOriginX(dividerLeft);
-                const handleMouseMove = (moveEvent: MouseEvent) => {
-                  const delta = moveEvent.clientX - startX;
-                  handleDividerDrag(startX + delta);
-                };
-                const handleMouseUp = () => {
-                  setFreezeDragOriginX(null);
-                  document.removeEventListener('mousemove', handleMouseMove);
-                  document.removeEventListener('mouseup', handleMouseUp);
-                };
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-              }}
-              title="Drag to adjust frozen columns"
-            />
-          )}
-
-          {/* Draggable vertical page divider Ghost Line */}
-          {pageDragOriginX !== null && isPaginationMode && (
-            <div
-              style={{
-                position: 'absolute',
-                left: `${pageDragOriginX - 1}px`,
-                top: 0,
-                bottom: '2px',
-                width: '0px',
-                borderLeft: '2px dashed rgba(131, 0, 81, 0.4)',
-                zIndex: 28,
-                pointerEvents: 'none',
-              }}
-            />
-          )}
-
-          {/* Draggable vertical page divider in Pagination view */}
-          {isPaginationMode && (
-            <div
-              style={{
-                position: 'absolute',
-                left: `${totalRenderedPageWidth - 1.5}px`,
-                top: 0,
-                bottom: '2px',
-                width: '3px',
-                cursor: 'col-resize',
-                zIndex: 30,
-              }}
-              className="border-l-2 border-dashed border-[#888E8E] hover:border-brand-1 active:border-brand-1"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                const startX = e.clientX;
-                setPageDragOriginX(totalRenderedPageWidth);
-                const handleMouseMove = (moveEvent: MouseEvent) => {
-                  const delta = moveEvent.clientX - startX;
-                  handlePageDividerDrag(startX + delta);
-                };
-                const handleMouseUp = () => {
-                  setPageDragOriginX(null);
-                  document.removeEventListener('mousemove', handleMouseMove);
-                  document.removeEventListener('mouseup', handleMouseUp);
-                };
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-              }}
-              title="Drag to change page columns size"
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Floating Sync to Code Panel at bottom */}
-      {isModified && (
-        <div className="absolute bottom-[56px] left-1/2 -translate-x-1/2 z-40 bg-white border border-border-default rounded-[8px] px-[16px] py-[8px] shadow-xl flex items-center gap-[12px] animate-slide-in-up">
-          <span className="t-small text-text-primary font-medium">Unsynced listing changes</span>
-          <button
-            onClick={onSync}
-            className="flex h-[28px] items-center gap-[6px] rounded-[6px] bg-brand-1 text-white px-[12px] hover:bg-[#6D0043] active:scale-[0.96] shadow-sm"
-          >
-            <SyncIcon color="white" />
-            <span className="t-small font-semibold">Sync to Code</span>
-          </button>
-        </div>
-      )}
-
-      {/* Pagination Controls Bar */}
-      {isPaginationMode && (
-        <div className="h-[40px] shrink-0 border-t border-border-default bg-[#F8F8F8] flex items-center justify-between px-[16px]">
-          <span className="t-small text-text-secondary">
-            Page displays {F} frozen + {S} active = {renderedCols.length} columns. (Total {listingColumns.length})
-          </span>
-          <div className="flex items-center gap-[8px]">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              className="h-[24px] w-[24px] rounded-[4px] hover:bg-black/5 flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none active:scale-[0.9]"
-            >
-              <ChevronLeftIcon />
-            </button>
-            <span className="t-small font-medium text-text-primary">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              className="h-[24px] w-[24px] rounded-[4px] hover:bg-black/5 flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none active:scale-[0.9]"
-            >
-              <ChevronRightIcon />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Right-click column context menu */}
-      {contextMenu && (
-        <div
-          style={{ top: contextMenu.y, left: contextMenu.x, position: 'fixed', zIndex: 100 }}
-          className="bg-white border border-border-default rounded-[4px] shadow-lg py-[4px] w-[180px]"
-        >
-          <button
-            onClick={() => {
-              const isFrozen = contextMenu.colIndex < F;
-              if (isFrozen) {
-                setFrozenColumnCount(contextMenu.colIndex);
-              } else {
-                setFrozenColumnCount(contextMenu.colIndex + 1);
-              }
-              setContextMenu(null);
-            }}
-            className="w-full text-left px-[12px] py-[6px] t-small text-text-primary hover:bg-bg-light flex items-center gap-[6px]"
-          >
-            <FreezeIcon color="var(--color-text-secondary)" />
-            {contextMenu.colIndex < F ? "Unfreeze columns" : "Freeze up to this column"}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ==================== Shell Preview Data ====================
 
@@ -3274,8 +2753,7 @@ function ShellPreview({
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
       <PanelHeader
-        title="Shell preview"
-        noBorder
+        title={selectedItemName || "Shell preview"}
         actions={
           <TooltipText label="Open Metadata">
             <button
@@ -3292,24 +2770,29 @@ function ShellPreview({
       />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="min-h-0 min-w-0 flex-1 overflow-auto p-[16px]">
-          {/* Shell preview table */}
-          <div className="mb-[12px]">
-            <p className="t-small font-semibold text-text-primary mb-[2px]">{shellData.tableNumber}. {shellData.tableTitle}</p>
-            <p className="t-small text-text-secondary">{shellData.population}</p>
+          {/* Title header - Styled like Listing's Shell preview header */}
+          <div className="h-[72px] min-w-max border-b-2 border-black flex flex-col items-center justify-start px-[16px] pt-[16px] bg-white text-black mb-[16px]">
+            <h1 className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">
+              {shellData.tableNumber}. {shellData.tableTitle}
+            </h1>
+            <p className="font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676] mt-[4px]">
+              {shellData.population}
+            </p>
           </div>
-          <div className="overflow-x-auto border-[0.6px] border-border-default rounded-[4px]">
-            <table className="w-full border-collapse">
-              {/* Column group header */}
+
+          <div className="relative inline-block min-w-full">
+            <table className="w-full border-separate border-spacing-0 font-['Inter',sans-serif] text-black">
               <thead>
-                <tr className="border-b-[0.5px] border-border-default bg-bg-light">
-                  <th className="sticky left-0 z-10 bg-bg-light text-left t-table font-semibold py-[6px] px-[8px] whitespace-nowrap border-r-[0.5px] border-border-default min-w-[180px]">
+                {/* Column group header */}
+                <tr className="group">
+                  <th className="bg-white text-left text-[12px] leading-[18px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default min-w-[180px]">
                     {selectedItemName.startsWith('Listing') ? 'Subject ID' : 'Parameter'}
                   </th>
                   {shellData.columnGroups.map((group, gi) => (
                     <th
                       key={gi}
                       colSpan={group.span}
-                      className="text-center t-table font-semibold py-[6px] px-[8px] whitespace-nowrap border-r-[0.5px] border-border-default"
+                      className="text-center text-[12px] leading-[18px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default"
                       style={{ whiteSpace: 'pre-line' }}
                     >
                       {group.name}
@@ -3317,14 +2800,14 @@ function ShellPreview({
                   ))}
                 </tr>
                 {/* Sub-column header */}
-                <tr className="border-b-[0.5px] border-border-default bg-bg-light">
-                  <th className="sticky left-0 z-10 bg-bg-light text-left t-small font-medium py-[4px] px-[8px] whitespace-nowrap border-r-[0.5px] border-border-default">
+                <tr className="group">
+                  <th className="bg-white text-left text-[12px] leading-[18px] font-bold py-[4px] px-[8px] whitespace-nowrap border-r border-b-2 border-black border-border-default">
                     
                   </th>
                   {shellData.columns.map((col, ci) => (
                     <th
                       key={ci}
-                      className="text-center t-small font-medium py-[4px] px-[6px] whitespace-nowrap border-r-[0.5px] border-border-default last:border-r-0"
+                      className="text-center text-[12px] leading-[18px] font-bold py-[4px] px-[6px] whitespace-nowrap border-r border-b-2 border-black border-border-default last:border-r-0"
                     >
                       {col}
                     </th>
@@ -3335,11 +2818,13 @@ function ShellPreview({
                 {shellData.rows.map((row, ri) => (
                   <tr
                     key={ri}
-                    className={`border-b-[0.5px] border-border-default last:border-0 ${row.isHeader ? 'bg-bg-light' : 'bg-white'} hover:bg-az-secondary cursor-pointer`}
+                    className="group hover:bg-az-secondary cursor-pointer"
                     onClick={onBlockClick}
                   >
                     <td
-                      className={`sticky left-0 z-10 ${row.isHeader ? 'bg-bg-light' : 'bg-white'} text-left t-table py-[6px] px-[8px] whitespace-nowrap border-r-[0.5px] border-border-default ${row.isHeader ? 'font-semibold text-text-primary' : 'text-text-primary'}`}
+                      className={`${
+                        row.isHeader ? 'bg-bg-light font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
+                      } text-left text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
                       style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
                     >
                       {row.category}
@@ -3347,7 +2832,9 @@ function ShellPreview({
                     {row.values.map((val, vi) => (
                       <td
                         key={vi}
-                        className={`text-center t-table py-[6px] px-[6px] whitespace-nowrap border-r-[0.5px] border-border-default last:border-r-0 ${row.isHeader ? 'font-semibold' : ''}`}
+                        className={`text-center text-[12px] leading-[18px] ${
+                          row.isHeader ? 'bg-bg-light font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
+                        } py-[6px] px-[6px] whitespace-nowrap border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
                       >
                         {val}
                       </td>
@@ -3368,7 +2855,7 @@ function ShellPreview({
           <WorkspaceDivider onDrag={(delta) => onMetadataResize(-delta)} />
         )}
         <div
-          className={`shrink-0 py-[4px] pr-[4px] relative z-20 ${metadataOpen ? '' : 'overflow-hidden'}`}
+          className={`shrink-0 relative z-20 ${metadataOpen ? 'py-[4px] pr-[4px]' : 'overflow-hidden'}`}
           style={{
             width: metadataOpen ? `${metadataWidth}px` : "0px",
             opacity: metadataOpen ? 1 : 0,
@@ -4035,7 +3522,7 @@ function MetadataPanel({
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       {/* Top Bar */}
-      <div className="flex h-[40px] shrink-0 items-center justify-between border-b border-border-default bg-white">
+      <div className="flex h-[40px] shrink-0 items-center justify-between border-b border-graphite-10 bg-white">
         <div className="flex h-full items-center">
           {(["basic", "blocks"] as const).map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -4396,7 +3883,11 @@ quit;
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-white">
       <PanelHeader
-        title={selectedItem || "Code"}
+        title={
+          docType === 'listing'
+            ? <LocalIcon src={codeSlashIconUrl} className="w-[20px] h-[20px]" color="#888E8E" />
+            : (selectedItem || "Code")
+        }
         actions={toolbarButtons}
       />
       <div className="min-h-0 flex-1 overflow-auto">
@@ -4518,7 +4009,16 @@ function WorkspaceContent({
   const [shellHeight, setShellHeight] = useState(488);
   // Listing view specific states
   const [categoryFilter, setCategoryFilter] = useState<"all" | "table" | "listing" | "figure">("all");
-  const [frozenUntilIndex, setFrozenUntilIndex] = useState<number | null>(2);
+  const [activeView, setActiveView] = useState<ActiveView>('table');
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>('g1');
+  const groupItems = [
+    { id: 'g1', name: 'Treatment Group' },
+    { id: 'g2', name: 'Population Set' },
+    { id: 'g3', name: 'Analysis Visit' },
+    { id: 'g4', name: 'Baseline Category' },
+    { id: 'g5', name: 'Subgroup Analysis' },
+  ];
+  const [frozenUntilIndex, setFrozenUntilIndex] = useState<number | null>(null);
   const [pageSepActive, setPageSepActive] = useState(false);
   const [pageColumnCounts, setPageColumnCounts] = useState<Record<string, number>>({});
   const [idpageBaseline, setIdpageBaseline] = useState<{ frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> } | null>(null);
@@ -4741,15 +4241,22 @@ function WorkspaceContent({
     );
   };
 
+  const [treeSearchQuery, setTreeSearchQuery] = useState('');
+
   const filteredPrograms = programs.map((program) => {
     const filteredTables = program.tables.filter((table) => {
-      if (categoryFilter === "all") return true;
-      if (categoryFilter === "table") return table.docType === "table" || !table.docType;
-      if (categoryFilter === "listing") return table.docType === "listing";
-      return false;
+      const matchesCategory = categoryFilter === "all" ||
+        (categoryFilter === "table" && (table.docType === "table" || !table.docType)) ||
+        (categoryFilter === "listing" && table.docType === "listing");
+      const matchesSearch = table.name.toLowerCase().includes(treeSearchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
     });
     return { ...program, tables: filteredTables };
   });
+
+  const filteredGroups = groupItems.filter((group) =>
+    group.name.toLowerCase().includes(treeSearchQuery.toLowerCase())
+  );
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
@@ -4832,20 +4339,50 @@ function WorkspaceContent({
                 </button>
               </TooltipText>
             </div>
-            <SearchBar />
+            <SearchBar
+              value={treeSearchQuery}
+              onChange={setTreeSearchQuery}
+              placeholder="Search"
+              background="dark"
+              className="mx-[8px] my-[2px] shrink-0"
+            />
             <div className="min-h-0 flex-1 overflow-auto">
               <div className="flex flex-col gap-[4px] py-[4px] pr-[4px]">
-                {filteredPrograms.map((program) => (
-                  <TreeItem
-                    key={program.id}
-                    program={program}
-                    selectedId={selectedId}
-                    onSelect={handleSelect}
-                    onToggleLock={handleToggleLock}
-                    onToggleExpand={handleToggleExpand}
-                    onShowLockedModal={(programName) => setModalState({ type: 'locked-by-parent', programName })}
-                  />
-                ))}
+                {activeView === 'group' ? (
+                  filteredGroups.map((group) => {
+                    const isGroupSelected = selectedGroupId === group.id;
+                    return (
+                      <div
+                        key={group.id}
+                        className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors ${
+                          isGroupSelected ? 'bg-az-secondary' : 'hover:bg-graphite-10'
+                        }`}
+                        onClick={() => setSelectedGroupId(group.id)}
+                      >
+                        <div className="flex h-full items-center pl-[24px] pr-[12px]">
+                          <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
+                            <FolderIcon color={isGroupSelected ? '#830051' : '#888E8E'} />
+                            <p className={`t-small min-w-0 truncate ${isGroupSelected ? 'text-brand-1' : 'text-text-primary'}`}>
+                              {group.name}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  filteredPrograms.map((program) => (
+                    <TreeItem
+                      key={program.id}
+                      program={program}
+                      selectedId={selectedId}
+                      onSelect={handleSelect}
+                      onToggleLock={handleToggleLock}
+                      onToggleExpand={handleToggleExpand}
+                      onShowLockedModal={(programName) => setModalState({ type: 'locked-by-parent', programName })}
+                    />
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -4866,6 +4403,8 @@ function WorkspaceContent({
             onToggleTreeList={() => setTreeListOpen(true)}
             onNavigateHome={onNavigateHome}
             currentEvent={currentEvent}
+            activeView={activeView}
+            onActiveViewChange={setActiveView}
             panelView={panelView}
             onPanelViewChange={handlePanelViewChange}
             panelLayout={panelLayout}
@@ -5063,7 +4602,7 @@ function WorkspaceContent({
                 )}
 
                 <div
-                  className="shrink-0 overflow-hidden"
+                  className={`shrink-0 overflow-hidden ${aiCopilotOpen ? 'border-l border-graphite-10' : ''}`}
                   style={{
                     width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
                     opacity: aiCopilotOpen ? 1 : 0,
@@ -5266,20 +4805,205 @@ const homeMetrics = [
   { label: 'Created by Me', value: '2' },
 ];
 
-const statusConfig: Record<EventStatus, { icon: string; label: string; color: string }> = {
+const statusConfig: Record<EventStatus | 'uploading', { icon: string; label: string; color: string }> = {
   'ai-processing': { icon: aiProcessingIconUrl, label: 'AI Processing', color: "var(--color-text-primary)" },
   'in-progress': { icon: wipStatusIconUrl, label: 'In Progress', color: "var(--color-text-primary)" },
   'completed': { icon: completedStatusIconUrl, label: 'Completed', color: "var(--color-text-primary)" },
   'to-do': { icon: untouchedStatusIconUrl, label: 'To do', color: "var(--color-text-primary)" },
   'error': { icon: errorStatusIconUrl, label: 'Parse Failed', color: '#CC2C3C' },
+  'uploading': { icon: aiProcessingIconUrl, label: 'Uploading...', color: "var(--color-text-secondary)" },
 };
 
-function StatusTag({ status }: { status: EventStatus }) {
+function StatusTag({ status }: { status: EventStatus | 'uploading' }) {
   const config = statusConfig[status];
+  const isUploading = status === 'uploading';
   return (
     <div className="flex items-center gap-[4px] rounded-[4px]">
-      <img src={config.icon} alt="" className="h-[16px] w-[16px] block shrink-0" />
+      {isUploading ? (
+        <svg className="h-[16px] w-[16px] animate-spin block shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="8" cy="8" r="6" stroke="var(--color-text-secondary)" strokeWidth="2" strokeDasharray="12" strokeLinecap="round" />
+        </svg>
+      ) : (
+        <img src={config.icon} alt="" className="h-[16px] w-[16px] block shrink-0" />
+      )}
       <span className="t-small" style={{ color: config.color }}>{config.label}</span>
+    </div>
+  );
+}
+
+function MoreIcon({ color = "#888E8E" }) {
+  return (
+    <svg className="w-[16px] h-[16px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 10C3.9 10 3 10.9 3 12C3 13.1 3.9 14 5 14C6.1 14 7 13.1 7 12C7 10.9 6.1 10 5 10ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10ZM19 10C17.9 10 17 10.9 17 12C17 13.1 17.9 14 19 14C20.1 14 21 13.1 21 12C21 10.9 20.1 10 19 10Z" fill={color} />
+    </svg>
+  );
+}
+
+interface EventCardProps {
+  event: EventCardData;
+  onEventClick: () => void;
+  onUpdateStatus: (id: string, status: EventStatus) => void;
+}
+
+function EventCard({ event, onEventClick, onUpdateStatus }: EventCardProps) {
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const isError = event.status === 'error';
+  const isUploading = event.status === ('uploading' as any);
+  const isClickable = !isError && !isUploading;
+
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const handleClose = () => setShowMoreMenu(false);
+    window.addEventListener('click', handleClose);
+    return () => window.removeEventListener('click', handleClose);
+  }, [showMoreMenu]);
+
+  const handleReupload = () => {
+    onUpdateStatus(event.id, 'uploading' as any);
+    setTimeout(() => {
+      onUpdateStatus(event.id, 'ai-processing');
+    }, 1000);
+  };
+
+  const actionButtons = [
+    { icon: toolCallIconUrl, label: 'AI edit' },
+    { icon: teamIconUrl, label: 'Team' },
+    { icon: barChartIconUrl, label: 'View charts' },
+    { icon: downloadIconUrl, label: 'Download' },
+    { icon: deleteBinIconUrl, label: 'Delete' },
+  ];
+
+  return (
+    <div
+      onClick={isClickable ? onEventClick : undefined}
+      className={`flex flex-col md:flex-row min-h-[92px] h-auto justify-between items-start md:items-center rounded-[4px] border px-[16px] py-[12px] gap-[12px] md:gap-[20px] transition-colors relative ${
+        isClickable ? 'cursor-pointer hover:bg-bg-light' : 'cursor-default'
+      } ${
+        isError ? 'border-status-error bg-white' : 'border-graphite-10 bg-white'
+      }`}
+    >
+      {/* Left section */}
+      <div className="flex min-w-0 flex-1 flex-col gap-[8px] w-full">
+        {/* Main contents */}
+        <div className="flex flex-col gap-[4px] min-w-0">
+          <div className="flex items-center gap-[12px] min-w-0">
+            <span className="t-heading text-text-primary truncate" title={event.name}>{event.name}</span>
+            <span className="flex h-[16px] items-center justify-center rounded-[2px] border-[0.6px] border-[#888E8E] px-[6px] text-[10px] leading-[12px] text-text-secondary shrink-0">
+              {event.version}
+            </span>
+          </div>
+          <div className="flex items-center gap-[4px] min-w-0 text-text-secondary">
+            <span className="t-small text-[#666666] truncate">{event.project}</span>
+            <span className="t-small font-medium text-text-secondary">/</span>
+            <span className="t-small text-[#666666] truncate">{event.study}</span>
+          </div>
+        </div>
+        {/* Meta */}
+        <div className="flex items-center gap-[16px] text-text-secondary truncate">
+          <span className="t-small text-[#666666] truncate">Created by: {event.creator}</span>
+          <span className="t-small text-[#666666] truncate">Created: {event.createdDate}</span>
+        </div>
+      </div>
+
+      {/* Right section */}
+      {isError ? (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-[12px] md:gap-[40px] shrink-0 w-full md:w-auto justify-between md:justify-end">
+          <div className="flex flex-col items-start md:items-end gap-[4px] min-w-0 flex-1">
+            <StatusTag status={event.status} />
+            {event.errorMessage && (
+              <span className="t-small text-[#666666] text-left md:text-right max-w-[280px] sm:max-w-[400px] truncate block" title={event.errorMessage}>
+                {event.errorMessage}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-[12px] self-stretch sm:self-auto justify-between sm:justify-end shrink-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); handleReupload(); }}
+              className="flex items-center justify-center gap-[4px] rounded-[4px] bg-az-secondary px-[12px] py-[8px] hover:bg-az-secondary-hover active:scale-[0.96] whitespace-nowrap"
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              <span className="text-[14px] font-medium text-brand-1">Re-upload Files</span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+              aria-label="Delete"
+            >
+              <LocalIcon src={deleteBinIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-[12px] md:gap-[40px] shrink-0 w-full md:w-auto justify-between md:justify-end">
+          <div className="flex flex-col items-start md:items-end gap-[4px] shrink-0">
+            <StatusTag status={event.status} />
+            {event.progress && (
+              <span className="text-[12px] leading-[20px] text-left md:text-right">
+                <span className="font-medium text-text-primary">{event.progress.completed}/{event.progress.total}</span>{' '}
+                <span className="text-[#666666]">TLF Completed</span>
+              </span>
+            )}
+          </div>
+          
+          {/* Toolbar Actions */}
+          {!isUploading && (
+            <div className="flex items-center gap-[6px] self-stretch sm:self-auto justify-between sm:justify-end relative shrink-0">
+              {/* Expanded on Large Desktop (>= 1200px / xl) */}
+              <div className="hidden xl:flex items-center gap-[6px]">
+                {actionButtons.map((btn, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                    aria-label={btn.label}
+                    title={btn.label}
+                  >
+                    <LocalIcon src={btn.icon} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+                  </button>
+                ))}
+              </div>
+
+              {/* Collapsed on smaller viewports (< 1200px / xl) */}
+              <div className="flex xl:hidden items-center relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMoreMenu(prev => !prev);
+                  }}
+                  className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                  aria-label="More actions"
+                  title="More actions"
+                >
+                  <MoreIcon color="var(--color-text-secondary)" />
+                </button>
+                
+                {showMoreMenu && (
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 bottom-[32px] sm:bottom-auto sm:top-[28px] mt-[4px] bg-white border border-[#D8DADA] rounded-[4px] shadow-lg py-[4px] w-[150px] z-50 animate-fade-in"
+                  >
+                    {actionButtons.map((btn, i) => (
+                      <button
+                        key={i}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowMoreMenu(false);
+                        }}
+                        className="w-full text-left px-[12px] py-[6px] t-small text-[#3C4242] hover:bg-[#F8F7F7] flex items-center gap-[8px]"
+                      >
+                        <LocalIcon src={btn.icon} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+                        <span>{btn.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -5287,6 +5011,8 @@ function StatusTag({ status }: { status: EventStatus }) {
 function HomePage({
   onEventClick,
   onCreateEvent,
+  events,
+  onUpdateStatus,
   treeListOpen,
   setTreeListOpen,
   treeListWidth,
@@ -5294,6 +5020,8 @@ function HomePage({
 }: {
   onEventClick: () => void;
   onCreateEvent: () => void;
+  events: EventCardData[];
+  onUpdateStatus: (id: string, status: EventStatus) => void;
   treeListOpen: boolean;
   setTreeListOpen: React.Dispatch<React.SetStateAction<boolean>>;
   treeListWidth: number;
@@ -5383,43 +5111,41 @@ function HomePage({
             </div>
           )}
           {/* Top section: Overview + metrics */}
-          <div className="flex flex-col justify-center gap-[12px] px-[28px] py-[12px]">
+          <div className="flex flex-col justify-center gap-[12px] px-[16px] sm:px-[28px] py-[12px]">
             <h2 className="t-heading text-text-primary">Overview</h2>
-            <div className="flex w-full items-center gap-[20px]">
+            <div className="grid grid-cols-2 gap-[12px] sm:grid-cols-3 lg:grid-cols-6 md:gap-[16px] lg:gap-[20px]">
               {homeMetrics.map((m) => (
                 <div
                   key={m.label}
-                  className="flex flex-1 flex-col gap-[4px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[16px] py-[8px]"
+                  className="flex flex-col gap-[4px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[16px] py-[8px]"
                 >
-                  <span className="text-[14px] font-medium leading-[20px] text-text-secondary">{m.label}</span>
-                  <span className="text-[36px] font-semibold leading-[1] text-text-primary">{m.value}</span>
+                  <span className="text-[14px] font-medium leading-[20px] text-text-secondary truncate" title={m.label}>{m.label}</span>
+                  <span className="text-[28px] sm:text-[32px] md:text-[36px] font-semibold leading-[1] text-text-primary">{m.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Event list */}
-          <div className="flex min-h-0 flex-1 flex-col gap-[12px] px-[28px] pt-[28px]">
+          <div className="flex min-h-0 flex-1 flex-col gap-[12px] px-[16px] sm:px-[28px] pt-[20px] sm:pt-[28px]">
             {/* Event list header */}
-            <div className="flex items-center justify-between">
-              <div className="flex h-[36px] w-[320px] items-center gap-[6px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[6px] py-[2px]">
-                <LocalIcon src={searchLineIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-                <input
-                  type="text"
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  placeholder="Search..."
-                  className="t-small min-w-0 flex-1 bg-transparent text-text-primary outline-none placeholder:text-text-secondary"
-                />
-              </div>
-              <div className="flex items-center gap-[16px]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-[12px]">
+              <SearchBar
+                value={searchValue}
+                onChange={setSearchValue}
+                placeholder="Search..."
+                background="light"
+                className="w-full sm:w-[320px] shrink-0"
+              />
+              <div className="flex items-center justify-between sm:justify-end gap-[16px] w-full sm:w-auto">
                 <button className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] hover:bg-black/5 active:scale-[0.96]">
                   <LocalIcon src={filterIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-primary)" />
                   <span className="text-[14px] leading-[20px] text-text-primary">Filter</span>
                 </button>
                 <button
                   onClick={onCreateEvent}
-                  className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96]"
+                  className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96] whitespace-nowrap shrink-0"
+                  style={{ whiteSpace: 'nowrap' }}
                 >
                   <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
                   <span className="text-[14px] leading-[20px] text-white">New Event</span>
@@ -5428,96 +5154,17 @@ function HomePage({
             </div>
 
             {/* Event cards */}
-            <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-auto">
-              {homeEvents.map((event) => {
-                const isError = event.status === 'error';
-                return (
-                  <div
+            <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-auto pb-[16px]">
+              {events
+                .filter((event) => event.name.toLowerCase().includes(searchValue.toLowerCase()) || event.project.toLowerCase().includes(searchValue.toLowerCase()) || event.study.toLowerCase().includes(searchValue.toLowerCase()))
+                .map((event) => (
+                  <EventCard
                     key={event.id}
-                    onClick={onEventClick}
-                    className={`flex h-[92px] cursor-pointer items-center justify-between rounded-[4px] border px-[16px] py-[10px] transition-colors ${
-                      isError ? 'border-status-error bg-white' : 'border-graphite-10 bg-white hover:bg-bg-light'
-                    }`}
-                  >
-                    {/* Left section */}
-                    <div className="flex min-w-0 flex-1 flex-col gap-[8px]">
-                      {/* Main contents */}
-                      <div className="flex flex-col gap-[8px]">
-                        <div className="flex items-center gap-[12px]">
-                          <span className="t-heading text-text-primary">{event.name}</span>
-                          <span className="flex h-[16px] items-center justify-center rounded-[2px] border-[0.6px] border-[#888E8E] px-[6px] text-[10px] leading-[12px] text-text-secondary">
-                            {event.version}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-[4px]">
-                          <span className="t-small text-[#666666]">{event.project}</span>
-                          <span className="t-small font-medium text-text-secondary">/</span>
-                          <span className="t-small text-[#666666]">{event.study}</span>
-                        </div>
-                      </div>
-                      {/* Meta */}
-                      <div className="flex items-center gap-[16px]">
-                        <span className="t-small text-[#666666]">Created by: {event.creator}</span>
-                        <span className="t-small text-[#666666]">Created: {event.createdDate}</span>
-                      </div>
-                    </div>
-                    {/* Right section */}
-                    {isError ? (
-                      <div className="flex shrink-0 items-center gap-[40px]">
-                        <div className="flex flex-col items-end gap-[8px]">
-                          <StatusTag status={event.status} />
-                          {event.errorMessage && (
-                            <span className="t-small text-[#666666]">{event.errorMessage}</span>
-                          )}
-                        </div>
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex items-center gap-[4px] rounded-[4px] bg-az-secondary px-[8px] py-[4px] hover:opacity-90 active:scale-[0.96]"
-                        >
-                          <span className="t-small text-brand-1">Re-upload Files</span>
-                        </button>
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                          aria-label="Delete"
-                        >
-                          <LocalIcon src={closeIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex shrink-0 items-center gap-[40px]">
-                        <div className="flex flex-col items-end gap-[8px]">
-                          <StatusTag status={event.status} />
-                          {event.progress && (
-                            <span className="text-[12px] leading-[20px]">
-                              <span className="font-medium text-text-primary">{event.progress.completed}/{event.progress.total}</span>{' '}
-                              <span className="text-[#666666]">TLF Completed</span>
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-[6px]">
-                          {[
-                            { icon: barChartIconUrl, label: 'View charts' },
-                            { icon: toolCallIconUrl, label: 'AI edit' },
-                            { icon: downloadIconUrl, label: 'Download' },
-                            { icon: codeIconUrl, label: 'Code' },
-                            { icon: moreIconUrl, label: 'More' },
-                          ].map((btn, i) => (
-                            <button
-                              key={i}
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                              aria-label={btn.label}
-                            >
-                              <LocalIcon src={btn.icon} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                    event={event}
+                    onEventClick={onEventClick}
+                    onUpdateStatus={onUpdateStatus}
+                  />
+                ))}
             </div>
           </div>
         </div>
@@ -5531,12 +5178,34 @@ export default function Main() {
   const [treeListOpen, setTreeListOpen] = useState(true);
   const [treeListWidth, setTreeListWidth] = useState(240);
   const [createEventModalOpen, setCreateEventModalOpen] = useState(false);
+  const [events, setEvents] = useState<EventCardData[]>(homeEvents);
+
+  const handleCreateEvent = (eventData: { name: string; project: string; study: string }) => {
+    const newEvent: EventCardData = {
+      id: `e${events.length + 1}`,
+      name: eventData.name,
+      version: '1.0',
+      project: eventData.project,
+      study: eventData.study,
+      creator: 'User',
+      createdDate: new Date().toISOString().split('T')[0],
+      status: 'ai-processing',
+    };
+    setEvents(prev => [newEvent, ...prev]);
+  };
+
+  const handleUpdateStatus = (id: string, status: EventStatus) => {
+    setEvents(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {page === 'home' ? (
         <HomePage
           onEventClick={() => setPage('event')}
           onCreateEvent={() => setCreateEventModalOpen(true)}
+          events={events}
+          onUpdateStatus={handleUpdateStatus}
           treeListOpen={treeListOpen}
           setTreeListOpen={setTreeListOpen}
           treeListWidth={treeListWidth}
@@ -5554,6 +5223,7 @@ export default function Main() {
       <CreateEventModal
         isOpen={createEventModalOpen}
         onClose={() => setCreateEventModalOpen(false)}
+        onCreateEvent={handleCreateEvent}
       />
     </div>
   );

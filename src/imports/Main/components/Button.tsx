@@ -12,7 +12,7 @@ interface ButtonProps {
   size?: ButtonSize;
   disabled?: boolean;
   icon?: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   type?: "button" | "submit";
   className?: string;
 }
@@ -38,13 +38,16 @@ export function PrimaryButton({
   const bgClass = disabled
     ? "bg-brand-1-disabled"
     : "bg-brand-1 hover:bg-brand-1-hover";
+  const hitAreaClass = size === "sm"
+    ? "relative after:content-[''] after:absolute after:-inset-y-[6px] after:inset-x-0"
+    : "relative after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0";
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-[4px] rounded-[4px] ${padding} ${bgClass} active:scale-[0.96] ${className}`}
+      className={`flex items-center gap-[4px] rounded-[4px] whitespace-nowrap ${padding} ${bgClass} ${hitAreaClass} active:scale-[0.96] ${className}`}
     >
       {icon && (
         <span
@@ -67,6 +70,7 @@ export function PrimaryButton({
           fontSize,
           lineHeight: "20px",
           color: "#FFFFFF",
+          whiteSpace: "nowrap",
         }}
       >
         {children}
@@ -97,13 +101,16 @@ export function SecondaryButton({
     ? "bg-white"
     : "bg-az-secondary hover:bg-az-secondary-hover";
   const textColor = disabled ? "#B2B4B4" : "#830051";
+  const hitAreaClass = size === "sm"
+    ? "relative after:content-[''] after:absolute after:-inset-y-[6px] after:inset-x-0"
+    : "relative after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0";
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-[4px] rounded-[4px] ${padding} ${bgClass} active:scale-[0.96] ${className}`}
+      className={`flex items-center gap-[4px] rounded-[4px] whitespace-nowrap ${padding} ${bgClass} ${hitAreaClass} active:scale-[0.96] ${className}`}
     >
       {icon && (
         <span
@@ -126,6 +133,7 @@ export function SecondaryButton({
           fontSize,
           lineHeight: "20px",
           color: textColor,
+          whiteSpace: "nowrap",
         }}
       >
         {children}
