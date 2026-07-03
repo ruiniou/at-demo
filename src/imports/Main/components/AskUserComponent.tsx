@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { AIAskOption } from "../../../components/ui/AI-AskOption";
 
 function ArrowLeftIcon({ className = "w-[24px] h-[24px]", color = "currentColor" }) {
   return (
@@ -133,19 +134,23 @@ export default function AskUserComponent({ onSubmit, onSkip, panelWidth }: {
         <p className="t-heading text-[#3C4242] mb-[8px] truncate">{currentQ.title}</p>
         <div className="flex flex-col">
           {currentQ.options.map((option, index) => (
-            <div key={`${step}-${index}`} className={`flex items-center gap-[8px] p-[8px] rounded-[4px] cursor-pointer transition-colors ${selectedOption === index ? 'bg-[#F8F7F7]' : 'bg-transparent hover:bg-[#F8F7F7]'}`} onClick={() => handleSelectOption(index)}>
-              <div className="w-[16px] h-[16px] shrink-0">
-                {selectedOption === index ? <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="white" stroke="#830051" strokeWidth="2"/><circle cx="8" cy="8" r="3.2" fill="#830051"/></svg> : <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" fill="white" stroke="#D8DADA" strokeWidth="1.6"/></svg>}
-              </div>
-              <p className="t-body text-[#3C4242] truncate">{option}</p>
-            </div>
+            <AIAskOption
+              key={`${step}-${index}`}
+              letter={String.fromCharCode(65 + index)}
+              label={option}
+              type="selection"
+              selected={selectedOption === index}
+              onClick={() => handleSelectOption(index)}
+            />
           ))}
-          <div className={`flex items-center gap-[8px] p-[8px] rounded-[4px] ${selectedOption === currentQ.options.length ? 'bg-[#F8F7F7]' : ''}`}>
-            <div className="w-[16px] h-[16px] shrink-0" onClick={() => {setSelectedOption(currentQ.options.length); setCustomInput("")}}>
-              {selectedOption === currentQ.options.length ? <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="white" stroke="#830051" strokeWidth="2"/><circle cx="8" cy="8" r="3.2" fill="#830051"/></svg> : <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" fill="white" stroke="#D8DADA" strokeWidth="1.6"/></svg>}
-            </div>
-            <input type="text" placeholder="Or, describe your needs..." value={customInput} onChange={(e) => { setCustomInput(e.target.value); setSelectedOption(currentQ.options.length); }} className="flex-1 t-body text-[#3C4242] placeholder:text-[#B2B4B4] bg-transparent border-none outline-none" />
-          </div>
+          <AIAskOption
+            letter={String.fromCharCode(65 + currentQ.options.length)}
+            type="custom"
+            selected={selectedOption === currentQ.options.length}
+            value={customInput}
+            onClick={() => { setSelectedOption(currentQ.options.length); }}
+            onChange={(val) => { setCustomInput(val); setSelectedOption(currentQ.options.length); }}
+          />
         </div>
       </div>
       <div className="flex justify-end gap-[8px] px-[10px] py-[8px]">

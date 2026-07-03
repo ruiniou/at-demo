@@ -1,4 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
+import { Checkbox } from "../../../components/ui/Checkbox";
+import { Badge } from "../../../components/ui/Badge";
+import { UploadCard, UploadStatus } from "../../../components/ui/UploadCard";
+import { Button } from "../../../components/ui/Button";
+import { Input } from "../../../components/ui/Input";
+import { Dropdown } from "../../../components/ui/Dropdown";
+import { SegmentedControl } from "../../../components/ui/SegmentedControl";
+
 import { createPortal } from "react-dom";
 import aiProcessingIconUrl from "../../../icons/Status label/Status=AI Processing.svg";
 import wipStatusIconUrl from "../../../icons/Status label/Status=WIP.svg";
@@ -120,383 +128,9 @@ function MoreIcon({ size = 16, color = "#888E8E" }: { size?: number; color?: str
   );
 }
 
-// ==================== Checkbox ====================
 
-function Checkbox({ checked, onChange, size = 16 }: { checked: boolean; onChange: () => void; size?: number }) {
-  return (
-    <button type="button" onClick={onChange} className="flex items-center justify-center" style={{ width: size, height: size }}>
-      <div className={`flex items-center justify-center rounded-[3px] border ${checked ? "border-brand-1 bg-brand-1" : "border-border-default bg-white"}`} style={{ width: size, height: size }}>
-        {checked && <CheckIcon size={12} color="#FFFFFF" />}
-      </div>
-    </button>
-  );
-}
 
-// ==================== Form Field Components ====================
-// Figma: 455:672 (Input Field), 455:673 (Dropdown Field)
-// States: Default, Hovered, Focused, Error, Disabled
 
-type DropdownOption = { label: string; value: string };
-
-type FieldState = "default" | "hovered" | "focused" | "error" | "disabled";
-
-function getBoxStyle(state: FieldState): { bg: string; border: string; borderWidth: number } {
-  switch (state) {
-    case "hovered":  return { bg: "var(--color-bg-light)", border: "var(--color-border-default)", borderWidth: 1 };
-    case "focused":  return { bg: "#FFFFFF", border: "var(--color-brand-1)", borderWidth: 1 };
-    case "error":    return { bg: "#FFFFFF", border: "var(--color-status-error)", borderWidth: 1.5 };
-    case "disabled": return { bg: "transparent", border: "var(--color-graphite-10)", borderWidth: 1 };
-    default:         return { bg: "#FFFFFF", border: "var(--color-graphite-10)", borderWidth: 1 };
-  }
-}
-
-function FieldLabel({ label, required, disabled }: { label: string; required?: boolean; disabled?: boolean }) {
-  const labelColor = disabled ? "var(--color-border-default)" : "var(--color-text-primary)";
-  const starColor = disabled ? "var(--color-border-default)" : "var(--color-brand-1)";
-  return (
-    <div className="flex gap-[2px]" style={{ alignItems: "center" }}>
-      <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: labelColor }}>{label}</span>
-      {required && <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: starColor }}>*</span>}
-    </div>
-  );
-}
-
-function ErrorMessage({ message }: { message: string }) {
-  return (
-    <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "var(--color-status-error)" }}>{message}</span>
-  );
-}
-
-// ==================== Dropdown Field (455:673) ====================
-
-function DropdownField({
-  label, required, placeholder, options, value, onChange,
-  error, errorMessage, disabled,
-}: {
-  label: string; required?: boolean; placeholder: string;
-  options: DropdownOption[]; value: string | null; onChange: (value: string) => void;
-  error?: boolean; errorMessage?: string; disabled?: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setIsOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
-
-  const selectedLabel = value ? options.find((o) => o.value === value)?.label ?? placeholder : placeholder;
-
-  // Determine state
-  let state: FieldState = "default";
-  if (disabled) state = "disabled";
-  else if (error) state = "error";
-  else if (isOpen) state = "focused";
-  else if (isHovered) state = "hovered";
-
-  const box = getBoxStyle(state);
-  const textColor = disabled ? "#D8DADA" : (value ? "#3C4242" : "#888E8E");
-  const arrowColor = disabled ? "var(--color-border-default)" : "var(--color-text-secondary)";
-
-  return (
-    <div className="relative flex flex-col gap-[6px]" ref={containerRef}>
-      <FieldLabel label={label} required={required} disabled={disabled} />
-      <button type="button" onClick={() => !disabled && setIsOpen(!isOpen)} disabled={disabled}
-        onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}
-        className="flex w-full rounded-[4px] text-left"
-        style={{ height: 36, alignItems: "center", justifyContent: "space-between", paddingLeft: 12, paddingRight: 10, backgroundColor: box.bg, border: `${box.borderWidth}px solid ${box.border}`, cursor: disabled ? "default" : "pointer" }}>
-        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: textColor }}>{selectedLabel}</span>
-        <ArrowDownIcon size={20} color={arrowColor} rotated={isOpen} />
-      </button>
-      {error && !disabled && errorMessage && <ErrorMessage message={errorMessage} />}
-      {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 top-full z-[200] mt-[2px] rounded-[4px] border border-graphite-10 bg-white p-[4px] shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="flex flex-col gap-[2px] px-[6px]">
-            {options.map((option) => {
-              const isSelected = value === option.value;
-              return (
-                <button key={option.value} type="button"
-                  onClick={() => { onChange(option.value); setIsOpen(false); }}
-                  className="flex rounded-[2px] py-[2px] pl-[2px] pr-[4px] text-left hover:bg-bg-light"
-                  style={{ alignItems: "center", gap: isSelected ? "4px" : "6px" }}>
-                  <div className="flex h-[16px] w-[16px] shrink-0 items-center justify-center" style={{ opacity: isSelected ? 1 : 0 }}>
-                    <CheckIcon size={16} color="#830051" />
-                  </div>
-                  <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "var(--color-text-primary)" }}>{option.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ==================== Input Field (455:672) ====================
-
-function InputField({
-  label, required, placeholder, value, onChange,
-  error, errorMessage, disabled,
-}: {
-  label: string; required?: boolean; placeholder: string; value: string; onChange: (value: string) => void;
-  error?: boolean; errorMessage?: string; disabled?: boolean;
-}) {
-  const [isFocused, setIsFocused] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-
-  let state: FieldState = "default";
-  if (disabled) state = "disabled";
-  else if (error) state = "error";
-  else if (isFocused) state = "focused";
-  else if (isHovered) state = "hovered";
-
-  const box = getBoxStyle(state);
-  const textColor = disabled ? "#D8DADA" : (value ? "#3C4242" : "#888E8E");
-  const placeholderColor = disabled ? "var(--color-border-default)" : "var(--color-text-secondary)";
-
-  return (
-    <div className="flex flex-col gap-[6px]">
-      <FieldLabel label={label} required={required} disabled={disabled} />
-      <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled}
-        onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)}
-        onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}
-        className={`w-full rounded-[4px] outline-none ${disabled ? "placeholder:text-border-default" : "placeholder:text-text-secondary"}`}
-        style={{ height: 36, paddingLeft: 12, paddingRight: 12, backgroundColor: box.bg, border: `${box.borderWidth}px solid ${box.border}`, fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: textColor, cursor: disabled ? "default" : "text" }} />
-      {error && !disabled && errorMessage && <ErrorMessage message={errorMessage} />}
-    </div>
-  );
-}
-
-// ==================== Segmented Control ====================
-
-function SegmentedControl({ options, selectedIndex, onChange }: { options: string[]; selectedIndex: number; onChange: (index: number) => void }) {
-  return (
-    <div className="flex h-[24px] items-stretch rounded-[4px] bg-bg-light p-[2px]">
-      {options.map((option, index) => {
-        const isSelected = index === selectedIndex;
-        return (
-          <button key={option} type="button" onClick={() => onChange(index)}
-            className={`flex items-center justify-center rounded-[3px] px-[6px] transition-colors ${isSelected ? "border-[0.6px] border-border-default bg-white" : "border-[0.6px] border-transparent hover:bg-black/5"}`}>
-            <span className="t-small" style={{ color: isSelected ? "#3C4242" : "#888E8E" }}>{option}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ==================== File Upload Row ====================
-
-type UploadStatus = "pending" | "uploading" | "uploaded" | "error" | "use-existing";
-
-function FileUploadSection({
-  label, required, requirementText, showSegmentedControl = false,
-  status: initialStatus = "pending", fileName = "", errorMessage = "", uploadProgress = 45,
-}: {
-  label: string; required?: boolean; requirementText: string; showSegmentedControl?: boolean;
-  status?: UploadStatus; fileName?: string; errorMessage?: string; uploadProgress?: number;
-}) {
-  const [currentStatus, setCurrentStatus] = useState<UploadStatus>(initialStatus);
-  const [segmentedIndex, setSegmentedIndex] = useState(0);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedExistingFile, setSelectedExistingFile] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const existingFileOptions = [
-    "adam_spec_v2.3.xlsx",
-    "adam_spec_v1.0.xlsx",
-    "adam_spec_beta.xlsx",
-    "adam_spec_draft.xlsx",
-    "adam_spec_old.xlsx",
-  ];
-  const filteredOptions = existingFileOptions.filter(f => f.toLowerCase().includes(searchQuery.toLowerCase()));
-
-  // Segmented Control visibility: show only in pending (default) or error state
-  const showSegmented = showSegmentedControl && (currentStatus === "pending" || currentStatus === "error");
-
-  const handleSegmentedChange = (idx: number) => {
-    setSegmentedIndex(idx);
-    if (idx === 0) setDropdownOpen(false);
-  };
-
-  const handleClear = () => {
-    setCurrentStatus("pending");
-    setSelectedExistingFile(null);
-    setSegmentedIndex(0);
-    setDropdownOpen(false);
-    setSearchQuery("");
-  };
-
-  const labelEl = (
-    <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: "var(--color-text-primary)" }}>{label}</span>
-  );
-  const requiredStar = required ? <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: "var(--color-brand-1)" }}>*</span> : null;
-
-  let uploadArea;
-
-  if (showSegmented && segmentedIndex === 1) {
-    // "Use Existing" tab selected — show dropdown to select an existing file
-      uploadArea = (
-        <div className="relative flex flex-col gap-[2px]">
-          {/* Dropdown box */}
-          <button
-            type="button"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex h-[36px] items-center justify-between rounded-[4px] border border-graphite-10 bg-white pl-[12px] pr-[10px]"
-          >
-            <span style={{ fontFamily: "Inter, sans-serif", fontSize: 12, color: "var(--color-text-secondary)" }}>Select an existing file...</span>
-            <div className={dropdownOpen ? "rotate-180" : ""}>
-              <img src={arrowDownIconUrl} alt="" className="h-[20px] w-[20px] shrink-0" />
-            </div>
-          </button>
-          {/* Dropdown panel */}
-          {dropdownOpen && (
-            <>
-              <div className="fixed inset-0 z-[5]" onClick={() => setDropdownOpen(false)} />
-              <div className="absolute left-0 right-0 top-[38px] z-10 flex flex-col gap-[8px] rounded-[4px] border border-graphite-10 bg-white p-[4px] shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
-                {/* Search bar */}
-                <div className="flex h-[28px] items-stretch rounded-[4px] border border-brand-1 bg-brand-1/20 p-[2px]">
-                  <div className="flex flex-1 items-center gap-[6px] rounded-[2px] bg-white px-[6px] py-[4px]">
-                    <img src={searchIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search..."
-                      className="h-full w-full bg-transparent text-[12px] text-text-primary outline-none placeholder:text-text-secondary"
-                      style={{ fontFamily: "'PingFang SC', sans-serif" }}
-                      autoFocus
-                    />
-                  </div>
-                </div>
-                {/* Option list */}
-                <div className="flex flex-col gap-[2px] px-[6px]">
-                  {filteredOptions.map((option) => {
-                    const isSelected = selectedExistingFile === option;
-                    return (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => { setSelectedExistingFile(option); setDropdownOpen(false); setSearchQuery(""); setCurrentStatus("use-existing"); }}
-                        className="flex rounded-[2px] py-[2px] pl-[2px] pr-[4px] text-left hover:bg-bg-light"
-                        style={{ alignItems: "center", gap: isSelected ? "4px" : "6px" }}
-                      >
-                        <div className="flex h-[16px] w-[16px] shrink-0 items-center justify-center" style={{ opacity: isSelected ? 1 : 0 }}>
-                          <img src={checkIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
-                        </div>
-                        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "var(--color-text-primary)" }}>{option}</span>
-                      </button>
-                    );
-                  })}
-                  {filteredOptions.length === 0 && (
-                    <div className="px-[4px] py-[4px]">
-                      <span className="t-small text-text-secondary">No results found</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      );
-  } else if (currentStatus === "pending") {
-    uploadArea = (
-      <div className="flex flex-col rounded-[4px] border border-dashed border-graphite-10 bg-white p-[8px_12px]" style={{ borderStyle: "dashed", borderWidth: "1px", borderColor: "var(--color-graphite-10)" }}>
-        <div className="flex items-center gap-[16px] py-[8px]">
-          <div className="flex min-w-0 flex-1 items-center gap-[8px]">
-            <img src={uploadIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
-            <span className="t-small text-text-secondary">{requirementText}</span>
-          </div>
-          <SecondaryButton size="sm">Upload</SecondaryButton>
-        </div>
-      </div>
-    );
-  } else if (currentStatus === "uploading") {
-    uploadArea = (
-      <div className="flex flex-col rounded-[4px] border border-graphite-10 bg-bg-light p-[8px_12px]">
-        <div className="flex items-center gap-[16px] py-[8px]">
-          <div className="flex min-w-0 flex-1 items-center gap-[8px]">
-            <img src={fileIconUrl} alt="" className="h-[20px] w-[20px] shrink-0" />
-            <span className="t-small text-text-secondary">{requirementText}</span>
-          </div>
-          <div className="flex shrink-0 items-center gap-[6px]">
-            <LoaderIcon size={16} color="var(--color-text-secondary)" />
-            <span className="t-body-secondary text-text-secondary">Uploading… {uploadProgress}%</span>
-          </div>
-        </div>
-      </div>
-    );
-  } else if (currentStatus === "uploaded") {
-    uploadArea = (
-      <div className="flex flex-col rounded-[4px] border border-graphite-10 bg-white p-[8px_12px]">
-        <div className="flex items-center gap-[16px] py-[8px]">
-          <div className="flex min-w-0 flex-1 items-center gap-[8px]">
-            <img src={fileIconUrl} alt="" className="h-[20px] w-[20px] shrink-0" />
-            <div className="flex items-center gap-[4px]">
-              <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: "var(--color-text-primary)" }}>{fileName}</span>
-              <img src={completedStatusIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
-            </div>
-          </div>
-          <button type="button" onClick={handleClear} className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-graphite-10" aria-label="Clear file">
-            <img src={closeIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
-          </button>
-        </div>
-      </div>
-    );
-  } else if (currentStatus === "error") {
-    uploadArea = (
-      <div className="flex flex-col rounded-[4px] border border-status-error bg-white p-[8px_12px]">
-        <div className="flex gap-[16px] py-[8px]" style={{ alignItems: "flex-start" }}>
-          <div className="flex min-w-0 flex-1 gap-[8px]" style={{ alignItems: "flex-start" }}>
-            <img src={errorStatusIconUrl} alt="" className="h-[20px] w-[20px] shrink-0 mt-[2px]" />
-            <div className="flex flex-col gap-[2px]">
-              <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: "var(--color-status-error)" }}>Upload Failed</span>
-              {errorMessage && <span className="t-small text-text-secondary">{errorMessage}</span>}
-            </div>
-          </div>
-          <SecondaryButton size="sm">Re-Upload</SecondaryButton>
-        </div>
-      </div>
-    );
-  } else if (currentStatus === "use-existing") {
-    uploadArea = (
-      <div className="flex flex-col rounded-[4px] border border-graphite-10 bg-white p-[8px_12px]">
-        <div className="flex items-center gap-[16px] py-[8px]">
-          <div className="flex min-w-0 flex-1 items-center gap-[8px]">
-            <img src={linkIconUrl} alt="" className="h-[20px] w-[20px] shrink-0" />
-            <div className="flex items-center gap-[4px]">
-              <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: "var(--color-text-primary)" }}>{selectedExistingFile || fileName}</span>
-              {required && <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: "var(--color-brand-1)" }}>*</span>}
-              <img src={completedStatusIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
-            </div>
-          </div>
-          <button type="button" onClick={handleClear} className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-graphite-10" aria-label="Clear selection">
-            <img src={closeIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-[6px]">
-      <div className="flex h-[24px] items-center justify-between">
-        <div className="flex items-center gap-[2px]">
-          {labelEl}
-          {requiredStar}
-        </div>
-        {showSegmented && <SegmentedControl options={["Upload", "Use Existing"]} selectedIndex={segmentedIndex} onChange={handleSegmentedChange} />}
-      </div>
-      {uploadArea}
-    </div>
-  );
-}
 
 // ==================== Optional Section ====================
 
@@ -533,10 +167,10 @@ function OptionalSection() {
       <div className="h-0 w-full border-t border-graphite-10" />
       {isExpanded && (
         <div className="flex flex-col gap-[16px] px-[10px] py-[12px]">
-          <DropdownField label="Reference Study" placeholder="Select reference study" options={refStudyOptions} value={refStudyValue} onChange={setRefStudyValue} />
-          <DropdownField label="Reference Event" placeholder="Select reference event" options={refEventOptions} value={refEventValue} onChange={setRefEventValue} />
-          <DropdownField label="O_GEM Version" placeholder="12.8" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
-          <InputField label="Program Path" placeholder="e.g. /studies/ABC-01/programs/primary" value={programPath} onChange={setProgramPath} />
+          <Dropdown label="Reference Study" placeholder="Select reference study" options={refStudyOptions} value={refStudyValue} onChange={setRefStudyValue} />
+          <Dropdown label="Reference Event" placeholder="Select reference event" options={refEventOptions} value={refEventValue} onChange={setRefEventValue} />
+          <Dropdown label="O_GEM Version" placeholder="12.8" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
+          <Input label="Program Path" placeholder="e.g. /studies/ABC-01/programs/primary" value={programPath} onChange={setProgramPath} />
         </div>
       )}
     </div>
@@ -631,7 +265,7 @@ function Step2Body() {
     else setSelectedRows(new Set(mockTaskRows.map((_, i) => i)));
   };
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto p-[20px_24px]">
+    <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto p-[20px_24px] [scrollbar-gutter:stable]">
       {/* Section title */}
       <div className="flex shrink-0 items-center justify-between">
         <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 14, color: "#000000" }}>Task Assignment</span>
@@ -694,7 +328,15 @@ function Step2Body() {
 
 // ==================== Main Modal ====================
 
-export default function CreateEventModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export default function CreateEventModal({
+  isOpen,
+  onClose,
+  onCreateEvent,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreateEvent: (eventData: { name: string; project: string; study: string }) => void;
+}) {
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   const modalRef = useRef<HTMLDivElement>(null);
   const [step1Height, setStep1Height] = useState<number | null>(null);
@@ -702,6 +344,19 @@ export default function CreateEventModal({ isOpen, onClose }: { isOpen: boolean;
   const [projectValue, setProjectValue] = useState<string | null>(null);
   const [studyValue, setStudyValue] = useState<string | null>(null);
   const [eventName, setEventName] = useState("");
+
+  // UploadCard states
+  const [adamStatus, setAdamStatus] = useState<UploadStatus>("error");
+  const [adamFile, setAdamFile] = useState("");
+
+  const [sdtmStatus, setSdtmStatus] = useState<UploadStatus>("uploaded");
+  const [sdtmFile, setSdtmFile] = useState("sdtm_spec_v1.2.xlsx");
+
+  const [shellStatus, setShellStatus] = useState<UploadStatus>("pending");
+  const [shellFile, setShellFile] = useState("");
+
+  const [tifoStatus, setTifoStatus] = useState<UploadStatus>("pending");
+  const [tifoFile, setTifoFile] = useState("");
 
   const taOptions: DropdownOption[] = [
     { label: "Oncology", value: "oncology" }, { label: "Cardiology", value: "cardiology" },
@@ -727,7 +382,10 @@ export default function CreateEventModal({ isOpen, onClose }: { isOpen: boolean;
 
   // Reset to step 1 when modal closes
   useEffect(() => {
-    if (!isOpen) { setCurrentStep(1); setStep1Height(null); }
+    if (!isOpen) { 
+      setCurrentStep(1); 
+      setStep1Height(null); 
+    }
   }, [isOpen]);
 
   // Capture Step 1 modal height to maintain consistent height in Step 2
@@ -740,6 +398,34 @@ export default function CreateEventModal({ isOpen, onClose }: { isOpen: boolean;
     return () => observer.disconnect();
   }, [isOpen, currentStep]);
 
+  const fieldsFilled = !!taValue && !!projectValue && !!studyValue && !!eventName.trim();
+
+  const requiredFilesUploaded =
+    (adamStatus === "uploaded" || adamStatus === "use-existing") &&
+    (sdtmStatus === "uploaded" || sdtmStatus === "use-existing") &&
+    (shellStatus === "uploaded" || shellStatus === "use-existing");
+
+  const canCreateEvent = fieldsFilled && requiredFilesUploaded;
+
+  const handleCreate = () => {
+    if (!canCreateEvent) return;
+    onCreateEvent({
+      name: eventName,
+      project: projectOptions.find(o => o.value === projectValue)?.label.split(" - ")[0] || projectValue || "",
+      study: studyOptions.find(o => o.value === studyValue)?.label || studyValue || "",
+    });
+    // Reset state
+    setEventName("");
+    setTaValue(null);
+    setProjectValue(null);
+    setStudyValue(null);
+    setAdamStatus("error");
+    setSdtmStatus("uploaded");
+    setShellStatus("pending");
+    setTifoStatus("pending");
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -751,7 +437,7 @@ export default function CreateEventModal({ isOpen, onClose }: { isOpen: boolean;
           <div className="flex min-w-0 flex-1 items-center gap-[10px]">
             <h2 style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 14, lineHeight: "22px", color: "var(--color-text-primary)" }}>Create New Event</h2>
           </div>
-          <button onClick={onClose} className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-graphite-10 active:scale-[0.96]" aria-label="Close">
+          <button onClick={onClose} className="relative flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-graphite-10 active:scale-[0.96] after:content-[''] after:absolute after:-inset-[8px]" aria-label="Close">
             <CloseIcon size={16} color="var(--color-text-secondary)" />
           </button>
         </div>
@@ -766,20 +452,53 @@ export default function CreateEventModal({ isOpen, onClose }: { isOpen: boolean;
             /* Step 1 - Upload Specs & Configs */
             <div className="flex min-h-0 flex-1 border-t border-graphite-10">
               {/* Left column */}
-             <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto border-r border-graphite-10 p-[20px]">
-                <DropdownField label="Therapeutic Area" required placeholder="Select TA" options={taOptions} value={taValue} onChange={setTaValue} />
-                <DropdownField label="Project" required placeholder="Select Project" options={projectOptions} value={projectValue} onChange={setProjectValue} />
-                <DropdownField label="Study" required placeholder="Select Study" options={studyOptions} value={studyValue} onChange={setStudyValue} />
-                <InputField label="Event Name" required placeholder="e.g. CSR Interim Analysis" value={eventName} onChange={setEventName} />
+             <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] border-r border-graphite-10 p-[20px]">
+                <Dropdown label="Therapeutic Area" required placeholder="Select TA" options={taOptions} value={taValue} onChange={setTaValue} />
+                <Dropdown label="Project" required placeholder="Select Project" options={projectOptions} value={projectValue} onChange={setProjectValue} />
+                <Dropdown label="Study" required placeholder="Select Study" options={studyOptions} value={studyValue} onChange={setStudyValue} />
+                <Input label="Event Name" required placeholder="e.g. CSR Interim Analysis" value={eventName} onChange={setEventName} />
                 <OptionalSection />
               </div>
               {/* Right column */}
-             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto p-[20px]">
+             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] p-[20px]">
                 <span className="t-small text-text-secondary">Specification Files</span>
-                <FileUploadSection label="ADaM Spec" required requirementText="Excel only (.xlsx / .xls), max 20MB per file" showSegmentedControl status="error" errorMessage='Validation failed: missing required column "U_SUBJECT_KEY" in sheet 1.' />
-                <FileUploadSection label="SDTM" required requirementText="Excel only (.xlsx / .xls), max 20MB" status="uploaded" fileName="sdtm_spec_v1.2.xlsx" />
-                <FileUploadSection label="Shell file" required requirementText="Excel only (.xlsx / .xls), max 20MB" />
-                <FileUploadSection label="TiFo" requirementText="Excel only (.xlsx / .xls), max 20MB" />
+                <UploadCard 
+                  label="ADaM Spec" 
+                  required 
+                  requirementText="Excel only (.xlsx / .xls), max 20MB per file" 
+                  showSegmentedControl 
+                  status={adamStatus} 
+                  fileName={adamFile}
+                  onStatusChange={setAdamStatus}
+                  onFileSelect={setAdamFile}
+                  errorMessage='Validation failed: missing required column "U_SUBJECT_KEY" in sheet 1.' 
+                />
+                <UploadCard 
+                  label="SDTM" 
+                  required 
+                  requirementText="Excel only (.xlsx / .xls), max 20MB" 
+                  status={sdtmStatus} 
+                  fileName={sdtmFile}
+                  onStatusChange={setSdtmStatus}
+                  onFileSelect={setSdtmFile}
+                />
+                <UploadCard 
+                  label="Shell file" 
+                  required 
+                  requirementText="Excel only (.xlsx / .xls), max 20MB" 
+                  status={shellStatus}
+                  fileName={shellFile}
+                  onStatusChange={setShellStatus}
+                  onFileSelect={setShellFile}
+                />
+                <UploadCard 
+                  label="TiFo" 
+                  requirementText="Excel only (.xlsx / .xls), max 20MB" 
+                  status={tifoStatus}
+                  fileName={tifoFile}
+                  onStatusChange={setTifoStatus}
+                  onFileSelect={setTifoFile}
+                />
               </div>
             </div>
           ) : (
@@ -794,14 +513,14 @@ export default function CreateEventModal({ isOpen, onClose }: { isOpen: boolean;
         {currentStep === 1 ? (
           <div className="flex shrink-0 items-center justify-end gap-[8px] border-t border-graphite-10 px-[20px] py-[14px]">
             <button onClick={() => setCurrentStep(2)} className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-light active:scale-[0.96]">Next</button>
-            <PrimaryButton disabled>Create Event</PrimaryButton>
+            <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
           </div>
         ) : (
           <div className="flex shrink-0 items-center justify-between border-t border-graphite-10 px-[20px] py-[14px]">
             <button onClick={() => setCurrentStep(1)} className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-light active:scale-[0.96]">Back</button>
             <div className="flex items-center gap-[8px]">
-              <button className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-light active:scale-[0.96]">Assign later</button>
-              <PrimaryButton>Create Event</PrimaryButton>
+              <button className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-light active:scale-[0.96]">Assign Later</button>
+              <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
             </div>
           </div>
         )}

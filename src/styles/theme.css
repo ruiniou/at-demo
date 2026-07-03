@@ -88,6 +88,8 @@
   --color-border-default: #D8DADA;
   --color-status-error: #CC2C3C;
   --color-status-success: #1E7E34;
+  --color-code-success: #1E7E34;
+  --color-status-warning: #F0AB00;
 
   /* Typography: Font Families */
   --font-sans: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
