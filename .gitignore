@@ -114,7 +114,6 @@ dist
 Thumbs.db
 
 # Guidelines (internal only)
-guidelines/
 
 # Qoder cache
 .qoder/
