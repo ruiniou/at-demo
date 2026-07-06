@@ -46,6 +46,7 @@ import snowflakeIconUrl from "../../icons/snowflake-line.svg";
 import deleteBinIconUrl from "../../icons/delete-bin-line.svg";
 import CreateEventModal from "./components/CreateEventModal";
 import { Button } from "../../components/ui/Button";
+import { Tooltip } from "../../components/ui/Tooltip";
 import { AIInputBox } from "../../components/ui/AI-InputBox";
 import { AIUserPrompt } from "../../components/ui/AI-UserPrompt";
 import { AICodeDiff } from "../../components/ui/AI-CodeDiff";
@@ -658,73 +659,11 @@ function CodeStatusDot({ color }: { color: string }) {
   return <span className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: color }} />;
 }
 
-function TooltipText({ label, children, align = "center" }: { label: string; children: React.ReactNode; align?: "center" | "left" }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0, translateX: "translateX(-50%)", translateY: "translateY(0)" });
-  const triggerRef = useRef<HTMLSpanElement>(null);
-  const tooltipRef = useRef<HTMLSpanElement>(null);
-
-  const handleMouseEnter = () => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const showAbove = spaceBelow < 24;
-      const gap = align === "left" ? 0 : 2;
-      setPos({
-        top: showAbove ? rect.top - gap : rect.bottom + gap,
-        left: align === "left" ? rect.left : rect.left + rect.width / 2,
-        translateX: align === "center" ? "translateX(-50%)" : "translateX(0)",
-        translateY: showAbove ? "translateY(-100%)" : "translateY(0)",
-      });
-    }
-    setIsOpen(true);
-  };
-
-  // Adjust position after render to handle viewport boundary cases
-  useLayoutEffect(() => {
-    if (!isOpen || !triggerRef.current || !tooltipRef.current || align !== "center") return;
-
-    const triggerRect = triggerRef.current.getBoundingClientRect();
-    const tooltipRect = tooltipRef.current.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const margin = 8;
-
-    const centeredLeft = triggerRect.left + triggerRect.width / 2;
-    const tooltipHalfWidth = tooltipRect.width / 2;
-
-    if (centeredLeft + tooltipHalfWidth > viewportWidth - margin) {
-      // Near right edge: right-align tooltip with button
-      setPos((prev) => ({ ...prev, left: triggerRect.right, translateX: "translateX(-100%)" }));
-    } else if (centeredLeft - tooltipHalfWidth < margin) {
-      // Near left edge: left-align tooltip with button
-      setPos((prev) => ({ ...prev, left: triggerRect.left, translateX: "translateX(0)" }));
-    }
-  }, [isOpen, align, label]);
-
+function TooltipText({ label, children, align = "center" }: { label: React.ReactNode; children: React.ReactNode; align?: "center" | "left" }) {
   return (
-    <span
-      ref={triggerRef}
-      className="relative inline-flex"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={() => setIsOpen(false)}
-    >
+    <Tooltip label={label} align={align}>
       {children}
-      {isOpen && (
-        <span
-          ref={tooltipRef}
-          className={`fixed z-[9999] rounded-[4px] bg-[#3C4242] px-[6px] py-[4px] t-small text-[#F8F7F7] shadow-[0px_2px_4px_rgba(0,0,0,0.08)] ${
-            align === "left" ? "max-w-[232px] break-words" : "whitespace-nowrap"
-          }`}
-          style={{
-            top: `${pos.top}px`,
-            left: `${pos.left}px`,
-            transform: `${pos.translateX} ${pos.translateY}`,
-          }}
-        >
-          {label}
-        </span>
-      )}
-    </span>
+    </Tooltip>
   );
 }
 
@@ -4279,7 +4218,6 @@ function WorkspaceContent({
       setShellPreviewOpen(true);
       setCodeOpen(false);
       setMetadataOpen(false);
-      setAiCopilotOpen(false);
     } else if (v === 'code') {
       setShellPreviewOpen(false);
       setMetadataOpen(false);

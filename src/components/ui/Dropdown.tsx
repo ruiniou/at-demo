@@ -90,6 +90,12 @@ export function Dropdown({
             fontSize: 12,
             lineHeight: "20px",
             color: textColor,
+            maxWidth: "calc(100% - 24px)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            display: "block",
+            textAlign: "left",
           }}
         >
           {selectedOption ? selectedOption.label : placeholder}
