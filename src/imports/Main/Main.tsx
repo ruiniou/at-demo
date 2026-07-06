@@ -2158,7 +2158,7 @@ function ListingShellPreview({
       {/* Content row: shell table + metadata overlay */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Shell content */}
-        <div className={`relative flex-1 overflow-auto ${pageSepActive ? 'bg-[#f2f3f3]' : 'bg-white'}`}>
+        <div className={`relative flex-1 overflow-auto bg-bg-light ${pageSepActive ? '' : 'p-[12px]'}`}>
           {pageSepActive && createPortal(
             <div className="fixed inset-0 z-[100] bg-border-default">
               {/* Scroll container */}
@@ -2225,7 +2225,7 @@ function ListingShellPreview({
           )}
 
           {/* Normal (non-preview) table view */}
-          <div className={`min-w-max p-[16px] ${pageSepActive ? 'hidden' : ''}`}>
+          <div className={`min-w-max bg-white border border-graphite-10 rounded-[4px] shadow-sm p-[16px] inline-block ${pageSepActive ? 'hidden' : ''}`}>
             <div className="w-max bg-white text-black">
               <div className="relative">
                 {/* Title header */}
@@ -2707,9 +2707,10 @@ function ShellPreview({
           </TooltipText>
         }
       />
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-h-0 min-w-0 flex-1 overflow-auto p-[16px]">
-          {/* Title header - Styled like Listing's Shell preview header */}
+      <div className="flex min-h-0 flex-1 overflow-hidden bg-bg-light">
+        <div className="min-h-0 min-w-0 flex-1 overflow-auto p-[12px]">
+          <div className="bg-white border border-graphite-10 rounded-[4px] shadow-sm p-[16px] min-w-full inline-block">
+            {/* Title header - Styled like Listing's Shell preview header */}
           <div className="h-[72px] min-w-max border-b-2 border-black flex flex-col items-center justify-start px-[16px] pt-[16px] bg-white text-black mb-[16px]">
             <h1 className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">
               {shellData.tableNumber}. {shellData.tableTitle}
@@ -2787,6 +2788,7 @@ function ShellPreview({
           <div className="mt-[12px] flex items-center gap-[4px]">
             <div className="h-[6px] w-[6px] rounded-full bg-brand-1" />
             <p className="t-small text-text-secondary">Shell preview — data shown is illustrative structure. Click a row to view metadata.</p>
+          </div>
           </div>
         </div>
         {/* Metadata left-edge drag handle — uses WorkspaceDivider pattern */}
