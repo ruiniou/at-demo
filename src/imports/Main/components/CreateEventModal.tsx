@@ -4,7 +4,8 @@ import { Badge } from "../../../components/ui/Badge";
 import { UploadCard, UploadStatus } from "../../../components/ui/UploadCard";
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
-import { Dropdown } from "../../../components/ui/Dropdown";
+import { Dropdown, DropdownOption } from "../../../components/ui/Dropdown";
+import { MultiSelectDropdown } from "../../../components/ui/MultiSelectDropdown";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
 
 import { createPortal } from "react-dom";
@@ -136,9 +137,9 @@ function MoreIcon({ size = 16, color = "#888E8E" }: { size?: number; color?: str
 
 function OptionalSection() {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [tablesToParse, setTablesToParse] = useState<string[]>([]);
   const [refStudyValue, setRefStudyValue] = useState<string | null>(null);
   const [refEventValue, setRefEventValue] = useState<string | null>(null);
-  const [ogemValue, setOgemValue] = useState<string | null>(null);
   const [programPath, setProgramPath] = useState("");
 
   const refStudyOptions: DropdownOption[] = [
@@ -151,10 +152,11 @@ function OptionalSection() {
     { label: "Final CSR", value: "final-csr" },
     { label: "DSMB Q1 Report", value: "dsmb-q1" },
   ];
-  const ogemOptions: DropdownOption[] = [
-    { label: "12.8", value: "12.8" },
-    { label: "12.7", value: "12.7" },
-    { label: "12.6", value: "12.6" },
+  const tablesToParseOptions: DropdownOption[] = [
+    { label: "14.1.1 Demographics", value: "14.1.1" },
+    { label: "14.1.2 Baseline Characteristics", value: "14.1.2" },
+    { label: "14.1.3 Medical History", value: "14.1.3" },
+    { label: "14.1.4 Concomitant Meds", value: "14.1.4" },
   ];
 
   return (
@@ -167,9 +169,9 @@ function OptionalSection() {
       <div className="h-0 w-full border-t border-graphite-10" />
       {isExpanded && (
         <div className="flex flex-col gap-[16px] px-[10px] py-[12px]">
+          <MultiSelectDropdown label="Tables to parse" placeholder="Select tables to parse" options={tablesToParseOptions} value={tablesToParse} onChange={setTablesToParse} />
           <Dropdown label="Reference Study" placeholder="Select reference study" options={refStudyOptions} value={refStudyValue} onChange={setRefStudyValue} />
           <Dropdown label="Reference Event" placeholder="Select reference event" options={refEventOptions} value={refEventValue} onChange={setRefEventValue} />
-          <Dropdown label="O_GEM Version" placeholder="12.8" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
           <Input label="Program Path" placeholder="e.g. /studies/ABC-01/programs/primary" value={programPath} onChange={setProgramPath} />
         </div>
       )}
@@ -341,9 +343,10 @@ export default function CreateEventModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const [step1Height, setStep1Height] = useState<number | null>(null);
   const [taValue, setTaValue] = useState<string | null>(null);
-  const [projectValue, setProjectValue] = useState<string | null>(null);
-  const [studyValue, setStudyValue] = useState<string | null>(null);
+  const [projectCodes, setProjectCodes] = useState<string[]>([]);
+  const [studyCodes, setStudyCodes] = useState<string[]>([]);
   const [eventName, setEventName] = useState("");
+  const [ogemValue, setOgemValue] = useState<string | null>("12.8");
 
   // UploadCard states
   const [adamStatus, setAdamStatus] = useState<UploadStatus>("error");
@@ -358,6 +361,9 @@ export default function CreateEventModal({
   const [tifoStatus, setTifoStatus] = useState<UploadStatus>("pending");
   const [tifoFile, setTifoFile] = useState("");
 
+  const [customShellStatus, setCustomShellStatus] = useState<UploadStatus>("pending");
+  const [customShellFile, setCustomShellFile] = useState("");
+
   const taOptions: DropdownOption[] = [
     { label: "Oncology", value: "oncology" }, { label: "Cardiology", value: "cardiology" },
     { label: "Neurology", value: "neurology" }, { label: "Immunology", value: "immunology" },
@@ -371,6 +377,11 @@ export default function CreateEventModal({
   const studyOptions: DropdownOption[] = [
     { label: "AZE2001-301", value: "aze2001-301" }, { label: "AZE2001-302", value: "aze2001-302" },
     { label: "AZE2001-303", value: "aze2001-303" },
+  ];
+  const ogemOptions: DropdownOption[] = [
+    { label: "12.8", value: "12.8" },
+    { label: "12.7", value: "12.7" },
+    { label: "12.6", value: "12.6" },
   ];
 
   useEffect(() => {
@@ -398,7 +409,7 @@ export default function CreateEventModal({
     return () => observer.disconnect();
   }, [isOpen, currentStep]);
 
-  const fieldsFilled = !!taValue && !!projectValue && !!studyValue && !!eventName.trim();
+  const fieldsFilled = !!taValue && projectCodes.length > 0 && studyCodes.length > 0 && !!eventName.trim() && !!ogemValue;
 
   const requiredFilesUploaded =
     (adamStatus === "uploaded" || adamStatus === "use-existing") &&
@@ -409,20 +420,30 @@ export default function CreateEventModal({
 
   const handleCreate = () => {
     if (!canCreateEvent) return;
+    const selectedProjects = projectCodes
+      .map(val => projectOptions.find(o => o.value === val)?.label.split(" - ")[0] || val)
+      .join(", ");
+    const selectedStudies = studyCodes
+      .map(val => studyOptions.find(o => o.value === val)?.label || val)
+      .join(", ");
+
     onCreateEvent({
       name: eventName,
-      project: projectOptions.find(o => o.value === projectValue)?.label.split(" - ")[0] || projectValue || "",
-      study: studyOptions.find(o => o.value === studyValue)?.label || studyValue || "",
+      project: selectedProjects,
+      study: selectedStudies,
     });
     // Reset state
     setEventName("");
     setTaValue(null);
-    setProjectValue(null);
-    setStudyValue(null);
+    setProjectCodes([]);
+    setStudyCodes([]);
+    setOgemValue("12.8");
     setAdamStatus("error");
     setSdtmStatus("uploaded");
     setShellStatus("pending");
     setTifoStatus("pending");
+    setCustomShellStatus("pending");
+    setCustomShellFile("");
     onClose();
   };
 
@@ -431,7 +452,7 @@ export default function CreateEventModal({
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <button className="absolute inset-0 bg-black/40" aria-label="Close modal" onClick={onClose} />
-      <div ref={modalRef} className="relative flex h-[650px] max-h-[calc(100vh-40px)] w-[760px] max-w-[90vw] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.15)]" style={currentStep === 2 && step1Height ? { height: `${step1Height}px` } : undefined}>
+      <div ref={modalRef} className="relative flex h-[740px] max-h-[calc(100vh-40px)] w-[760px] max-w-[90vw] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.15)]" style={currentStep === 2 && step1Height ? { height: `${step1Height}px` } : undefined}>
         {/* Header */}
         <div className="flex shrink-0 items-center gap-[16px] px-[20px] pb-[12px] pt-[16px]">
           <div className="flex min-w-0 flex-1 items-center gap-[10px]">
@@ -452,16 +473,16 @@ export default function CreateEventModal({
             /* Step 1 - Upload Specs & Configs */
             <div className="flex min-h-0 flex-1 border-t border-graphite-10">
               {/* Left column */}
-             <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] border-r border-graphite-10 p-[20px]">
+              <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] border-r border-graphite-10 p-[20px]">
                 <Dropdown label="Therapeutic Area" required placeholder="Select TA" options={taOptions} value={taValue} onChange={setTaValue} />
-                <Dropdown label="Project" required placeholder="Select Project" options={projectOptions} value={projectValue} onChange={setProjectValue} />
-                <Dropdown label="Study" required placeholder="Select Study" options={studyOptions} value={studyValue} onChange={setStudyValue} />
+                <MultiSelectDropdown label="Project Code" required placeholder="Select Project Code" options={projectOptions} value={projectCodes} onChange={setProjectCodes} />
+                <MultiSelectDropdown label="Study Code" required placeholder="Select Study Code" options={studyOptions} value={studyCodes} onChange={setStudyCodes} />
                 <Input label="Event Name" required placeholder="e.g. CSR Interim Analysis" value={eventName} onChange={setEventName} />
+                <Dropdown label="O_GEM Version" required placeholder="Select O_GEM Version" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
                 <OptionalSection />
               </div>
               {/* Right column */}
-             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] p-[20px]">
-                <span className="t-small text-text-secondary">Specification Files</span>
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] p-[18px_20px_20px_20px]">
                 <UploadCard 
                   label="ADaM Spec" 
                   required 
@@ -498,6 +519,14 @@ export default function CreateEventModal({
                   fileName={tifoFile}
                   onStatusChange={setTifoStatus}
                   onFileSelect={setTifoFile}
+                />
+                <UploadCard 
+                  label="Custom Shell json" 
+                  requirementText="JSON only (.json), max 20MB" 
+                  status={customShellStatus}
+                  fileName={customShellFile}
+                  onStatusChange={setCustomShellStatus}
+                  onFileSelect={setCustomShellFile}
                 />
               </div>
             </div>

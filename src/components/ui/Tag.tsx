@@ -20,7 +20,7 @@ const Tag = forwardRef<HTMLSpanElement, TagProps>(
     return (
       <span
         ref={ref}
-        className={`inline-flex items-center gap-[4px] rounded-[4px] bg-graphite-10 px-[6px] py-[2px] hover:bg-graphite-20 transition-colors ${className}`}
+        className={`inline-flex items-center gap-[4px] rounded-[4px] bg-graphite-10 px-[6px] py-[2px] hover:bg-graphite-20 transition-colors min-w-0 ${className}`}
         {...props}
       >
         <span
@@ -30,6 +30,11 @@ const Tag = forwardRef<HTMLSpanElement, TagProps>(
             fontSize: 12,
             lineHeight: "20px",
             color: "var(--color-text-primary)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            display: "block",
+            maxWidth: "100%",
           }}
         >
           {children}
