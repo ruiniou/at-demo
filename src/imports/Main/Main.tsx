@@ -2107,7 +2107,7 @@ function ListingShellPreview({
   return (
     <div className="h-full bg-white flex flex-col overflow-hidden">
       {/* Top Bar */}
-      <div className="bg-white h-[40px] shrink-0 w-full flex items-center justify-between px-[12px] border-b border-graphite-10">
+      <div className="bg-white h-[40px] shrink-0 w-full flex items-center justify-between px-[12px]">
         <p className="t-small truncate text-black">{selectedItemName || 'Shell preview'}</p>
         <div className="flex items-center gap-[10px]">
           <div className="flex items-center gap-[8px]">
@@ -2692,6 +2692,7 @@ function ShellPreview({
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
       <PanelHeader
+        noBorder={true}
         title={selectedItemName || "Shell preview"}
         actions={
           <TooltipText label="Open Metadata">
