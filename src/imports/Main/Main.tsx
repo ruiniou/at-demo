@@ -8,6 +8,9 @@ import checkIconUrl from "../../icons/check-line.svg";
 import closeIconUrl from "../../icons/close-line.svg";
 import codeIconUrl from "../../icons/code-line.svg";
 import codeSlashIconUrl from "../../icons/code-s-slash-line.svg";
+import eyeLineIconUrl from "../../icons/eye-line.svg";
+import contractUpDownIconUrl from "../../icons/contract-up-down-line.svg";
+import expandUpDownIconUrl from "../../icons/expand-up-down-line.svg";
 import collapseIconUrl from "../../icons/Icon-collapse.svg";
 import copyIconUrl from "../../icons/file-copy-line.svg";
 import editIconUrl from "../../icons/edit-2-line.svg";
@@ -45,6 +48,7 @@ import downloadIconUrl from "../../icons/download-2-line.svg";
 import snowflakeIconUrl from "../../icons/snowflake-line.svg";
 import deleteBinIconUrl from "../../icons/delete-bin-line.svg";
 import CreateEventModal from "./components/CreateEventModal";
+import { KMPlot } from "./components/KMPlot";
 import { Button } from "../../components/ui/Button";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { AIInputBox } from "../../components/ui/AI-InputBox";
@@ -53,6 +57,7 @@ import { AICodeDiff } from "../../components/ui/AI-CodeDiff";
 import { AIThinkingStatus } from "../../components/ui/AI-ThinkingStatus";
 import ChatBox from "./components/ChatBox";
 import { SearchBar } from "../../components/ui/SearchBar";
+import { SegmentedControl } from "../../components/ui/SegmentedControl";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -651,7 +656,7 @@ function AICopilotPanel({
 // ==================== Workspace Shell: Top Nav & Tree List ====================
 
 type ItemStatus = 'pending' | 'locked' | 'analyzing' | 'error' | 'modified';
-type DocumentType = 'table' | 'listing';
+type DocumentType = 'table' | 'listing' | 'figure';
 type ActiveView = 'table' | 'group' | 'listing';
 
 type TableItem = {
@@ -1093,6 +1098,7 @@ function TreeStatusControl({
   isChildOfLockedParent,
   onToggleLock,
   onShowLockedModal,
+  isFigureQueued,
 }: {
   item: TableItem | ProgramItem;
   itemId: string;
@@ -1102,7 +1108,24 @@ function TreeStatusControl({
   isChildOfLockedParent: boolean;
   onToggleLock: (programId: string, tableId?: string) => void;
   onShowLockedModal: (programName: string) => void;
+  isFigureQueued?: boolean;
 }) {
+  if (item.docType === 'figure' && isFigureQueued) {
+    return (
+      <TooltipText label="Queued — Waiting for Table 14.1.4 to complete">
+        <span className="cursor-help">
+          <CodeStatusSlot>
+            <div className="flex items-center justify-center w-[16px] h-[16px]">
+              <SvgIcon className="w-[14px] h-[14px]" viewBox="0 0 24 24">
+                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm3.3 12.5l-3.8-2.3V7h1.5v4.5l3.1 1.9-.8 1.1z" fill="#888E8E" />
+              </SvgIcon>
+            </div>
+          </CodeStatusSlot>
+        </span>
+      </TooltipText>
+    );
+  }
+
   if (item.status === 'analyzing') {
     return (
       <CodeStatusSlot>
@@ -1265,20 +1288,30 @@ function TreeItem({
             const isTableSelected = selectedId === table.id;
             const effectiveItem: TableItem = isProgramLocked ? { ...table, status: 'locked' } : table;
 
+            const isQueued = table.docType === 'figure' && table.status === 'queued';
+
             return (
               <div
                 key={table.id}
-                className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors ${
-                  isTableSelected ? 'bg-az-secondary' : isTableHovered ? 'bg-graphite-10' : ''
+                className={`relative h-[28px] w-full rounded-[4px] transition-colors ${
+                  isQueued
+                    ? 'opacity-60 cursor-not-allowed'
+                    : isTableSelected
+                      ? 'bg-az-secondary'
+                      : isTableHovered
+                        ? 'bg-graphite-10'
+                        : 'cursor-pointer'
                 }`}
-                onClick={() => onSelect(table.id)}
-                onMouseEnter={() => setHoveredId(table.id)}
-                onMouseLeave={() => setHoveredId(null)}
+                onClick={isQueued ? undefined : () => onSelect(table.id)}
+                onMouseEnter={isQueued ? undefined : () => setHoveredId(table.id)}
+                onMouseLeave={isQueued ? undefined : () => setHoveredId(null)}
               >
                 <div className="flex h-full items-center justify-between pl-[24px] pr-[12px]">
                   <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
                     {table.docType === 'listing' ? (
                       <ListingTreeIcon color={isProgramLocked ? "#B2B4B4" : isTableSelected ? "#830051" : "#888E8E"} />
+                    ) : table.docType === 'figure' ? (
+                      <FigureTreeIcon color={isProgramLocked ? "#B2B4B4" : isTableSelected ? "#830051" : "#888E8E"} />
                     ) : (
                       <TableTreeIcon color={isProgramLocked ? "#B2B4B4" : isTableSelected ? "#830051" : "#888E8E"} />
                     )}
@@ -1290,11 +1323,12 @@ function TreeItem({
                     item={effectiveItem}
                     itemId={table.id}
                     program={program}
-                    isHovered={isTableHovered && !isProgramLocked}
+                    isHovered={isTableHovered && !isProgramLocked && !isQueued}
                     isProgram={false}
                     isChildOfLockedParent={isProgramLocked}
                     onToggleLock={onToggleLock}
                     onShowLockedModal={onShowLockedModal}
+                    isFigureQueued={isQueued}
                   />
                 </div>
               </div>
@@ -1753,6 +1787,9 @@ function ListingShellPreview({
   const [hoveredFreezeColumn, setHoveredFreezeColumn] = useState<number | null>(null);
   const [gapXPositions, setGapXPositions] = useState<number[]>([]);
 
+  const listingScrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const thRefs = useRef<Array<HTMLTableCellElement | null>>([]);
   const gapXPositionsRef = useRef<number[]>([]);
@@ -1940,6 +1977,8 @@ function ListingShellPreview({
     if (!containerEl) return;
 
     const frozenSnapshot = frozenUntilIndex;
+    setHoveredGap(null);
+    setHoveredFreezeColumn(null);
     setDraggingBreak({ colIdx, currentGap: colIdx });
 
     // Calculate neighbors and boundaries
@@ -2002,6 +2041,7 @@ function ListingShellPreview({
   };
 
   const handleFreezeDragStart = (e: React.MouseEvent) => {
+    if (isScrolled) return;
     e.preventDefault();
     e.stopPropagation();
     const containerEl = tableContainerRef.current;
@@ -2010,6 +2050,8 @@ function ListingShellPreview({
     const initialFreeze = frozenUntilIndex;
     if (initialFreeze === null) return;
 
+    setHoveredGap(null);
+    setHoveredFreezeColumn(null);
     setDraggingFreeze({ currentGap: initialFreeze });
     const initialLeft = initialFreeze === null ? 0 : (gapXPositionsRef.current[initialFreeze] || getGapX(initialFreeze));
     setFreezeDragOriginX(initialLeft);
@@ -2020,8 +2062,8 @@ function ListingShellPreview({
 
       let nearest = initialFreeze;
       let minDist = Infinity;
-      // Max freeze gap index is: listingColumns.length - 2 - pageBreakColumns.length
-      const maxFreeze = listingColumns.length - 2 - pageBreakColumns.length;
+      const firstPageBreak = pageBreakColumns.length > 0 ? Math.min(...pageBreakColumns) : Infinity;
+      const maxFreeze = Math.min(listingColumns.length - 2, firstPageBreak - 1);
 
       for (let i = 0; i <= Math.max(0, maxFreeze); i++) {
         const gx = gapXPositionsRef.current[i] || getGapX(i);
@@ -2032,21 +2074,6 @@ function ListingShellPreview({
       const clamped = Math.max(0, Math.min(maxFreeze, nearest));
       setDraggingFreeze({ currentGap: clamped });
       setFrozenUntilIndex(clamped);
-
-      // Push page breaks to the right dynamically
-      setPageBreakColumns(prev => {
-        const sorted = [...prev].sort((a, b) => a - b);
-        let changed = false;
-        const nextBreaks = sorted.map((p, idx) => {
-          const minAllowed = clamped + 1 + idx;
-          if (p < minAllowed) {
-            changed = true;
-            return minAllowed;
-          }
-          return p;
-        });
-        return changed ? nextBreaks : prev;
-      });
     };
 
     const onUp = () => {
@@ -2285,6 +2312,8 @@ function ListingShellPreview({
     handlePageSelectionByNumber(nextValue);
   };
 
+  const firstPageBreakIndex = pageBreakColumns.length > 0 ? Math.min(...pageBreakColumns) : Infinity;
+
   return (
     <div className="h-full bg-white flex flex-col overflow-hidden">
       {/* Top Bar */}
@@ -2338,8 +2367,11 @@ function ListingShellPreview({
 
       {/* Content row: shell table + metadata overlay */}
       <div className="flex flex-1 overflow-hidden relative">
-        {/* Shell content */}
-        <div className={`relative flex-1 overflow-auto ${pageSepActive ? 'bg-[#f2f3f3]' : 'bg-white'}`}>
+        <div
+          ref={listingScrollContainerRef}
+          onScroll={(e) => setIsScrolled(e.currentTarget.scrollLeft > 0)}
+          className={`relative flex-1 overflow-auto ${pageSepActive ? 'bg-[#f2f3f3]' : 'bg-white'}`}
+        >
           {pageSepActive && createPortal(
             <div className="fixed inset-0 z-[100] bg-border-default">
               {/* Scroll container */}
@@ -2436,11 +2468,15 @@ function ListingShellPreview({
                               ref={(node) => { thRefs.current[columnIndex] = node; }}
                               style={cellStyle}
                               className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-black border-r-graphite-10 px-[4px] py-[6px] text-left align-middle text-[12px] leading-[18px] font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
-                              onMouseEnter={() => setHoveredFreezeColumn(columnIndex)}
+                              onMouseEnter={() => {
+                                if (draggingBreak === null && draggingFreeze === null && columnIndex < firstPageBreakIndex) {
+                                  setHoveredFreezeColumn(columnIndex);
+                                }
+                              }}
                               onMouseLeave={() => setHoveredFreezeColumn(null)}
                             >
                               {/* Hover tooltip for Add Freeze */}
-                              {hoveredFreezeColumn === columnIndex && frozenUntilIndex === null && hoveredGap === null && !pageSepActive && (
+                              {hoveredFreezeColumn === columnIndex && frozenUntilIndex === null && columnIndex < firstPageBreakIndex && hoveredGap === null && !pageSepActive && (
                                 <div
                                   className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full z-[60] pb-[6px] cursor-pointer active:scale-[0.96] transition-transform pointer-events-auto"
                                   onClick={(e) => { e.stopPropagation(); setFrozenUntilIndex(columnIndex); setHoveredFreezeColumn(null); }}
@@ -2453,7 +2489,7 @@ function ListingShellPreview({
                               )}
                               {/* Button area */}
                               <div className="flex w-full items-center justify-between gap-[4px] rounded-[3px]">
-                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} className="flex-1 min-w-0 whitespace-normal break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#830051] focus-visible:outline-offset-1" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
+                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} className="flex-1 min-w-0 whitespace-normal break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
                               </div>
                               
                               {frozenBoundary && (
@@ -2496,7 +2532,7 @@ function ListingShellPreview({
                                     style={{
                                       right: '-6px',
                                       width: '12px',
-                                      cursor: 'col-resize',
+                                      cursor: isScrolled ? 'not-allowed' : 'col-resize',
                                       zIndex: 32,
                                     }}
                                     onMouseDown={handleFreezeDragStart}
@@ -2563,8 +2599,8 @@ function ListingShellPreview({
                     />
                   )}
 
-                  {/* Page break insertion preview (while hovering a gap) */}
-                  {hoveredGap !== null && !pageBreakColumns.includes(hoveredGap) && (
+                   {/* Page break insertion preview (while hovering a gap) */}
+                  {hoveredGap !== null && !pageBreakColumns.includes(hoveredGap) && draggingBreak === null && draggingFreeze === null && (
                     <>
                       <div
                         className="absolute bottom-0 pointer-events-none"
@@ -2573,7 +2609,7 @@ function ListingShellPreview({
                       <div
                         className="absolute z-[60] cursor-pointer pointer-events-auto pb-[6px] active:scale-[0.96] transition-transform"
                         style={{ left: `${gapXPositions[hoveredGap] || getGapX(hoveredGap)}px`, top: '0', transform: 'translateX(-50%) translateY(-100%)' }}
-                        onMouseEnter={() => setHoveredGap(hoveredGap)}
+                        onMouseEnter={() => { if (draggingBreak === null && draggingFreeze === null) setHoveredGap(hoveredGap); }}
                         onMouseLeave={() => setHoveredGap(null)}
                         onClick={() => { addPageBreak(hoveredGap); setHoveredGap(null); }}
                       >
@@ -2602,7 +2638,7 @@ function ListingShellPreview({
                           width: '20px',
                           cursor: 'col-resize',
                         }}
-                        onMouseEnter={() => setHoveredGap(columnIndex)}
+                        onMouseEnter={() => { if (draggingBreak === null && draggingFreeze === null) setHoveredGap(columnIndex); }}
                         onMouseLeave={() => setHoveredGap(null)}
                       />
                     );
@@ -2853,6 +2889,17 @@ function ShellPreview({
   shellPreviewMaxWidth,
   isShellFlex,
   selectedItemName = '',
+  docType = 'table',
+  onJumpToTL,
+  showCI = true,
+  showCensorMarks = true,
+  showMedianLines = true,
+  showRiskTable = true,
+  onShowCIChange,
+  onShowCensorMarksChange,
+  onShowMedianLinesChange,
+  onShowRiskTableChange,
+  associatedTLStatus = 'pending',
 }: {
   onBlockClick: () => void;
   onMetadataClick: () => void;
@@ -2867,6 +2914,17 @@ function ShellPreview({
   shellPreviewMaxWidth: number;
   isShellFlex: boolean;
   selectedItemName?: string;
+  docType?: DocumentType;
+  onJumpToTL?: (name: string) => void;
+  showCI?: boolean;
+  showCensorMarks?: boolean;
+  showMedianLines?: boolean;
+  showRiskTable?: boolean;
+  onShowCIChange?: (v: boolean) => void;
+  onShowCensorMarksChange?: (v: boolean) => void;
+  onShowMedianLinesChange?: (v: boolean) => void;
+  onShowRiskTableChange?: (v: boolean) => void;
+  associatedTLStatus?: string;
 }) {
   const shellData = shellTableData[selectedItemName] || shellTableData['Table 14.1.1'];
   const metadataMinWidth = 280;
@@ -2891,85 +2949,100 @@ function ShellPreview({
       />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="min-h-0 min-w-0 flex-1 overflow-auto p-[12px]">
-          {/* Title header - Styled like Listing's Shell preview header */}
-          <div className="h-[72px] min-w-max border-b-2 border-black flex flex-col items-center justify-start px-[16px] pt-[16px] bg-white text-black mb-[16px]">
-            <h1 className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">
-              {shellData.tableNumber}. {shellData.tableTitle}
-            </h1>
-            <p className="font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676] mt-[4px]">
-              {shellData.population}
-            </p>
-          </div>
+          {docType === 'figure' ? (
+            <div className="max-w-[540px] mx-auto py-[16px] px-[8px]">
+              <KMPlot
+                mode="shell"
+                showCI={true}
+                showCensorMarks={true}
+                showMedianLines={true}
+                showRiskTable={true}
+                figureNumber={selectedItemName}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Title header - Styled like Listing's Shell preview header */}
+              <div className="h-[72px] min-w-max border-b-2 border-black flex flex-col items-center justify-start px-[16px] pt-[16px] bg-white text-black mb-[16px]">
+                <h1 className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">
+                  {shellData.tableNumber}. {shellData.tableTitle}
+                </h1>
+                <p className="font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676] mt-[4px]">
+                  {shellData.population}
+                </p>
+              </div>
 
-          <div className="relative inline-block min-w-full">
-            <table className="w-full border-separate border-spacing-0 font-['Inter',sans-serif] text-black">
-              <thead>
-                {/* Column group header */}
-                <tr className="group">
-                  <th className="bg-white text-left text-[12px] leading-[18px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default min-w-[180px]">
-                    {selectedItemName.startsWith('Listing') ? 'Subject ID' : 'Parameter'}
-                  </th>
-                  {shellData.columnGroups.map((group, gi) => (
-                    <th
-                      key={gi}
-                      colSpan={group.span}
-                      className="text-center text-[12px] leading-[18px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default"
-                      style={{ whiteSpace: 'pre-line' }}
-                    >
-                      {group.name}
-                    </th>
-                  ))}
-                </tr>
-                {/* Sub-column header */}
-                <tr className="group">
-                  <th className="bg-white text-left text-[12px] leading-[18px] font-bold py-[4px] px-[8px] whitespace-nowrap border-r border-b-2 border-black border-border-default">
-                    
-                  </th>
-                  {shellData.columns.map((col, ci) => (
-                    <th
-                      key={ci}
-                      className="text-center text-[12px] leading-[18px] font-bold py-[4px] px-[6px] whitespace-nowrap border-r border-b-2 border-black border-border-default last:border-r-0"
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {shellData.rows.map((row, ri) => (
-                  <tr
-                    key={ri}
-                    className="group hover:bg-az-secondary cursor-pointer"
-                    onClick={onBlockClick}
-                  >
-                    <td
-                      className={`${
-                        row.isHeader ? 'bg-bg-light font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
-                      } text-left text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
-                      style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
-                    >
-                      {row.category}
-                    </td>
-                    {row.values.map((val, vi) => (
-                      <td
-                        key={vi}
-                        className={`text-center text-[12px] leading-[18px] ${
-                          row.isHeader ? 'bg-bg-light font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
-                        } py-[6px] px-[6px] whitespace-nowrap border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+              <div className="relative inline-block min-w-full">
+                <table className="w-full border-separate border-spacing-0 font-['Inter',sans-serif] text-black">
+                  <thead>
+                    {/* Column group header */}
+                    <tr className="group">
+                      <th className="bg-white text-left text-[12px] leading-[18px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default min-w-[180px]">
+                        {selectedItemName.startsWith('Listing') ? 'Subject ID' : 'Parameter'}
+                      </th>
+                      {shellData.columnGroups.map((group, gi) => (
+                        <th
+                          key={gi}
+                          colSpan={group.span}
+                          className="text-center text-[12px] leading-[18px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default"
+                          style={{ whiteSpace: 'pre-line' }}
+                        >
+                          {group.name}
+                        </th>
+                      ))}
+                    </tr>
+                    {/* Sub-column header */}
+                    <tr className="group">
+                      <th className="bg-white text-left text-[12px] leading-[18px] font-bold py-[4px] px-[8px] whitespace-nowrap border-r border-b-2 border-black border-border-default">
+                        
+                      </th>
+                      {shellData.columns.map((col, ci) => (
+                        <th
+                          key={ci}
+                          className="text-center text-[12px] leading-[18px] font-bold py-[4px] px-[6px] whitespace-nowrap border-r border-b-2 border-black border-border-default last:border-r-0"
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shellData.rows.map((row, ri) => (
+                      <tr
+                        key={ri}
+                        className="group hover:bg-az-secondary cursor-pointer"
+                        onClick={onBlockClick}
                       >
-                        {val}
-                      </td>
+                        <td
+                          className={`${
+                            row.isHeader ? 'bg-bg-light font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
+                          } text-left text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+                          style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
+                        >
+                          {row.category}
+                        </td>
+                        {row.values.map((val, vi) => (
+                          <td
+                            key={vi}
+                            className={`text-center text-[12px] leading-[18px] ${
+                              row.isHeader ? 'bg-bg-light font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
+                            } py-[6px] px-[6px] whitespace-nowrap border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+                          >
+                            {val}
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {/* Shell note */}
-          <div className="mt-[12px] flex items-center gap-[4px]">
-            <div className="h-[6px] w-[6px] rounded-full bg-brand-1" />
-            <p className="t-small text-text-secondary">Shell preview — data shown is illustrative structure. Click a row to view metadata.</p>
-          </div>
+                  </tbody>
+                </table>
+              </div>
+              {/* Shell note */}
+              <div className="mt-[12px] flex items-center gap-[4px]">
+                <div className="h-[6px] w-[6px] rounded-full bg-brand-1" />
+                <p className="t-small text-text-secondary">Shell preview — data shown is illustrative structure. Click a row to view metadata.</p>
+              </div>
+            </>
+          )}
         </div>
         {/* Metadata left-edge drag handle — uses WorkspaceDivider pattern */}
         {metadataOpen && (
@@ -2985,7 +3058,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)]">
-              <MetadataPanel onClose={onMetadataClose} />
+              <MetadataPanel onClose={onMetadataClose} docType={docType} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} />
             </div>
           )}
         </div>
@@ -3077,6 +3150,30 @@ function GroupCodeViewer({ lines }: { lines: string[] }) {
     </div>
   );
 }
+
+// ── Figure Block Items Data for Components Tab ──
+const METADATA_FIGURE_BLOCK_ITEMS_DATA = [
+  {
+    id: 'kmCurve',
+    name: 'KM Plot Chart',
+    fields: [
+      { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', type: 'text' as const, required: true },
+      { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text' as const, required: true },
+      { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text' as const, required: true },
+      { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', type: 'tag' as const, required: true },
+    ],
+  },
+  {
+    id: 'riskTable',
+    name: 'Number at Risk Table',
+    fields: [
+      { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text' as const, required: true },
+      { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text' as const, required: true },
+      { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text' as const, required: true },
+      { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', type: 'tag' as const, required: true },
+    ],
+  },
+];
 
 // ── Block Items Data for Blocks Tab Two-Column Layout ──
 const METADATA_BLOCK_ITEMS_DATA = [
@@ -3289,6 +3386,8 @@ interface MetadataPanelProps {
   pageBreakColumnBaseline?: { pageSepActive: boolean; pageColumnCounts: Record<string, number>; pageBreakColumns: number[] } | null;
   onPageBreakColumnBaselineChange?: (baseline: { pageSepActive: boolean; pageColumnCounts: Record<string, number>; pageBreakColumns: number[] }) => void;
   onAddChangesToChat?: (text: string) => void;
+  associatedTLStatus?: string;
+  onJumpToTL?: (name: string) => void;
 }
 
 function MetadataPanel({
@@ -3297,7 +3396,7 @@ function MetadataPanel({
   repeatColumnBaseline = null, onRepeatColumnBaselineChange,
   pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
   idpageBaseline = null, idlistBaseline = null, onIdpageBaselineChange, onIdlistBaselineChange,
-  onAddChangesToChat,
+  onAddChangesToChat, associatedTLStatus = 'pending', onJumpToTL,
 }: MetadataPanelProps) {
   const [activeTab, setActiveTab] = useState<"basic" | "blocks">("basic");
   const loadFromSession = <T,>(key: string, fallback: T): T => { try { const raw = sessionStorage.getItem(key); return raw ? (JSON.parse(raw) as T) : fallback; } catch { return fallback; } };
@@ -3421,6 +3520,56 @@ function MetadataPanel({
   });
   useEffect(() => { sessionStorage.setItem('metadataBlockFields_listing', JSON.stringify(listingColumnFields)); }, [listingColumnFields]);
 
+  // ── Figure States ──
+  const [figureBlocks, setFigureBlocks] = useState<MetadataBlock[]>(() => {
+    const fallback = [
+      {
+        id: 'figBasic',
+        fields: [
+          { id: 'associatedTL', label: 'Associated Table/Listing', value: 'Table 14.1.4', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'figureType', label: 'Figure Type', value: 'KM', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'inputDataset', label: 'Input Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'pageBy', label: 'Page by', value: 'TRTA', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'programName', label: 'Program Name', value: 'f_kmplot', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'macroName', label: 'Macro(s)', value: 'm_kmplot', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'generalFilter', label: 'General Filter', value: "SAFFL='Y'", status: 'default' as FieldStatus, confirmed: false },
+          { id: 'groupName', label: 'Group', value: 'Treatment Group', status: 'default' as FieldStatus, confirmed: false },
+        ]
+      }
+    ];
+    const stored = loadFromSession('metadataBlocks_figure', fallback);
+    if (!Array.isArray(stored)) return fallback;
+    return stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
+  });
+  useEffect(() => { sessionStorage.setItem('metadataBlocks_figure', JSON.stringify(figureBlocks)); }, [figureBlocks]);
+
+  const [figureComponents, setFigureComponents] = useState<MetadataBlock[]>(() => {
+    const fallback = [
+      {
+        id: 'comp1',
+        fields: [
+          { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'compType1', label: 'Component Type', value: 'Chart', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', status: 'default' as FieldStatus, confirmed: false },
+        ]
+      },
+      {
+        id: 'comp2',
+        fields: [
+          { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'compType2', label: 'Component Type', value: 'Table', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', status: 'default' as FieldStatus, confirmed: false },
+        ]
+      }
+    ];
+    const stored = loadFromSession('metadataComponents_figure', fallback);
+    if (!Array.isArray(stored)) return fallback;
+    return stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
+  });
+  useEffect(() => { sessionStorage.setItem('metadataComponents_figure', JSON.stringify(figureComponents)); }, [figureComponents]);
+
   // Helper functions for configuration changes
   const areColumnCountsEqual = (a: Record<string, number>, b: Record<string, number>) => {
     const keysA = Object.keys(a);
@@ -3477,13 +3626,22 @@ function MetadataPanel({
   const listingColumnTotalFields = listingColumnFields.length;
   const listingColumnConfirmedCount = listingColumnFields.filter(f => f.confirmed).length;
 
+  const figureTotalFieldsBasic = figureBlocks.reduce((s, b) => s + b.fields.length, 0);
+  const figureConfirmedCountBasic = figureBlocks.reduce((s, b) => s + b.fields.filter(f => f.confirmed).length, 0);
+  const figureTotalFieldsComponents = figureComponents.reduce((s, b) => s + b.fields.length, 0);
+  const figureConfirmedCountComponents = figureComponents.reduce((s, b) => s + b.fields.filter(f => f.confirmed).length, 0);
+
   const totalFields = docType === 'listing'
     ? (isBasicTab ? listingTotalFields : listingColumnTotalFields)
-    : (isBasicTab ? basicTotalFields : blocksTotalFields);
+    : docType === 'figure'
+      ? (isBasicTab ? figureTotalFieldsBasic : figureTotalFieldsComponents)
+      : (isBasicTab ? basicTotalFields : blocksTotalFields);
 
   const confirmedCount = docType === 'listing'
     ? (isBasicTab ? listingConfirmedCount : listingColumnConfirmedCount)
-    : (isBasicTab ? basicConfirmedCount : blocksConfirmedCount);
+    : docType === 'figure'
+      ? (isBasicTab ? figureConfirmedCountBasic : figureConfirmedCountComponents)
+      : (isBasicTab ? basicConfirmedCount : blocksConfirmedCount);
 
   const confirmableFields = totalFields;
 
@@ -3497,7 +3655,9 @@ function MetadataPanel({
 
   const hasAnyEdits = docType === 'listing'
     ? (hasListingBasicEdits || hasListingColumnEdits)
-    : (groupStatus === 'edited' || blockFields.some(f => f.status === 'edited') || blocks.some(b => b.fields.some(f => f.status === 'edited')));
+    : docType === 'figure'
+      ? figureBlocks.some(b => b.fields.some(f => f.status === 'edited')) || figureComponents.some(b => b.fields.some(f => f.status === 'edited'))
+      : (groupStatus === 'edited' || blockFields.some(f => f.status === 'edited') || blocks.some(b => b.fields.some(f => f.status === 'edited')));
 
   const selectAllState: "empty" | "indeterminate" | "checked" = confirmedCount === 0 ? "empty" : confirmedCount === confirmableFields ? "checked" : "indeterminate";
 
@@ -3523,6 +3683,8 @@ function MetadataPanel({
       } else {
         setListingBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, confirmed: !f.confirmed }) }));
       }
+    } else if (docType === 'figure') {
+      setFigureBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, confirmed: !f.confirmed }) }));
     } else {
       setBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, confirmed: !f.confirmed }) }));
     }
@@ -3574,6 +3736,14 @@ function MetadataPanel({
       } else {
         setListingColumnFields(prev => prev.map(f => ({ ...f, confirmed: confirm })));
       }
+    } else if (docType === 'figure') {
+      if (isBasicTab) {
+        setFigureBlocks(prev => prev.map(b => ({ ...b, fields: b.fields.map(f => ({ ...f, confirmed: confirm })) })));
+      } else {
+        const newConfirmed: Record<string, boolean> = {};
+        METADATA_FIGURE_BLOCK_ITEMS_DATA.forEach(b => { newConfirmed[b.id] = confirm; });
+        setBlockItemConfirmed(newConfirmed);
+      }
     } else {
       if (isBasicTab) {
         if (groupStatus !== 'edited') setGroupConfirmed(confirm);
@@ -3589,6 +3759,8 @@ function MetadataPanel({
   const handleFieldEdit = (blockId: string, fieldId: string, value: string) => {
     if (docType === 'listing') {
       setListingBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, value, status: 'edited', confirmed: true }) }));
+    } else if (docType === 'figure') {
+      setFigureBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, value, status: 'edited', confirmed: true }) }));
     } else {
       setBlocks(prev => prev.map(b => b.id !== blockId ? b : { ...b, fields: b.fields.map(f => f.id !== fieldId ? f : { ...f, value, status: 'edited', confirmed: true }) }));
     }
@@ -3649,7 +3821,7 @@ function MetadataPanel({
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`relative flex h-full items-center justify-center border-b-2 px-[16px] active:scale-[0.96] ${activeTab === tab ? "border-brand-1" : "border-transparent"}`}>
               <p className={`t-small font-medium ${activeTab === tab ? "text-brand-1" : "text-text-primary"}`}>
-                {tab === "basic" ? (docType === 'listing' ? "Basic info" : "Basic Information") : (docType === 'listing' ? "Column" : "Blocks")}
+                {tab === "basic" ? (docType === 'listing' ? "Basic info" : docType === 'figure' ? "Basic" : "Basic Information") : (docType === 'listing' ? "Column" : docType === 'figure' ? "Components" : "Blocks")}
               </p>
               {/* Red dot on the upper right corner of the tab text */}
               {docType === 'listing' && (
@@ -3746,6 +3918,54 @@ function MetadataPanel({
                   })}
                 </div>
               ))
+            ) : docType === 'figure' ? (
+              // Figure Basic Tab
+              <>
+                {figureBlocks.map((block) =>
+                  block.fields.map((field) => {
+                    const isAssociatedTL = field.id === 'associatedTL';
+                    const styles = getFieldStyles(field.status, isAssociatedTL);
+
+                    return (
+                      <div key={field.id}
+                        onClick={isAssociatedTL ? (() => onJumpToTL && onJumpToTL(field.value)) : undefined}
+                        className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder} ${isAssociatedTL ? 'hover:bg-az-secondary transition-colors cursor-pointer' : ''}`}
+                      >
+                        <div className="flex flex-col gap-[4px] p-[8px]">
+                          <div className="flex h-[20px] items-center justify-between">
+                            <p className="t-small text-text-primary">{field.label}</p>
+                            {!isAssociatedTL && (
+                              <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                                className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                                <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                              </button>
+                            )}
+                          </div>
+                          <div className="relative">
+                            {isAssociatedTL ? (
+                              <div className="py-[4px]">
+                                <span className="inline-flex items-center text-[12px] font-medium text-brand-1 hover:underline">
+                                  {field.value}
+                                </span>
+                              </div>
+                            ) : (
+                              <input type="text" value={field.value} readOnly={isLocked}
+                                onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
+                                className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
+                            )}
+                            {!isLocked && field.status === 'default' && !isAssociatedTL && (
+                              <div className="absolute right-[8px] top-[8px] pointer-events-none">
+                                <SvgIcon className="h-[16px] w-[16px]"><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </>
             ) : (
               // Table Basic Tab (Original)
               <>
@@ -3849,12 +4069,19 @@ function MetadataPanel({
                 );
               })}
             </div>
+          ) : docType === 'figure' ? (
+            <BlocksTabContent
+              blocks={METADATA_FIGURE_BLOCK_ITEMS_DATA}
+              confirmedBlocks={blockItemConfirmed}
+              onToggleConfirm={(blockId) => setBlockItemConfirmed(prev => ({ ...prev, [blockId]: !prev[blockId] }))}
+              isLocked={isLocked}
+            />
           ) : (
-            // Table Blocks Tab (Original)
             <BlocksTabContent
               blocks={METADATA_BLOCK_ITEMS_DATA}
               confirmedBlocks={blockItemConfirmed}
               onToggleConfirm={(blockId) => setBlockItemConfirmed(prev => ({ ...prev, [blockId]: !prev[blockId] }))}
+              isLocked={isLocked}
             />
           )
         )}
@@ -3893,6 +4120,21 @@ function MetadataPanel({
                 }
                 if (columnChanges.length > 0) {
                   text += `\n\n====================\nCOLUMN LEVEL CHANGES\n` + columnChanges.join('\n');
+                }
+                onAddChangesToChat?.(text);
+              } else if (docType === 'figure') {
+                const changes: string[] = [];
+                figureBlocks.forEach(b => {
+                  b.fields.forEach(f => {
+                    if (f.status === 'edited') {
+                      changes.push(`- ${f.label}: ${f.value}`);
+                    }
+                  });
+                });
+
+                let text = `You are given metadata changes for this figure. Apply these changes to update the code accordingly.`;
+                if (changes.length > 0) {
+                  text += `\n\n====================\nFIGURE LEVEL CHANGES\n` + changes.join('\n');
                 }
                 onAddChangesToChat?.(text);
               }
@@ -3966,6 +4208,10 @@ function CodePanel({
   pageCols,
   isLocked,
   onToggleLock,
+  showCI = true,
+  showCensorMarks = true,
+  showMedianLines = true,
+  showRiskTable = true,
 }: {
   selectedItem: string;
   docType?: DocumentType;
@@ -3973,6 +4219,10 @@ function CodePanel({
   pageCols?: number;
   isLocked: boolean;
   onToggleLock: () => void;
+  showCI?: boolean;
+  showCensorMarks?: boolean;
+  showMedianLines?: boolean;
+  showRiskTable?: boolean;
 }) {
   const listingCodeContent = `/* Setup listing options */
 options nodate nonumber orientation=landscape;
@@ -4030,7 +4280,50 @@ quit;
 
   const codeContent = docType === 'listing' ? listingCodeContent : programCodeContent;
 
-  const codeLines = codeContent.split('\n');
+  const [userCode, setUserCode] = useState(codeContent);
+  const [lastRunCode, setLastRunCode] = useState(codeContent);
+
+  useEffect(() => {
+    setUserCode(codeContent);
+    setLastRunCode(codeContent);
+  }, [selectedItem, codeContent]);
+
+  const codeLines = userCode.split('\n');
+
+  const [logExpanded, setLogExpanded] = useState(true);
+  const [figureView, setFigureView] = useState<'preview' | 'code'>('code');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const normalLogLines = [
+    { text: 'NOTE: SAS (r) Proprietary Software 9.4  TS1M6' },
+    { text: 'NOTE: ---------------------------------------------------------' },
+    { text: '2          cluster_1, hba1c1( RLG_A,RLG_B,RLG_N,RLG_C ) = /+ m/' },
+    { text: '3    proc sql;' },
+    { text: 'NOTE: PROCEDURE SQL used (Total process time):' },
+    { text: '      real time           0.02 seconds', tone: 'secondary' as const },
+    { text: '      cpu time            0.01 seconds', tone: 'secondary' as const },
+    { text: 'NOTE: Table WORK.ATLAS_UPCIO created, with 1024 rows and 8 columns.' },
+    { text: 'NOTE: PROCEDURE SORT used (Total process time):' },
+    { text: '      real time           0.04 seconds', tone: 'secondary' as const },
+    { text: 'NOTE: DATA statement used (Total process time):' },
+    { text: '      real time           0.03 seconds', tone: 'secondary' as const },
+    { text: 'WARNING: Variable PARAM not found in WORK.ATLAS_UPCIO.', tone: 'warning' as const },
+    { text: 'NOTE: PROC MEANS used — 512 observations read.' },
+    { text: '      real time           0.06 seconds', tone: 'secondary' as const },
+    { text: 'NOTE: PARMACRO= CHEMISTRY matched 48 observations.' },
+    { text: 'NOTE: QUIT statement used.' },
+  ];
+
+  const errorLogLines = [
+    { text: 'NOTE: SAS (r) Proprietary Software 9.4  TS1M6' },
+    { text: 'NOTE: ---------------------------------------------------------' },
+    { text: '2          cluster_1, hba1c1( RLG_A,RLG_B,RLG_N,RLG_C ) = /+ m/' },
+    { text: '3    proc sql;' },
+    { text: 'ERROR: File WORK.ADSL.DATA does not exist.' },
+    { text: 'ERROR: Expression using = has components that are of different types.' },
+    { text: 'NOTE: QUIT statement used.' },
+  ];
+
+  const logLines = userCode.toLowerCase().includes('error') ? errorLogLines : normalLogLines;
 
   const toolbarButtons = (
     <>
@@ -4063,6 +4356,14 @@ quit;
     </>
   );
 
+  const handleRetry = () => {
+    setPreviewLoading(true);
+    setTimeout(() => {
+      setPreviewLoading(false);
+      setLastRunCode(userCode);
+    }, 1500);
+  };
+
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-white">
       <style dangerouslySetInnerHTML={{ __html: `
@@ -4084,19 +4385,166 @@ quit;
         }
       `}} />
       <PanelHeader
-        title={<LocalIcon src={codeSlashIconUrl} className="w-[20px] h-[20px]" color="#888E8E" />}
+        title={
+          docType === 'figure' ? (
+            <SegmentedControl
+              size="sm"
+              value={figureView}
+              onChange={(v) => {
+                const nextView = v as 'preview' | 'code';
+                setFigureView(nextView);
+                if (nextView === 'preview') {
+                  if (userCode !== lastRunCode) {
+                    setPreviewLoading(true);
+                    setTimeout(() => {
+                      setPreviewLoading(false);
+                      setLastRunCode(userCode);
+                    }, 1500);
+                  }
+                }
+              }}
+              options={[
+                {
+                  value: 'preview',
+                  ariaLabel: 'Preview RTF',
+                  tooltip: 'Preview',
+                  icon: (active) => (
+                    <LocalIcon src={eyeLineIconUrl} className="h-[16px] w-[16px]" color={active ? "var(--color-text-primary)" : "var(--color-text-secondary)"} />
+                  ),
+                },
+                {
+                  value: 'code',
+                  ariaLabel: 'Code',
+                  tooltip: 'Code',
+                  icon: (active) => (
+                    <LocalIcon src={codeSlashIconUrl} className="h-[16px] w-[16px]" color={active ? "var(--color-text-primary)" : "var(--color-text-secondary)"} />
+                  ),
+                },
+              ]}
+            />
+          ) : (
+            <LocalIcon src={codeSlashIconUrl} className="w-[16px] h-[16px]" color="#888E8E" />
+          )
+        }
         actions={toolbarButtons}
       />
-      <div className="min-h-0 flex-1 overflow-auto code-panel-scroll-container">
-        <div className="flex min-w-max min-h-full font-mono text-[13px] leading-[20px]">
-          <div className="select-none bg-bg-light px-[8px] py-[16px] text-right text-[#999999] shrink-0">
-            {codeLines.map((_, index) => <div key={index}>{index + 1}</div>)}
+      <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container">
+        {docType === 'figure' && figureView === 'preview' ? (
+          previewLoading ? (
+            <div className="flex flex-col items-center justify-center h-full p-[24px] select-none text-text-secondary min-h-[300px]">
+              <div className="relative w-[36px] h-[36px] mb-[12px] flex items-center justify-center">
+                <div className="w-[28px] h-[28px] border-4 border-az-secondary border-t-[#830051] rounded-full animate-spin" />
+              </div>
+              <p className="text-[13px] leading-[20px] font-semibold text-text-primary animate-pulse">
+                Loading Preview...Please wait
+              </p>
+              <p className="text-[11px] leading-[16px] text-text-secondary mt-[4px]">
+                Running SAS compiler and rendering SVG output
+              </p>
+            </div>
+          ) : userCode.toLowerCase().includes('error') ? (
+            // Code Execution Error State
+            <div className="flex flex-col items-center justify-center h-full p-[24px] select-none text-text-secondary min-h-[300px]">
+              <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#FCE8E6] text-[#C5221F] mb-[12px]">
+                <SvgIcon className="h-[20px] w-[20px]" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor" />
+                </SvgIcon>
+              </div>
+              <p className="text-[14px] leading-[22px] font-bold text-[#C5221F]">
+                Generation Failed
+              </p>
+              <p className="text-[12px] leading-[18px] text-text-secondary mt-[4px] text-center max-w-[280px]">
+                Generation failed, please check the Log
+              </p>
+            </div>
+          ) : userCode.toLowerCase().includes('timeout') ? (
+            // External Service Error State
+            <div className="flex flex-col items-center justify-center h-full p-[24px] select-none text-text-secondary min-h-[300px]">
+              <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#FEF7E0] text-[#B06000] mb-[12px]">
+                <SvgIcon className="h-[20px] w-[20px]" viewBox="0 0 24 24">
+                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z" fill="currentColor" />
+                </SvgIcon>
+              </div>
+              <p className="text-[14px] leading-[22px] font-bold text-text-primary">
+                Service Unavailable
+              </p>
+              <p className="text-[12px] leading-[18px] text-text-secondary mt-[4px] text-center max-w-[320px]">
+                The generation service is temporarily unavailable, unrelated to code. Please try again later.
+              </p>
+              <button
+                onClick={handleRetry}
+                className="mt-[16px] px-[16px] py-[6px] bg-brand-1 hover:bg-[#6D0043] text-white text-[12px] font-semibold rounded-[4px] transition-colors shadow-sm active:scale-[0.96]"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            // Success State (KMPlot)
+            <div className="max-w-[540px] mx-auto py-[16px] px-[8px]">
+              <KMPlot
+                mode="runtime"
+                showCI={true}
+                showCensorMarks={true}
+                showMedianLines={true}
+                showRiskTable={true}
+                figureNumber={selectedItem}
+              />
+            </div>
+          )
+        ) : docType === 'figure' ? (
+          <div className="flex flex-1 min-w-max font-mono text-[12px] leading-[20px] h-full">
+            <div className="select-none bg-bg-light px-[8px] py-[16px] text-right text-[#999999] shrink-0">
+              {codeLines.map((_, index) => <div key={index}>{index + 1}</div>)}
+            </div>
+            <textarea
+              value={userCode}
+              onChange={(e) => setUserCode(e.target.value)}
+              readOnly={isLocked}
+              className={`flex-1 p-[16px] font-mono text-[12px] leading-[20px] text-text-primary outline-none resize-none border-none ${
+                isLocked ? 'bg-bg-light cursor-not-allowed text-[#B2B4B4]' : 'bg-white'
+              }`}
+            />
           </div>
-          <pre className="px-[16px] py-[16px] text-text-primary">
-            <code>{highlightSAS(codeContent)}</code>
-          </pre>
-        </div>
+        ) : (
+          <div className="flex min-w-max min-h-full font-mono text-[13px] leading-[20px]">
+            <div className="select-none bg-bg-light px-[8px] py-[16px] text-right text-[#999999] shrink-0">
+              {codeLines.map((_, index) => <div key={index}>{index + 1}</div>)}
+            </div>
+            <pre className="px-[16px] py-[16px] text-text-primary">
+              <code>{highlightSAS(codeContent)}</code>
+            </pre>
+          </div>
+        )}
       </div>
+      {docType === 'figure' && figureView === 'preview' && (
+        <div className="flex shrink-0 flex-col">
+          <div className="flex h-[40px] shrink-0 items-center gap-[4px] border-t border-graphite-10 bg-bg-light pl-[16px] pr-[8px]">
+            <p className="t-small text-text-primary">Log</p>
+            <TooltipText label={logExpanded ? "Collapse Log" : "Expand Log"}>
+              <button
+                onClick={() => setLogExpanded((v) => !v)}
+                className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                aria-label={logExpanded ? "Collapse Log" : "Expand Log"}
+              >
+                <LocalIcon src={logExpanded ? contractUpDownIconUrl : expandUpDownIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+              </button>
+            </TooltipText>
+          </div>
+          {logExpanded && (
+            <div className="max-h-[240px] overflow-auto bg-bg-light px-[16px] py-[12px] font-mono text-[12px] leading-[20px]">
+              {logLines.map((line, index) => (
+                <div
+                  key={index}
+                  className={line.tone === 'secondary' ? 'text-text-secondary' : line.tone === 'warning' ? 'text-status-warning' : line.text.startsWith('ERROR:') ? 'text-[#CC2C3C] font-semibold' : 'text-text-primary'}
+                  style={{ whiteSpace: 'pre' }}
+                >
+                  {line.text}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -4166,6 +4614,7 @@ function WorkspaceContent({
         { id: 'l1', name: 'Listing 16.2.1', status: 'pending', docType: 'listing' },
         { id: 'l2', name: 'Listing 16.2.2', status: 'pending', docType: 'listing' },
         { id: 'l3', name: 'Listing 16.2.3', status: 'pending', docType: 'listing' },
+        { id: 'f1', name: 'Figure 15.1.1', status: 'pending', docType: 'figure' },
       ],
     },
 
@@ -4185,6 +4634,11 @@ function WorkspaceContent({
   const [shellPreviewWidth, setShellPreviewWidth] = useState(560);
   const [metadataWidth, setMetadataWidth] = useState(380);
   const [aiCopilotWidth, setAiCopilotWidth] = useState(360);
+
+  const [showCI, setShowCI] = useState(true);
+  const [showCensorMarks, setShowCensorMarks] = useState(true);
+  const [showMedianLines, setShowMedianLines] = useState(true);
+  const [showRiskTable, setShowRiskTable] = useState(true);
 
   // Ref to measure content area for adaptive panel sizing
   const contentAreaRef = useRef<HTMLDivElement>(null);
@@ -4382,6 +4836,10 @@ function WorkspaceContent({
   };
   const selectedTable = getSelectedTable();
   const docType = selectedTable?.docType || 'table';
+  const associatedTLStatus = (() => {
+    const t1 = programs.flatMap(p => p.tables).find(t => t.id === 't1');
+    return t1 ? t1.status : 'pending';
+  })();
   const selectedTableProgram = programs.find((program) =>
     program.tables.some((table) => table.id === selectedId)
   );
@@ -4444,7 +4902,8 @@ function WorkspaceContent({
     const filteredTables = program.tables.filter((table) => {
       const matchesCategory = categoryFilter === "all" ||
         (categoryFilter === "table" && (table.docType === "table" || !table.docType)) ||
-        (categoryFilter === "listing" && table.docType === "listing");
+        (categoryFilter === "listing" && table.docType === "listing") ||
+        (categoryFilter === "figure" && table.docType === "figure");
       const matchesSearch = table.name.toLowerCase().includes(treeSearchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
@@ -4463,6 +4922,15 @@ function WorkspaceContent({
     } else {
       setShellPreviewOpen(false);
       setMetadataOpen(false);
+    }
+  };
+
+  const handleJumpToTL = (name: string) => {
+    const found = programs
+      .flatMap((p) => p.tables)
+      .find((t) => t.name.toLowerCase().includes(name.trim().toLowerCase()));
+    if (found) {
+      handleSelect(found.id);
     }
   };
 
@@ -4732,6 +5200,7 @@ function WorkspaceContent({
                       }
                     >
                       <ShellPreview
+                        docType={docType}
                         onBlockClick={() => setMetadataOpen(true)}
                         onMetadataClick={() => setMetadataOpen((open) => !open)}
                         metadataOpen={metadataOpen}
@@ -4745,6 +5214,16 @@ function WorkspaceContent({
                         shellPreviewMaxWidth={constraints.shellPreview.max}
                         isShellFlex={panelView === 'shell'}
                         selectedItemName={getSelectedItemName()}
+                        onJumpToTL={handleJumpToTL}
+                        showCI={showCI}
+                        showCensorMarks={showCensorMarks}
+                        showMedianLines={showMedianLines}
+                        showRiskTable={showRiskTable}
+                        onShowCIChange={setShowCI}
+                        onShowCensorMarksChange={setShowCensorMarks}
+                        onShowMedianLinesChange={setShowMedianLines}
+                        onShowRiskTableChange={setShowRiskTable}
+                        associatedTLStatus={associatedTLStatus}
                       />
                     </div>
                   )}
@@ -4773,7 +5252,16 @@ function WorkspaceContent({
 
                   {codeOpen && (
                     <div className="min-w-0 flex-1 overflow-hidden" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
-                      <CodePanel selectedItem={getSelectedItemName()} isLocked={selectedTableLocked} onToggleLock={handleCodePanelToggleLock} />
+                      <CodePanel
+                        selectedItem={getSelectedItemName()}
+                        docType={docType}
+                        isLocked={selectedTableLocked}
+                        onToggleLock={handleCodePanelToggleLock}
+                        showCI={showCI}
+                        showCensorMarks={showCensorMarks}
+                        showMedianLines={showMedianLines}
+                        showRiskTable={showRiskTable}
+                      />
                     </div>
                   )}
                 </div>
