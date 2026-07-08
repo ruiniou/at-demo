@@ -152,7 +152,7 @@ export function UploadCard({
                       className={`flex items-center gap-[4px] rounded-[2px] py-[2px] pl-[2px] pr-[4px] text-left hover:bg-bg-light ${isSelected ? "bg-bg-light" : ""}`}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={isSelected ? "opacity-100" : "opacity-0"} style={{ minWidth: 16 }}>
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="#3C4242"/>
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="var(--color-text-primary)"/>
                       </svg>
                       <span className="t-small text-text-primary">{option}</span>
                     </button>
@@ -170,7 +170,7 @@ export function UploadCard({
       <div className="flex flex-col rounded-[4px] border border-dashed border-graphite-10 bg-white p-[8px_10px]">
         <div className="flex items-center gap-[16px] py-[8px]">
           <div className="flex flex-1 items-center gap-[8px] min-w-0">
-            <img src={uploadIconUrl} alt="" className="h-[20px] w-[20px] shrink-0" />
+            <img src={uploadIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
             <div className="flex flex-1 min-w-0 flex-col gap-[2px]">
               <span className="t-small text-text-secondary">{requirementText}</span>
             </div>
@@ -186,13 +186,13 @@ export function UploadCard({
       <div className="flex flex-col rounded-[4px] bg-bg-light p-[8px_10px]">
         <div className="flex items-center gap-[16px] py-[8px]">
           <div className="flex flex-1 items-center gap-[8px] min-w-0">
-            <img src={uploadIconUrl} alt="" className="h-[20px] w-[20px] shrink-0" />
+            <img src={uploadIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
             <div className="flex flex-1 min-w-0 flex-col gap-[2px]">
               <span className="t-small text-text-secondary">{requirementText}</span>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-[6px]">
-            <LoaderIcon size={20} color="var(--color-text-secondary)" />
+            <LoaderIcon size={16} color="var(--color-text-secondary)" />
             <span className="t-body-secondary text-text-secondary">{localProgress}%</span>
           </div>
         </div>
@@ -204,7 +204,7 @@ export function UploadCard({
       <div className="flex flex-col rounded-[4px] border border-graphite-10 bg-white p-[8px_10px]">
         <div className="flex items-center gap-[16px] py-[8px]">
           <div className="flex flex-1 items-center gap-[8px] min-w-0">
-            <img src={fileIconUrl} alt="" className="h-[20px] w-[20px] shrink-0" />
+            <img src={fileIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
             <div className="flex flex-1 min-w-0 flex-col gap-[2px]">
               <div className="flex items-center gap-[4px] min-w-0">
                 <span className="t-small-medium text-text-primary truncate" title={localFileName}>{localFileName}</span>
@@ -224,7 +224,7 @@ export function UploadCard({
       <div className="flex flex-col rounded-[4px] border border-status-error bg-white p-[8px_10px]">
         <div className="flex items-start gap-[16px] py-[8px]">
           <div className="flex flex-1 gap-[8px] min-w-0">
-            <img src={errorWarningIconUrl} alt="" className="h-[20px] w-[20px] shrink-0" />
+            <img src={errorWarningIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
             <div className="flex flex-1 min-w-0 flex-col gap-[2px]">
               <span className="t-small-medium text-status-error">Upload Failed</span>
               {errorMessage && <span className="t-small text-text-secondary">{errorMessage}</span>}
@@ -240,7 +240,7 @@ export function UploadCard({
       <div className="flex flex-col rounded-[4px] border border-graphite-10 bg-white p-[8px_10px]">
         <div className="flex items-center gap-[16px] py-[8px]">
           <div className="flex flex-1 items-center gap-[8px] min-w-0">
-            <img src={linkIconUrl} alt="" className="h-[20px] w-[20px] shrink-0" />
+            <img src={linkIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
             <div className="flex flex-1 min-w-0 flex-col gap-[2px]">
               <div className="flex items-center gap-[4px] min-w-0">
                 <span className="t-small-medium text-text-primary truncate" title={selectedExistingFile || localFileName}>{selectedExistingFile || localFileName}</span>
@@ -261,8 +261,8 @@ export function UploadCard({
     <div className="flex flex-col gap-[6px]">
       <div className="flex min-h-[24px] items-center justify-between">
         <div className="flex items-center gap-[2px]">
-          <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: "#3C4242" }}>{label}</span>
-          {required && <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: "#830051" }}>*</span>}
+          <span className="t-small-medium text-text-primary">{label}</span>
+          {required && <span className="font-[Inter] text-[12px] font-semibold text-az-danger">*</span>}
         </div>
         {showSegmented && (
           <SegmentedControl
