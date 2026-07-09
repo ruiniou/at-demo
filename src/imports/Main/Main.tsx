@@ -3910,6 +3910,55 @@ function MetadataPanel({
   );
 }
 
+function highlightSAS(code: string): React.ReactNode {
+  const regex = /(\/\*[\s\S]*?\*\/)|("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')|(\b(?:proc sql|proc|sql|quit|data|run|create table|select|from|where|left join|group by|on|and|not|options|title\d|footnote\d|as|in)\b)|(%[a-zA-Z_0-9]+)|(\b(?:inds|inda|cols|col_labels|freeze_cols|page_cols|page_num|orientation|out_rtf)\b)|(\b\d+\b)/gi;
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(code)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(code.substring(lastIndex, match.index));
+    }
+
+    const [
+      full,
+      comment,
+      doubleQuoteStr,
+      singleQuoteStr,
+      keyword,
+      macroCall,
+      param,
+      number
+    ] = match;
+
+    const key = `${match.index}-${full}`;
+
+    if (comment) {
+      parts.push(<span key={key} className="text-[#008000] italic">{full}</span>);
+    } else if (doubleQuoteStr || singleQuoteStr) {
+      parts.push(<span key={key} className="text-[#A31515] font-semibold">{full}</span>);
+    } else if (keyword) {
+      parts.push(<span key={key} className="text-[#005CC5] font-bold">{full}</span>);
+    } else if (macroCall) {
+      parts.push(<span key={key} className="text-[#830051] font-bold">{full}</span>);
+    } else if (param) {
+      parts.push(<span key={key} className="text-[#7952B3]">{full}</span>);
+    } else if (number) {
+      parts.push(<span key={key} className="text-[#098658]">{full}</span>);
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < code.length) {
+    parts.push(code.substring(lastIndex));
+  }
+
+  return <>{parts}</>;
+}
+
 function CodePanel({
   selectedItem,
   docType,
@@ -4026,7 +4075,7 @@ quit;
             {codeLines.map((_, index) => <div key={index}>{index + 1}</div>)}
           </div>
           <pre className="px-[16px] py-[16px] text-text-primary">
-            <code>{codeContent}</code>
+            <code>{highlightSAS(codeContent)}</code>
           </pre>
         </div>
       </div>
