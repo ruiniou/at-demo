@@ -5378,7 +5378,7 @@ const homeEvents: EventCardData[] = [
     creator: 'Tom',
     createdDate: '2025-11-11',
     status: 'error',
-    errorMessage: 'Shell file parsing failed. Outputs cannot be generated until the issue is resolved.',
+    errorMessage: 'Shell file parsing failed.',
   },
   {
     id: 'e6',
@@ -5454,7 +5454,18 @@ const homeEvents: EventCardData[] = [
     creator: 'Emily',
     createdDate: '2025-10-28',
     status: 'error',
-    errorMessage: 'SAS macro execution failed. Please verify the input dataset structure.',
+    errorMessage: 'SAS macro execution failed.',
+  },
+  {
+    id: 'e13',
+    name: 'Demographics Group Analysis',
+    version: '1.0',
+    project: 'PRO001',
+    study: 'AZE2001-301',
+    creator: 'Tom',
+    createdDate: '2025-11-12',
+    status: 'error',
+    errorMessage: 'Critical validation failed: The database structure does not conform to CDISC SDTM IG v3.2. Columns USUBJID, AGE, and SEX are missing or formatted incorrectly in the DM domain file. Please check files and try again.',
   },
 ];
 
@@ -5582,11 +5593,17 @@ function EventCard({ event, onEventClick, onUpdateStatus }: EventCardProps) {
           <div className="flex flex-col items-start md:items-end gap-[4px] min-w-0 flex-1">
             <StatusTag status={event.status} />
             {event.errorMessage && (
-              <TooltipText label={event.errorMessage} align="left">
-                <span className="t-small text-[#666666] text-left md:text-right max-w-[280px] sm:max-w-[400px] line-clamp-2 block">
+              event.errorMessage.length > 90 ? (
+                <TooltipText label={event.errorMessage} align="left">
+                  <span className="t-small text-[#666666] text-left md:text-right max-w-[280px] sm:max-w-[400px] line-clamp-2 block">
+                    {event.errorMessage}
+                  </span>
+                </TooltipText>
+              ) : (
+                <span className="t-small text-[#666666] text-left md:text-right max-w-[280px] sm:max-w-[400px] block">
                   {event.errorMessage}
                 </span>
-              </TooltipText>
+              )
             )}
           </div>
           <div className="flex items-center gap-[12px] self-stretch sm:self-auto justify-between sm:justify-end shrink-0">

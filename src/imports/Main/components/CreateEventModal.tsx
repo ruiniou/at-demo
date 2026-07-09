@@ -355,7 +355,7 @@ export default function CreateEventModal({
   const [sdtmStatus, setSdtmStatus] = useState<UploadStatus>("uploaded");
   const [sdtmFile, setSdtmFile] = useState("sdtm_spec_v1.2.xlsx");
 
-  const [shellStatus, setShellStatus] = useState<UploadStatus>("pending");
+  const [shellStatus, setShellStatus] = useState<UploadStatus>("error");
   const [shellFile, setShellFile] = useState("");
 
   const [tifoStatus, setTifoStatus] = useState<UploadStatus>("pending");
@@ -483,7 +483,7 @@ export default function CreateEventModal({
               </div>
               {/* Right column */}
               <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] p-[18px_20px_20px_20px]">
-                <UploadCard 
+                 <UploadCard 
                   label="ADaM Spec" 
                   required 
                   requirementText="Excel only (.xlsx / .xls), max 20MB per file" 
@@ -492,7 +492,7 @@ export default function CreateEventModal({
                   fileName={adamFile}
                   onStatusChange={setAdamStatus}
                   onFileSelect={setAdamFile}
-                  errorMessage='Validation failed: missing required column "U_SUBJECT_KEY" in sheet 1.' 
+                  errorMessage="Validation failed: missing column USUBJID." 
                 />
                 <UploadCard 
                   label="SDTM" 
@@ -511,6 +511,7 @@ export default function CreateEventModal({
                   fileName={shellFile}
                   onStatusChange={setShellStatus}
                   onFileSelect={setShellFile}
+                  errorMessage="Validation failed: The shell template contains unrecognized format in Sheet 3, Cell Range B5:D20. Expected headers (Table No, Title, Footnotes), but found invalid character sequence. Please correct the template and try again."
                 />
                 <UploadCard 
                   label="TiFo" 
