@@ -5582,9 +5582,11 @@ function EventCard({ event, onEventClick, onUpdateStatus }: EventCardProps) {
           <div className="flex flex-col items-start md:items-end gap-[4px] min-w-0 flex-1">
             <StatusTag status={event.status} />
             {event.errorMessage && (
-              <span className="t-small text-[#666666] text-left md:text-right max-w-[280px] sm:max-w-[400px] truncate block" title={event.errorMessage}>
-                {event.errorMessage}
-              </span>
+              <TooltipText label={event.errorMessage} align="left">
+                <span className="t-small text-[#666666] text-left md:text-right max-w-[280px] sm:max-w-[400px] line-clamp-2 block">
+                  {event.errorMessage}
+                </span>
+              </TooltipText>
             )}
           </div>
           <div className="flex items-center gap-[12px] self-stretch sm:self-auto justify-between sm:justify-end shrink-0">
