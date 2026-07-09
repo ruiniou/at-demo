@@ -216,6 +216,41 @@ function ErrorMessageWithRetry() {
 
 // ==================== Markdown Components ====================
 
+const VerticalDimension = ({ height, label, color = "#F97316" }: { height: number; label: string; color?: string }) => {
+  const showArrows = height >= 10;
+  return (
+    <div 
+      className="relative w-full flex items-center justify-center pointer-events-none z-20"
+      style={{ 
+        height, 
+        marginTop: -height, 
+        marginBottom: height,
+        borderTop: `1px solid ${color}`,
+        borderBottom: `1px solid ${color}`
+      }}
+    >
+      {/* 垂直实线 */}
+      <div className="absolute top-0 bottom-0 w-[1px]" style={{ backgroundColor: color }} />
+      
+      {/* 垂直箭头 */}
+      {showArrows && (
+        <div className="absolute inset-y-0 flex flex-col items-center justify-between pointer-events-none">
+          <div style={{ width: 0, height: 0, borderLeft: '3px solid transparent', borderRight: '3px solid transparent', borderBottom: `4px solid ${color}` }} />
+          <div style={{ width: 0, height: 0, borderLeft: '3px solid transparent', borderRight: '3px solid transparent', borderTop: `4px solid ${color}` }} />
+        </div>
+      )}
+      
+      {/* 尺寸文字标签 */}
+      <span 
+        className="px-[4px] py-[0px] rounded text-[8px] font-mono font-bold scale-[0.8] z-30 select-none bg-white shadow-sm"
+        style={{ color, border: `1px solid ${color}`, lineHeight: '12px' }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+};
+
 function InlineHighlight({ children }: { children: React.ReactNode }) {
   return (
     <span className="bg-graphite-10 px-[4px] rounded-[4px] h-[20px] inline-flex items-center t-caption text-text-primary">
@@ -232,18 +267,50 @@ function Hyperlink({ children, href = "#" }: { children: React.ReactNode; href?:
   );
 }
 
-function Blockquote({ children }: { children: React.ReactNode }) {
+function Blockquote({ children, devSpacingMode }: { children: React.ReactNode; devSpacingMode?: boolean }) {
   return (
-    <blockquote className="border-l-[3px] border-border-default bg-[#FAFAFA] pl-[12px] py-[8px] mb-[10px] rounded-r-[4px]">
-      <div className="t-body text-text-primary">
-        {children}
-      </div>
-    </blockquote>
+    <div className="relative w-full">
+      <blockquote className="border-l-[3px] border-border-default bg-[#FAFAFA] pl-[12px] py-[8px] mb-[10px] rounded-r-[4px]">
+        <div className="t-body text-text-primary">
+          {children}
+        </div>
+      </blockquote>
+      {devSpacingMode && (
+        <>
+          {/* Padding Top 8px */}
+          <div className="absolute top-0 left-0 right-0 pointer-events-none">
+            <VerticalDimension height={8} label="py: 8px" color="#10B981" />
+          </div>
+          {/* Padding Bottom 8px */}
+          <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ transform: 'translateY(-10px)' }}>
+            <VerticalDimension height={8} label="py: 8px" color="#10B981" />
+          </div>
+          {/* Margin Bottom 10px */}
+          <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+            <VerticalDimension height={10} label="mb: 10px" color="#F97316" />
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
-function Divider() {
-  return <div className="h-[0.5px] bg-border-default w-full my-[12px]" />;
+function Divider({ devSpacingMode }: { devSpacingMode?: boolean }) {
+  return (
+    <div className="relative w-full">
+      <div className="h-[0.5px] bg-border-default w-full my-[12px]" />
+      {devSpacingMode && (
+        <>
+          <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{ marginTop: -12 }}>
+            <VerticalDimension height={12} label="mt: 12px" color="#F97316" />
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ marginBottom: -12 }}>
+            <VerticalDimension height={12} label="mb: 12px" color="#F97316" />
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 // ==================== Chat Conversation & Main Panel ====================
@@ -256,95 +323,196 @@ type Message = {
   isSkipped?: boolean;
 };
 
-function ChatConversation({ messages, isPending }: { messages: Message[]; isPending: boolean }) {
+function ChatConversation({ 
+  messages, 
+  isPending, 
+  devSpacingMode = false 
+}: { 
+  messages: Message[]; 
+  isPending: boolean; 
+  devSpacingMode?: boolean; 
+}) {
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
 
   return (
-    <div className="flex flex-col w-full p-[10px] gap-[12px]">
+    <div className="flex flex-col w-full p-[10px] gap-[12px] relative">
+      {devSpacingMode && (
+        <>
+          <div className="absolute top-0 left-0 right-0 pointer-events-none">
+            <VerticalDimension height={10} label="py: 10px" color="#10B981" />
+          </div>
+          <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
+            <VerticalDimension height={10} label="py: 10px" color="#10B981" />
+          </div>
+        </>
+      )}
+
       {messages.map((msg, i) => (
-        <div key={i} className="flex flex-col w-full gap-[12px]">
-          {msg.type === 'user' && (
-            <AIUserPrompt
-              content={msg.content || ""}
-              tag={msg.hasTag ? "Table.14.1.1 (Lines 290-321)" : undefined}
-            />
-          )}
+        <React.Fragment key={i}>
+          <div className="flex flex-col w-full gap-[12px] relative">
+            {msg.type === 'user' && (
+              <AIUserPrompt
+                content={msg.content || ""}
+                tag={msg.hasTag ? "Table.14.1.1 (Lines 290-321)" : undefined}
+              />
+            )}
 
-          {msg.type === 'ai_thinking' && (
-            <AIThinkingStatus status={showAskUser ? "waiting" : "loading"} />
-          )}
+            {msg.type === 'ai_thinking' && (
+              <AIThinkingStatus status={showAskUser ? "waiting" : "loading"} />
+            )}
 
-          {msg.type === 'ai_ask_user' && (
-            <AIThinkingStatus status="waiting" />
-          )}
+            {msg.type === 'ai_ask_user' && (
+              <AIThinkingStatus status="waiting" />
+            )}
 
-          {msg.type === 'ask_user_result' && (
-            <div className="bg-bg-light px-[10px] py-[8px] rounded-[8px] w-full">
-              {msg.isSkipped ? (
-                <p className="t-body text-text-secondary italic">Skipped question</p>
-              ) : (
-                <div className="flex flex-col gap-[4px]">
-                  {msg.answers?.map((ans, idx) => (
-                    <div key={idx} className="t-body text-text-secondary">
-                      <p className="font-normal">Q: {truncateText(ans.q)}</p>
-                      <p className="font-normal">A: {ans.a}</p>
+            {msg.type === 'ask_user_result' && (
+              <div className="bg-bg-light px-[10px] py-[8px] rounded-[8px] w-full">
+                {msg.isSkipped ? (
+                  <p className="t-body text-text-secondary italic">Skipped question</p>
+                ) : (
+                  <div className="flex flex-col gap-[4px]">
+                    {msg.answers?.map((ans, idx) => (
+                      <div key={idx} className="t-body text-text-secondary">
+                        <p className="font-normal">Q: {truncateText(ans.q)}</p>
+                        <p className="font-normal">A: {ans.a}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {msg.type === 'ai_complete' && (
+              <div className="flex flex-col gap-[12px] w-full relative">
+                <AIThinkingStatus status="completed" />
+                
+                {devSpacingMode && (
+                  <div className="w-full relative pointer-events-none" style={{ height: 12 }}>
+                    <VerticalDimension height={12} label="gap-y: 12px" color="#8B5CF6" />
+                  </div>
+                )}
+                
+                {/* Markdown Render Container */}
+                <div className={`flex flex-col w-full px-[10px] relative ${devSpacingMode ? 'border border-gray-100 rounded p-[4px]' : ''}`}>
+                  
+                  {/* h1 block */}
+                  <div className="relative w-full">
+                    <h1 className="t-heading text-text-primary mb-[10px]">Analysis Results Summary</h1>
+                    {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
+                  </div>
+
+                  {/* p block */}
+                  <div className="relative w-full">
+                    <p className="t-body text-text-primary mb-[10px] leading-relaxed">
+                      Generated Kaplan-Meier survival plot for <InlineHighlight>OS (Overall Survival)</InlineHighlight> using the ITT population. 
+                      Reference the <Hyperlink>Analysis Plan v1.2</Hyperlink> for further details.
+                    </p>
+                    {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
+                  </div>
+                  
+                  {/* table block */}
+                  <div className="relative w-full">
+                    <div className="mb-[10px]">
+                      <Suspense fallback={<div className="h-20 animate-pulse bg-gray-100 rounded mb-2" />}>
+                        <MarkdownTable />
+                      </Suspense>
                     </div>
-                  ))}
+                    {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
+                  </div>
+                  
+                  {/* p block */}
+                  <div className="relative w-full">
+                    <p className="t-body text-text-primary mb-[10px] leading-relaxed">
+                      Key observations from the data cohort:
+                    </p>
+                    {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
+                  </div>
+
+                  {/* list block */}
+                  <div className="relative w-full">
+                    <ul className="list-disc pl-[24px] mb-[10px] flex flex-col gap-[4px]">
+                      <li className="t-body text-text-primary">High survival rate in early stages.</li>
+                      {devSpacingMode && (
+                        <div className="w-full relative pointer-events-none" style={{ height: 4 }}>
+                          <VerticalDimension height={4} label="gap-y: 4px" color="#8B5CF6" />
+                        </div>
+                      )}
+                      <li className="t-body text-text-primary">Significant variance in treatment line 3.</li>
+                    </ul>
+                    {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
+                  </div>
+
+                  {/* blockquote block */}
+                  <Blockquote devSpacingMode={devSpacingMode}>
+                    "The integration of survival data confirms the hypothesis proposed in the preliminary report."
+                  </Blockquote>
+
+                  {/* hr block */}
+                  <Divider devSpacingMode={devSpacingMode} />
+
+                  {/* h3 block */}
+                  <div className="relative w-full">
+                    <h3 className="t-heading text-text-primary mb-[10px]">SAS Logic</h3>
+                    {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
+                  </div>
+
+                  {/* pre block */}
+                  <div className="relative w-full">
+                    <div className="border-[0.6px] border-border-default rounded-[4px] overflow-hidden mb-[10px]">
+                      <pre className="bg-bg-light px-[16px] py-[12px] overflow-x-auto relative">
+                        <code className="t-code text-text-primary whitespace-pre">
+                          <span className="text-[#005CC5]">proc sql</span>;{'\n'}
+                          {'  '}<span className="text-[#005CC5]">select</span> * <span className="text-[#005CC5]">from</span> itt_pop;{'\n'}
+                          <span className="text-[#005CC5]">quit</span>;
+                        </code>
+                        {devSpacingMode && (
+                          <>
+                            <div className="absolute top-0 left-0 right-0 pointer-events-none">
+                              <VerticalDimension height={12} label="py: 12px" color="#10B981" />
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ transform: 'translateY(-10px)' }}>
+                              <VerticalDimension height={12} label="py: 12px" color="#10B981" />
+                            </div>
+                          </>
+                        )}
+                      </pre>
+                    </div>
+                    {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          {msg.type === 'ai_complete' && (
-            <div className="flex flex-col gap-[12px] w-full">
-              <AIThinkingStatus status="completed" />
-              
-              {/* Markdown Render Container */}
-              <div className="flex flex-col w-full px-[10px]">
-                <h1 className="t-heading text-text-primary mb-[10px]">Analysis Results Summary</h1>
-                <p className="t-body text-text-primary mb-[10px]">
-                  Generated Kaplan-Meier survival plot for <InlineHighlight>OS (Overall Survival)</InlineHighlight> using the ITT population. 
-                  Reference the <Hyperlink>Analysis Plan v1.2</Hyperlink> for further details.
-                </p>
+                {/* Other components (non-Markdown blocks) */}
+                <div className="relative w-full">
+                  <ToolCallCard toolName="read_file" />
+                  {devSpacingMode && (
+                    <div className="w-full relative pointer-events-none" style={{ height: 12, marginTop: 12 }}>
+                      <VerticalDimension height={12} label="gap-y: 12px" color="#8B5CF6" />
+                    </div>
+                  )}
+                </div>
                 
-                <Suspense fallback={<div className="h-20 animate-pulse bg-gray-100 rounded mb-2" />}>
-                  <MarkdownTable />
-                </Suspense>
-                
-                <p className="t-body text-text-primary mb-[10px]">
-                  Key observations from the data cohort:
-                </p>
-                <ul className="list-disc pl-[24px] mb-[10px] flex flex-col gap-[4px]">
-                  <li className="t-body text-text-primary">High survival rate in early stages.</li>
-                  <li className="t-body text-text-primary">Significant variance in treatment line 3.</li>
-                </ul>
+                <div className="relative w-full">
+                  <AICodeDiff />
+                  {devSpacingMode && (
+                    <div className="w-full relative pointer-events-none" style={{ height: 12, marginTop: 12 }}>
+                      <VerticalDimension height={12} label="gap-y: 12px" color="#8B5CF6" />
+                    </div>
+                  )}
+                </div>
 
-                <Blockquote>
-                  "The integration of survival data confirms the hypothesis proposed in the preliminary report."
-                </Blockquote>
-
-                <Divider />
-
-                <h3 className="t-heading text-text-primary mb-[10px]">SAS Logic</h3>
-                <div className="border-[0.6px] border-border-default rounded-[4px] overflow-hidden mb-[10px]">
-                  <pre className="bg-bg-light px-[16px] py-[12px] overflow-x-auto">
-                    <code className="t-code text-text-primary whitespace-pre">
-                      <span className="text-[#005CC5]">proc sql</span>;{'\n'}
-                      {'  '}<span className="text-[#005CC5]">select</span> * <span className="text-[#005CC5]">from</span> itt_pop;{'\n'}
-                      <span className="text-[#005CC5]">quit</span>;
-                    </code>
-                  </pre>
+                <div className="relative w-full">
+                  <ErrorMessageWithRetry />
                 </div>
               </div>
-
-              {/* Other components (non-Markdown blocks) */}
-              <ToolCallCard toolName="read_file" />
-              <AICodeDiff />
-              <ErrorMessageWithRetry />
+            )}
+          </div>
+          {devSpacingMode && i < messages.length - 1 && (
+            <div className="w-full relative pointer-events-none" style={{ height: 12, marginTop: 12 }}>
+              <VerticalDimension height={12} label="gap-y: 12px" color="#8B5CF6" />
             </div>
           )}
-        </div>
+        </React.Fragment>
       ))}
     </div>
   );
@@ -363,7 +531,11 @@ function AICopilotPanel({
   onChangeInputValue?: (v: string) => void;
   focusTrigger?: number;
 }) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [devSpacingMode, setDevSpacingMode] = useState(true); // 默认开启以供演示
+  const [messages, setMessages] = useState<Message[]>([
+    { type: 'user', content: 'Generate Kaplan-Meier survival plot report for OS.' },
+    { type: 'ai_complete' }
+  ]);
   const [isPending, setIsPending] = useState(false);
 
   const [localInput, setLocalInput] = useState("");
@@ -422,7 +594,16 @@ function AICopilotPanel({
     >
       {/* Header */}
       <div className="bg-white h-[40px] flex items-center justify-between px-[12px] border-b border-graphite-10">
-        <AtlasLogoIcon className="h-[16px] w-[16px]" color="var(--color-brand-1)" />
+        <div className="flex items-center gap-[8px]">
+          <AtlasLogoIcon className="h-[16px] w-[16px]" color="var(--color-brand-1)" />
+          <button 
+            type="button" 
+            onClick={() => setDevSpacingMode(!devSpacingMode)}
+            className={`px-[6px] py-[2px] rounded text-[10px] font-semibold transition-all border ${devSpacingMode ? 'bg-[#F2F9F2] text-green-700 border-green-300' : 'bg-transparent text-text-secondary border-graphite-10 hover:bg-black/5'}`}
+          >
+            {devSpacingMode ? '📏 Spacing: ON' : '📏 Spacing: OFF'}
+          </button>
+        </div>
         <button
           onClick={onClose}
           aria-label="Close AI Copilot"
@@ -441,7 +622,7 @@ function AICopilotPanel({
             <span className="t-body text-text-secondary text-center">Automate TFLs. Accelerate Insights.</span>
           </div>
         ) : (
-          <ChatConversation messages={messages} isPending={isPending} />
+          <ChatConversation messages={messages} isPending={isPending} devSpacingMode={devSpacingMode} />
         )}
       </div>
 
@@ -3744,13 +3925,26 @@ function CodePanel({
   isLocked: boolean;
   onToggleLock: () => void;
 }) {
-  const listingCodeContent = `%s_listing(
-  inda = adsl
-, cols = USUBJID SUBJID SITEID AGE SEX RACE TRT01A VISIT ASTDY AEDECOD
-, freeze_cols = ${freezeCols ?? 2}
-, page_cols = ${pageCols ?? 5}
-, page_num = 1
-);`;
+  const listingCodeContent = `/* Setup listing options */
+options nodate nonumber orientation=landscape;
+title1 "Listing 16.2.1";
+title2 "Demographic and Baseline Characteristics (ITT Population)";
+
+/* Call standardized listing macro */
+%m_u_listing(
+    inds = adam.adsl,
+    cols = USUBJID | SUBJID | SITEID | AGE | SEX | RACE | TRT01A | VISIT | ASTDY | AEDECOD,
+    col_labels = Subject ID | Subj ID | Site ID | Age | Sex | Race | Treatment Group | Visit | Study Day | Adverse Event,
+    freeze_cols = ${freezeCols ?? 2},
+    page_cols = ${pageCols ?? 5},
+    page_num = 1,
+    orientation = L,
+    out_rtf = listing_16_2_1.rtf
+);
+
+/* Footnotes */
+footnote1 "Note: Age is calculated relative to birth date. Day is relative to first dose date.";
+footnote2 "Program Name: l_demog.sas";`;
 
   const programCodeContent = `/*= c_nested_cont(
     cluster_1, hba1c1( RLG_A,RLG_B,RLG_C )= a/ */
@@ -3827,7 +4021,7 @@ quit;
         actions={toolbarButtons}
       />
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="flex min-w-max font-mono text-[13px] leading-[20px]">
+        <div className="flex min-w-max min-h-full font-mono text-[13px] leading-[20px]">
           <div className="select-none bg-bg-light px-[8px] py-[16px] text-right text-[#999999] shrink-0">
             {codeLines.map((_, index) => <div key={index}>{index + 1}</div>)}
           </div>
