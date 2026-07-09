@@ -4625,12 +4625,12 @@ function WorkspaceContent({
     type: 'locked-by-parent' | null;
     programName?: string;
   }>({ type: null });
-  const [shellPreviewOpen, setShellPreviewOpen] = useState(true);
+  const [panelView, setPanelView] = useState<PanelView>('both');
+  const shellPreviewOpen = panelView !== 'code';
+  const codeOpen = panelView !== 'shell';
   const [metadataOpen, setMetadataOpen] = useState(false);
-  const [codeOpen, setCodeOpen] = useState(true);
   const [aiCopilotOpen, setAiCopilotOpen] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [panelView, setPanelView] = useState<PanelView>('both');
   const [shellPreviewWidth, setShellPreviewWidth] = useState(560);
   const [metadataWidth, setMetadataWidth] = useState(380);
   const [aiCopilotWidth, setAiCopilotWidth] = useState(360);
@@ -4916,11 +4916,7 @@ function WorkspaceContent({
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
-
-    if (isTableSelected(id)) {
-      setShellPreviewOpen(true);
-    } else {
-      setShellPreviewOpen(false);
+    if (!isTableSelected(id)) {
       setMetadataOpen(false);
     }
   };
@@ -4944,17 +4940,8 @@ function WorkspaceContent({
 
   const handlePanelViewChange = (v: PanelView) => {
     setPanelView(v);
-    if (v === 'shell') {
-      setShellPreviewOpen(true);
-      setCodeOpen(false);
+    if (v === 'shell' || v === 'code') {
       setMetadataOpen(false);
-    } else if (v === 'code') {
-      setShellPreviewOpen(false);
-      setMetadataOpen(false);
-      setCodeOpen(true);
-    } else {
-      setShellPreviewOpen(true);
-      setCodeOpen(true);
     }
   };
 
