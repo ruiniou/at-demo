@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "./Button";
 import { SegmentedControl } from "./SegmentedControl";
 import { SearchBar } from "./SearchBar";
+import { Tooltip } from "./Tooltip";
 
 // Icon imports
 import uploadIconUrl from "../../icons/upload-2-line.svg";
@@ -227,7 +228,11 @@ export function UploadCard({
             <img src={errorWarningIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
             <div className="flex flex-1 min-w-0 flex-col gap-[2px]">
               <span className="t-small-medium text-status-error">Upload Failed</span>
-              {errorMessage && <span className="t-small text-text-secondary">{errorMessage}</span>}
+              {errorMessage && (
+                <Tooltip label={errorMessage} align="left" className="w-full">
+                  <span className="t-small text-text-secondary line-clamp-2 text-left block w-full">{errorMessage}</span>
+                </Tooltip>
+              )}
             </div>
           </div>
           <Button variant="secondary" size="sm" onClick={handleUploadClick}>Re-Upload</Button>
