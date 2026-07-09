@@ -1,8 +1,12 @@
 import React from "react";
+import { Tooltip } from "./Tooltip";
 
 export type SegmentedControlOption = {
-  label: string;
+  label?: string;
   value: string;
+  icon?: React.ReactNode | ((active: boolean) => React.ReactNode);
+  ariaLabel?: string;
+  tooltip?: React.ReactNode;
 };
 
 export interface SegmentedControlProps {
@@ -23,33 +27,32 @@ export function SegmentedControl({
   if (size === "sm") {
     // Figma 646:2294 — small variant for upload card
     return (
-      <div className={`flex h-[24px] items-center rounded-[4px] bg-bg-light shrink-0 ${className}`}>
+      <div className={`flex h-[26px] items-center rounded-[4px] bg-[#F8F7F7] p-[2px] shrink-0 ${className}`}>
         {options.map((opt) => {
           const isActive = value === opt.value;
-          return (
+          const iconNode = typeof opt.icon === "function" ? opt.icon(isActive) : opt.icon;
+          const button = (
             <button
               key={opt.value}
               type="button"
               onClick={() => onChange(opt.value)}
-              className={`relative flex h-full items-center justify-center rounded-[3px] px-[6px] whitespace-nowrap transition-colors after:content-[''] after:absolute after:-inset-y-[8px] after:inset-x-0 ${
+              aria-label={opt.ariaLabel ?? opt.label}
+              className={`relative flex h-[22px] items-center justify-center rounded-[3px] px-[8px] whitespace-nowrap transition-colors after:content-[''] after:absolute after:-inset-y-[8px] after:inset-x-0 ${
                 isActive
-                  ? "bg-white border-[0.6px] border-[#D8DADA]"
-                  : "hover:bg-black/5"
+                  ? "bg-white text-text-primary border-[0.6px] border-[#D8DADA] shadow-sm t-small-medium"
+                  : "text-text-secondary hover:text-text-primary t-small hover:bg-black/5"
               }`}
             >
-              <span
-                style={{
-                  fontFamily: "'PingFang SC', sans-serif",
-                  fontWeight: 400,
-                  fontSize: 12,
-                  lineHeight: "20px",
-                  textAlign: "center",
-                  color: isActive ? "#3C4242" : "#888E8E",
-                }}
-              >
-                {opt.label}
-              </span>
+              {iconNode}
+              {opt.label && <span className={iconNode ? "ml-[4px]" : ""}>{opt.label}</span>}
             </button>
+          );
+          return opt.tooltip ? (
+            <Tooltip key={opt.value} label={opt.tooltip}>
+              {button}
+            </Tooltip>
+          ) : (
+            button
           );
         })}
       </div>
