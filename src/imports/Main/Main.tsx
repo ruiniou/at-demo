@@ -353,8 +353,8 @@ function ChatConversation({ messages, isPending }: { messages: Message[]; isPend
 function AICopilotPanel({
   panelWidth,
   onClose,
-  inputValue = "",
-  onChangeInputValue = () => {},
+  inputValue,
+  onChangeInputValue,
   focusTrigger = 0,
 }: {
   panelWidth: number;
