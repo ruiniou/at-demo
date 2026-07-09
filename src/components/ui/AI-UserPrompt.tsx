@@ -27,9 +27,9 @@ export function AIUserPrompt({
           <AITagMini>{tag}</AITagMini>
         </div>
       )}
-      <div className="flex flex-col gap-[4px] t-body text-text-secondary">
+      <div className="flex flex-col gap-[4px] t-body text-text-secondary break-words whitespace-pre-wrap w-full">
         {paragraphs.map((para, idx) => (
-          <p key={idx}>{para}</p>
+          <p key={idx} className="break-words whitespace-pre-wrap">{para}</p>
         ))}
       </div>
     </div>
