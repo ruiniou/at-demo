@@ -436,7 +436,7 @@ function AICopilotPanel({
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-[12px]">
+          <div className="absolute top-[40px] inset-x-0 flex flex-col items-center pt-[180px] gap-[12px]">
             <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
             <span className="t-body text-text-secondary text-center">Automate TFLs. Accelerate Insights.</span>
           </div>
