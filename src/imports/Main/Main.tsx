@@ -4065,11 +4065,29 @@ quit;
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-white">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .code-panel-scroll-container::-webkit-scrollbar {
+          width: 14px;
+          height: 14px;
+        }
+        .code-panel-scroll-container::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .code-panel-scroll-container::-webkit-scrollbar-thumb {
+          background-color: rgba(216, 218, 218, 0.75);
+          border: 2px solid transparent;
+          border-radius: 7px;
+          background-clip: padding-box;
+        }
+        .code-panel-scroll-container::-webkit-scrollbar-thumb:hover {
+          background-color: #B2B4B4;
+        }
+      `}} />
       <PanelHeader
         title={<LocalIcon src={codeSlashIconUrl} className="w-[20px] h-[20px]" color="#888E8E" />}
         actions={toolbarButtons}
       />
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto code-panel-scroll-container">
         <div className="flex min-w-max min-h-full font-mono text-[13px] leading-[20px]">
           <div className="select-none bg-bg-light px-[8px] py-[16px] text-right text-[#999999] shrink-0">
             {codeLines.map((_, index) => <div key={index}>{index + 1}</div>)}
