@@ -964,7 +964,7 @@ function PanelViewToggle({
           {value === 'both' && (
             <div aria-hidden className="absolute border-border-default border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
           )}
-          <div className={`relative shrink-0 size-[16px] flex items-center justify-center ${layout === 'vertical' && value === 'both' ? 'rotate-90' : ''}`}>
+          <div className={`relative shrink-0 size-[16px] flex items-center justify-center ${layout === 'vertical' ? 'rotate-90' : ''}`}>
             <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 13.334 12">
               <path d={SPLIT_ICON_PATH} fill={value === 'both' ? '#3C4242' : '#888E8E'} />
             </svg>
