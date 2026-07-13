@@ -62,7 +62,7 @@ export function AICodeDiff({
         onClick={() => setExpanded(!expanded)}
         className={[
           "flex items-center justify-between px-[10px] py-[8px] cursor-pointer select-none transition-colors",
-          hovered ? "bg-bg-light" : "bg-transparent",
+          hovered ? "bg-bg-panel" : "bg-transparent",
         ].join(" ")}
       >
         <div className="flex items-center gap-[12px]">

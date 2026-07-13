@@ -38,7 +38,7 @@ export function AIToolCall({
         onClick={() => setExpanded(!expanded)}
         className={[
           "flex items-center gap-[6px] px-[10px] py-[8px] cursor-pointer select-none rounded-[3px] transition-colors",
-          hovered ? "bg-bg-light" : "bg-transparent",
+          hovered ? "bg-bg-panel" : "bg-transparent",
         ].join(" ")}
       >
         <img
@@ -64,7 +64,7 @@ export function AIToolCall({
         <div className="flex flex-col gap-[8px] pt-[8px] pb-[10px] border-t-[0.6px] border-graphite-10">
           <div className="flex flex-col gap-[4px] px-[12px]">
             <span className="t-caption text-text-secondary">Arguments</span>
-            <div className="bg-bg-light rounded-[2px] py-[4px]">
+            <div className="bg-bg-panel rounded-[2px] py-[4px]">
               {args.map((line, idx) => (
                 <div key={idx} className="px-[10px] h-[20px] flex items-center">
                   <code className="t-code text-text-secondary">{line}</code>
@@ -75,7 +75,7 @@ export function AIToolCall({
 
           <div className="flex flex-col gap-[4px] px-[12px]">
             <span className="t-caption text-text-secondary">Result</span>
-            <div className="bg-bg-light rounded-[2px] py-[4px]">
+            <div className="bg-bg-panel rounded-[2px] py-[4px]">
               {results.map((line, idx) => (
                 <div key={idx} className="px-[10px] h-[20px] flex items-center">
                   <code className="t-code text-text-secondary">{line}</code>

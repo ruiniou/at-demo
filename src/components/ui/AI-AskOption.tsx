@@ -28,8 +28,8 @@ export function AIAskOption({
       onClick={type === "selection" ? onClick : undefined}
       className={[
         "flex items-center gap-[8px] p-[8px] rounded-[4px] h-[40px] transition-colors cursor-pointer",
-        "hover:bg-bg-light",
-        selected ? "bg-bg-light" : "bg-transparent",
+        "hover:bg-bg-panel",
+        selected ? "bg-bg-panel" : "bg-transparent",
         className,
       ].join(" ")}
     >

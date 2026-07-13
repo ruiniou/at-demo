@@ -150,7 +150,7 @@ export function UploadCard({
                         handleStatusUpdate("use-existing"); 
                         if (onFileSelect) onFileSelect(option);
                       }}
-                      className={`flex items-center gap-[4px] rounded-[2px] py-[2px] pl-[2px] pr-[4px] text-left hover:bg-bg-light ${isSelected ? "bg-bg-light" : ""}`}
+                      className={`flex items-center gap-[4px] rounded-[2px] py-[2px] pl-[2px] pr-[4px] text-left hover:bg-bg-panel ${isSelected ? "bg-bg-panel" : ""}`}
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className={isSelected ? "opacity-100" : "opacity-0"} style={{ minWidth: 16 }}>
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="var(--color-text-primary)"/>
@@ -184,7 +184,7 @@ export function UploadCard({
     // Figma 632:1260 — no border, bg #F8F7F7, upload-2-line icon + loader
     // Left section fills width so text doesn't shift when right text changes
     uploadArea = (
-      <div className="flex flex-col rounded-[4px] bg-bg-light p-[8px_10px]">
+      <div className="flex flex-col rounded-[4px] bg-bg-panel p-[8px_10px]">
         <div className="flex items-center gap-[16px] py-[8px]">
           <div className="flex flex-1 items-center gap-[8px] min-w-0">
             <img src={uploadIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
@@ -229,9 +229,13 @@ export function UploadCard({
             <div className="flex flex-1 min-w-0 flex-col gap-[2px]">
               <span className="t-small-medium text-status-error">Upload Failed</span>
               {errorMessage && (
-                <Tooltip label={errorMessage} align="left" className="w-full">
-                  <span className="t-small text-text-secondary line-clamp-2 text-left block w-full">{errorMessage}</span>
-                </Tooltip>
+                errorMessage.length > 90 ? (
+                  <Tooltip label={errorMessage} align="left" className="w-full">
+                    <span className="t-small text-text-secondary line-clamp-2 text-left block w-full">{errorMessage}</span>
+                  </Tooltip>
+                ) : (
+                  <span className="t-small text-text-secondary text-left block w-full">{errorMessage}</span>
+                )
               )}
             </div>
           </div>

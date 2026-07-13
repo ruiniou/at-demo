@@ -49,7 +49,7 @@ export function AIErrorAlert({
   return (
     <div
       className={[
-        "bg-bg-light",
+        "bg-bg-panel",
         "border-[0.6px] border-status-error",
         "rounded-[4px] px-[10px] py-[8px] flex gap-[8px] items-start",
         className,

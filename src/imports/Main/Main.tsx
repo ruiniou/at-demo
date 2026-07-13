@@ -15,6 +15,8 @@ import collapseIconUrl from "../../icons/Icon-collapse.svg";
 import copyIconUrl from "../../icons/file-copy-line.svg";
 import editIconUrl from "../../icons/edit-2-line.svg";
 import errorWarningIconUrl from "../../icons/error-warning-line.svg";
+import closeCircleIconUrl from "../../icons/close-circle-line.svg";
+import alertIconUrl from "../../icons/alert-line.svg";
 import expandIconUrl from "../../icons/Icon-expand.svg";
 import figureIconUrl from "../../icons/Figure.svg";
 import historyIconUrl from "../../icons/History Icon.svg";
@@ -153,7 +155,7 @@ function ToolCallCard({ toolName, children }: { toolName: string; children?: Rea
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={`border-[0.6px] border-graphite-10 rounded-[4px] px-[12px] py-[8px] w-full transition-colors ${
-        hovered ? 'bg-bg-light' : 'bg-transparent'
+        hovered ? 'bg-bg-panel' : 'bg-transparent'
       }`}
     >
       <div className="flex items-center gap-[4px] h-[30px]">
@@ -212,7 +214,7 @@ function ErrorMessageWithRetry() {
         )}
       </div>
 
-      <button className="shrink-0 bg-white border-[0.6px] border-border-default hover:bg-bg-light px-[8px] py-[4px] rounded-[4px] transition-colors flex items-center gap-[4px]">
+      <button className="shrink-0 bg-white border-[0.6px] border-border-default hover:bg-bg-panel px-[8px] py-[4px] rounded-[4px] transition-colors flex items-center gap-[4px]">
         <span className="t-small text-text-primary">Retry</span>
       </button>
     </div>
@@ -276,7 +278,7 @@ function Blockquote({ children, devSpacingMode }: { children: React.ReactNode; d
   return (
     <div className="relative w-full">
       <blockquote className="border-l-[3px] border-border-default bg-[#FAFAFA] pl-[12px] py-[8px] mb-[10px] rounded-r-[4px]">
-        <div className="t-body text-text-primary">
+        <div className="t-heading text-text-primary">
           {children}
         </div>
       </blockquote>
@@ -372,7 +374,7 @@ function ChatConversation({
             )}
 
             {msg.type === 'ask_user_result' && (
-              <div className="bg-bg-light px-[10px] py-[8px] rounded-[8px] w-full">
+              <div className="bg-bg-panel px-[10px] py-[8px] rounded-[8px] w-full">
                 {msg.isSkipped ? (
                   <p className="t-body text-text-secondary italic">Skipped question</p>
                 ) : (
@@ -465,7 +467,7 @@ function ChatConversation({
                   {/* pre block */}
                   <div className="relative w-full">
                     <div className="border-[0.6px] border-border-default rounded-[4px] overflow-hidden mb-[10px]">
-                      <pre className="bg-bg-light px-[16px] py-[12px] overflow-x-auto relative">
+                      <pre className="bg-bg-panel px-[16px] py-[12px] overflow-x-auto relative">
                         <code className="t-code text-text-primary whitespace-pre">
                           <span className="text-[#005CC5]">proc sql</span>;{'\n'}
                           {'  '}<span className="text-[#005CC5]">select</span> * <span className="text-[#005CC5]">from</span> itt_pop;{'\n'}
@@ -734,6 +736,8 @@ const iconFilters: Record<string, string> = {
   "#B2B4B4": "brightness(0) saturate(100%) invert(75%) sepia(5%) saturate(100%) hue-rotate(131deg) brightness(94%) contrast(88%)",
   "#CC2C3C": "brightness(0) saturate(100%) invert(24%) sepia(91%) saturate(1782%) hue-rotate(336deg) brightness(89%) contrast(88%)",
   "var(--color-status-error)": "brightness(0) saturate(100%) invert(24%) sepia(91%) saturate(1782%) hue-rotate(336deg) brightness(89%) contrast(88%)",
+  "#C5221F": "brightness(0) saturate(100%) invert(20%) sepia(85%) saturate(3015%) hue-rotate(349deg) brightness(82%) contrast(101%)",
+  "#B06000": "brightness(0) saturate(100%) invert(35%) sepia(93%) saturate(1416%) hue-rotate(24deg) brightness(94%) contrast(101%)",
   "#666666": "brightness(0) invert(40%)",
 };
 
@@ -750,11 +754,11 @@ function LocalIcon({
   return <img src={src} alt="" aria-hidden="true" className={`${className} block shrink-0`} style={filter ? { filter } : undefined} />;
 }
 
-function LockTreeIcon({ className = "w-[16px] h-[16px]", color = "#3C4242" }) {
+function LockTreeIcon({ className = "w-[16px] h-[16px]", color = "#3F4444" }) {
   return <LocalIcon src={lockIconUrl} className={className} color={color} />;
 }
 
-function UnlockTreeIcon({ className = "w-[16px] h-[16px]", color = "#3C4242" }) {
+function UnlockTreeIcon({ className = "w-[16px] h-[16px]", color = "#3F4444" }) {
   return <LocalIcon src={unlockIconUrl} className={className} color={color} />;
 }
 
@@ -787,7 +791,7 @@ function InfoIcon() {
   );
 }
 
-function FolderIcon({ color = "#3C4242" }) {
+function FolderIcon({ color = "#3F4444" }) {
   return (
     <SvgIcon className="w-[16px] h-[16px]">
       <path d="M10 4L12 6H20C20.55 6 21 6.45 21 7V18C21 18.55 20.55 19 20 19H4C3.45 19 3 18.55 3 18V5C3 4.45 3.45 4 4 4H10ZM5 6V17H19V8H11.17L9.17 6H5Z" fill={color} />
@@ -897,7 +901,7 @@ function WorkspaceModal({
         <div className="flex items-center justify-end gap-[12px] border-t border-[#E5E8E8] px-[24px] pb-[20px] pt-[21px]">
           <button
             onClick={onSecondary}
-            className="h-[36px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-light active:scale-[0.96]"
+            className="h-[36px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-panel active:scale-[0.96]"
           >
             {secondaryLabel}
           </button>
@@ -932,7 +936,7 @@ function PanelViewToggle({
   docType?: DocumentType;
 }) {
   return (
-    <div className="bg-bg-light flex items-center rounded-[4px]">
+    <div className="bg-bg-panel flex items-center rounded-[4px]">
       <TooltipText label="Show Shell">
         <button
           onClick={() => onChange('shell')}
@@ -1016,7 +1020,7 @@ function ViewToggleBar({
   docType?: DocumentType;
 }) {
 
-  const viewTabs = docType === 'listing' ? null : (
+  const viewTabs = (docType === 'listing' || docType === 'figure') ? null : (
     <>
       <button
         onClick={() => onActiveViewChange('table')}
@@ -2481,7 +2485,7 @@ function ListingShellPreview({
                                   className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full z-[60] pb-[6px] cursor-pointer active:scale-[0.96] transition-transform pointer-events-auto"
                                   onClick={(e) => { e.stopPropagation(); setFrozenUntilIndex(columnIndex); setHoveredFreezeColumn(null); }}
                                 >
-                                  <div className="flex items-center gap-[4px] bg-[#3C4242] text-[#F8F7F7] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
+                                  <div className="flex items-center gap-[4px] bg-[#3F4444] text-[#EBEFEE] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
                                     <FreezeIcon color="white" />
                                     <span className="font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px]">Repeat Columns</span>
                                   </div>
@@ -2613,7 +2617,7 @@ function ListingShellPreview({
                         onMouseLeave={() => setHoveredGap(null)}
                         onClick={() => { addPageBreak(hoveredGap); setHoveredGap(null); }}
                       >
-                        <div className="flex items-center gap-[4px] bg-[#3C4242] text-[#F8F7F7] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
+                        <div className="flex items-center gap-[4px] bg-[#3F4444] text-[#EBEFEE] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
                           <LocalIcon src={addLineIconUrl} className="w-[14px] h-[14px]" color="white" />
                           <span className="font-['PingFang_SC:Regular',sans-serif] text-[12px] leading-[20px]">Add page break</span>
                         </div>
@@ -3015,7 +3019,7 @@ function ShellPreview({
                       >
                         <td
                           className={`${
-                            row.isHeader ? 'bg-bg-light font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
+                            row.isHeader ? 'bg-bg-panel font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
                           } text-left text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
                           style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
                         >
@@ -3025,7 +3029,7 @@ function ShellPreview({
                           <td
                             key={vi}
                             className={`text-center text-[12px] leading-[18px] ${
-                              row.isHeader ? 'bg-bg-light font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
+                              row.isHeader ? 'bg-bg-panel font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
                             } py-[6px] px-[6px] whitespace-nowrap border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
                           >
                             {val}
@@ -3122,7 +3126,7 @@ function GroupCodeViewer({ lines }: { lines: string[] }) {
   return (
     <div className="relative rounded-[2px] w-full mt-[4px]">
       <div className="overflow-clip rounded-[2px] border-[0.6px] border-border-default">
-        <button onClick={() => setExpanded(v => !v)} className="w-full flex items-center gap-[4px] px-[10px] py-[8px] bg-white hover:bg-bg-light transition-colors active:scale-[0.99]" aria-expanded={expanded}>
+        <button onClick={() => setExpanded(v => !v)} className="w-full flex items-center gap-[4px] px-[10px] py-[8px] bg-white hover:bg-bg-panel transition-colors active:scale-[0.99]" aria-expanded={expanded}>
           <span className="t-small text-text-primary">Group Code</span>
           <div className="shrink-0 size-[16px] flex items-center justify-center transition-transform duration-150" style={{ transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
             <SvgIcon className="h-[8px] w-[9px]" viewBox="0 0 8.49 5.19"><path d="M0.75 0.75L4.24 4.24L7.72 0.75" stroke="#888E8E" strokeWidth="1.5" fill="none" /></SvgIcon>
@@ -3130,7 +3134,7 @@ function GroupCodeViewer({ lines }: { lines: string[] }) {
         </button>
         {expanded && (
           <div className="relative border-t-[0.6px] border-border-default">
-            <div className="overflow-auto bg-bg-light" style={{ maxHeight: '220px' }}>
+            <div className="overflow-auto bg-bg-panel" style={{ maxHeight: '220px' }}>
               <div className="py-[4px]" style={{ minWidth: 'max-content' }}>
                 {lines.map((line, i) => (
                   <div key={i} className="flex items-start h-[20px] px-[10px]">
@@ -3306,7 +3310,7 @@ function BlocksTabContent({
             className={`w-full text-left px-[12px] py-[10px] t-small leading-[1.3] transition-colors truncate ${
               selectedBlockId === block.id
                 ? 'bg-az-secondary text-brand-1 font-medium border-l-[3px] border-l-brand-1 pl-[9px]'
-                : 'text-text-primary hover:bg-bg-light border-l-[3px] border-l-transparent pl-[9px]'
+                : 'text-text-primary hover:bg-bg-panel border-l-[3px] border-l-transparent pl-[9px]'
             }`}
             title={block.name}
           >
@@ -3335,7 +3339,7 @@ function BlocksTabContent({
                   </p>
                   {field.type === 'tag' ? (
                     <div className={`flex flex-wrap gap-[4px] min-h-[32px] px-[8px] py-[4px] rounded-[4px] border items-center ${
-                      isLocked ? 'border-transparent bg-bg-light' : 'border-border-default bg-white'
+                      isLocked ? 'border-transparent bg-bg-panel' : 'border-border-default bg-white'
                     }`}>
                       <span className={`inline-flex items-center gap-[6px] h-[24px] px-[8px] rounded-[12px] t-small ${
                         isLocked ? 'bg-[#EBEBEB] text-[#B2B4B4]' : 'bg-[#F0F0F0] text-text-primary'
@@ -3353,7 +3357,7 @@ function BlocksTabContent({
                       readOnly
                       className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[4px] border t-small outline-none focus:outline-none ${
                         isLocked
-                          ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed'
+                          ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed'
                           : 'bg-white border-border-default text-text-primary'
                       }`}
                     />
@@ -3844,7 +3848,7 @@ function MetadataPanel({
       </div>
 
       {/* Status Bar */}
-      <div className="flex items-center justify-end bg-bg-light px-[12px] py-[8px]">
+      <div className="flex items-center justify-end bg-bg-panel px-[12px] py-[8px]">
         <div className="flex items-center gap-[6px]">
           <button onClick={isLocked ? undefined : handleSelectAll} disabled={isLocked}
             className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
@@ -3907,7 +3911,7 @@ function MetadataPanel({
                                 isReadOnlyField
                                   ? 'border-transparent bg-transparent pl-0 text-text-primary' // Hide border and style nicely for read-only config fields
                                   : isLocked
-                                    ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed'
+                                    ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed'
                                     : `bg-white ${styles.inputBorder || 'border-border-default'}`
                               }`}
                             />
@@ -3952,7 +3956,7 @@ function MetadataPanel({
                             ) : (
                               <input type="text" value={field.value} readOnly={isLocked}
                                 onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                                className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
+                                className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
                             )}
                             {!isLocked && field.status === 'default' && !isAssociatedTL && (
                               <div className="absolute right-[8px] top-[8px] pointer-events-none">
@@ -3986,7 +3990,7 @@ function MetadataPanel({
                           <div className="relative">
                             <input type="text" value={field.value} readOnly={isLocked}
                               onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
+                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
                             {!isLocked && field.status === 'default' && (
                               <div className="absolute right-[8px] top-[8px] pointer-events-none">
                                 <SvgIcon className="h-[16px] w-[16px]"><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>
@@ -4011,7 +4015,7 @@ function MetadataPanel({
                     </div>
                     <div className="relative" ref={dropdownRef}>
                       <button onClick={isLocked ? undefined : () => setGroupDropdownOpen(!groupDropdownOpen)} disabled={isLocked}
-                        className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-left flex items-center justify-between ${isLocked ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${groupStyles.inputBorder || 'border-border-default'} text-text-primary`}`}>
+                        className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-left flex items-center justify-between ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${groupStyles.inputBorder || 'border-border-default'} text-text-primary`}`}>
                         <span className="truncate">{GROUP_OPTIONS[selectedGroupIdx]?.name || 'Select...'}</span>
                         {!isLocked && <SvgIcon className="h-[16px] w-[16px]" shrink-0><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>}
                       </button>
@@ -4019,7 +4023,7 @@ function MetadataPanel({
                         <div className="absolute top-full left-0 right-0 mt-[2px] bg-white border border-border-default rounded-[4px] shadow-lg z-[60] max-h-[200px] overflow-auto">
                           {GROUP_OPTIONS.map((opt, idx) => (
                             <button key={idx} onClick={() => handleGroupSelect(idx)}
-                              className={`w-full text-left px-[8px] py-[6px] t-small hover:bg-bg-light ${idx === selectedGroupIdx ? 'text-brand-1 font-medium' : 'text-text-primary'}`}>{opt.name}</button>
+                              className={`w-full text-left px-[8px] py-[6px] t-small hover:bg-bg-panel ${idx === selectedGroupIdx ? 'text-brand-1 font-medium' : 'text-text-primary'}`}>{opt.name}</button>
                           ))}
                         </div>
                       )}
@@ -4061,7 +4065,7 @@ function MetadataPanel({
                         onChange={isLocked ? undefined : (e) => handleListingColumnFieldEdit(field.id, e.target.value)}
                         readOnly={isLocked}
                         className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${
-                          isLocked ? 'bg-bg-light border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`
+                          isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`
                         }`}
                       />
                     </div>
@@ -4180,11 +4184,11 @@ function highlightSAS(code: string): React.ReactNode {
     if (comment) {
       parts.push(<span key={key} className="text-[#008000] italic">{full}</span>);
     } else if (doubleQuoteStr || singleQuoteStr) {
-      parts.push(<span key={key} className="text-[#A31515] font-semibold">{full}</span>);
+      parts.push(<span key={key} className="text-[#A31515]">{full}</span>);
     } else if (keyword) {
-      parts.push(<span key={key} className="text-[#005CC5] font-bold">{full}</span>);
+      parts.push(<span key={key} className="text-[#005CC5]">{full}</span>);
     } else if (macroCall) {
-      parts.push(<span key={key} className="text-[#830051] font-bold">{full}</span>);
+      parts.push(<span key={key} className="text-[#830051]">{full}</span>);
     } else if (param) {
       parts.push(<span key={key} className="text-[#7952B3]">{full}</span>);
     } else if (number) {
@@ -4245,38 +4249,39 @@ title2 "Demographic and Baseline Characteristics (ITT Population)";
 footnote1 "Note: Age is calculated relative to birth date. Day is relative to first dose date.";
 footnote2 "Program Name: l_demog.sas";`;
 
-  const programCodeContent = `/*= c_nested_cont(
-    cluster_1, hba1c1( RLG_A,RLG_B,RLG_C )= a/ */
-proc sql;
-  create table atlas_prep_cluster1 as
-  select a.*
-       , b.rlg_decim
-  from adlb(in=a)
-  where anl1fl=''
-    and max(length(scanprint(anl1, best., 2, ',')), 0) a1
-       as param
-  left join (
-    select param,
-           max( missing(anl1) )
-    and PARAMCD='CHEMISTRY'
-    and ANLFL1=''
-    and not missing(ANL1)
-    group by param
-  ) as b
-  on a.paramcd=param
-  where SAFFL=''
-    and PARAMCD='CHEMISTRY' and ANLFL1='Y';
-quit;
+  const programCodeContent = `/* Setup figure options */
+options nodate nonumber orientation=landscape;
+title1 "Figure 15.1.1";
+title2 "Kaplan-Meier Plot of Time to Dermatologic Event (ITT Population)";
 
-%s_c_nested_cont(
-  inda = atlas_prep_cluster_1
-, pop_flag = SAFFL=''
-, paramvar = SAFFL and PARAMCD='CHEMISTRY' and ANLFL1='Y')
-, byvarlistin = PARAM()
-, paramvar = PARAM
-, trgrpn = TRTAN(N)
-, popgrp = SAFFL(a.1_2_123
-  ustgrp =`;
+/* Prepare data for Kaplan-Meier analysis */
+data km_prep;
+    set adam.adtte;
+    where paramcd = "TTDE" and saffl = "Y";
+run;
+
+/* Compute survival statistics and generate at-risk numbers */
+proc lifetest data=km_prep method=km plots=survival(atrisk);
+    time aval * cnsr(1);
+    strata trtan;
+    ods output ProductLimitEstimates=km_est;
+run;
+
+/* ODS Graphics settings for premium rendering */
+ods graphics on / width=640px height=480px imagename="km_plot";
+ods rtf file="figure_15_1_1.rtf" style=HTMLBlue;
+
+/* Render the Kaplan-Meier Plot using standard template */
+proc sgrender data=km_est template=Kaplan_Meier_Plot;
+    dynamic title="Kaplan-Meier Plot of Time to Dermatologic Event"
+            show_ci=${showCI ? "Y" : "N"}
+            show_censor=${showCensorMarks ? "Y" : "N"}
+            show_median=${showMedianLines ? "Y" : "N"}
+            show_risk=${showRiskTable ? "Y" : "N"};
+run;
+
+ods rtf close;
+ods graphics off;`;
 
   const codeContent = docType === 'listing' ? listingCodeContent : programCodeContent;
 
@@ -4286,6 +4291,7 @@ quit;
   useEffect(() => {
     setUserCode(codeContent);
     setLastRunCode(codeContent);
+    setHasRunOnce(false);
   }, [selectedItem, codeContent]);
 
   const codeLines = userCode.split('\n');
@@ -4293,37 +4299,168 @@ quit;
   const [logExpanded, setLogExpanded] = useState(true);
   const [figureView, setFigureView] = useState<'preview' | 'code'>('code');
   const [previewLoading, setPreviewLoading] = useState(false);
-  const normalLogLines = [
-    { text: 'NOTE: SAS (r) Proprietary Software 9.4  TS1M6' },
-    { text: 'NOTE: ---------------------------------------------------------' },
-    { text: '2          cluster_1, hba1c1( RLG_A,RLG_B,RLG_N,RLG_C ) = /+ m/' },
-    { text: '3    proc sql;' },
-    { text: 'NOTE: PROCEDURE SQL used (Total process time):' },
-    { text: '      real time           0.02 seconds', tone: 'secondary' as const },
-    { text: '      cpu time            0.01 seconds', tone: 'secondary' as const },
-    { text: 'NOTE: Table WORK.ATLAS_UPCIO created, with 1024 rows and 8 columns.' },
-    { text: 'NOTE: PROCEDURE SORT used (Total process time):' },
-    { text: '      real time           0.04 seconds', tone: 'secondary' as const },
-    { text: 'NOTE: DATA statement used (Total process time):' },
-    { text: '      real time           0.03 seconds', tone: 'secondary' as const },
-    { text: 'WARNING: Variable PARAM not found in WORK.ATLAS_UPCIO.', tone: 'warning' as const },
-    { text: 'NOTE: PROC MEANS used — 512 observations read.' },
-    { text: '      real time           0.06 seconds', tone: 'secondary' as const },
-    { text: 'NOTE: PARMACRO= CHEMISTRY matched 48 observations.' },
-    { text: 'NOTE: QUIT statement used.' },
-  ];
+  const [hasRunOnce, setHasRunOnce] = useState(false);
+  const codeTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
-  const errorLogLines = [
-    { text: 'NOTE: SAS (r) Proprietary Software 9.4  TS1M6' },
-    { text: 'NOTE: ---------------------------------------------------------' },
-    { text: '2          cluster_1, hba1c1( RLG_A,RLG_B,RLG_N,RLG_C ) = /+ m/' },
-    { text: '3    proc sql;' },
-    { text: 'ERROR: File WORK.ADSL.DATA does not exist.' },
-    { text: 'ERROR: Expression using = has components that are of different types.' },
-    { text: 'NOTE: QUIT statement used.' },
-  ];
+  const [selectedCodeLine, setSelectedCodeLine] = useState<number | null>(null);
+  const [hoveredLineNumber, setHoveredLineNumber] = useState<number | null>(null);
 
-  const logLines = userCode.toLowerCase().includes('error') ? errorLogLines : normalLogLines;
+  const handleTextareaSelectionChange = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const textarea = e.currentTarget;
+    const selStart = textarea.selectionStart;
+    const lineNum = textarea.value.substring(0, selStart).split('\n').length;
+    setSelectedCodeLine(lineNum);
+  };
+
+  const isFoldableLine = (lineText: string): boolean => {
+    const trimmed = lineText.trim().toLowerCase();
+    return (
+      trimmed.startsWith('proc ') ||
+      trimmed.startsWith('data ') ||
+      trimmed.startsWith('%') ||
+      trimmed.startsWith('/*')
+    );
+  };
+
+  const handleLineClick = (lineNum: number) => {
+    setSelectedCodeLine(lineNum);
+    if (docType === 'figure' && !isLocked && codeTextAreaRef.current) {
+      const lines = userCode.split('\n');
+      let charCount = 0;
+      for (let i = 0; i < lineNum - 1 && i < lines.length; i++) {
+        charCount += lines[i].length + 1;
+      }
+      codeTextAreaRef.current.focus();
+      codeTextAreaRef.current.setSelectionRange(charCount, charCount);
+    }
+  };
+
+  // Structured log data — error scenario
+  const errorStructuredLog = {
+    summary: { error: 3, warning: 1, note: 24 },
+    entries: [
+      { level: 'ERROR' as const, code: '388-185', description: 'Expecting an arithmetic operator.', logLine: 22, programLine: 84, affectedCode: '! ;' },
+      { level: 'ERROR' as const, code: '76-322', description: 'Syntax error, statement will be ignored.', logLine: 26, programLine: 88, affectedCode: 'proc means data=;' },
+      { level: 'ERROR' as const, code: '180-322', description: 'Statement is not valid or it is used out of proper order.', logLine: 42, programLine: 132, affectedCode: 'run cancel;' },
+      { level: 'WARNING' as const, code: '1001', description: 'Variable PARAM not found in WORK.ATLAS_UPCIO.', logLine: 18, programLine: 34, affectedCode: 'PARAM' },
+      { level: 'NOTE' as const, code: '', description: 'SAS (r) Proprietary Software 9.4 TS1M6', logLine: 1, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'Copyright (c) 2002-2012 by SAS Institute Inc., Cary, NC, USA.', logLine: 2, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'PROCEDURE SQL used (Total process time): real time 0.02 seconds', logLine: 8, programLine: 3, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'Table WORK.ATLAS_UPCIO created, with 1024 rows and 8 columns.', logLine: 11, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'PROCEDURE SORT used (Total process time): real time 0.04 seconds', logLine: 13, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'DATA statement used (Total process time): real time 0.03 seconds', logLine: 15, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'PROC MEANS used — 512 observations read.', logLine: 20, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'PARMACRO= CHEMISTRY matched 48 observations.', logLine: 30, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'PROCEDURE FREQ used (Total process time): real time 0.01 seconds', logLine: 32, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'Dataset WORK.KM_DATA has 256 observations and 12 variables.', logLine: 34, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'PROCEDURE LIFETEST used (Total process time): real time 0.12 seconds', logLine: 36, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'PROCEDURE TEMPLATE used (Total process time): real time 0.01 seconds', logLine: 38, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'Output added to ODS LISTING destination.', logLine: 39, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'RTF file written: /output/figure_15_1_1.rtf (245 KB)', logLine: 40, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'Macro variable TRTAN resolved to 2.', logLine: 44, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'Macro GENERATE_FIGURE completed with return code 0.', logLine: 45, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'DATA step merge: WORK.ADTTE + WORK.ADSL — 512 obs merged.', logLine: 46, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'Variable AVAL formatted with BEST12. width.', logLine: 47, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'ODS GRAPHICS ON — default dimensions 640x480.', logLine: 48, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'PROC SGRENDER template applied: Kaplan_Meier_Plot.', logLine: 49, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'PROCEDURE SGRENDER used (Total process time): real time 0.08 seconds', logLine: 50, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'At-risk table generated: 6 time points, 2 groups.', logLine: 51, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414', logLine: 52, programLine: 0, affectedCode: '' },
+      { level: 'NOTE' as const, code: '', description: 'QUIT statement used.', logLine: 53, programLine: 0, affectedCode: '' },
+    ],
+    rawLogLines: [
+      { lineNum: 1, text: 'NOTE: SAS (r) Proprietary Software 9.4  TS1M6', level: 'NOTE' as const },
+      { lineNum: 2, text: 'NOTE: Copyright (c) 2002-2012 by SAS Institute Inc., Cary, NC, USA.', level: 'NOTE' as const },
+      { lineNum: 3, text: '      Licensed to ATLAS BIOANALYTICS, Site 0123456789.' },
+      { lineNum: 4, text: 'NOTE: ---------------------------------------------------------', level: 'NOTE' as const },
+      { lineNum: 5, text: '1    %include "/programs/fig_km_15_1_1.sas";' },
+      { lineNum: 6, text: '2          cluster_1, hba1c1( RLG_A,RLG_B,RLG_N,RLG_C ) = /+ m/' },
+      { lineNum: 7, text: '3    proc sql;' },
+      { lineNum: 8, text: 'NOTE: PROCEDURE SQL used (Total process time):', level: 'NOTE' as const },
+      { lineNum: 9, text: '      real time           0.02 seconds' },
+      { lineNum: 10, text: '      cpu time            0.01 seconds' },
+      { lineNum: 11, text: 'NOTE: Table WORK.ATLAS_UPCIO created, with 1024 rows and 8 columns.', level: 'NOTE' as const },
+      { lineNum: 12, text: '4    proc sort data=atlas_upcio; by paramcd visitnum; run;' },
+      { lineNum: 13, text: 'NOTE: PROCEDURE SORT used (Total process time):', level: 'NOTE' as const },
+      { lineNum: 14, text: '      real time           0.04 seconds' },
+      { lineNum: 15, text: 'NOTE: DATA statement used (Total process time):', level: 'NOTE' as const },
+      { lineNum: 16, text: '      real time           0.03 seconds' },
+      { lineNum: 17, text: '      cpu time            0.02 seconds' },
+      { lineNum: 18, text: 'WARNING: Variable PARAM not found in WORK.ATLAS_UPCIO.', level: 'WARNING' as const },
+      { lineNum: 19, text: '5    data km_prep; set adtte; where paramcd="TTDE" and saffl="Y"; run;' },
+      { lineNum: 20, text: 'NOTE: PROC MEANS used — 512 observations read.', level: 'NOTE' as const },
+      { lineNum: 21, text: '      real time           0.06 seconds' },
+      { lineNum: 22, text: 'ERROR 388-185: Expecting an arithmetic operator.', level: 'ERROR' as const },
+      { lineNum: 23, text: '                                               !' },
+      { lineNum: 24, text: '                                               ;' },
+      { lineNum: 25, text: '6    %m_u_figure( inds=adtte, type=KM, group=trtan, time=aval, censor=cnsr );' },
+      { lineNum: 26, text: 'ERROR 76-322: Syntax error, statement will be ignored.', level: 'ERROR' as const },
+      { lineNum: 27, text: '      proc means data=;' },
+      { lineNum: 28, text: '                     ^' },
+      { lineNum: 29, text: '7    proc lifetest data=km_prep method=km plots=survival(atrisk);' },
+      { lineNum: 30, text: 'NOTE: PARMACRO= CHEMISTRY matched 48 observations.', level: 'NOTE' as const },
+      { lineNum: 31, text: '      time aval * cnsr(1);' },
+      { lineNum: 32, text: 'NOTE: PROCEDURE FREQ used (Total process time): real time 0.01 seconds', level: 'NOTE' as const },
+      { lineNum: 33, text: '      strata trtan;' },
+      { lineNum: 34, text: 'NOTE: Dataset WORK.KM_DATA has 256 observations and 12 variables.', level: 'NOTE' as const },
+      { lineNum: 35, text: '      run;' },
+      { lineNum: 36, text: 'NOTE: PROCEDURE LIFETEST used (Total process time): real time 0.12 seconds', level: 'NOTE' as const },
+      { lineNum: 37, text: '8    ods rtf file="/output/figure_15_1_1.rtf";' },
+      { lineNum: 38, text: 'NOTE: PROCEDURE TEMPLATE used (Total process time): real time 0.01 seconds', level: 'NOTE' as const },
+      { lineNum: 39, text: 'NOTE: Output added to ODS LISTING destination.', level: 'NOTE' as const },
+      { lineNum: 40, text: 'NOTE: RTF file written: /output/figure_15_1_1.rtf (245 KB)', level: 'NOTE' as const },
+      { lineNum: 41, text: '9    proc sgrender data=km_data template=Kaplan_Meier_Plot;' },
+      { lineNum: 42, text: 'ERROR 180-322: Statement is not valid or it is used out of proper order.', level: 'ERROR' as const },
+      { lineNum: 43, text: '      run cancel;' },
+      { lineNum: 44, text: 'NOTE: Macro variable TRTAN resolved to 2.', level: 'NOTE' as const },
+      { lineNum: 45, text: 'NOTE: Macro GENERATE_FIGURE completed with return code 0.', level: 'NOTE' as const },
+      { lineNum: 46, text: 'NOTE: DATA step merge: WORK.ADTTE + WORK.ADSL — 512 obs merged.', level: 'NOTE' as const },
+      { lineNum: 47, text: 'NOTE: Variable AVAL formatted with BEST12. width.', level: 'NOTE' as const },
+      { lineNum: 48, text: 'NOTE: ODS GRAPHICS ON — default dimensions 640x480.', level: 'NOTE' as const },
+      { lineNum: 49, text: 'NOTE: PROC SGRENDER template applied: Kaplan_Meier_Plot.', level: 'NOTE' as const },
+      { lineNum: 50, text: 'NOTE: PROCEDURE SGRENDER used (Total process time): real time 0.08 seconds', level: 'NOTE' as const },
+      { lineNum: 51, text: 'NOTE: At-risk table generated: 6 time points, 2 groups.', level: 'NOTE' as const },
+      { lineNum: 52, text: 'NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414', level: 'NOTE' as const },
+      { lineNum: 53, text: 'NOTE: QUIT statement used.', level: 'NOTE' as const },
+    ],
+  };
+
+  // Structured log data — success scenario (no errors)
+  const successStructuredLog = {
+    summary: { error: 0, warning: 1, note: 24 },
+    entries: errorStructuredLog.entries.filter(e => e.level !== 'ERROR'),
+    rawLogLines: errorStructuredLog.rawLogLines.filter(l => l.level !== 'ERROR'),
+  };
+
+  const hasCodeError = userCode.toLowerCase().includes('error');
+  const activeLogData = hasCodeError ? errorStructuredLog : successStructuredLog;
+
+  const handleLogEntryClick = (programLine: number) => {
+    if (figureView !== 'code') {
+      setFigureView('code');
+    }
+    
+    setTimeout(() => {
+      if (codeTextAreaRef.current) {
+        const lines = userCode.split('\n');
+        let charCount = 0;
+        for (let i = 0; i < programLine - 1 && i < lines.length; i++) {
+          charCount += lines[i].length + 1; // +1 for '\n'
+        }
+        codeTextAreaRef.current.focus();
+        codeTextAreaRef.current.setSelectionRange(charCount, charCount + (lines[programLine - 1]?.length || 0));
+        
+        // Approximate scroll calculation
+        const lineHeight = 20; // 20px per line based on leading-[20px]
+        const parentContainer = codeTextAreaRef.current.closest('.code-panel-scroll-container');
+        if (parentContainer) {
+          parentContainer.scrollTop = (programLine - 1) * lineHeight;
+        } else {
+          codeTextAreaRef.current.scrollTop = (programLine - 1) * lineHeight;
+        }
+      }
+    }, 0);
+  };
 
   const toolbarButtons = (
     <>
@@ -4357,6 +4494,7 @@ quit;
   );
 
   const handleRetry = () => {
+    setHasRunOnce(true);
     setPreviewLoading(true);
     setTimeout(() => {
       setPreviewLoading(false);
@@ -4365,8 +4503,12 @@ quit;
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-col overflow-hidden bg-white">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden bg-white code-panel-container">
       <style dangerouslySetInnerHTML={{ __html: `
+        .code-panel-container ::selection {
+          background-color: rgba(131, 0, 81, 0.15) !important;
+          color: inherit !important;
+        }
         .code-panel-scroll-container::-webkit-scrollbar {
           width: 14px;
           height: 14px;
@@ -4394,6 +4536,7 @@ quit;
                 const nextView = v as 'preview' | 'code';
                 setFigureView(nextView);
                 if (nextView === 'preview') {
+                  setHasRunOnce(true);
                   if (userCode !== lastRunCode) {
                     setPreviewLoading(true);
                     setTimeout(() => {
@@ -4492,54 +4635,180 @@ quit;
             </div>
           )
         ) : docType === 'figure' ? (
-          <div className="flex flex-1 min-w-max font-mono text-[12px] leading-[20px] h-full">
-            <div className="select-none bg-bg-light px-[8px] py-[16px] text-right text-[#999999] shrink-0">
-              {codeLines.map((_, index) => <div key={index}>{index + 1}</div>)}
+          <div className="flex flex-1 min-w-max font-mono text-[13px] leading-[20px]">
+            <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[54px] sticky left-0 z-10">
+              {codeLines.map((line, index) => {
+                const lineNum = index + 1;
+                const isHovered = hoveredLineNumber === lineNum;
+                const isFocused = selectedCodeLine === lineNum - 1;
+                const foldable = isFoldableLine(line);
+                return (
+                  <div
+                    key={index}
+                    onMouseEnter={() => setHoveredLineNumber(lineNum)}
+                    onMouseLeave={() => setHoveredLineNumber(null)}
+                    onClick={() => handleLineClick(lineNum)}
+                    className="h-[20px] flex items-center justify-end pl-[8px] pr-[4px] gap-[4px] cursor-pointer select-none"
+                  >
+                    <span className={`text-[12px] font-mono text-right w-[24px] ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
+                      {lineNum}
+                    </span>
+                    <div className="w-[14px] h-[14px] flex items-center justify-center shrink-0">
+                      {isHovered && foldable ? (
+                        <SvgIcon className="h-[10px] w-[10px] text-text-secondary" viewBox="0 0 24 24">
+                          <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </SvgIcon>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <textarea
-              value={userCode}
-              onChange={(e) => setUserCode(e.target.value)}
-              readOnly={isLocked}
-              className={`flex-1 p-[16px] font-mono text-[12px] leading-[20px] text-text-primary outline-none resize-none border-none ${
-                isLocked ? 'bg-bg-light cursor-not-allowed text-[#B2B4B4]' : 'bg-white'
-              }`}
-            />
+            {isLocked ? (
+              <div className="flex-1 py-[16px] bg-white">
+                {codeLines.map((line, index) => {
+                  const lineNum = index + 1;
+                  const isSelected = selectedCodeLine === lineNum;
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => handleLineClick(lineNum)}
+                      className={`h-[20px] px-[16px] whitespace-pre font-mono text-[13px] leading-[20px] cursor-pointer ${
+                        isSelected ? 'bg-[#FBF4F7]' : ''
+                      }`}
+                    >
+                      <code>{highlightSAS(line || ' ')}</code>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div
+                className="relative flex-1 bg-white"
+                style={{ height: `${codeLines.length * 20 + 32}px` }}
+              >
+                <pre className="absolute inset-0 pt-[16px] pb-[16px] m-0 pointer-events-none font-mono text-[13px] leading-[20px] overflow-hidden">
+                  {codeLines.map((line, index) => {
+                    const lineNum = index + 1;
+                    const isSelected = selectedCodeLine === lineNum;
+                    return (
+                      <div
+                        key={index}
+                        className={`h-[20px] px-[16px] whitespace-pre ${
+                          isSelected ? 'bg-[#FBF4F7]' : ''
+                        }`}
+                      >
+                        <code>{highlightSAS(line || ' ')}</code>
+                      </div>
+                    );
+                  })}
+                </pre>
+                <textarea
+                  ref={codeTextAreaRef}
+                  value={userCode}
+                  onChange={(e) => setUserCode(e.target.value)}
+                  onSelect={handleTextareaSelectionChange}
+                  onKeyUp={handleTextareaSelectionChange}
+                  onMouseUp={handleTextareaSelectionChange}
+                  className="absolute inset-0 w-full h-full pt-[16px] pb-[16px] px-[16px] font-mono text-[13px] leading-[20px] text-transparent bg-transparent outline-none resize-none border-none caret-text-primary whitespace-pre overflow-hidden"
+                  style={{ caretColor: 'var(--color-text-primary)' }}
+                />
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex min-w-max min-h-full font-mono text-[13px] leading-[20px]">
-            <div className="select-none bg-bg-light px-[8px] py-[16px] text-right text-[#999999] shrink-0">
-              {codeLines.map((_, index) => <div key={index}>{index + 1}</div>)}
+            <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[54px] sticky left-0 z-10">
+              {codeLines.map((line, index) => {
+                const lineNum = index + 1;
+                const isHovered = hoveredLineNumber === lineNum;
+                const isFocused = selectedCodeLine === lineNum - 1;
+                const foldable = isFoldableLine(line);
+                return (
+                  <div
+                    key={index}
+                    onMouseEnter={() => setHoveredLineNumber(lineNum)}
+                    onMouseLeave={() => setHoveredLineNumber(null)}
+                    onClick={() => handleLineClick(lineNum)}
+                    className="h-[20px] flex items-center justify-end pl-[8px] pr-[4px] gap-[4px] cursor-pointer select-none"
+                  >
+                    <span className={`text-[12px] font-mono text-right w-[24px] ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
+                      {lineNum}
+                    </span>
+                    <div className="w-[14px] h-[14px] flex items-center justify-center shrink-0">
+                      {isHovered && foldable ? (
+                        <SvgIcon className="h-[10px] w-[10px] text-text-secondary" viewBox="0 0 24 24">
+                          <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </SvgIcon>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <pre className="px-[16px] py-[16px] text-text-primary">
-              <code>{highlightSAS(codeContent)}</code>
-            </pre>
+            <div className="flex-1 py-[16px] bg-white">
+              {codeLines.map((line, index) => {
+                const lineNum = index + 1;
+                const isSelected = selectedCodeLine === lineNum;
+                return (
+                  <div
+                    key={index}
+                    onClick={() => handleLineClick(lineNum)}
+                    className={`h-[20px] px-[16px] whitespace-pre font-mono text-[13px] leading-[20px] cursor-pointer ${
+                      isSelected ? 'bg-[#FBF4F7]' : ''
+                    }`}
+                  >
+                    <code>{highlightSAS(line || ' ')}</code>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
-      {docType === 'figure' && figureView === 'preview' && (
-        <div className="flex shrink-0 flex-col">
-          <div className="flex h-[40px] shrink-0 items-center gap-[4px] border-t border-graphite-10 bg-bg-light pl-[16px] pr-[8px]">
+      {docType === 'figure' && hasRunOnce && (
+        <div className="flex shrink-0 flex-col border-t border-graphite-10">
+          <div className="flex h-[40px] shrink-0 items-center gap-[4px] bg-bg-panel pl-[16px] pr-[8px]">
             <p className="t-small text-text-primary">Log</p>
-            <TooltipText label={logExpanded ? "Collapse Log" : "Expand Log"}>
-              <button
-                onClick={() => setLogExpanded((v) => !v)}
-                className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                aria-label={logExpanded ? "Collapse Log" : "Expand Log"}
-              >
-                <LocalIcon src={logExpanded ? contractUpDownIconUrl : expandUpDownIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-              </button>
-            </TooltipText>
+            <div className="ml-auto flex items-center">
+              <TooltipText label={logExpanded ? "Collapse Log" : "Expand Log"}>
+                <button
+                  onClick={() => setLogExpanded((v) => !v)}
+                  className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                  aria-label={logExpanded ? "Collapse Log" : "Expand Log"}
+                >
+                  <LocalIcon src={logExpanded ? contractUpDownIconUrl : expandUpDownIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+                </button>
+              </TooltipText>
+            </div>
           </div>
           {logExpanded && (
-            <div className="max-h-[240px] overflow-auto bg-bg-light px-[16px] py-[12px] font-mono text-[12px] leading-[20px]">
-              {logLines.map((line, index) => (
-                <div
-                  key={index}
-                  className={line.tone === 'secondary' ? 'text-text-secondary' : line.tone === 'warning' ? 'text-status-warning' : line.text.startsWith('ERROR:') ? 'text-[#CC2C3C] font-semibold' : 'text-text-primary'}
-                  style={{ whiteSpace: 'pre' }}
+            <div className="max-h-[240px] overflow-auto bg-bg-panel px-[8px] pb-[8px]">
+              {activeLogData.entries.map((entry, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => entry.programLine ? handleLogEntryClick(entry.programLine) : undefined}
+                  className={`flex w-full items-start gap-[8px] rounded-[4px] px-[8px] py-[4px] text-left text-[12px] leading-[18px] font-mono hover:bg-white/60 ${entry.programLine ? 'cursor-pointer' : 'cursor-default'}`}
                 >
-                  {line.text}
-                </div>
+                  <div className="flex w-[16px] h-[16px] shrink-0 items-center justify-center pt-[1px]">
+                    {entry.level === 'ERROR' && (
+                      <LocalIcon src={closeCircleIconUrl} className="h-[16px] w-[16px]" color="#C5221F" />
+                    )}
+                    {entry.level === 'WARNING' && (
+                      <LocalIcon src={alertIconUrl} className="h-[16px] w-[16px]" color="#B06000" />
+                    )}
+                  </div>
+                  <span className="shrink-0 min-w-0 flex-1 whitespace-pre-wrap break-words text-text-primary">
+                    {entry.code ? `${entry.code}: ` : ''}{entry.description}
+                  </span>
+                  {entry.level !== 'NOTE' && (
+                    <>
+                      <span className="shrink-0 text-text-secondary tabular-nums min-w-[60px] truncate text-right" title="Affected Code">{entry.affectedCode}</span>
+                      <span className="shrink-0 text-text-secondary tabular-nums min-w-[32px] text-right" title="Log Line">L{entry.logLine}</span>
+                      <span className="shrink-0 text-text-secondary tabular-nums min-w-[32px] text-right" title="Program Line">P{entry.programLine}</span>
+                    </>
+                  )}
+                </button>
               ))}
             </div>
           )}
@@ -4853,6 +5122,9 @@ function WorkspaceContent({
   // Set default panel layout based on doc type (listing=vertical, table=horizontal)
   useEffect(() => {
     setPanelLayout(docType === 'listing' ? 'vertical' : 'horizontal');
+    if (docType === 'listing' || docType === 'figure') {
+      setActiveView('table');
+    }
   }, [docType]);
 
   const handleShellPagePreviewChange = (_active: boolean) => {
@@ -4946,7 +5218,7 @@ function WorkspaceContent({
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-1 bg-bg-light">
+    <div className="flex h-full min-w-0 flex-1 bg-bg-panel">
       <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         <div
           className="shrink-0 overflow-hidden"
@@ -4956,7 +5228,7 @@ function WorkspaceContent({
             transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
           }}
         >
-          <div className="flex h-full w-full flex-col bg-bg-light">
+          <div className="flex h-full w-full flex-col bg-bg-panel">
             <div className="flex h-[48px] shrink-0 items-center gap-[8px] px-[10px]">
               <TooltipText label="Back to Home">
                 <button
@@ -5559,7 +5831,7 @@ function EventCard({ event, onEventClick, onUpdateStatus }: EventCardProps) {
     <div
       onClick={isClickable ? onEventClick : undefined}
       className={`flex flex-col md:flex-row min-h-[92px] h-auto justify-between items-start md:items-center rounded-[4px] border px-[16px] py-[12px] gap-[12px] md:gap-[20px] transition-colors relative ${
-        isClickable ? 'cursor-pointer hover:bg-bg-light' : 'cursor-default'
+        isClickable ? 'cursor-pointer hover:bg-bg-panel' : 'cursor-default'
       } ${
         isError ? 'border-status-error bg-white' : 'border-graphite-10 bg-white'
       }`}
@@ -5681,7 +5953,7 @@ function EventCard({ event, onEventClick, onUpdateStatus }: EventCardProps) {
                           e.stopPropagation();
                           setShowMoreMenu(false);
                         }}
-                        className="w-full text-left px-[12px] py-[6px] t-small text-[#3C4242] hover:bg-[#F8F7F7] flex items-center gap-[8px]"
+                        className="w-full text-left px-[12px] py-[6px] t-small text-text-primary hover:bg-bg-panel flex items-center gap-[8px]"
                       >
                         <LocalIcon src={btn.icon} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
                         <span>{btn.label}</span>
@@ -5721,7 +5993,7 @@ function HomePage({
   const [isResizing, setIsResizing] = useState(false);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-bg-light">
+    <div className="flex h-screen w-full overflow-hidden bg-bg-panel">
       <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         {/* Tree list sidebar */}
         <div
@@ -5732,7 +6004,7 @@ function HomePage({
             transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
           }}
         >
-          <div className="flex h-full w-full flex-col bg-bg-light">
+          <div className="flex h-full w-full flex-col bg-bg-panel">
             {/* Sidebar header */}
             <div className="flex h-[48px] shrink-0 items-center justify-between px-[10px]">
               <img src={atlasLogoFullUrl} alt="" className="h-[24px] block shrink-0" />

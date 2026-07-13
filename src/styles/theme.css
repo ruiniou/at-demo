@@ -81,18 +81,28 @@
 @theme inline {
   --color-brand-1: #830051;
   --color-az-secondary: #F4E8EE;
-  --color-text-primary: #3C4242;
-  --color-text-secondary: #888E8E;
-  --color-graphite-10: #EBECEC;
-  --color-bg-light: #F8F7F7;
-  --color-border-default: #D8DADA;
+  --color-text-primary: #3F4444;
+  --color-text-secondary: #8C8F8F;
+  --color-graphite-10: #ECECEC;
+  --color-bg-panel: #F8F7F7;
+  --color-border-default: #D9DADA;
   --color-status-error: #CC2C3C;
-  --color-status-success: #1E7E34;
   --color-code-success: #1E7E34;
   --color-status-warning: #F0AB00;
 
+  /* Multi-dimensional status tokens */
+  --color-status-success-bg: #F6CCE2;
+  --color-status-success-border: #EC99C5;
+  --color-status-success-icon: #D0006F;
+  --color-status-success-text: #3F4444;
+  --color-status-warning-bg: #FCEECC;
+  --color-status-warning-border: #F6CD66;
+  --color-status-warning-icon: #F0AB00;
+  --color-status-warning-text: #3F4444;
+
   /* Typography: Font Families */
-  --font-sans: 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Roboto Slab', 'Noto Sans SC', sans-serif;
+  --font-body: 'Inter', 'Noto Sans SC', sans-serif;
   --font-mono: 'Menlo', 'Courier New', Courier, monospace;
   --font-numeric: 'Inter', sans-serif;
 
@@ -163,25 +173,37 @@
   --color-brand-1-disabled: #E6CCDC;
   --color-az-secondary: #F4E8EE;
   --color-az-secondary-hover: #E6CCDC;
-  --color-graphite-10: #EBECEC;
-  --color-graphite-20: #D8DADA;
+  --color-dark-mulberry: #4D0030;
+  --color-graphite-10: #ECECEC;
+  --color-graphite-20: #D9DADA;
   --color-graphite-40: #B2B4B4;
-  --color-graphite-60: #888E8E;
+  --color-graphite-60: #8C8F8F;
   --color-graphite-80: #656969;
-  --color-graphite-100: #3C4242;
-  --color-text-primary: #3C4242;
-  --color-text-secondary: #888E8E;
-  --color-bg-light: #F8F7F7;
+  --color-graphite-100: #3F4444;
+  --color-text-primary: #3F4444;
+  --color-text-secondary: #8C8F8F;
+  --color-bg-panel: #F8F7F7;
   --color-status-error: #CC2C3C;
-  --color-status-success: #C4D600;
+  --color-code-success: #1E7E34;
   --color-az-danger: #CC2C3C;
   --color-brand-2: #D0006F;
   --color-az-warning: #F0AB00;
   --color-az-info: #9DB0AC;
   --color-az-blue: #003865;
+  --color-light-platinum: #EBEFEE;
   --color-overlay: rgba(0, 0, 0, 0.4);
   --color-back-blur: rgba(248, 247, 247, 0.8);
-  --color-gray-overlay: rgba(216, 218, 218, 0.75);
+  --color-gray-overlay: rgba(217, 218, 218, 0.75);
+
+  /* Multi-dimensional status tokens */
+  --color-status-success-bg: #F6CCE2;
+  --color-status-success-border: #EC99C5;
+  --color-status-success-icon: #D0006F;
+  --color-status-success-text: #3F4444;
+  --color-status-warning-bg: #FCEECC;
+  --color-status-warning-border: #F6CD66;
+  --color-status-warning-icon: #F0AB00;
+  --color-status-warning-text: #3F4444;
 }
 
 @layer base {

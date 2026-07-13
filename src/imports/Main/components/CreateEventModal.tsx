@@ -162,7 +162,7 @@ function OptionalSection() {
   return (
     <div className="rounded-[6px] border border-graphite-10">
       <button type="button" onClick={() => setIsExpanded(!isExpanded)}
-        className={`flex w-full items-center justify-between px-[10px] py-[10px] hover:bg-bg-light ${isExpanded ? "rounded-t-[6px]" : "rounded-[6px]"}`}>
+        className={`flex w-full items-center justify-between px-[10px] py-[10px] hover:bg-bg-panel ${isExpanded ? "rounded-t-[6px]" : "rounded-[6px]"}`}>
         <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 13, lineHeight: "20px", color: "var(--color-text-primary)" }}>Optional</span>
         <ArrowDownIcon size={20} color="var(--color-text-secondary)" rotated={isExpanded} />
       </button>
@@ -301,7 +301,7 @@ function Step2Body() {
         </div>
         {/* Data rows */}
         {mockTaskRows.map((row, idx) => (
-          <div key={idx} className="flex w-max items-center border-b border-graphite-10 last:border-b-0 hover:bg-bg-light">
+          <div key={idx} className="flex w-max items-center border-b border-graphite-10 last:border-b-0 hover:bg-bg-panel">
             <div className="flex w-[36px] shrink-0 items-center justify-center py-[4px] border-r border-border-default">
               <Checkbox checked={selectedRows.has(idx)} onChange={() => toggleRow(idx)} />
             </div>
@@ -542,14 +542,14 @@ export default function CreateEventModal({
         {/* Footer */}
         {currentStep === 1 ? (
           <div className="flex shrink-0 items-center justify-end gap-[8px] border-t border-graphite-10 px-[20px] py-[14px]">
-            <button onClick={() => setCurrentStep(2)} className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-light active:scale-[0.96]">Next</button>
+            <button onClick={() => setCurrentStep(2)} className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-panel active:scale-[0.96]">Next</button>
             <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
           </div>
         ) : (
           <div className="flex shrink-0 items-center justify-between border-t border-graphite-10 px-[20px] py-[14px]">
-            <button onClick={() => setCurrentStep(1)} className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-light active:scale-[0.96]">Back</button>
+            <button onClick={() => setCurrentStep(1)} className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-panel active:scale-[0.96]">Back</button>
             <div className="flex items-center gap-[8px]">
-              <button className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-light active:scale-[0.96]">Assign Later</button>
+              <button className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-panel active:scale-[0.96]">Assign Later</button>
               <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
             </div>
           </div>

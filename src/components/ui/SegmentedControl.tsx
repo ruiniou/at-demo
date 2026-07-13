@@ -27,7 +27,7 @@ export function SegmentedControl({
   if (size === "sm") {
     // Figma 646:2294 — small variant for upload card
     return (
-      <div className={`flex h-[26px] items-center rounded-[4px] bg-[#F8F7F7] p-[2px] shrink-0 ${className}`}>
+      <div className={`flex h-[26px] items-center rounded-[4px] bg-bg-panel p-[2px] shrink-0 ${className}`}>
         {options.map((opt) => {
           const isActive = value === opt.value;
           const iconNode = typeof opt.icon === "function" ? opt.icon(isActive) : opt.icon;
@@ -61,7 +61,7 @@ export function SegmentedControl({
 
   // Large variant — for Shell/Code view toggle
   return (
-    <div className={`flex items-center rounded-[6px] border border-border-default bg-bg-light p-[2px] shrink-0 ${className}`}>
+    <div className={`flex items-center rounded-[6px] border border-border-default bg-bg-panel p-[2px] shrink-0 ${className}`}>
       {options.map((opt) => {
         const isActive = value === opt.value;
         return (

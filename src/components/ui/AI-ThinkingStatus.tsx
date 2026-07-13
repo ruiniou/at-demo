@@ -25,20 +25,22 @@ export function AIThinkingStatus({
     }
     if (status === "waiting") {
       return (
-        <img
-          src={pauseCircleIconUrl}
-          alt=""
-          aria-hidden="true"
-          className="w-[16px] h-[16px] block shrink-0"
-          style={{ filter: WARNING_FILTER }}
-        />
+        <div className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[4px] bg-status-warning-bg">
+          <img
+            src={pauseCircleIconUrl}
+            alt=""
+            aria-hidden="true"
+            className="w-[16px] h-[16px] block shrink-0"
+            style={{ filter: WARNING_FILTER }}
+          />
+        </div>
       );
     }
     return null;
   };
 
   const textClass =
-    status === "waiting" ? "t-body-secondary text-status-warning" : "t-body-secondary text-text-secondary";
+    status === "waiting" ? "t-body-secondary text-text-primary" : "t-body-secondary text-text-secondary";
 
   const labels: Record<AIThinkingStatusType, string> = {
     loading: "Thinking…",

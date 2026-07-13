@@ -22,7 +22,7 @@ export default function MarkdownTable() {
     <div className="overflow-x-auto mb-[10px] border-[0.6px] border-[#D8DADA] rounded-[4px]">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b-[0.5px] border-[#D8DADA] bg-[#F8F7F7]">
+          <tr className="border-b-[0.5px] border-[#D8DADA] bg-bg-panel">
             <th className="text-left t-table font-semibold py-[8px] px-[12px] whitespace-nowrap">Parameter Detail with Long Header Name</th>
             <th className="text-left t-table font-semibold py-[8px] px-[12px] whitespace-nowrap">Value</th>
             <th className="text-left t-table font-semibold py-[8px] px-[12px] whitespace-nowrap">ID</th>

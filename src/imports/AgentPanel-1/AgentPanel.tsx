@@ -92,7 +92,7 @@ function Container() {
 function Changes() {
   return (
     <div className="content-stretch flex font-['PingFang_SC:Medium',sans-serif] gap-[4px] items-center justify-end leading-[0] not-italic relative shrink-0 text-[12px] whitespace-nowrap" data-name="Changes">
-      <div className="flex flex-col justify-center relative shrink-0 text-status-success">
+      <div className="flex flex-col justify-center relative shrink-0 text-code-success">
         <p className="leading-[18px]">+1</p>
       </div>
       <div className="flex flex-col justify-center relative shrink-0 text-status-error">
@@ -145,7 +145,7 @@ function Container4() {
 function Code() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-code-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
           <span className="leading-[1.25] text-text-secondary">1</span>
           <span className="leading-[1.25] text-text-primary">{` = `}</span>
@@ -180,7 +180,7 @@ function Container6() {
 function Code1() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-code-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
           <span className="leading-[1.25] text-text-secondary">2</span>
           <span className="leading-[1.25] text-text-primary">{` = `}</span>
@@ -215,7 +215,7 @@ function Container8() {
 function Code2() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-code-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
           <span className="leading-[1.25] text-text-secondary">3</span>
           <span className="leading-[1.25] text-text-primary">{` = `}</span>
@@ -250,7 +250,7 @@ function Container10() {
 function Code3() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-code-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
           <span className="leading-[1.25] text-text-secondary">4</span>
           <span className="leading-[1.25] text-text-primary">{` = `}</span>
@@ -285,7 +285,7 @@ function Container12() {
 function Code4() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-code-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
           <span className="leading-[1.25] text-text-secondary">5</span>
           <span className="leading-[1.25] text-text-primary">{` = `}</span>
@@ -333,7 +333,7 @@ function Container14() {
 function Code5() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-code-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
           <span className="leading-[1.25] text-text-secondary">1</span>
           <span className="leading-[1.25] text-text-primary">{` = `}</span>
@@ -368,7 +368,7 @@ function Container16() {
 function Code6() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-code-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
           <span className="leading-[1.25] text-text-secondary">2</span>
           <span className="leading-[1.25] text-text-primary">{` = `}</span>
@@ -403,7 +403,7 @@ function Container18() {
 function Code7() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-code-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
           <span className="leading-[1.25] text-text-secondary">4</span>
           <span className="leading-[1.25] text-text-primary">{` = `}</span>
@@ -438,7 +438,7 @@ function Container20() {
 function Code8() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-center min-w-px relative self-stretch" data-name="Code">
-      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-status-success text-[0px] whitespace-nowrap">
+      <div className="flex flex-col font-['Menlo:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-code-success text-[0px] whitespace-nowrap">
         <p className="text-[13px]">
           <span className="leading-[1.25] text-text-secondary">5</span>
           <span className="leading-[1.25] text-text-primary">{` = `}</span>

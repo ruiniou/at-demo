@@ -57,7 +57,7 @@ export function Dropdown({
   } else if (isOpen) {
     boxClasses = "border-[1px] border-brand-1 bg-white";
   } else {
-    boxClasses = "border-[1px] border-graphite-10 bg-white hover:bg-[#F8F7F7] hover:border-[#D8DADA]";
+    boxClasses = "border-[1px] border-graphite-10 bg-white hover:bg-bg-panel hover:border-border-default";
   }
 
   // Label + star colors

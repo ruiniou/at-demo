@@ -189,7 +189,7 @@ function InlineVariableList({ variables, selected, onToggle, onRemove, onBrowseA
       {isOpen && (
         <div className="absolute top-full left-0 z-50 mt-[4px] w-full rounded-[8px] border border-[#D8DADA] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.1)]">
           {/* Search */}
-          <div className="p-[6px] border-b border-[#EBECEC]">
+          <div className="p-[6px] border-b border-graphite-10">
             <SearchBar
               value={search}
               onChange={setSearch}
@@ -214,13 +214,13 @@ function InlineVariableList({ variables, selected, onToggle, onRemove, onBrowseA
                       e.stopPropagation();
                       onToggle(v.variable);
                     }}
-                    className={`flex w-full items-center gap-[8px] px-[12px] py-[6px] text-left hover:bg-[#F8F7F7] ${isSelected ? "bg-[#F4E8EE]" : ""}`}
+                    className={`flex w-full items-center gap-[8px] px-[12px] py-[6px] text-left hover:bg-bg-panel ${isSelected ? "bg-[#F4E8EE]" : ""}`}
                   >
                     <div className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
                       <CheckboxIcon state={isSelected ? "checked" : "empty"} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="t-small text-[#3C4242]">{v.variable}</p>
+                      <p className="t-small text-text-primary">{v.variable}</p>
                       <p className="truncate t-small text-[#888E8E]">{v.label}</p>
                     </div>
                   </button>
@@ -235,7 +235,7 @@ function InlineVariableList({ variables, selected, onToggle, onRemove, onBrowseA
               setIsOpen(false);
               onBrowseAll();
             }}
-            className="flex w-full items-center justify-center border-t border-[#EBECEC] px-[12px] py-[8px] hover:bg-[#F8F7F7]"
+            className="flex w-full items-center justify-center border-t border-graphite-10 px-[12px] py-[8px] hover:bg-bg-panel"
           >
             <span className="t-small font-medium text-[#830051]">Browse All Variables</span>
           </button>
@@ -253,12 +253,12 @@ function DerivationCell({ text }: { text: string }) {
   const needsTruncate = lines.length > 2 || text.length > 80;
 
   if (!needsTruncate) {
-    return <p className="t-small text-[#3C4242] whitespace-normal">{text}</p>;
+    return <p className="t-small text-text-primary whitespace-normal">{text}</p>;
   }
 
   return (
     <div>
-      <p className="t-small text-[#3C4242] whitespace-normal">
+      <p className="t-small text-text-primary whitespace-normal">
         {expanded ? text : text.slice(0, 80) + (text.length > 80 ? "…" : "")}
       </p>
       {needsTruncate && (
@@ -363,10 +363,10 @@ function BrowseVariablesModal({
       <div className="relative flex h-[600px] w-[800px] max-w-[90vw] max-h-[85vh] flex-col rounded-[8px] bg-white shadow-[0px_8px_24px_rgba(0,0,0,0.15)]">
         {/* Header */}
         <div className="flex h-[48px] shrink-0 items-center justify-between border-b border-[#D8DADA] px-[20px]">
-          <h2 className="t-heading text-[#3C4242]">Browse Variables</h2>
+          <h2 className="t-heading text-text-primary">Browse Variables</h2>
           <button
             onClick={onClose}
-            className="relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-[#EBECEC] active:scale-[0.96] after:content-[''] after:absolute after:-inset-[8px]"
+            className="relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-graphite-10 active:scale-[0.96] after:content-[''] after:absolute after:-inset-[8px]"
             aria-label="Close"
           >
             <CloseIcon className="h-[16px] w-[16px]" color="#888E8E" />
@@ -398,7 +398,7 @@ function BrowseVariablesModal({
                     isActive ? "border-[#830051]" : "border-transparent"
                   }`}
                 >
-                  <span className={`t-small font-medium ${isActive ? "text-[#830051]" : "text-[#3C4242]"}`}>
+                  <span className={`t-small font-medium ${isActive ? "text-[#830051]" : "text-text-primary"}`}>
                     {tab === "all" ? "All Variables" : "VLM"}
                   </span>
                 </button>
@@ -409,7 +409,7 @@ function BrowseVariablesModal({
 
         {/* Selected Bar */}
         {selected.length > 0 && (
-          <div className="flex shrink-0 flex-wrap items-center gap-[4px] border-b border-[#EBECEC] bg-[#F8F7F7] px-[20px] py-[8px]">
+          <div className="flex shrink-0 flex-wrap items-center gap-[4px] border-b border-graphite-10 bg-bg-panel px-[20px] py-[8px]">
             <span className="t-small text-[#888E8E] shrink-0 mr-[4px]">Selected:</span>
             {selectedVariables.map((v) => (
               <span
@@ -432,7 +432,7 @@ function BrowseVariablesModal({
         <div className="min-h-0 flex-1 overflow-auto">
           {activeTab === "all" && (
             <table className="w-full border-collapse">
-              <thead className="sticky top-0 z-10 bg-[#F8F7F7]">
+              <thead className="sticky top-0 z-10 bg-bg-panel">
                 <tr className="border-b border-[#D8DADA]">
                   <th className="w-[36px] px-[12px] py-[8px]" />
                   <th className="w-[100px] px-[8px] py-[8px] text-left">
@@ -481,7 +481,7 @@ function BrowseVariablesModal({
                     return (
                       <tr
                         key={v.id}
-                        className={`border-b border-[#EBECEC] hover:bg-[#F8F7F7] ${isSelected ? "bg-[#F4E8EE]/40" : ""}`}
+                        className={`border-b border-graphite-10 hover:bg-bg-panel ${isSelected ? "bg-[#F4E8EE]/40" : ""}`}
                       >
                         <td className="px-[12px] py-[6px]">
                           <button
@@ -492,29 +492,29 @@ function BrowseVariablesModal({
                           </button>
                         </td>
                         <td className="px-[8px] py-[6px]">
-                          <span className="t-small whitespace-nowrap text-[#3C4242]">{v.datasetName}</span>
+                          <span className="t-small whitespace-nowrap text-text-primary">{v.datasetName}</span>
                         </td>
                         <td className="px-[8px] py-[6px]">
                           <div className="flex items-center gap-[4px]">
-                            <span className="t-small font-medium whitespace-nowrap text-[#3C4242]">{v.variable}</span>
+                            <span className="t-small font-medium whitespace-nowrap text-text-primary">{v.variable}</span>
                             {v.hasVlm && (
                               <button
                                 onClick={() => jumpToVlm(v.variable)}
                                 className="inline-flex h-[18px] items-center gap-[1px] rounded-[4px] bg-[#E1F6F9] px-[4px] hover:bg-[#C3EDF2]"
                               >
-                                <span className="text-[10px] font-medium whitespace-nowrap text-[#003865]">VLM ↗</span>
+                                <span className="text-[10px] font-medium whitespace-nowrap text-text-primary">VLM ↗</span>
                               </button>
                             )}
                           </div>
                         </td>
                         <td className="px-[8px] py-[6px]">
-                          <span className="t-small text-[#3C4242] whitespace-normal">{v.label}</span>
+                          <span className="t-small text-text-primary whitespace-normal">{v.label}</span>
                         </td>
                         <td className="px-[8px] py-[6px]">
-                          <span className="t-small whitespace-nowrap text-[#3C4242]">{v.type}/{v.length}</span>
+                          <span className="t-small whitespace-nowrap text-text-primary">{v.type}/{v.length}</span>
                         </td>
                         <td className="px-[8px] py-[6px]">
-                          <span className="t-small whitespace-nowrap text-[#3C4242]">{v.displayFormat}</span>
+                          <span className="t-small whitespace-nowrap text-text-primary">{v.displayFormat}</span>
                         </td>
                         <td className="px-[8px] py-[6px]">
                           <DerivationCell text={v.derivation} />
@@ -529,7 +529,7 @@ function BrowseVariablesModal({
 
           {activeTab === "vlm" && (
             <table className="w-full border-collapse">
-              <thead className="sticky top-0 z-10 bg-[#F8F7F7]">
+              <thead className="sticky top-0 z-10 bg-bg-panel">
                 <tr className="border-b border-[#D8DADA]">
                   <th className="w-[100px] px-[12px] py-[8px] text-left">
                     <span className="t-small font-medium text-[#888E8E]">Dataset</span>
@@ -567,25 +567,25 @@ function BrowseVariablesModal({
                   filteredVlm.map((row) => (
                     <tr
                       key={row.id}
-                      className="border-b border-[#EBECEC] hover:bg-[#F8F7F7]"
+                      className="border-b border-graphite-10 hover:bg-bg-panel"
                     >
                       <td className="px-[12px] py-[6px]">
-                        <span className="t-small whitespace-nowrap text-[#3C4242]">{row.datasetName}</span>
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.datasetName}</span>
                       </td>
                       <td className="px-[8px] py-[6px]">
-                        <span className="t-small text-[#3C4242] whitespace-normal">{row.parameterName}</span>
+                        <span className="t-small text-text-primary whitespace-normal">{row.parameterName}</span>
                       </td>
                       <td className="px-[8px] py-[6px]">
-                        <span className="t-code text-[#3C4242]">{row.whereClause}</span>
+                        <span className="t-code text-text-primary">{row.whereClause}</span>
                       </td>
                       <td className="px-[8px] py-[6px]">
-                        <span className="t-small font-medium whitespace-nowrap text-[#3C4242]">{row.variableName}</span>
+                        <span className="t-small font-medium whitespace-nowrap text-text-primary">{row.variableName}</span>
                       </td>
                       <td className="px-[8px] py-[6px]">
-                        <span className="t-small whitespace-nowrap text-[#3C4242]">{row.type}/{row.length}</span>
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.type}/{row.length}</span>
                       </td>
                       <td className="px-[8px] py-[6px]">
-                        <span className="t-small whitespace-nowrap text-[#3C4242]">{row.displayFormat}</span>
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.displayFormat}</span>
                       </td>
                       <td className="px-[8px] py-[6px]">
                         <DerivationCell text={row.derivation} />
@@ -602,7 +602,7 @@ function BrowseVariablesModal({
         <div className="flex shrink-0 items-center justify-end gap-[12px] border-t border-[#D8DADA] px-[20px] py-[12px]">
           <button
             onClick={onClose}
-            className="h-[32px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] t-small font-medium text-[#3C4242] hover:bg-[#F8F7F7] active:scale-[0.96]"
+            className="h-[32px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] t-small font-medium text-text-primary hover:bg-bg-panel active:scale-[0.96]"
           >
             Cancel
           </button>
