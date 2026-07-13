@@ -37,7 +37,7 @@ export function OptionLabel({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center ${gap} ${padding} rounded-[2px] text-left transition-colors hover:bg-[#F8F7F7] ${className}`}
+      className={`flex items-center ${gap} ${padding} rounded-[2px] text-left transition-colors hover:bg-bg-panel ${className}`}
     >
       {isSingle ? (
         /* Single select: check-line icon, visible only when selected */
@@ -70,7 +70,7 @@ export function OptionLabel({
           fontWeight: 400,
           fontSize: 12,
           lineHeight: "20px",
-          color: "#3C4242",
+          color: "#3F4444",
         }}
       >
         {label}

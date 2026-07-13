@@ -1,16 +1,18 @@
 {
   "$metadata": {
     "designSystem": "AZ Design System",
+    "version": "2.0",
+    "description": "Three-layer token architecture: Primitives → Semantic → Component"
   },
   "primitives": {
     "Graphite": {
       "10": {
         "$type": "color",
-        "$value": "#EBECEC"
+        "$value": "#ECECEC"
       },
       "20": {
         "$type": "color",
-        "$value": "#D8DADA"
+        "$value": "#D9DADA"
       },
       "40": {
         "$type": "color",
@@ -18,7 +20,7 @@
       },
       "60": {
         "$type": "color",
-        "$value": "#888E8E"
+        "$value": "#8C8F8F"
       },
       "80": {
         "$type": "color",
@@ -26,7 +28,7 @@
       },
       "100": {
         "$type": "color",
-        "$value": "#3C4242"
+        "$value": "#3F4444"
       }
     },
     "Mulberry": {
@@ -51,6 +53,13 @@
         "$value": "#830051"
       }
     },
+    "Dark-Mulberry": {
+      "100": {
+        "$type": "color",
+        "$value": "#4D0030",
+        "$description": "Mulberry 60% Shade — belongs to Mulberry tint/shade family"
+      }
+    },
     "Magenta": {
       "20": {
         "$type": "color",
@@ -73,26 +82,26 @@
         "$value": "#D0006F"
       }
     },
-    "Lime-Green": {
+    "Gold": {
       "20": {
         "$type": "color",
-        "$value": "#F3F7CC"
+        "$value": "#FCEECC"
       },
       "40": {
         "$type": "color",
-        "$value": "#E7EF99"
+        "$value": "#F9DD99"
       },
       "60": {
         "$type": "color",
-        "$value": "#DCE766"
+        "$value": "#F6CD66"
       },
       "80": {
         "$type": "color",
-        "$value": "#D0DE33"
+        "$value": "#F3BC33"
       },
       "100": {
         "$type": "color",
-        "$value": "#C4D600"
+        "$value": "#F0AB00"
       }
     },
     "Platinum": {
@@ -115,6 +124,13 @@
       "100": {
         "$type": "color",
         "$value": "#9DB0AC"
+      }
+    },
+    "Light-Platinum": {
+      "100": {
+        "$type": "color",
+        "$value": "#EBEFEE",
+        "$description": "Primary light background neutral — replaces legacy bg-light"
       }
     },
     "Light-Blue": {
@@ -183,34 +199,30 @@
         "$value": "#3C1053"
       }
     },
-    "Gold": {
+    "Lime-Green": {
       "20": {
         "$type": "color",
-        "$value": "#FCEECC"
+        "$value": "#F3F7CC"
       },
       "40": {
         "$type": "color",
-        "$value": "#F9DD99"
+        "$value": "#E7EF99"
       },
       "60": {
         "$type": "color",
-        "$value": "#F6CD66"
+        "$value": "#DCE766"
       },
       "80": {
         "$type": "color",
-        "$value": "#F3BC33"
+        "$value": "#D0DE33"
       },
       "100": {
         "$type": "color",
-        "$value": "#F0AB00"
+        "$value": "#C4D600"
       }
     }
   },
   "semantic": {
-    "AZ success": {
-      "$type": "color",
-      "$value": "{primitives.Lime-Green.100}"
-    },
     "AZ brand-color-1": {
       "$type": "color",
       "$value": "{primitives.Mulberry.100}"
@@ -219,6 +231,10 @@
       "$type": "color",
       "$value": "{primitives.Magenta.100}"
     },
+    "AZ dark-mulberry": {
+      "$type": "color",
+      "$value": "{primitives.Dark-Mulberry.100}"
+    },
     "AZ blue": {
       "$type": "color",
       "$value": "{primitives.Navy.100}"
@@ -226,10 +242,6 @@
     "AZ info": {
       "$type": "color",
       "$value": "{primitives.Platinum.100}"
-    },
-    "AZ warning": {
-      "$type": "color",
-      "$value": "{primitives.Gold.100}"
     },
     "AZ text-primary": {
       "$type": "color",
@@ -247,13 +259,59 @@
       "$type": "color",
       "$value": "#F4E8EE"
     },
-    "bg-light": {
+    "bg-panel": {
       "$type": "color",
-      "$value": "#F8F7F7"
+      "$value": "#F8F7F7",
+      "$description": "Primary light background"
     },
-    "status-success": {
+    "code-success": {
       "$type": "color",
-      "$value": "#1E7E34"
+      "$value": "#1E7E34",
+      "$description": "Code diff addition indicator — dark green for high contrast"
+    },
+    "status-success-bg": {
+      "$type": "color",
+      "$value": "{primitives.Magenta.20}",
+      "$description": "Success state subtle background"
+    },
+    "status-success-border": {
+      "$type": "color",
+      "$value": "{primitives.Magenta.40}",
+      "$description": "Success state border"
+    },
+    "status-success-icon": {
+      "$type": "color",
+      "$value": "{primitives.Magenta.100}",
+      "$description": "Success state icon/dot accent"
+    },
+    "status-success-text": {
+      "$type": "color",
+      "$value": "{primitives.Graphite.100}",
+      "$description": "Success state text — high contrast"
+    },
+    "AZ warning": {
+      "$type": "color",
+      "$value": "{primitives.Gold.100}"
+    },
+    "status-warning-bg": {
+      "$type": "color",
+      "$value": "{primitives.Gold.20}",
+      "$description": "Warning state subtle background / icon pad"
+    },
+    "status-warning-border": {
+      "$type": "color",
+      "$value": "{primitives.Gold.60}",
+      "$description": "Warning state border"
+    },
+    "status-warning-icon": {
+      "$type": "color",
+      "$value": "{primitives.Gold.100}",
+      "$description": "Warning state icon accent"
+    },
+    "status-warning-text": {
+      "$type": "color",
+      "$value": "{primitives.Graphite.100}",
+      "$description": "Warning state text — high contrast"
     }
   }
 }

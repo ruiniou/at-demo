@@ -20,7 +20,7 @@ function IconButton({ children, onClick }: { children: React.ReactNode; onClick?
   return (
     <button
       onClick={onClick}
-      className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-[#EBECEC] transition-colors shrink-0"
+      className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-graphite-10 transition-colors shrink-0"
     >
       {children}
     </button>
@@ -37,7 +37,7 @@ export default function CodeDiffBlock() {
         onMouseEnter={() => setHeaderHovered(true)}
         onMouseLeave={() => setHeaderHovered(false)}
         className={`flex items-center justify-between px-[10px] py-[8px] cursor-pointer transition-colors ${
-          headerHovered ? 'bg-[#F8F7F7]' : 'bg-transparent'
+          headerHovered ? 'bg-bg-panel' : 'bg-transparent'
         }`}
         onClick={() => setIsExpanded(!isExpanded)}
       >

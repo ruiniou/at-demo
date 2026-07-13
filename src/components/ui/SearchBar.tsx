@@ -42,7 +42,7 @@ export function SearchBar({
   }
 
   // Inner frame
-  const innerBg = background === "dark" ? "bg-[#EBECEC]" : "bg-white";
+  const innerBg = background === "dark" ? "bg-graphite-10" : "bg-white";
   // Typed state has asymmetric padding: 4px 4px 4px 6px
   const innerPadding = hasValue ? "p-[4px_4px_4px_6px]" : "p-[4px_6px]";
   const innerClasses = `flex flex-1 items-center gap-[6px] rounded-[2px] ${innerBg} ${innerPadding}`;
@@ -73,7 +73,7 @@ export function SearchBar({
                 fontWeight: 400,
                 fontSize: 12,
                 lineHeight: "20px",
-                color: "#3C4242",
+                color: "#3F4444",
               }}
             />
           </div>

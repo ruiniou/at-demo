@@ -46,9 +46,9 @@ function CTASecondaryButton({ children, onClick }: { children: React.ReactNode; 
   return (
     <button
       onClick={onClick}
-      className="bg-white hover:bg-[#F8F7F7] border-[0.6px] border-[#D8DADA] text-[#3C4242] px-[8px] py-[4px] rounded-[4px] flex items-center gap-[4px] transition-colors h-[28px]"
+      className="bg-white hover:bg-bg-panel border-[0.6px] border-border-default text-text-primary px-[8px] py-[4px] rounded-[4px] flex items-center gap-[4px] transition-colors h-[28px]"
     >
-      <span className="t-small text-[#3C4242]">{children}</span>
+      <span className="t-small text-text-primary">{children}</span>
     </button>
   );
 }
@@ -116,22 +116,22 @@ export default function AskUserComponent({ onSubmit, onSkip, panelWidth }: {
 
   return (
     <div 
-      className="absolute bottom-[52px] left-[10px] bg-white border-[0.6px] border-[#D8DADA] rounded-[8px] shadow-[1px_2px_8px_0px_rgba(0,0,0,0.08)] z-10 overflow-hidden"
+      className="absolute bottom-[52px] left-[10px] bg-white border-[0.6px] border-border-default rounded-[8px] shadow-[1px_2px_8px_0px_rgba(0,0,0,0.08)] z-10 overflow-hidden"
       style={{ width: `calc(100% - 20px)` }}
     >
-      <div className="flex items-center justify-between px-[10px] py-[8px] border-b-[0.6px] border-[#D8DADA]">
+      <div className="flex items-center justify-between px-[10px] py-[8px] border-b-[0.6px] border-border-default">
         <div className="flex items-center gap-[6px]">
           <QuestionIcon className="w-[16px] h-[16px]" />
-          <p className="t-body-compact text-[#3C4242] font-normal">Questions</p>
+          <p className="t-body-compact text-text-primary font-normal">Questions</p>
         </div>
         <div className="flex items-center">
-          <button onClick={() => step > 1 && setStep(step - 1)} className={`w-[24px] h-[24px] flex items-center justify-center hover:bg-[#EBECEC] rounded-[4px] ${step === 1 ? 'opacity-30' : ''}`}><ArrowLeftIcon className="w-[16px] h-[16px]" color="#888E8E" /></button>
+          <button onClick={() => step > 1 && setStep(step - 1)} className={`w-[24px] h-[24px] flex items-center justify-center hover:bg-graphite-10 rounded-[4px] ${step === 1 ? 'opacity-30' : ''}`}><ArrowLeftIcon className="w-[16px] h-[16px]" color="#888E8E" /></button>
           <div className="min-w-[40px] text-center"><span className="t-caption text-[#888E8E]">{step} / {questions.length}</span></div>
-          <button onClick={() => step < questions.length && handleContinue()} className={`w-[24px] h-[24px] flex items-center justify-center hover:bg-[#EBECEC] rounded-[4px] ${step === questions.length ? 'opacity-30' : ''}`}><ArrowRightIcon className="w-[16px] h-[16px]" color="#888E8E" /></button>
+          <button onClick={() => step < questions.length && handleContinue()} className={`w-[24px] h-[24px] flex items-center justify-center hover:bg-graphite-10 rounded-[4px] ${step === questions.length ? 'opacity-30' : ''}`}><ArrowRightIcon className="w-[16px] h-[16px]" color="#888E8E" /></button>
         </div>
       </div>
       <div className={`px-[10px] pt-[12px] pb-[4px] q-fade ${fadeClass}`}>
-        <p className="t-heading text-[#3C4242] mb-[8px] truncate">{currentQ.title}</p>
+        <p className="t-heading text-text-primary mb-[8px] truncate">{currentQ.title}</p>
         <div className="flex flex-col">
           {currentQ.options.map((option, index) => (
             <AIAskOption
