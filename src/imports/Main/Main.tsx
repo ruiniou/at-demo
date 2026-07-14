@@ -49,10 +49,13 @@ import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
 import snowflakeIconUrl from "../../icons/snowflake-line.svg";
 import deleteBinIconUrl from "../../icons/delete-bin-line.svg";
+import linkUnlinkIconUrl from "../../icons/link-unlink-m.svg";
+import focusIconUrl from "../../icons/focus-3-line.svg";
 import CreateEventModal from "./components/CreateEventModal";
 import { KMPlot } from "./components/KMPlot";
 import { Button } from "../../components/ui/Button";
 import { Tooltip } from "../../components/ui/Tooltip";
+import { Dropdown } from "../../components/ui/Dropdown";
 import { AIInputBox } from "../../components/ui/AI-InputBox";
 import { AIUserPrompt } from "../../components/ui/AI-UserPrompt";
 import { AICodeDiff } from "../../components/ui/AI-CodeDiff";
@@ -3079,6 +3082,7 @@ interface MetadataField {
   value: string;
   status: FieldStatus;
   confirmed: boolean;
+  dependencyState?: 'S0' | 'S1' | 'S2' | 'S3' | 'S4';
 }
 
 interface MetadataBlock {
@@ -3524,13 +3528,17 @@ function MetadataPanel({
   });
   useEffect(() => { sessionStorage.setItem('metadataBlockFields_listing', JSON.stringify(listingColumnFields)); }, [listingColumnFields]);
 
+  // Dependency Field States
+  const [showDepUpdateModal, setShowDepUpdateModal] = useState(false);
+  const [showDepDropdown, setShowDepDropdown] = useState(false);
+
   // ── Figure States ──
   const [figureBlocks, setFigureBlocks] = useState<MetadataBlock[]>(() => {
     const fallback = [
       {
         id: 'figBasic',
         fields: [
-          { id: 'associatedTL', label: 'Associated Table/Listing', value: 'Table 14.1.4', status: 'default' as FieldStatus, confirmed: false },
+          { id: 'associatedTL', label: 'Associated Table/Listing', value: 'Table 14.1.4', status: 'default' as FieldStatus, confirmed: false, dependencyState: 'S1' },
           { id: 'figureType', label: 'Figure Type', value: 'KM', status: 'default' as FieldStatus, confirmed: false },
           { id: 'inputDataset', label: 'Input Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false },
           { id: 'pageBy', label: 'Page by', value: 'TRTA', status: 'default' as FieldStatus, confirmed: false },
@@ -3543,7 +3551,14 @@ function MetadataPanel({
     ];
     const stored = loadFromSession('metadataBlocks_figure', fallback);
     if (!Array.isArray(stored)) return fallback;
-    return stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
+    
+    const migrated = stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
+    
+    // Force associatedTL to default on mount to clear stuck testing state
+    return migrated.map(b => ({
+      ...b,
+      fields: b.fields.map(f => f.id === 'associatedTL' ? { ...f, status: 'default', dependencyState: 'S1' } : f)
+    }));
   });
   useEffect(() => { sessionStorage.setItem('metadataBlocks_figure', JSON.stringify(figureBlocks)); }, [figureBlocks]);
 
@@ -3928,37 +3943,155 @@ function MetadataPanel({
                 {figureBlocks.map((block) =>
                   block.fields.map((field) => {
                     const isAssociatedTL = field.id === 'associatedTL';
-                    const styles = getFieldStyles(field.status, isAssociatedTL);
+                    const styles = getFieldStyles(field.status, false);
 
-                    return (
-                      <div key={field.id}
-                        onClick={isAssociatedTL ? (() => onJumpToTL && onJumpToTL(field.value)) : undefined}
-                        className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder} ${isAssociatedTL ? 'hover:bg-az-secondary transition-colors cursor-pointer' : ''}`}
-                      >
-                        <div className="flex flex-col gap-[4px] p-[8px]">
-                          <div className="flex h-[20px] items-center justify-between">
-                            <p className="t-small text-text-primary">{field.label}</p>
-                            {!isAssociatedTL && (
+                    if (isAssociatedTL) {
+                      const state = field.dependencyState || 'S1';
+                      const isS0 = state === 'S0';
+                      const isS1 = state === 'S1';
+                      const isS2 = state === 'S2';
+                      const isS3 = state === 'S3';
+                      const isS4 = state === 'S4';
+                      
+                      let bgClass = 'bg-graphite-10';
+                      let borderClass = 'border-transparent';
+                      let textColorHex = '#3C4242';
+
+                      if (isS0) {
+                        bgClass = 'bg-transparent';
+                        borderClass = 'border-transparent';
+                        textColorHex = '#999999';
+                      } else if (isS2) {
+                        bgClass = 'bg-status-warning-bg';
+                        borderClass = 'border-status-warning-border border-solid';
+                        textColorHex = 'var(--color-status-warning-text)';
+                      } else if (isS3) {
+                        bgClass = 'bg-bg-panel';
+                        borderClass = 'border-border-default border-solid';
+                        textColorHex = 'var(--color-text-secondary)';
+                      } else if (isS4) {
+                        bgClass = 'bg-status-error-bg';
+                        borderClass = 'border-status-error-border border-solid';
+                        textColorHex = 'var(--color-status-error-text)';
+                      } else { // S1
+                        bgClass = 'bg-white';
+                        borderClass = styles.inputBorder || 'border-border-default border-solid';
+                        textColorHex = '#3C4242';
+                      }
+
+                      return (
+                        <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
+                          <div className="flex flex-col gap-[4px] p-[8px]">
+                            <div className="flex h-[20px] items-center justify-between">
+                              <div className="flex items-center gap-[8px]">
+                                <p className="t-small text-text-primary shrink-0">{field.label}</p>
+                              </div>
                               <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
                                 className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
                                 aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
                                 <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
                               </button>
-                            )}
+                            </div>
+                            
+                            <div className="relative w-full flex items-center gap-[16px]">
+                              <div className="flex-1 min-w-0">
+                                <Dropdown
+                                  value={isS0 ? null : field.value}
+                                  options={[
+                                    { label: 'Table 14.1.1', value: 'Table 14.1.1' },
+                                    { label: 'Table 14.1.4', value: 'Table 14.1.4' },
+                                    { label: 'Listing 16.2.1', value: 'Listing 16.2.1' },
+                                  ]}
+                                  onChange={(val) => {
+                                    if (val !== field.value) {
+                                      handleFieldEdit(block.id, field.id, val);
+                                      const newBlocks = [...figureBlocks];
+                                      const blk = newBlocks.find(b => b.id === block.id);
+                                      if (blk) {
+                                        const f = blk.fields.find(f => f.id === field.id);
+                                        if (f) {
+                                          f.dependencyState = 'S1';
+                                          f.status = 'edited';
+                                        }
+                                      }
+                                      setFigureBlocks(newBlocks);
+                                    }
+                                  }}
+                                  disabled={isLocked}
+                                  placeholder="No associated Table/Listing"
+                                  customBoxClass={isS0 ? undefined : `border-[1px] ${borderClass} ${bgClass}`}
+                                  customTextColor={isS0 ? undefined : textColorHex}
+                                  customTextStyle={{ textDecoration: isS3 ? 'line-through' : 'none' }}
+                                  triggerClassName="min-h-[32px] px-[8px] py-[4px] rounded-[2px]"
+                                  suffixNode={
+                                    isS2 ? (
+                                      <TooltipText label="Update Dependency">
+                                        <button onClick={() => setShowDepUpdateModal(true)} className="flex items-center justify-center h-[24px] px-[8px] bg-white rounded-[4px] border border-status-warning-border hover:bg-black/5 mr-[4px]">
+                                          <span className="text-[12px] font-medium text-status-warning-text">Update</span>
+                                        </button>
+                                      </TooltipText>
+                                    ) : undefined
+                                  }
+                                />
+                              </div>
+                              {!isS0 && !!field.value && (
+                                <div className="flex items-center gap-[4px] shrink-0">
+                                  <TooltipText label="Unlink">
+                                    <button 
+                                      onClick={isLocked ? undefined : () => {
+                                        handleFieldEdit(block.id, field.id, '');
+                                        const newBlocks = [...figureBlocks];
+                                        const blk = newBlocks.find(b => b.id === block.id);
+                                        if (blk) {
+                                          const f = blk.fields.find(f => f.id === field.id);
+                                          if (f) {
+                                            f.dependencyState = 'S0';
+                                            f.status = 'edited';
+                                          }
+                                        }
+                                        setFigureBlocks(newBlocks);
+                                      }} 
+                                      className={`flex items-center justify-center h-[20px] w-[20px] rounded-[2px] transition-colors ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                      disabled={isLocked}
+                                    >
+                                      <LocalIcon src={linkUnlinkIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                                    </button>
+                                  </TooltipText>
+                                  <TooltipText label="Go to Dependency">
+                                    <button 
+                                      onClick={() => onJumpToTL && onJumpToTL(field.value)} 
+                                      className="flex items-center justify-center h-[20px] w-[20px] rounded-[2px] transition-colors hover:bg-black/5 active:scale-[0.96]"
+                                    >
+                                      <LocalIcon src={focusIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                                    </button>
+                                  </TooltipText>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div key={field.id}
+                        className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}
+                      >
+                        <div className="flex flex-col gap-[4px] p-[8px]">
+                          <div className="flex h-[20px] items-center justify-between">
+                            <p className="t-small text-text-primary">{field.label}</p>
+                            <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                              className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                              aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                              <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                            </button>
                           </div>
                           <div className="relative">
-                            {isAssociatedTL ? (
-                              <div className="py-[4px]">
-                                <span className="inline-flex items-center text-[12px] font-medium text-brand-1 hover:underline">
-                                  {field.value}
-                                </span>
-                              </div>
-                            ) : (
-                              <input type="text" value={field.value} readOnly={isLocked}
-                                onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                                className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
-                            )}
-                            {!isLocked && field.status === 'default' && !isAssociatedTL && (
+                            <input type="text" value={field.value} readOnly={isLocked}
+                              onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
+                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
+                            
+                            {!isLocked && field.status === 'default' && (
                               <div className="absolute right-[8px] top-[8px] pointer-events-none">
                                 <SvgIcon className="h-[16px] w-[16px]"><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>
                               </div>
@@ -4152,6 +4285,29 @@ function MetadataPanel({
           </button>
         </div>
       )}
+
+      {/* Figure Dependency Update Modal */}
+      <WorkspaceModal
+        isOpen={showDepUpdateModal}
+        onClose={() => setShowDepUpdateModal(false)}
+        title="Update Dependency"
+        description="重新执行可能失败 (Re-executing might fail). Are you sure you want to update the dependency?"
+        primaryLabel="Update"
+        secondaryLabel="Cancel"
+        onSecondary={() => setShowDepUpdateModal(false)}
+        onPrimary={() => {
+          const newBlocks = [...figureBlocks];
+          const blk = newBlocks.find(b => b.fields.some(f => f.id === 'associatedTL'));
+          if (blk) {
+            const f = blk.fields.find(f => f.id === 'associatedTL');
+            if (f) {
+              f.dependencyState = 'S4';
+            }
+          }
+          setFigureBlocks(newBlocks);
+          setShowDepUpdateModal(false);
+        }}
+      />
     </div>
   );
 }
@@ -4287,10 +4443,12 @@ ods graphics off;`;
 
   const [userCode, setUserCode] = useState(codeContent);
   const [lastRunCode, setLastRunCode] = useState(codeContent);
+  const [savedCode, setSavedCode] = useState(codeContent);
 
   useEffect(() => {
     setUserCode(codeContent);
     setLastRunCode(codeContent);
+    setSavedCode(codeContent);
     setHasRunOnce(false);
   }, [selectedItem, codeContent]);
 
@@ -4462,13 +4620,35 @@ ods graphics off;`;
     }, 0);
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+  const isCodeUnsaved = userCode !== savedCode;
+
+  const handleSave = () => {
+    setIsSaving(true);
+    setTimeout(() => {
+      setSavedCode(userCode);
+      setIsSaving(false);
+    }, 500);
+  };
+
   const toolbarButtons = (
     <>
-      <TooltipText label="Save Code">
-        <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Save">
-          <LocalIcon src={saveIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-        </button>
-      </TooltipText>
+      <Button 
+        variant="secondary" 
+        size="sm" 
+        disabled={!isCodeUnsaved || isSaving} 
+        onClick={handleSave}
+        className="w-[74px]"
+      >
+        <div className="flex items-center gap-[4px] justify-center w-full">
+          {isSaving ? (
+            <div className="w-[14px] h-[14px] rounded-full border-[2px] border-transparent border-t-[#B2B4B4] border-l-[#B2B4B4] animate-spin" />
+          ) : (
+            <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color={!isCodeUnsaved ? "#B2B4B4" : "#830051"} />
+          )}
+          <span>{isSaving ? "Saving" : isCodeUnsaved ? "Save" : "Saved"}</span>
+        </div>
+      </Button>
       {[
         { label: "Copy Code", icon: copyIconUrl },
         { label: "Version History", icon: historyIconUrl },
@@ -4537,6 +4717,8 @@ ods graphics off;`;
                 setFigureView(nextView);
                 if (nextView === 'preview') {
                   setHasRunOnce(true);
+                  setSavedCode(userCode); // Force Save
+
                   if (userCode !== lastRunCode) {
                     setPreviewLoading(true);
                     setTimeout(() => {

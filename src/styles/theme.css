@@ -87,6 +87,10 @@
   --color-bg-panel: #F8F7F7;
   --color-border-default: #D9DADA;
   --color-status-error: #CC2C3C;
+  --color-status-error-bg: #FAD4D8;
+  --color-status-error-border: #F5A9B4;
+  --color-status-error-icon: #CC2C3C;
+  --color-status-error-text: #CC2C3C;
   --color-code-success: #1E7E34;
   --color-status-warning: #F0AB00;
 
@@ -184,6 +188,10 @@
   --color-text-secondary: #8C8F8F;
   --color-bg-panel: #F8F7F7;
   --color-status-error: #CC2C3C;
+  --color-status-error-bg: #FAD4D8;
+  --color-status-error-border: #F5A9B4;
+  --color-status-error-icon: #CC2C3C;
+  --color-status-error-text: #CC2C3C;
   --color-code-success: #1E7E34;
   --color-az-danger: #CC2C3C;
   --color-brand-2: #D0006F;
