@@ -13,7 +13,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // Variant styles — Figma 221-516 (Primary), 221-554 (Secondary)
     const variants: Record<string, string> = {
       primary: "bg-brand-1 hover:bg-brand-1-hover disabled:bg-brand-1-disabled",
-      secondary: "bg-az-secondary hover:bg-az-secondary-hover disabled:bg-white",
+      secondary: "bg-az-secondary hover:bg-az-secondary-hover disabled:bg-graphite-10",
       ghost: "bg-transparent text-text-secondary hover:bg-black/5 hover:text-text-primary",
       danger: "bg-status-error text-white hover:opacity-90",
       icon: "bg-transparent hover:bg-black/5 text-text-secondary hover:text-text-primary",

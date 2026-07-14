@@ -17,6 +17,11 @@ export interface DropdownProps {
   className?: string;
   error?: string;
   disabled?: boolean;
+  customBoxClass?: string;
+  customTextColor?: string;
+  customTextStyle?: React.CSSProperties;
+  suffixNode?: React.ReactNode;
+  triggerClassName?: string;
 }
 
 // Figma 455:673 — Form/Dropdown Field
@@ -31,6 +36,11 @@ export function Dropdown({
   className = "",
   error,
   disabled = false,
+  customBoxClass,
+  customTextColor,
+  customTextStyle,
+  suffixNode,
+  triggerClassName,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -50,7 +60,9 @@ export function Dropdown({
 
   // Border + bg per state (Figma spec)
   let boxClasses = "";
-  if (disabled) {
+  if (customBoxClass) {
+    boxClasses = customBoxClass;
+  } else if (disabled) {
     boxClasses = "border-[1px] border-graphite-10 bg-transparent cursor-not-allowed";
   } else if (error) {
     boxClasses = "border-[1.5px] border-[#E03B3B] bg-white";
@@ -63,7 +75,7 @@ export function Dropdown({
   // Label + star colors
   const labelColor = disabled ? "#D8DADA" : "#3C4242";
   const starColor = disabled ? "#D8DADA" : "#830051";
-  const textColor = disabled ? "#D8DADA" : selectedOption ? "#3C4242" : "#888E8E";
+  const textColor = customTextColor ? customTextColor : disabled ? "#D8DADA" : selectedOption ? "#3C4242" : "#888E8E";
 
   return (
     <div className={`flex flex-col gap-[6px] w-full text-left relative ${className}`} ref={dropdownRef}>
@@ -81,7 +93,7 @@ export function Dropdown({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`relative flex h-[36px] w-full items-center justify-between rounded-[4px] pl-[12px] pr-[10px] transition-colors after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0 ${boxClasses}`}
+        className={`relative flex w-full items-center justify-between transition-colors after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0 ${triggerClassName || 'h-[36px] rounded-[4px] pl-[12px] pr-[10px]'} ${boxClasses}`}
       >
         <span
           style={{
@@ -96,16 +108,22 @@ export function Dropdown({
             whiteSpace: "nowrap",
             display: "block",
             textAlign: "left",
+            ...customTextStyle,
           }}
         >
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <img
-          src={arrowIconUrl}
-          alt=""
-          className={`h-[20px] w-[20px] transition-transform ${isOpen ? "rotate-180" : ""}`}
-          style={{ opacity: disabled ? 0.4 : 1 }}
-        />
+        <div className="flex items-center gap-[4px] shrink-0">
+          {suffixNode && (
+            <div onClick={(e) => e.stopPropagation()}>{suffixNode}</div>
+          )}
+          <img
+            src={arrowIconUrl}
+            alt=""
+            className={`h-[20px] w-[20px] transition-transform ${isOpen ? "rotate-180" : ""}`}
+            style={{ opacity: disabled ? 0.4 : 1 }}
+          />
+        </div>
       </button>
 
       {error && (
