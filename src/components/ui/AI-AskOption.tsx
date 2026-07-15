@@ -56,7 +56,7 @@ export function AIAskOption({
             onClick?.();
           }}
           onChange={(e) => onChange?.(e.target.value)}
-          className="flex-1 t-caption text-text-primary placeholder:text-[#B2B4B4] bg-transparent border-none outline-none min-w-0"
+          className="flex-1 t-caption text-text-primary placeholder:text-graphite-40 bg-transparent border-none outline-none min-w-0"
         />
       )}
     </div>

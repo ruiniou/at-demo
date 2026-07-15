@@ -910,7 +910,7 @@ function WorkspaceModal({
           </button>
           <button
             onClick={onPrimary}
-            className="h-[36px] rounded-[4px] bg-brand-1 px-[12px] t-body-secondary text-white hover:bg-[#6D0043] active:scale-[0.96]"
+            className="h-[36px] rounded-[4px] bg-brand-1 px-[12px] t-body-secondary text-white hover:bg-brand-1-hover active:scale-[0.96]"
           >
             {primaryLabel}
           </button>
@@ -1684,7 +1684,7 @@ function ColumnDivider({
         }}
       >
         <div
-          className="flex items-center gap-[4px] font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
+          className="flex items-center gap-[4px] font-['Inter',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
           style={{
             background: pillBg,
             color: pillTextColor,
@@ -2394,10 +2394,10 @@ function ListingShellPreview({
                       style={{ width: `${pageWidthPx}px`, height: `${pageHeightPx}px` }}
                     >
                       <div style={{ transform: `scale(${pageScale / 100})`, transformOrigin: 'top left' }} className="relative">
-                        <div className="absolute right-[32px] top-[28px] rounded-[4px] bg-az-secondary px-[6px] py-0 font-['PingFang_SC',sans-serif] text-[12px] leading-[20px] text-brand-1">{pageIndex + 1}/{printPages.length}</div>
+                        <div className="absolute right-[32px] top-[28px] rounded-[4px] bg-az-secondary px-[6px] py-0 font-['Inter',sans-serif] text-[12px] leading-[20px] text-brand-1">{pageIndex + 1}/{printPages.length}</div>
                         <div className="p-[48px] pt-[64px]">
                           <div className="border-b-2 border-black pb-[14px] mb-[10px] text-center">
-                            <h1 className="font-['Inter',sans-serif] text-[13px] leading-[18px] font-bold tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
+                            <h1 className="t-shell-title tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
                             <p className="mt-[4px] font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676]">
                               Rows {page.rowPageIndex * PRINT_ROWS_PER_PAGE + 1}-{page.rowPageIndex * PRINT_ROWS_PER_PAGE + page.pageRows.length} · Columns {page.pageScrollColumns[0] ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[0].key) + 1 : 1}-{page.pageScrollColumns.length ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[page.pageScrollColumns.length - 1].key) + 1 : frozenPrintColumns.length}{frozenPrintColumns.length > 0 ? ` · frozen 1-${frozenPrintColumns.length} repeated` : ''}
                             </p>
@@ -2411,7 +2411,7 @@ function ListingShellPreview({
                             <thead>
                               <tr className="border-b-2 border-black">
                                 {page.pageColumns.map((column) => (
-                                  <th key={column.key} className="border-r border-border-default px-[4px] py-[6px] text-left align-middle text-[10px] leading-[14px] font-bold whitespace-normal break-words last:border-r-0">{column.label}</th>
+                                  <th key={column.key} className="border-r border-border-default px-[4px] py-[6px] text-left align-middle t-shell-footnote font-bold whitespace-normal break-words last:border-r-0">{column.label}</th>
                                 ))}
                               </tr>
                             </thead>
@@ -2437,7 +2437,7 @@ function ListingShellPreview({
                 <span className="t-heading text-text-primary">Appendix 16.2.4</span>
                 <button type="button" onClick={() => setPageSepActive(false)} className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] transition-colors hover:bg-black/5">
                   <CloseIcon className="h-[16px] w-[16px]" color="var(--color-text-primary)" />
-                  <span className="font-['PingFang_SC',sans-serif] text-[14px] leading-[20px] font-normal text-text-primary">Exit Preview</span>
+                  <span className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-normal text-text-primary">Exit Preview</span>
                 </button>
               </div>
             </div>,
@@ -2450,7 +2450,7 @@ function ListingShellPreview({
               <div className="relative">
                 {/* Title header */}
                 <div className="h-[72px] min-w-max border-b-2 border-black flex items-start justify-center px-[16px] pt-[24px]">
-                  <h1 className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
+                  <h1 className="t-shell-title text-center tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
                 </div>
                 <div ref={tableContainerRef} className="relative inline-block min-w-max">
                   <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-black" style={{ width: `${totalListingWidth}px` }}>
@@ -2490,7 +2490,7 @@ function ListingShellPreview({
                                 >
                                   <div className="flex items-center gap-[4px] bg-[#3F4444] text-[#EBEFEE] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
                                     <FreezeIcon color="white" />
-                                    <span className="font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px]">Repeat Columns</span>
+                                    <span className="font-['Inter',sans-serif] font-normal text-[12px] leading-[20px]">Repeat Columns</span>
                                   </div>
                                 </div>
                               )}
@@ -2512,7 +2512,7 @@ function ListingShellPreview({
                                     }}
                                   >
                                     <div
-                                      className="flex items-center gap-[4px] font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
+                                      className="flex items-center gap-[4px] font-['Inter',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
                                       style={{
                                         background: '#F4E8EE',
                                         color: "var(--color-brand-1)",
@@ -2622,7 +2622,7 @@ function ListingShellPreview({
                       >
                         <div className="flex items-center gap-[4px] bg-[#3F4444] text-[#EBEFEE] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
                           <LocalIcon src={addLineIconUrl} className="w-[14px] h-[14px]" color="white" />
-                          <span className="font-['PingFang_SC:Regular',sans-serif] text-[12px] leading-[20px]">Add page break</span>
+                          <span className="font-['Inter',sans-serif] text-[12px] leading-[20px]">Add page break</span>
                         </div>
                       </div>
                     </>
@@ -2971,7 +2971,7 @@ function ShellPreview({
             <>
               {/* Title header - Styled like Listing's Shell preview header */}
               <div className="h-[72px] min-w-max border-b-2 border-black flex flex-col items-center justify-start px-[16px] pt-[16px] bg-white text-black mb-[16px]">
-                <h1 className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">
+                <h1 className="t-shell-title text-center tracking-[-0.01em]">
                   {shellData.tableNumber}. {shellData.tableTitle}
                 </h1>
                 <p className="font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676] mt-[4px]">
@@ -2984,14 +2984,14 @@ function ShellPreview({
                   <thead>
                     {/* Column group header */}
                     <tr className="group">
-                      <th className="bg-white text-left text-[12px] leading-[18px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default min-w-[180px]">
+                      <th className="bg-white text-left t-shell-header py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default min-w-[180px]">
                         {selectedItemName.startsWith('Listing') ? 'Subject ID' : 'Parameter'}
                       </th>
                       {shellData.columnGroups.map((group, gi) => (
                         <th
                           key={gi}
                           colSpan={group.span}
-                          className="text-center text-[12px] leading-[18px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default"
+                          className="text-center t-shell-header py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default"
                           style={{ whiteSpace: 'pre-line' }}
                         >
                           {group.name}
@@ -3000,13 +3000,13 @@ function ShellPreview({
                     </tr>
                     {/* Sub-column header */}
                     <tr className="group">
-                      <th className="bg-white text-left text-[12px] leading-[18px] font-bold py-[4px] px-[8px] whitespace-nowrap border-r border-b-2 border-black border-border-default">
+                      <th className="bg-white text-left t-shell-header py-[4px] px-[8px] whitespace-nowrap border-r border-b-2 border-black border-border-default">
                         
                       </th>
                       {shellData.columns.map((col, ci) => (
                         <th
                           key={ci}
-                          className="text-center text-[12px] leading-[18px] font-bold py-[4px] px-[6px] whitespace-nowrap border-r border-b-2 border-black border-border-default last:border-r-0"
+                          className="text-center t-shell-header py-[4px] px-[6px] whitespace-nowrap border-r border-b-2 border-black border-border-default last:border-r-0"
                         >
                           {col}
                         </th>
@@ -3332,7 +3332,7 @@ function BlocksTabContent({
             data-block-id={block.id}
             className={`px-[16px] py-[14px] ${blockIndex !== blocks.length - 1 ? 'border-b border-[#E5E8E8]' : ''}`}
           >
-            <p className="text-[14px] font-bold text-text-primary mb-[12px]">{block.name}</p>
+            <p className="t-body-bold text-text-primary mb-[12px]">{block.name}</p>
             <div className="flex flex-col gap-[12px]">
               {block.fields.map((field) => (
                 <div key={field.id}>
@@ -4278,7 +4278,7 @@ function MetadataPanel({
               handleUpdateCode();
             }}
             disabled={isLocked}
-            className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isLocked ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
+            className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-body-medium ${isLocked ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-brand-1-hover active:scale-[0.98]'}`}
           >
             <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={isLocked ? '#888E8E' : 'white'} />
             Add Changes to Chat
@@ -4775,7 +4775,7 @@ ods graphics off;`;
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor" />
                 </SvgIcon>
               </div>
-              <p className="text-[14px] leading-[22px] font-bold text-[#C5221F]">
+              <p className="t-body-bold text-[#C5221F]">
                 Generation Failed
               </p>
               <p className="text-[12px] leading-[18px] text-text-secondary mt-[4px] text-center max-w-[280px]">
@@ -4790,7 +4790,7 @@ ods graphics off;`;
                   <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z" fill="currentColor" />
                 </SvgIcon>
               </div>
-              <p className="text-[14px] leading-[22px] font-bold text-text-primary">
+              <p className="t-body-bold text-text-primary">
                 Service Unavailable
               </p>
               <p className="text-[12px] leading-[18px] text-text-secondary mt-[4px] text-center max-w-[320px]">
@@ -4798,7 +4798,7 @@ ods graphics off;`;
               </p>
               <button
                 onClick={handleRetry}
-                className="mt-[16px] px-[16px] py-[6px] bg-brand-1 hover:bg-[#6D0043] text-white text-[12px] font-semibold rounded-[4px] transition-colors shadow-sm active:scale-[0.96]"
+                className="mt-[16px] px-[16px] py-[6px] bg-brand-1 hover:bg-brand-1-hover text-white text-[12px] font-semibold rounded-[4px] transition-colors shadow-sm active:scale-[0.96]"
               >
                 Retry
               </button>
@@ -6288,7 +6288,7 @@ function HomePage({
                 </button>
                 <button
                   onClick={onCreateEvent}
-                  className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96] whitespace-nowrap shrink-0"
+                  className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:bg-brand-1-hover active:scale-[0.96] whitespace-nowrap shrink-0"
                   style={{ whiteSpace: 'nowrap' }}
                 >
                   <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />

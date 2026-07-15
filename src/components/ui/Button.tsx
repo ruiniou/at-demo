@@ -1,4 +1,4 @@
-import React, { ButtonHTMLAttributes, forwardRef } from "react";
+import React, { ButtonHTMLAttributes, forwardRef, useState } from "react";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "icon" | "danger";
@@ -9,6 +9,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = "", variant = "primary", size = "default", disabled = false, children, ...props }, ref) => {
     // Base styles — text uses inline style to avoid globals.css cascade issues
     const baseStyles = "inline-flex items-center justify-center gap-[4px] whitespace-nowrap rounded-[4px] transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 disabled:pointer-events-none active:scale-[0.96]";
+    const [isHovered, setIsHovered] = useState(false);
 
     // Variant styles — Figma 221-516 (Primary), 221-554 (Secondary)
     const variants: Record<string, string> = {
@@ -29,8 +30,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Text style per variant (inline to avoid globals.css .t-body-secondary color override)
     const textColors: Record<string, string> = {
-      primary: "#FFFFFF",
-      secondary: disabled ? "#B2B4B4" : "#830051",
+      primary: isHovered && !disabled ? "var(--color-brand-1)" : "#FFFFFF",
+      secondary: disabled ? "var(--color-graphite-40)" : "var(--color-brand-1)",
       ghost: "",
       danger: "#FFFFFF",
       icon: "",
@@ -38,7 +39,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const fontSizes: Record<string, number> = { default: 14, sm: 12, lg: 14, icon: 14 };
     const useTextStyle = variant === "primary" || variant === "secondary" || variant === "danger";
     const textStyle = useTextStyle
-      ? { fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: fontSizes[size], lineHeight: "20px", color: textColors[variant] }
+      ? { fontFamily: "Inter, sans-serif", fontWeight: variant === "primary" || variant === "secondary" ? 600 : 400, fontSize: fontSizes[size], lineHeight: "20px", color: textColors[variant] }
       : undefined;
 
     return (
@@ -46,6 +47,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled}
         className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+        onMouseEnter={(e) => { setIsHovered(true); props.onMouseEnter?.(e); }}
+        onMouseLeave={(e) => { setIsHovered(false); props.onMouseLeave?.(e); }}
         {...props}
       >
         {useTextStyle ? <span style={textStyle}>{children}</span> : children}

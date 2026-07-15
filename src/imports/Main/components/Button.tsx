@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 // ==================== Button Component ====================
 // Figma: 221-516 (Primary), 221-554 (Secondary)
@@ -20,7 +20,7 @@ interface ButtonProps {
 // ==================== Primary Button ====================
 // Figma: 221-516, Button/Primary
 // Default bg: #830051 (brand-1), text: #FFFFFF
-// Hovered bg: #9A3374 (brand-1-hover)
+// Hovered bg: AZ Gold (brand-1-hover)
 // Disabled bg: #E6CCDC (brand-1-disabled), text: #FFFFFF
 
 export function PrimaryButton({
@@ -38,6 +38,8 @@ export function PrimaryButton({
   const bgClass = disabled
     ? "bg-brand-1-disabled"
     : "bg-brand-1 hover:bg-brand-1-hover";
+  const [isHovered, setIsHovered] = useState(false);
+  const textColor = isHovered && !disabled ? "var(--color-brand-1)" : "#FFFFFF";
   const hitAreaClass = size === "sm"
     ? "relative after:content-[''] after:absolute after:-inset-y-[6px] after:inset-x-0"
     : "relative after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0";
@@ -46,6 +48,8 @@ export function PrimaryButton({
     <button
       type={type}
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       disabled={disabled}
       className={`flex items-center gap-[4px] rounded-[4px] whitespace-nowrap ${padding} ${bgClass} ${hitAreaClass} active:scale-[0.96] ${className}`}
     >
@@ -65,11 +69,11 @@ export function PrimaryButton({
       )}
       <span
         style={{
-          fontFamily: "'PingFang SC', sans-serif",
-          fontWeight: 400,
+          fontFamily: "Inter, sans-serif",
+          fontWeight: 600,
           fontSize,
           lineHeight: "20px",
-          color: "#FFFFFF",
+          color: textColor,
           whiteSpace: "nowrap",
         }}
       >
@@ -100,7 +104,7 @@ export function SecondaryButton({
   const bgClass = disabled
     ? "bg-white"
     : "bg-az-secondary hover:bg-az-secondary-hover";
-  const textColor = disabled ? "#B2B4B4" : "#830051";
+  const textColor = disabled ? "var(--color-graphite-40)" : "var(--color-brand-1)";
   const hitAreaClass = size === "sm"
     ? "relative after:content-[''] after:absolute after:-inset-y-[6px] after:inset-x-0"
     : "relative after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0";
@@ -128,8 +132,8 @@ export function SecondaryButton({
       )}
       <span
         style={{
-          fontFamily: "'PingFang SC', sans-serif",
-          fontWeight: 400,
+          fontFamily: "Inter, sans-serif",
+          fontWeight: 600,
           fontSize,
           lineHeight: "20px",
           color: textColor,

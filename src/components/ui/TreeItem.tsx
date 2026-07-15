@@ -88,7 +88,7 @@ export function TreeItemRow({
           )}
           <p
             className={`t-small min-w-0 flex-1 truncate ${
-              isLocked ? "text-[#B2B4B4]" : selectable && isSelected ? "text-brand-1" : "text-text-primary"
+              isLocked ? "text-graphite-40" : selectable && isSelected ? "text-brand-1" : "text-text-primary"
             }`}
           >
             {label}

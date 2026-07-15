@@ -611,7 +611,7 @@ function BrowseVariablesModal({
               onConfirm(selected);
               onClose();
             }}
-            className="h-[32px] rounded-[4px] bg-[#830051] px-[16px] t-small font-medium text-white hover:bg-[#6D0043] active:scale-[0.96]"
+            className="h-[32px] rounded-[4px] bg-brand-1 px-[16px] t-small font-medium text-white hover:bg-brand-1-hover active:scale-[0.96]"
           >
             Confirm ({selected.length})
           </button>

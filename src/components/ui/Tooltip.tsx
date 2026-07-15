@@ -14,9 +14,9 @@ export function Tooltip({ label, children, align = "center", className = "" }: T
     padding: "4px 6px",
     fontSize: "12px",
     lineHeight: "16px",
-    fontFamily: "'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     fontWeight: 400,
-    color: "#F8F7F7",
+    color: "var(--color-bg-panel)",
     boxShadow: "0px 2px 4px rgba(0,0,0,0.08)",
     minHeight: "auto",
     ...(align === "left"
@@ -39,7 +39,7 @@ export function Tooltip({ label, children, align = "center", className = "" }: T
       autoAdjustOverflow={true}
       getPopupContainer={() => document.body}
       zIndex={9999}
-      color="#3C4242"
+      color="var(--color-text-primary)"
       overlayInnerStyle={overlayInnerStyle}
       transitionName=""
       mouseEnterDelay={0}

@@ -50,7 +50,7 @@ export function MultiSelectDropdown({
   if (disabled) {
     boxClasses = "border-[1px] border-graphite-10 bg-transparent cursor-not-allowed";
   } else if (error) {
-    boxClasses = "border-[1.5px] border-[#E03B3B] bg-white";
+    boxClasses = "border-[1.5px] border-status-error bg-white";
   } else if (isOpen) {
     boxClasses = "border-[1px] border-brand-1 bg-white";
   } else {
@@ -58,8 +58,8 @@ export function MultiSelectDropdown({
   }
 
   // Label + star colors
-  const labelColor = disabled ? "#D8DADA" : "#3C4242";
-  const starColor = disabled ? "#D8DADA" : "#830051";
+  const labelColor = disabled ? "var(--color-graphite-20)" : "var(--color-text-primary)";
+  const starColor = disabled ? "var(--color-graphite-20)" : "var(--color-brand-1)";
 
   const handleToggleOption = (optValue: string) => {
     if (value.includes(optValue)) {
@@ -83,7 +83,7 @@ export function MultiSelectDropdown({
     <div className={`flex flex-col gap-[6px] w-full text-left relative ${className}`} ref={dropdownRef}>
       {label && (
         <div className="flex items-center gap-[2px]">
-          <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: labelColor }}>
+          <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: labelColor }}>
             {label}
           </span>
           {required && (
@@ -116,7 +116,7 @@ export function MultiSelectDropdown({
                     setIsExpandedTags(!isExpandedTags);
                   }}
                   className="inline-flex items-center gap-[4px] py-[2px] text-[11px] text-brand-1 cursor-pointer font-medium max-h-[26px] bg-transparent hover:bg-transparent transition-colors"
-                  style={{ fontFamily: "'PingFang SC', sans-serif" }}
+                  style={{ fontFamily: "Inter, sans-serif" }}
                 >
                   {!isExpandedTags ? `+${selectedOptions.length - 3} more...` : "Show less"}
                 </span>
@@ -125,11 +125,11 @@ export function MultiSelectDropdown({
           ) : (
             <span
               style={{
-                fontFamily: "'PingFang SC', sans-serif",
+                fontFamily: "Inter, sans-serif",
                 fontWeight: 400,
                 fontSize: 12,
                 lineHeight: "20px",
-                color: disabled ? "#D8DADA" : "#888E8E",
+                color: disabled ? "var(--color-graphite-20)" : "var(--color-text-secondary)",
                 paddingLeft: "4px"
               }}
             >
@@ -146,7 +146,7 @@ export function MultiSelectDropdown({
       </div>
 
       {error && (
-        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "#E03B3B" }}>
+        <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "var(--color-status-error-text)" }}>
           {error}
         </span>
       )}

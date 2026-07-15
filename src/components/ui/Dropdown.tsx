@@ -65,7 +65,7 @@ export function Dropdown({
   } else if (disabled) {
     boxClasses = "border-[1px] border-graphite-10 bg-transparent cursor-not-allowed";
   } else if (error) {
-    boxClasses = "border-[1.5px] border-[#E03B3B] bg-white";
+    boxClasses = "border-[1.5px] border-status-error bg-white";
   } else if (isOpen) {
     boxClasses = "border-[1px] border-brand-1 bg-white";
   } else {
@@ -73,15 +73,21 @@ export function Dropdown({
   }
 
   // Label + star colors
-  const labelColor = disabled ? "#D8DADA" : "#3C4242";
-  const starColor = disabled ? "#D8DADA" : "#830051";
-  const textColor = customTextColor ? customTextColor : disabled ? "#D8DADA" : selectedOption ? "#3C4242" : "#888E8E";
+  const labelColor = disabled ? "var(--color-graphite-20)" : "var(--color-text-primary)";
+  const starColor = disabled ? "var(--color-graphite-20)" : "var(--color-brand-1)";
+  const textColor = customTextColor
+    ? customTextColor
+    : disabled
+      ? "var(--color-graphite-20)"
+      : selectedOption
+        ? "var(--color-text-primary)"
+        : "var(--color-text-secondary)";
 
   return (
     <div className={`flex flex-col gap-[6px] w-full text-left relative ${className}`} ref={dropdownRef}>
       {label && (
         <div className="flex items-center gap-[2px]">
-          <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: labelColor }}>
+          <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: labelColor }}>
             {label}
           </span>
           {required && (
@@ -97,7 +103,7 @@ export function Dropdown({
       >
         <span
           style={{
-            fontFamily: "'PingFang SC', sans-serif",
+            fontFamily: "Inter, sans-serif",
             fontWeight: 400,
             fontSize: 12,
             lineHeight: "20px",
@@ -127,7 +133,7 @@ export function Dropdown({
       </button>
 
       {error && (
-        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "#E03B3B" }}>
+        <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "var(--color-status-error-text)" }}>
           {error}
         </span>
       )}

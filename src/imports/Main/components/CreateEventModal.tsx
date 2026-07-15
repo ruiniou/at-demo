@@ -163,7 +163,7 @@ function OptionalSection() {
     <div className="rounded-[6px] border border-graphite-10">
       <button type="button" onClick={() => setIsExpanded(!isExpanded)}
         className={`flex w-full items-center justify-between px-[10px] py-[10px] hover:bg-bg-panel ${isExpanded ? "rounded-t-[6px]" : "rounded-[6px]"}`}>
-        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 13, lineHeight: "20px", color: "var(--color-text-primary)" }}>Optional</span>
+        <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 13, lineHeight: "20px", color: "var(--color-text-primary)" }}>Optional</span>
         <ArrowDownIcon size={20} color="var(--color-text-secondary)" rotated={isExpanded} />
       </button>
       <div className="h-0 w-full border-t border-graphite-10" />
@@ -199,7 +199,7 @@ function Stepper({ currentStep }: { currentStep: 1 | 2 }) {
         <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 11, color: active ? "#FFFFFF" : "#888E8E" }}>{num}</span>
       </div>
       <span style={{
-        fontFamily: "'PingFang SC', sans-serif",
+        fontFamily: "Inter, sans-serif",
         fontWeight: active ? 600 : 400,
         fontSize: 12,
         lineHeight: "20px",
@@ -270,7 +270,7 @@ function Step2Body() {
     <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto p-[20px_24px] [scrollbar-gutter:stable]">
       {/* Section title */}
       <div className="flex shrink-0 items-center justify-between">
-        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 14, color: "#000000" }}>Task Assignment</span>
+        <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 14, color: "#000000" }}>Task Assignment</span>
       </div>
       {/* Table */}
       <div className="overflow-x-auto rounded-[4px] border border-graphite-10">
@@ -456,7 +456,7 @@ export default function CreateEventModal({
         {/* Header */}
         <div className="flex shrink-0 items-center gap-[16px] px-[20px] pb-[12px] pt-[16px]">
           <div className="flex min-w-0 flex-1 items-center gap-[10px]">
-            <h2 style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 14, lineHeight: "22px", color: "var(--color-text-primary)" }}>Create New Event</h2>
+            <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 14, lineHeight: "22px", color: "var(--color-text-primary)" }}>Create New Event</h2>
           </div>
           <button onClick={onClose} className="relative flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-graphite-10 active:scale-[0.96] after:content-[''] after:absolute after:-inset-[8px]" aria-label="Close">
             <CloseIcon size={16} color="var(--color-text-secondary)" />

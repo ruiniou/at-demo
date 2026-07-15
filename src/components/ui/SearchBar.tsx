@@ -34,11 +34,11 @@ export function SearchBar({
   // Outer wrapper styles by state
   let outerClasses = "flex h-[36px] items-stretch rounded-[4px] p-[2px] gap-[6px] border-[0.6px]";
   if (isFocused) {
-    // Focused: bg #E6CCDC, border 0.6px #830051
+    // Focused: Mulberry tint background with Mulberry border.
     outerClasses += " bg-az-secondary-hover border-brand-1";
   } else {
     // Default / Typed:
-    outerClasses += background === "dark" ? " border-transparent" : " border-[#D8DADA]";
+    outerClasses += background === "dark" ? " border-transparent" : " border-border-default";
   }
 
   // Inner frame
@@ -69,11 +69,11 @@ export function SearchBar({
               placeholder={placeholder}
               className="w-full bg-transparent outline-none"
               style={{
-                fontFamily: "'PingFang SC', sans-serif",
+                fontFamily: "Inter, sans-serif",
                 fontWeight: 400,
                 fontSize: 12,
                 lineHeight: "20px",
-                color: "#3F4444",
+                color: "var(--color-text-primary)",
               }}
             />
           </div>
