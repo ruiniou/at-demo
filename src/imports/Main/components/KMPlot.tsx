@@ -171,11 +171,11 @@ export function KMPlot({
       {/* Title area */}
       <div className="mb-[8px] flex flex-col items-center">
         {mode === 'shell' ? (
-          <h2 className="text-[13px] leading-[18px] font-bold text-[#6f7676] italic text-center">
+          <h2 className="t-shell-title text-[#6f7676] italic text-center">
             {figureNumber}: [Figure Title Placeholder]
           </h2>
         ) : (
-          <h2 className="text-[13px] leading-[18px] font-bold text-text-primary text-center">
+          <h2 className="t-shell-title text-text-primary text-center">
             {figureNumber}: {displayTitle}
           </h2>
         )}
@@ -404,11 +404,11 @@ export function KMPlot({
           <table className="w-full text-[10px] border-collapse font-sans">
             <thead>
               <tr className="border-b border-border-default">
-                <th className="text-left font-bold py-[4px] px-[8px] text-text-primary w-[110px]">
+                <th className="text-left t-shell-header py-[4px] px-[8px] text-text-primary w-[110px]">
                   Number at Risk
                 </th>
                 {ticksX.map((tick) => (
-                  <th key={tick} className="text-center font-semibold py-[4px] px-[4px] text-text-secondary">
+                  <th key={tick} className="text-center t-shell-header py-[4px] px-[4px] text-text-secondary">
                     {tick}
                   </th>
                 ))}
@@ -416,7 +416,7 @@ export function KMPlot({
             </thead>
             <tbody>
               <tr className="border-b border-border-default last:border-0">
-                <td className="text-left font-semibold py-[4px] px-[8px]" style={{ color: group1.color }}>
+                <td className="text-left t-shell-cell font-medium py-[4px] px-[8px]" style={{ color: group1.color }}>
                   <span className="font-mono font-bold mr-[4px]">──</span> {group1.label}
                 </td>
                 {group1.risk.map((val, idx) => (
@@ -426,7 +426,7 @@ export function KMPlot({
                 ))}
               </tr>
               <tr>
-                <td className="text-left font-semibold py-[4px] px-[8px]" style={{ color: group2.color }}>
+                <td className="text-left t-shell-cell font-medium py-[4px] px-[8px]" style={{ color: group2.color }}>
                   <span className="font-mono font-bold mr-[4px]">- -</span> {group2.label}
                 </td>
                 {group2.risk.map((val, idx) => (

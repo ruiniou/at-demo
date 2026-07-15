@@ -48,7 +48,7 @@ function Tag({ className = "", text = "Table.1(290-321)" }: TagProps) {
       <div className="overflow-clip relative shrink-0 size-[16px] flex items-center justify-center">
         <CodeIcon className="size-[12px]" color="var(--color-brand-1)" />
       </div>
-      <div className="flex flex-[1_0_0] flex-col font-['PingFang_SC',sans-serif] justify-center leading-[0] max-w-[152px] min-w-px not-italic overflow-hidden relative text-[13px] text-brand-1 text-ellipsis whitespace-nowrap">
+      <div className="flex flex-[1_0_0] flex-col font-['Inter',sans-serif] justify-center leading-[0] max-w-[152px] min-w-px not-italic overflow-hidden relative text-[13px] text-brand-1 text-ellipsis whitespace-nowrap">
         <p className="leading-[20px] overflow-hidden text-ellipsis font-medium">{text}</p>
       </div>
     </div>
@@ -192,8 +192,8 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                   <ChevronRightIcon className="size-[14px]" color="var(--color-brand-1)" />
                 )}
               </div>
-              <div className="flex flex-col font-['PingFang_SC',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-brand-1 text-center whitespace-nowrap">
-                <p className="leading-[24px] font-medium">3 Pending Changes</p>
+              <div className="flex flex-col justify-center relative shrink-0 t-body text-brand-1 text-center whitespace-nowrap">
+                <p>3 Pending Changes</p>
               </div>
             </div>
 
@@ -210,7 +210,7 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                     <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                       <CodeIcon className="size-[12px]" color="var(--color-brand-1)" />
                     </div>
-                    <div className="flex flex-col font-['PingFang_SC',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-brand-1 text-center whitespace-nowrap">
+                    <div className="flex flex-col font-['Inter',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-brand-1 text-center whitespace-nowrap">
                       <p className="leading-[20px] font-normal">{item}</p>
                     </div>
                   </div>
@@ -246,7 +246,7 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                       }}
                       onKeyDown={handleKeyDown}
                       placeholder="Ask me anything..."
-                      className="w-full t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none resize-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] max-h-[140px] pr-[12px] overflow-y-auto chat-maxheight-textarea"
+                      className="w-full min-h-[44px] max-h-[160px] bg-transparent outline-none resize-none t-body text-text-primary placeholder:text-text-tertiary placeholder:italic overflow-y-auto leading-[24px] pt-[10px] pb-[10px] pr-[12px] chat-maxheight-textarea"
                       rows={4}
                     />
                   </div>
@@ -262,7 +262,7 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                         }}
                         className="flex-1 flex items-center gap-[4px] cursor-text select-text h-[24px]"
                       >
-                        <span className="text-text-primary font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] whitespace-nowrap shrink-0">
+                        <span className="text-text-primary font-['Inter',sans-serif] text-[14px] leading-[24px] whitespace-nowrap shrink-0">
                           {inputText}
                         </span>
                         <Tag />
@@ -288,7 +288,7 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                           }
                         }}
                         placeholder="Ask me anything..."
-                        className="flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px]"
+                        className="flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['Inter',sans-serif] text-[14px] leading-[24px]"
                       />
                     )}
                     
@@ -300,7 +300,7 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
               {/* Send Button */}
               <button 
                 onClick={handleSend}
-                className="bg-brand-1 hover:opacity-90 transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95 animate-none"
+                className="bg-brand-1 hover:bg-brand-1-hover transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95 animate-none"
               >
                 <SendIcon className="size-[12px]" color="white" />
               </button>
@@ -325,13 +325,13 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                     }
                   }}
                   placeholder="Ask me anything..."
-                  className="flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px]"
+                  className="flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['Inter',sans-serif] text-[14px] leading-[24px]"
                 />
               </div>
               
               <button 
                 onClick={handleSend}
-                className="bg-brand-1 hover:opacity-90 transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95"
+                className="bg-brand-1 hover:bg-brand-1-hover transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95"
               >
                 <img
                   src={aiSubmitIconUrl}

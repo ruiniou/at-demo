@@ -42,7 +42,7 @@ function Tag() {
           </svg>
         </div>
       </div>
-      <div className="flex flex-[1_0_0] flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-brand-1 text-[13px]">
+      <div className="flex flex-[1_0_0] flex-col t-caption justify-center min-w-px relative text-brand-1">
         <p className="leading-[20px]">Table.1(290-321)</p>
       </div>
     </div>
@@ -59,7 +59,7 @@ function AiThinking() {
           </svg>
         </div>
       </div>
-      <p className="font-['PingFang_SC:Regular',sans-serif] leading-[18px] not-italic relative shrink-0 text-text-primary text-[14px] whitespace-nowrap">Tool name</p>
+      <p className="t-body-compact relative shrink-0 text-text-primary whitespace-nowrap">Tool name</p>
     </div>
   );
 }
@@ -67,7 +67,7 @@ function AiThinking() {
 function Container1() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[13px] whitespace-nowrap">
+      <div className="flex flex-col t-caption justify-center relative shrink-0 text-text-primary whitespace-nowrap">
         <p className="leading-[20px]">Lines 3-7</p>
       </div>
     </div>
@@ -91,7 +91,7 @@ function Container() {
 
 function Changes() {
   return (
-    <div className="content-stretch flex font-['PingFang_SC:Medium',sans-serif] gap-[4px] items-center justify-end leading-[0] not-italic relative shrink-0 text-[12px] whitespace-nowrap" data-name="Changes">
+    <div className="content-stretch flex t-small-medium gap-[4px] items-center justify-end relative shrink-0 whitespace-nowrap" data-name="Changes">
       <div className="flex flex-col justify-center relative shrink-0 text-code-success">
         <p className="leading-[18px]">+1</p>
       </div>
@@ -540,7 +540,7 @@ function AiThinking1() {
           </svg>
         </div>
       </div>
-      <p className="font-['PingFang_SC:Regular',sans-serif] leading-[18px] not-italic relative shrink-0 text-status-error text-[14px] whitespace-nowrap">{`Error: Error reason summary `}</p>
+      <p className="t-body-compact relative shrink-0 text-status-error whitespace-nowrap">{`Error: Error reason summary `}</p>
     </div>
   );
 }
@@ -548,7 +548,7 @@ function AiThinking1() {
 function AiThinking2() {
   return (
     <div className="content-stretch flex items-center relative shrink-0 w-full" data-name="AI Thinking">
-      <p className="flex-[1_0_0] font-['PingFang_SC:Regular',sans-serif] leading-[20px] min-w-px not-italic relative text-status-error text-[12px]">Error reason details here.</p>
+      <p className="flex-[1_0_0] t-small leading-[20px] min-w-px relative text-status-error">Error reason details here.</p>
     </div>
   );
 }
@@ -567,7 +567,7 @@ function OneRound() {
     <div className="content-stretch flex flex-col gap-[12px] items-start p-[10px] relative shrink-0 w-[360px]" data-name="One round">
       <div className="bg-[#fafafa] content-stretch flex flex-col gap-[4px] items-start justify-end px-[10px] py-[8px] relative rounded-[8px] shrink-0 w-[340px]" data-name="User Prompt">
         <Tag />
-        <p className="font-['PingFang_SC:Regular',sans-serif] leading-[24px] min-w-full not-italic relative shrink-0 text-text-secondary text-[14px] w-[min-content]">User prompt.</p>
+        <p className="t-body min-w-full relative shrink-0 text-text-secondary w-[min-content]">User prompt.</p>
       </div>
       <AiOutput />
       <div className="bg-az-secondary content-stretch flex gap-[8px] items-start px-[10px] py-[8px] relative rounded-[4px] shrink-0 w-[340px]" data-name="Error">
@@ -575,7 +575,7 @@ function OneRound() {
         <ErrorMessage />
         <div className="bg-white content-stretch flex gap-[4px] items-center px-[8px] py-[4px] relative rounded-[4px] shrink-0" data-name="Secondary-Button">
           <div aria-hidden="true" className="absolute border-[#d8dada] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[4px]" />
-          <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[12px] whitespace-nowrap">
+            <div className="flex flex-col t-small justify-center relative shrink-0 text-text-primary whitespace-nowrap">
             <p className="leading-[20px]">Retry</p>
           </div>
         </div>
@@ -595,7 +595,7 @@ function ChatArea() {
 function Input1() {
   return (
     <div className="content-stretch flex flex-[1_0_0] items-center justify-center min-w-px relative" data-name="Input">
-      <div className="flex flex-[1_0_0] flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] min-w-px not-italic relative text-[#b2b4b4] text-[14px]">
+      <div className="flex flex-[1_0_0] flex-col t-body justify-center min-w-px relative text-[#b2b4b4]">
         <p className="leading-[24px]">Ask me anything…</p>
       </div>
     </div>
@@ -671,7 +671,7 @@ function Svg() {
 function Container21() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[14px] whitespace-nowrap">
+      <div className="flex flex-col t-body justify-center relative shrink-0 text-text-primary whitespace-nowrap">
         <p className="leading-[18px]">Questions</p>
       </div>
     </div>
@@ -694,7 +694,7 @@ function LeftIconLabel() {
 function Container22() {
   return (
     <div className="content-stretch flex flex-col items-center min-w-[32px] px-[3.36px] relative shrink-0" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-secondary text-[13px] text-center whitespace-nowrap">
+      <div className="flex flex-col t-caption justify-center relative shrink-0 text-text-secondary text-center whitespace-nowrap">
         <p className="leading-[20px]">1 / 3</p>
       </div>
     </div>
@@ -742,7 +742,7 @@ function Header() {
 function Heading() {
   return (
     <div className="content-stretch flex flex-col items-start pb-[8px] relative shrink-0 w-full" data-name="Heading 3">
-      <div className="flex flex-col font-['PingFang_SC:Semibold',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[16px] w-full">
+      <div className="flex flex-col t-heading justify-center relative shrink-0 text-text-primary w-full">
         <p className="leading-[22px]">Question heading?</p>
       </div>
     </div>
@@ -752,7 +752,7 @@ function Heading() {
 function Container24() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[13px] whitespace-nowrap">
+      <div className="flex flex-col t-caption justify-center relative shrink-0 text-text-primary whitespace-nowrap">
         <p className="leading-[20px]">Planning / Task Breakdown</p>
       </div>
     </div>
@@ -762,7 +762,7 @@ function Container24() {
 function Container25() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[13px] whitespace-nowrap">
+      <div className="flex flex-col t-caption justify-center relative shrink-0 text-text-primary whitespace-nowrap">
         <p className="leading-[20px]">Planning / Task Breakdown</p>
       </div>
     </div>
@@ -772,7 +772,7 @@ function Container25() {
 function Container26() {
   return (
     <div className="content-stretch flex flex-[1_0_0] flex-col items-start min-w-px relative" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[13px] whitespace-nowrap">
+      <div className="flex flex-col t-caption justify-center relative shrink-0 text-text-primary whitespace-nowrap">
         <p className="leading-[20px]">Planning / Task Breakdown</p>
       </div>
     </div>
@@ -782,7 +782,7 @@ function Container26() {
 function Container27() {
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0" data-name="Container">
-      <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[#b2b4b4] text-[13px] whitespace-nowrap">
+      <div className="flex flex-col t-caption justify-center relative shrink-0 text-[#b2b4b4] whitespace-nowrap">
         <p className="leading-[20px]">Or, describe your needs…</p>
       </div>
     </div>
@@ -867,12 +867,12 @@ function ActionButtons() {
         <div className="bg-clip-padding border-0 border-[transparent] border-solid content-stretch flex gap-[8px] items-start justify-end px-[10px] py-[8px] relative size-full">
           <div className="bg-white content-stretch flex gap-[4px] items-center px-[8px] py-[4px] relative rounded-[4px] shrink-0" data-name="Secondary-Button">
             <div aria-hidden="true" className="absolute border-[#d8dada] border-[0.6px] border-solid inset-0 pointer-events-none rounded-[4px]" />
-            <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-text-primary text-[12px] whitespace-nowrap">
+              <div className="flex flex-col t-small justify-center relative shrink-0 text-text-primary whitespace-nowrap">
               <p className="leading-[20px]">Skip</p>
             </div>
           </div>
           <div className="bg-[#e6ccdc] content-stretch flex gap-[4px] items-center px-[8px] py-[4px] relative rounded-[4px] shrink-0" data-name="Primary-Button">
-            <div className="flex flex-col font-['PingFang_SC:Regular',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[12px] text-white whitespace-nowrap">
+            <div className="flex flex-col t-small justify-center relative shrink-0 text-white whitespace-nowrap">
               <p className="leading-[20px]">Continue</p>
             </div>
           </div>

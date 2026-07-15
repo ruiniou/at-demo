@@ -96,7 +96,7 @@ export function AIInputBox({
           border-radius: 8px;
         }
         .ai-inputbox-textarea::-webkit-scrollbar-thumb:hover {
-          background-color: #B2B4B4;
+          background-color: var(--color-graphite-40);
         }
         .ai-inputbox-textarea {
           scrollbar-width: thin;
@@ -131,7 +131,7 @@ export function AIInputBox({
             disabled={disabled}
             rows={1}
             className={[
-              "t-input",
+              "t-body",
               "flex-1 w-full bg-transparent border-none outline-none resize-none",
               "text-text-primary",
               disabled

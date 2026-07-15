@@ -53,7 +53,7 @@ export function OptionLabel({
           className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border ${
             selected
               ? "border-brand-1 bg-brand-1"
-              : "border-[#D8DADA] bg-white"
+              : "border-graphite-20 bg-white"
           }`}
         >
           {selected && (
@@ -66,11 +66,11 @@ export function OptionLabel({
 
       <span
         style={{
-          fontFamily: "'PingFang SC', sans-serif",
+          fontFamily: "Inter, sans-serif",
           fontWeight: 400,
           fontSize: 12,
           lineHeight: "20px",
-          color: "#3F4444",
+          color: "var(--color-text-primary)",
         }}
       >
         {label}
@@ -79,11 +79,11 @@ export function OptionLabel({
       {sub && (
         <span
           style={{
-            fontFamily: "'PingFang SC', sans-serif",
+            fontFamily: "Inter, sans-serif",
             fontWeight: 400,
             fontSize: 12,
             lineHeight: "20px",
-            color: "#888E8E",
+            color: "var(--color-text-secondary)",
           }}
         >
           {sub}

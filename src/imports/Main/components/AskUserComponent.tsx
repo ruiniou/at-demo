@@ -34,7 +34,7 @@ function CTAPrimaryButton({ children, disabled = false, onClick }: { children: R
       className={`px-[8px] py-[4px] rounded-[4px] flex items-center gap-[4px] transition-colors h-[28px] ${
         disabled
           ? 'bg-[#E6CCDC] text-white cursor-not-allowed'
-          : 'bg-[#830051] hover:bg-[#6a0042] text-white'
+          : 'bg-brand-1 hover:bg-brand-1-hover text-white'
       }`}
     >
       <span className="t-small text-white">{children}</span>

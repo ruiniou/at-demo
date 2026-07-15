@@ -11,18 +11,31 @@
   transform: translateY(0);
 }
 
-/* Design Tokens - Typography Classes */
+/* ═══════════════════════════════════════════
+   Design Tokens — Typography Classes
+   Naming: Figma "Group / Style" → CSS ".t-{group}-{style}"
+   ═══════════════════════════════════════════ */
+
+/* ── Heading Group (Roboto Slab) ── */
 .t-heading {
   font-family: var(--font-heading);
   font-size: 16px;
   font-weight: 600;
   line-height: 22px;
 }
+
+/* ── Body Group (Inter) ── */
 .t-body {
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 400;
   line-height: 24px;
+}
+.t-body-compact {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
 }
 .t-body-secondary {
   font-family: var(--font-body);
@@ -31,18 +44,21 @@
   line-height: 20px;
   color: #8C8F8F;
 }
-.t-body-compact {
+.t-body-medium {
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 400;
-  line-height: 18px;
+  font-weight: 500;
+  line-height: 20px;
 }
-.t-body-accent {
+.t-link {
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 500;
   line-height: 24px;
+  color: var(--color-brand-1);
 }
+
+/* ── Label Group (Inter) ── */
 .t-caption {
   font-family: var(--font-body);
   font-size: 13px;
@@ -55,87 +71,53 @@
   font-weight: 400;
   line-height: 16px;
 }
-.t-link {
+.t-small-medium {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+/* ── Shell Group (Inter — Document rendering T/L/F) ── */
+.t-shell-title {
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 500;
-  line-height: 24px;
-  color: #830051;
+  font-weight: 700;
+  line-height: 20px;
 }
+.t-shell-header {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+.t-shell-cell {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+.t-shell-footnote {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 14px;
+}
+
+/* ── Table (UI / Markdown tables) ── */
 .t-table {
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: 400;
   line-height: 16px;
 }
-.t-input {
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 24px;
-}
+
+/* ── Code Group (Menlo) ── */
 .t-code {
   font-family: 'Menlo', 'Courier New', Courier, monospace;
   font-size: 12px;
   font-weight: 400;
   line-height: 1.25;
-}
-
-/* ---- General UI Typography Extensions ---- */
-.t-display-1 {
-  font-family: var(--font-heading);
-  font-size: var(--text-5xl, 36px);
-  font-weight: var(--font-weight-semibold, 600);
-  line-height: 1.2;
-}
-.t-title-1 {
-  font-family: var(--font-heading);
-  font-size: var(--text-3xl, 24px);
-  font-weight: var(--font-weight-semibold, 600);
-  line-height: 32px;
-}
-.t-title-2 {
-  font-family: var(--font-heading);
-  font-size: var(--text-2xl, 20px);
-  font-weight: var(--font-weight-semibold, 600);
-  line-height: 28px;
-}
-.t-title-3 {
-  font-family: var(--font-heading);
-  font-size: var(--text-xl, 18px);
-  font-weight: var(--font-weight-semibold, 600);
-  line-height: 24px;
-}
-.t-body-medium {
-  font-family: var(--font-body);
-  font-size: var(--text-md, 14px);
-  font-weight: var(--font-weight-medium, 500);
-  line-height: 24px;
-}
-.t-small-medium {
-  font-family: var(--font-body);
-  font-size: var(--text-sm, 12px);
-  font-weight: var(--font-weight-medium, 500);
-  line-height: 18px;
-}
-.t-micro {
-  font-family: var(--font-body);
-  font-size: var(--text-2xs, 10px);
-  font-weight: var(--font-weight-medium, 500);
-  line-height: 14px;
-}
-.t-code-editor {
-  font-family: var(--font-mono, 'Menlo', 'Courier New', Courier, monospace);
-  font-size: var(--text-md, 14px);
-  font-weight: var(--font-weight-normal, 400);
-  line-height: 1.5;
-}
-.t-code-shell {
-  font-family: var(--font-mono, 'Menlo', 'Courier New', Courier, monospace);
-  font-size: var(--text-sm, 12px);
-  font-weight: var(--font-weight-normal, 400);
-  line-height: 1.4;
-  color: var(--color-text-secondary, #8C8F8F);
 }
 
 /* Custom Scrollbar Styles */
@@ -161,29 +143,29 @@
   scrollbar-color: rgba(216, 218, 218, 0.75) transparent;
 }
 *:hover {
-  scrollbar-color: #B2B4B4 transparent;
+  scrollbar-color: var(--color-graphite-40) transparent;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #B2B4B4;
+  background-color: var(--color-graphite-40);
 }
 
 /* Colored background scrollbar override (e.g. for ToolCallCard dropdown or active states) */
 .scrollbar-colored::-webkit-scrollbar-thumb {
-  background-color: #E6CCDC;
+  background-color: var(--color-brand-1-disabled);
 }
 
 .scrollbar-colored::-webkit-scrollbar-thumb:hover {
-  background-color: #CC99B9;
+  background-color: var(--color-brand-1-hover);
 }
 
 /* Firefox scrollbar support for colored backgrounds */
 .scrollbar-colored {
-  scrollbar-color: #E6CCDC transparent;
+  scrollbar-color: var(--color-brand-1-disabled) transparent;
 }
 
 .scrollbar-colored:hover {
-  scrollbar-color: #CC99B9 transparent;
+  scrollbar-color: var(--color-brand-1-hover) transparent;
 }
 
 /* Animation classes for Listing Preview */

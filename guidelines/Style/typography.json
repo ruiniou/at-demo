@@ -7,7 +7,7 @@
 
   "fontFamily": {
     "sans": {
-      "$value": "PingFang SC"
+      "$value": "Inter"
     },
 
     "mono": {

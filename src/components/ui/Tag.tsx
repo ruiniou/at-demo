@@ -12,7 +12,7 @@ export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
  * Status=Hovered: bg graphite-20 (#D8DADA)
  *
  * Layout: row, padding 2px 6px, gap 4px, hug content
- * Text: PingFang SC, Regular 400, 12px / 20px
+ * Text: Inter, Regular 400, 12px / 20px
  * Close icon: 12×12 close-line
  */
 const Tag = forwardRef<HTMLSpanElement, TagProps>(
@@ -25,7 +25,7 @@ const Tag = forwardRef<HTMLSpanElement, TagProps>(
       >
         <span
           style={{
-            fontFamily: "'PingFang SC', sans-serif",
+            fontFamily: "Inter, sans-serif",
             fontWeight: 400,
             fontSize: 12,
             lineHeight: "20px",
