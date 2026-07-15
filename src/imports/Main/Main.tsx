@@ -4751,7 +4751,7 @@ ods graphics off;`;
             <LocalIcon src={codeSlashIconUrl} className="w-[16px] h-[16px]" color="#888E8E" />
           )
         }
-        actions={toolbarButtons}
+        actions={docType === 'figure' && figureView === 'preview' ? undefined : toolbarButtons}
       />
       <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container">
         {docType === 'figure' && figureView === 'preview' ? (
