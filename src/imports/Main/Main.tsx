@@ -263,7 +263,7 @@ const VerticalDimension = ({ height, label, color = "#F97316" }: { height: numbe
 
 function InlineHighlight({ children }: { children: React.ReactNode }) {
   return (
-    <span className="bg-graphite-10 px-[4px] rounded-[4px] h-[20px] inline-flex items-center t-caption text-text-primary">
+    <span className="bg-graphite-10 px-[4px] rounded-[4px] h-[20px] inline-flex items-center t-caption text-brand-1 font-semibold">
       {children}
     </span>
   );
@@ -360,7 +360,7 @@ function ChatConversation({
 
       {messages.map((msg, i) => (
         <React.Fragment key={i}>
-          <div className="flex flex-col w-full gap-[12px] relative">
+          <div className={`flex flex-col w-full gap-[12px] relative ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
             {msg.type === 'user' && (
               <AIUserPrompt
                 content={msg.content || ""}
@@ -408,17 +408,17 @@ function ChatConversation({
                   
                   {/* h1 block */}
                   <div className="relative w-full">
-                    <h1 className="t-heading text-text-primary mb-[10px]">Analysis Results Summary</h1>
+                    <h1 className="text-[16px] font-bold text-text-primary mb-[10px]" style={{ fontFamily: 'var(--font-body)' }}>Analysis Results Summary</h1>
                     {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
                   </div>
 
                   {/* p block */}
                   <div className="relative w-full">
-                    <p className="t-body text-text-primary mb-[10px] leading-relaxed">
+                    <p className="t-body text-text-primary p-[4px] mb-[8px] leading-relaxed">
                       Generated Kaplan-Meier survival plot for <InlineHighlight>OS (Overall Survival)</InlineHighlight> using the ITT population. 
                       Reference the <Hyperlink>Analysis Plan v1.2</Hyperlink> for further details.
                     </p>
-                    {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
+                    {devSpacingMode && <VerticalDimension height={8} label="mb: 8px" color="#F97316" />}
                   </div>
                   
                   {/* table block */}
@@ -433,22 +433,26 @@ function ChatConversation({
                   
                   {/* p block */}
                   <div className="relative w-full">
-                    <p className="t-body text-text-primary mb-[10px] leading-relaxed">
+                    <p className="t-body text-text-primary p-[4px] mb-[8px] leading-relaxed">
                       Key observations from the data cohort:
                     </p>
-                    {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
+                    {devSpacingMode && <VerticalDimension height={8} label="mb: 8px" color="#F97316" />}
                   </div>
 
                   {/* list block */}
                   <div className="relative w-full">
                     <ul className="list-disc pl-[24px] mb-[10px] flex flex-col gap-[4px]">
-                      <li className="t-body text-text-primary">High survival rate in early stages.</li>
+                      <li className="t-body text-text-primary">
+                        <strong className="font-semibold text-text-primary">High survival rate</strong> in early stages.
+                      </li>
                       {devSpacingMode && (
                         <div className="w-full relative pointer-events-none" style={{ height: 4 }}>
                           <VerticalDimension height={4} label="gap-y: 4px" color="#8B5CF6" />
                         </div>
                       )}
-                      <li className="t-body text-text-primary">Significant variance in treatment line 3.</li>
+                      <li className="t-body text-text-primary">
+                        <strong className="font-semibold text-text-primary">Significant variance</strong> in treatment line 3.
+                      </li>
                     </ul>
                     {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
                   </div>
@@ -463,7 +467,7 @@ function ChatConversation({
 
                   {/* h3 block */}
                   <div className="relative w-full">
-                    <h3 className="t-heading text-text-primary mb-[10px]">SAS Logic</h3>
+                    <h3 className="text-[16px] font-bold text-text-primary mb-[10px]" style={{ fontFamily: 'var(--font-body)' }}>SAS Logic</h3>
                     {devSpacingMode && <VerticalDimension height={10} label="mb: 10px" color="#F97316" />}
                   </div>
 
@@ -910,7 +914,7 @@ function WorkspaceModal({
           </button>
           <button
             onClick={onPrimary}
-            className="h-[36px] rounded-[4px] bg-brand-1 px-[12px] t-body-secondary text-white hover:bg-brand-1-hover active:scale-[0.96]"
+            className="h-[36px] rounded-[4px] bg-brand-1 px-[12px] t-body-secondary text-white hover:bg-[#6D0043] active:scale-[0.96]"
           >
             {primaryLabel}
           </button>
@@ -1009,6 +1013,8 @@ function ViewToggleBar({
   panelLayout,
   onPanelLayoutChange,
   docType = 'table',
+  rtfOpen,
+  onToggleRtf,
 }: {
   treeListOpen: boolean;
   onToggleTreeList: () => void;
@@ -1021,6 +1027,8 @@ function ViewToggleBar({
   panelLayout: PanelLayout;
   onPanelLayoutChange: (l: PanelLayout) => void;
   docType?: DocumentType;
+  rtfOpen?: boolean;
+  onToggleRtf?: () => void;
 }) {
 
   const viewTabs = (docType === 'listing' || docType === 'figure') ? null : (
@@ -1052,6 +1060,12 @@ function ViewToggleBar({
     </>
   );
 
+  const rightControls = (
+    <div className="flex items-center gap-[12px]">
+      <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
+    </div>
+  );
+
   if (!treeListOpen) {
     // Collapsed: single row with study info + view tabs + panel toggle
     return (
@@ -1073,7 +1087,7 @@ function ViewToggleBar({
             </TooltipText>
           </div>
           <div className="flex items-stretch gap-[4px] h-full">{viewTabs}</div>
-          <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
+          {rightControls}
         </div>
       </div>
     );
@@ -1086,8 +1100,8 @@ function ViewToggleBar({
         <div className="flex items-stretch justify-center flex-1 h-full">
           {viewTabs}
         </div>
-        <div className="absolute right-[12px] top-[14px]">
-          <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
+        <div className="absolute right-[12px] top-[12px]">
+          {rightControls}
         </div>
       </div>
     </div>
@@ -1542,25 +1556,49 @@ function HorizontalWorkspaceDivider({
 }
 
 const listingData = [
-  { subject: "E0001001", age: "29/F/White", region: "xx/xx/xx", ethnicity: "Xxxxxxx", country: "Xxxxxxx", weight: "xx", height: "xx", bmi: "xx.x", nicotine: "Xxxxx", alcohol: "Xxxxx", ecog: "(0) Fully active" },
-  { subject: "E0001002", age: "30/F/White", region: "xx/xx/xx", ethnicity: "Xxxxxxx", country: "Xxxxxxx", weight: "xx", height: "xx", bmi: "xx.x", nicotine: "Xxxxx", alcohol: "Xxxxx", ecog: "(1) Fully active" },
-  { subject: "E0001003", age: "31/F/White", region: "xx/xx/xx", ethnicity: "Xxxxxxx", country: "Xxxxxxx", weight: "xx", height: "xx", bmi: "xx.x", nicotine: "Xxxxx", alcohol: "Xxxxx", ecog: "(2) Fully active" },
-  { subject: "E0001004", age: "32/F/White", region: "xx/xx/xx", ethnicity: "Xxxxxxx", country: "Xxxxxxx", weight: "xx", height: "xx", bmi: "xx.x", nicotine: "Xxxxx", alcohol: "Xxxxx", ecog: "(3) Fully active" },
+  { studyDay: "-21", lesionNum: "1", lesionLoc: "Lung, right upper lobe", locSpec: "", method: "Multi-Slice Spiral CT", diameter: "42", sum: "150" },
+  { studyDay: "", lesionNum: "2", lesionLoc: "Local nymph node", locSpec: "Right paratracheal node", method: "Multi-Slice Spiral CT", diameter: "20", sum: "" },
+  { studyDay: "", lesionNum: "3", lesionLoc: "Lung, left upper lobe", locSpec: "", method: "Multi-Slice Spiral CT", diameter: "25", sum: "" },
+  { studyDay: "", lesionNum: "4", lesionLoc: "Liver-left lobe, segment IV", locSpec: "Segment 4 hepatic metastases", method: "Multi-Slice Spiral CT", diameter: "31", sum: "" },
+  { studyDay: "", lesionNum: "5", lesionLoc: "Spleen", locSpec: "Splenic metastasis", method: "Multi-Slice Spiral CT", diameter: "32", sum: "" },
+  { studyDay: "46", lesionNum: "1", lesionLoc: "Lung, right upper lobe", locSpec: "", method: "Multi-Slice Spiral CT", diameter: "31", sum: "93" },
+  { studyDay: "", lesionNum: "2", lesionLoc: "Local nymph node", locSpec: "Right paratracheal node", method: "Multi-Slice Spiral CT", diameter: "10", sum: "" },
+  { studyDay: "", lesionNum: "3", lesionLoc: "Lung, left upper lobe", locSpec: "", method: "Multi-Slice Spiral CT", diameter: "15", sum: "" },
+  { studyDay: "", lesionNum: "4", lesionLoc: "Liver-left lobe, segment IV", locSpec: "Segment 4 hepatic metastases", method: "Multi-Slice Spiral CT", diameter: "17", sum: "" },
+  { studyDay: "", lesionNum: "5", lesionLoc: "Spleen", locSpec: "Splenic metastasis", method: "Multi-Slice Spiral CT", diameter: "20", sum: "" },
+  { studyDay: "86", lesionNum: "1", lesionLoc: "Lung, right upper lobe", locSpec: "", method: "Multi-Slice Spiral CT", diameter: "32", sum: "91" },
+  { studyDay: "", lesionNum: "2", lesionLoc: "Local nymph node", locSpec: "Right paratracheal node", method: "Multi-Slice Spiral CT", diameter: "12", sum: "" },
+  { studyDay: "", lesionNum: "3", lesionLoc: "Lung, left upper lobe", locSpec: "", method: "Multi-Slice Spiral CT", diameter: "14", sum: "" },
+  { studyDay: "", lesionNum: "4", lesionLoc: "Liver-left lobe, segment IV", locSpec: "Segment 4 hepatic metastases", method: "Multi-Slice Spiral CT", diameter: "14", sum: "" },
+  { studyDay: "", lesionNum: "5", lesionLoc: "Spleen", locSpec: "Splenic metastasis", method: "Multi-Slice Spiral CT", diameter: "19", sum: "" },
+  { studyDay: "128", lesionNum: "1", lesionLoc: "Lung, right upper lobe", locSpec: "", method: "Multi-Slice Spiral CT", diameter: "30", sum: "65" },
+  { studyDay: "", lesionNum: "2", lesionLoc: "Local nymph node", locSpec: "Right paratracheal node", method: "Multi-Slice Spiral CT", diameter: "5", sum: "" },
+  { studyDay: "", lesionNum: "3", lesionLoc: "Lung, left upper lobe", locSpec: "", method: "Multi-Slice Spiral CT", diameter: "10", sum: "" },
+  { studyDay: "", lesionNum: "4", lesionLoc: "Liver-left lobe, segment IV", locSpec: "Segment 4 hepatic metastases", method: "Multi-Slice Spiral CT", diameter: "5", sum: "" },
+  { studyDay: "", lesionNum: "5", lesionLoc: "Spleen", locSpec: "Splenic metastasis", method: "Multi-Slice Spiral CT", diameter: "15", sum: "" },
+  { studyDay: "xxx#", lesionNum: "x", lesionLoc: "xxxxxxx", locSpec: "xxxxxxx", method: "", diameter: "", sum: "" },
 ];
 
 const listingColumns = [
-  { key: "subject", label: "Subject identifier", width: 112, widthPx: 112 },
-  { key: "age", label: "Age/Sex/Race [a]", width: 118, widthPx: 118 },
-  { key: "region", label: "Geographical region/Prior gastrectomy/Line of therapy", width: 205, widthPx: 205 },
-  { key: "ethnicity", label: "Ethnicity", width: 86, widthPx: 86 },
-  { key: "country", label: "Country/Area", width: 96, widthPx: 96 },
-  { key: "weight", label: "Baseline weight (kg)", width: 108, widthPx: 108 },
-  { key: "height", label: "Baseline height (cm)", width: 112, widthPx: 112 },
-  { key: "bmi", label: "Baseline body mass index (kg/m2)", width: 124, widthPx: 124 },
-  { key: "nicotine", label: "Nicotine use", width: 92, widthPx: 92 },
-  { key: "alcohol", label: "Alcohol use", width: 88, widthPx: 88 },
-  { key: "ecog", label: "ECOG performance status", width: 132, widthPx: 132 },
+  { key: "studyDay", label: "Study\nday [b]", width: 80, widthPx: 80 },
+  { key: "lesionNum", label: "Lesion\nnumber", width: 80, widthPx: 80 },
+  { key: "lesionLoc", label: "Lesion location", width: 200, widthPx: 200 },
+  { key: "locSpec", label: "Location within site\nspecification", width: 220, widthPx: 220 },
+  { key: "method", label: "Method of assessment", width: 160, widthPx: 160 },
+  { key: "diameter", label: "Diameter\n(mm) [c]", width: 90, widthPx: 90 },
+  { key: "sum", label: "Sum of\ndiameters\n(mm) [d]", width: 100, widthPx: 100 },
 ] as const;
+
+const listingFootnotes = [
+  '* Reviewer who completed baseline first in the absence of an adjudicator, or the reviewer the adjudicator agreed with.',
+  '# Study day of assessment has not been provided, visit day has been used instead.',
+  '[a] Duration of actual exposure is calculated as per statistical analysis plan.',
+  '[b] Study day is relative to randomisation date. A negative study day indicates the assessment/event occurred before date of randomisation.',
+  '[c] Non-nodal lesion longest diameter or nodal short axis diameter.',
+  '[d] Sum of non-nodal lesion longest diameters and nodal short axis diameters.',
+  'NA Not applicable; NE Not evaluable; RECIST Response evaluation criteria in solid tumors, Version 1.1.',
+  '<<output program path>> <<output file name>> <<date/time>>'
+];
 
 // Print preview constants
 const A4_LANDSCAPE_WIDTH_PX = 1123;
@@ -1684,7 +1722,7 @@ function ColumnDivider({
         }}
       >
         <div
-          className="flex items-center gap-[4px] font-['Inter',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
+          className="flex items-center gap-[4px] font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
           style={{
             background: pillBg,
             color: pillTextColor,
@@ -2394,10 +2432,10 @@ function ListingShellPreview({
                       style={{ width: `${pageWidthPx}px`, height: `${pageHeightPx}px` }}
                     >
                       <div style={{ transform: `scale(${pageScale / 100})`, transformOrigin: 'top left' }} className="relative">
-                        <div className="absolute right-[32px] top-[28px] rounded-[4px] bg-az-secondary px-[6px] py-0 font-['Inter',sans-serif] text-[12px] leading-[20px] text-brand-1">{pageIndex + 1}/{printPages.length}</div>
+                        <div className="absolute right-[32px] top-[28px] rounded-[4px] bg-az-secondary px-[6px] py-0 font-['PingFang_SC',sans-serif] text-[12px] leading-[20px] text-brand-1">{pageIndex + 1}/{printPages.length}</div>
                         <div className="p-[48px] pt-[64px]">
                           <div className="border-b-2 border-black pb-[14px] mb-[10px] text-center">
-                            <h1 className="t-shell-title tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
+                            <h1 className="font-['Inter',sans-serif] text-[13px] leading-[18px] font-bold tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
                             <p className="mt-[4px] font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676]">
                               Rows {page.rowPageIndex * PRINT_ROWS_PER_PAGE + 1}-{page.rowPageIndex * PRINT_ROWS_PER_PAGE + page.pageRows.length} · Columns {page.pageScrollColumns[0] ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[0].key) + 1 : 1}-{page.pageScrollColumns.length ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[page.pageScrollColumns.length - 1].key) + 1 : frozenPrintColumns.length}{frozenPrintColumns.length > 0 ? ` · frozen 1-${frozenPrintColumns.length} repeated` : ''}
                             </p>
@@ -2411,7 +2449,7 @@ function ListingShellPreview({
                             <thead>
                               <tr className="border-b-2 border-black">
                                 {page.pageColumns.map((column) => (
-                                  <th key={column.key} className="border-r border-border-default px-[4px] py-[6px] text-left align-middle t-shell-footnote font-bold whitespace-normal break-words last:border-r-0">{column.label}</th>
+                                  <th key={column.key} className="border-r border-border-default px-[4px] py-[6px] text-left align-middle text-[10px] leading-[14px] font-bold whitespace-normal break-words last:border-r-0">{column.label}</th>
                                 ))}
                               </tr>
                             </thead>
@@ -2437,7 +2475,7 @@ function ListingShellPreview({
                 <span className="t-heading text-text-primary">Appendix 16.2.4</span>
                 <button type="button" onClick={() => setPageSepActive(false)} className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] transition-colors hover:bg-black/5">
                   <CloseIcon className="h-[16px] w-[16px]" color="var(--color-text-primary)" />
-                  <span className="font-['Inter',sans-serif] text-[14px] leading-[20px] font-normal text-text-primary">Exit Preview</span>
+                  <span className="font-['PingFang_SC',sans-serif] text-[14px] leading-[20px] font-normal text-text-primary">Exit Preview</span>
                 </button>
               </div>
             </div>,
@@ -2445,15 +2483,32 @@ function ListingShellPreview({
           )}
 
           {/* Normal (non-preview) table view */}
-          <div className={`min-w-max p-[12px] ${pageSepActive ? 'hidden' : ''}`}>
-            <div className="w-max bg-white text-black">
+          <div className={`min-w-max p-[24px] ${pageSepActive ? 'hidden' : ''}`}>
+            <div className={`w-max bg-white text-black ${!metadataOpen ? 'mx-auto' : ''}`}>
               <div className="relative">
+                {/* Study Info & Page Info */}
+                <div className="flex justify-between items-end w-full mb-[24px]">
+                  <div className="t-body text-[12px] leading-[18px] whitespace-pre-wrap">AstraZeneca<br/>Study number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, &lt;&lt;Data cut-off ddmmyyyy&gt;&gt;</div>
+                  <div className="t-body text-[12px] leading-[18px] text-right">Page 266 of 280</div>
+                </div>
+
                 {/* Title header */}
-                <div className="h-[72px] min-w-max border-b-2 border-black flex items-start justify-center px-[16px] pt-[24px]">
-                  <h1 className="t-shell-title text-center tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
+                <div className="min-w-max flex flex-col items-center justify-center pb-[12px]">
+                  <h1 className="t-body text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">
+                    Appendix 16.2.12<br />
+                    Tumour assessment details by blinded independent central review (ITT analysis set)<br />
+                    Subject identifier: &lt;&lt;Exxxxxxxx&gt;&gt;
+                  </h1>
+                </div>
+
+                {/* Subheader */}
+                <div className="w-full text-left t-body text-[12px] leading-[18px] mb-[12px] mt-[12px]">
+                  <p>G. Target lesion details</p>
+                  <p>Reviewer: [[Radiologist 1|Radiologist 2]]*, Review identification number: &lt;&lt;xxxxxxx&gt;&gt;</p>
+                  <p>Planned treatment group: &lt;&lt;AZD1 (low dose)&gt;&gt;, Duration of actual exposure (months) [a]: &lt;&lt;xx&gt;&gt;, Death study day [b]: &lt;&lt;xx&gt;&gt;</p>
                 </div>
                 <div ref={tableContainerRef} className="relative inline-block min-w-max">
-                  <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-black" style={{ width: `${totalListingWidth}px` }}>
+                  <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-black border-t-2 border-black" style={{ width: `${totalListingWidth}px` }}>
                     <colgroup>
                       {listingColumns.map((col) => (
                         <col key={col.key} style={{ width: `${col.widthPx}px`, minWidth: `${col.widthPx}px` }} />
@@ -2474,7 +2529,7 @@ function ListingShellPreview({
                               key={column.key}
                               ref={(node) => { thRefs.current[columnIndex] = node; }}
                               style={cellStyle}
-                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-black border-r-graphite-10 px-[4px] py-[6px] text-left align-middle text-[12px] leading-[18px] font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
+                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-black border-r-graphite-10 px-[8px] py-[6px] text-left align-middle text-[14px] leading-[20px] font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
                               onMouseEnter={() => {
                                 if (draggingBreak === null && draggingFreeze === null && columnIndex < firstPageBreakIndex) {
                                   setHoveredFreezeColumn(columnIndex);
@@ -2490,13 +2545,13 @@ function ListingShellPreview({
                                 >
                                   <div className="flex items-center gap-[4px] bg-[#3F4444] text-[#EBEFEE] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
                                     <FreezeIcon color="white" />
-                                    <span className="font-['Inter',sans-serif] font-normal text-[12px] leading-[20px]">Repeat Columns</span>
+                                    <span className="font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px]">Repeat Columns</span>
                                   </div>
                                 </div>
                               )}
                               {/* Button area */}
                               <div className="flex w-full items-center justify-between gap-[4px] rounded-[3px]">
-                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} className="flex-1 min-w-0 whitespace-normal break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
+                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} className="flex-1 min-w-0 whitespace-pre-wrap break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
                               </div>
                               
                               {frozenBoundary && (
@@ -2512,7 +2567,7 @@ function ListingShellPreview({
                                     }}
                                   >
                                     <div
-                                      className="flex items-center gap-[4px] font-['Inter',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
+                                      className="flex items-center gap-[4px] font-['PingFang_SC',sans-serif] font-normal text-[12px] leading-[20px] whitespace-nowrap rounded-[3px]"
                                       style={{
                                         background: '#F4E8EE',
                                         color: "var(--color-brand-1)",
@@ -2552,8 +2607,8 @@ function ListingShellPreview({
                     </tr>
                   </thead>
                   <tbody>
-                    {listingData.map((row) => (
-                      <tr key={row.subject} className="group">
+                    {listingData.map((row, rowIndex) => (
+                      <tr key={rowIndex} className="group hover:bg-az-secondary cursor-pointer">
                         {listingColumns.map((column, columnIndex) => {
                           const frozen = isColumnFrozen(columnIndex);
                           const frozenBoundary = frozenUntilIndex === columnIndex;
@@ -2563,8 +2618,8 @@ function ListingShellPreview({
                           if (frozen) { cellStyle.left = `${getFrozenLeft(columnIndex)}px`; cellStyle.zIndex = 20; cellStyle.backgroundColor = 'white'; }
                           if (shadows.length) cellStyle.boxShadow = shadows.join(', ');
                           return (
-                            <td key={`${row.subject}-${column.key}`} style={cellStyle} className={`border-r border-b border-b-border-default group-last:border-b-2 group-last:border-b-black border-border-default px-[4px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-normal break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
-                              <div className="w-full overflow-hidden truncate">
+                            <td key={`${rowIndex}-${column.key}`} style={cellStyle} className={`border-r border-b border-b-border-default group-last:border-b-2 group-last:border-b-black border-border-default px-[8px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-pre-wrap break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
+                              <div className="w-full overflow-hidden">
                                 {(row as Record<string, string>)[column.key]}
                               </div>
                             </td>
@@ -2622,7 +2677,7 @@ function ListingShellPreview({
                       >
                         <div className="flex items-center gap-[4px] bg-[#3F4444] text-[#EBEFEE] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
                           <LocalIcon src={addLineIconUrl} className="w-[14px] h-[14px]" color="white" />
-                          <span className="font-['Inter',sans-serif] text-[12px] leading-[20px]">Add page break</span>
+                          <span className="font-['PingFang_SC:Regular',sans-serif] text-[12px] leading-[20px]">Add page break</span>
                         </div>
                       </div>
                     </>
@@ -2671,6 +2726,14 @@ function ListingShellPreview({
                     );
                   })}
                 </div>
+                {/* Footnotes */}
+                <div className="mt-[16px] flex flex-col gap-[4px] w-full text-left">
+                  {listingFootnotes.map((fn, idx) => (
+                    <p key={idx} className="t-body text-[12px] leading-[18px] text-text-secondary whitespace-pre-wrap">
+                      {fn}
+                    </p>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -2718,6 +2781,9 @@ interface ShellTableData {
   tableTitle: string;
   tableNumber: string;
   population: string;
+  studyInfo?: string;
+  pageInfo?: string;
+  footnotes?: string[];
   columnGroups: { name: string; span: number }[];
   columns: string[];
   rows: { category: string; indent?: number; values: string[]; isHeader?: boolean }[];
@@ -2726,31 +2792,60 @@ interface ShellTableData {
 const shellTableData: Record<string, ShellTableData> = {
   'Table 14.1.1': {
     tableNumber: 'Table 14.1.1',
-    tableTitle: 'Demographics and Baseline Characteristics',
-    population: 'Safety Analysis Set',
-    columnGroups: [
-      { name: 'Placebo\n(N=120)', span: 2 },
-      { name: 'AZD0780 10mg\n(N=118)', span: 2 },
-      { name: 'AZD0780 20mg\n(N=122)', span: 2 },
-      { name: 'Total\n(N=360)', span: 2 },
+    tableTitle: 'Disposition',
+    studyInfo: 'AstraZeneca\nStudy number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, <<Data cut-off ddmmyyyy>>',
+    pageInfo: 'Page 9 of 280',
+    footnotes: [
+      '[a] Screened subjects are those who signed main informed consent.',
+      '[b] Percentages are based on the number of subjects started treatment.',
+      'Subjects are summarised in the arm to which they were randomised.',
+      'Percentages are based on the number of subjects randomised, with the exception of those marked.',
+      'n Number of subjects per category.',
+      '<<output program path>> <<output file name>> <<date/time>>'
     ],
-    columns: ['n', '(%)', 'n', '(%)', 'n', '(%)', 'n', '(%)'],
+    population: '',
+    columnGroups: [
+      { name: 'AZD0901 1.8\nmg/kg', span: 1 },
+      { name: 'AZD0901 2.2\nmg/kg', span: 1 },
+      { name: 'Investigator\nchoice of\ntherapy', span: 1 },
+      { name: 'Total', span: 1 },
+    ],
+    columns: ['n', 'n', 'n', 'n'],
     rows: [
-      { category: 'Sex', values: ['', '', '', '', '', '', '', ''], isHeader: true },
-      { category: 'Male', indent: 1, values: ['72', '(60.0)', '68', '(57.6)', '74', '(60.7)', '214', '(59.4)'] },
-      { category: 'Female', indent: 1, values: ['48', '(40.0)', '50', '(42.4)', '48', '(39.3)', '146', '(40.6)'] },
-      { category: 'Age Group (years)', values: ['', '', '', '', '', '', '', ''], isHeader: true },
-      { category: '< 65', indent: 1, values: ['67', '(55.8)', '64', '(54.2)', '70', '(57.4)', '201', '(55.8)'] },
-      { category: '>= 65 and < 75', indent: 1, values: ['38', '(31.7)', '41', '(34.7)', '37', '(30.3)', '116', '(32.2)'] },
-      { category: '>= 75', indent: 1, values: ['15', '(12.5)', '13', '(11.0)', '15', '(12.3)', '43', '(11.9)'] },
-      { category: 'Race', values: ['', '', '', '', '', '', '', ''], isHeader: true },
-      { category: 'White', indent: 1, values: ['89', '(74.2)', '86', '(72.9)', '91', '(74.6)', '266', '(73.9)'] },
-      { category: 'Black or African American', indent: 1, values: ['18', '(15.0)', '20', '(16.9)', '17', '(13.9)', '55', '(15.3)'] },
-      { category: 'Asian', indent: 1, values: ['8', '(6.7)', '7', '(5.9)', '9', '(7.4)', '24', '(6.7)'] },
-      { category: 'Other', indent: 1, values: ['5', '(4.2)', '5', '(4.2)', '5', '(4.1)', '15', '(4.2)'] },
-      { category: 'Ethnicity', values: ['', '', '', '', '', '', '', ''], isHeader: true },
-      { category: 'Hispanic or Latino', indent: 1, values: ['14', '(11.7)', '12', '(10.2)', '15', '(12.3)', '41', '(11.4)'] },
-      { category: 'Not Hispanic or Latino', indent: 1, values: ['106', '(88.3)', '106', '(89.8)', '107', '(87.7)', '319', '(88.6)'] },
+      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Subjects discontinued Ramucirumab', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Subjects discontinued Paclitaxel', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Subjects discontinued Docetaxel', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Subjects discontinued Irinotecan', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Subjects discontinued TAS-102', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Subjects discontinued Apatinib', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Subjects ongoing in study at data cut-off date', values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'Subjects withdrawn from study', values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'Death', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'Lost to follow-up', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'Screen failure', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'Study terminated by sponsor', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'Withdrawal by subject', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
     ],
   },
   'Table 14.1.2': {
@@ -2882,6 +2977,101 @@ const shellTableData: Record<string, ShellTableData> = {
   },
 };
 
+const errorStructuredLog = {
+  summary: { error: 3, warning: 1, note: 24 },
+  entries: [
+    { level: 'ERROR' as const, code: '388-185', description: 'Expecting an arithmetic operator.', logLine: 22, programLine: 84, affectedCode: '! ;' },
+    { level: 'ERROR' as const, code: '76-322', description: 'Syntax error, statement will be ignored.', logLine: 26, programLine: 88, affectedCode: 'proc means data=;' },
+    { level: 'ERROR' as const, code: '180-322', description: 'Statement is not valid or it is used out of proper order.', logLine: 42, programLine: 132, affectedCode: 'run cancel;' },
+    { level: 'WARNING' as const, code: '1001', description: 'Variable PARAM not found in WORK.ATLAS_UPCIO.', logLine: 18, programLine: 34, affectedCode: 'PARAM' },
+    { level: 'NOTE' as const, code: '', description: 'SAS (r) Proprietary Software 9.4 TS1M6', logLine: 1, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'Copyright (c) 2002-2012 by SAS Institute Inc., Cary, NC, USA.', logLine: 2, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'PROCEDURE SQL used (Total process time): real time 0.02 seconds', logLine: 8, programLine: 3, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'Table WORK.ATLAS_UPCIO created, with 1024 rows and 8 columns.', logLine: 11, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'PROCEDURE SORT used (Total process time): real time 0.04 seconds', logLine: 13, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'DATA statement used (Total process time): real time 0.03 seconds', logLine: 15, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'PROC MEANS used — 512 observations read.', logLine: 20, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'PARMACRO= CHEMISTRY matched 48 observations.', logLine: 30, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'PROCEDURE FREQ used (Total process time): real time 0.01 seconds', logLine: 32, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'Dataset WORK.KM_DATA has 256 observations and 12 variables.', logLine: 34, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'PROCEDURE LIFETEST used (Total process time): real time 0.12 seconds', logLine: 36, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'PROCEDURE TEMPLATE used (Total process time): real time 0.01 seconds', logLine: 38, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'Output added to ODS LISTING destination.', logLine: 39, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'RTF file written: /output/figure_15_1_1.rtf (245 KB)', logLine: 40, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'Macro variable TRTAN resolved to 2.', logLine: 44, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'Macro GENERATE_FIGURE completed with return code 0.', logLine: 45, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'DATA step merge: WORK.ADTTE + WORK.ADSL — 512 obs merged.', logLine: 46, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'Variable AVAL formatted with BEST12. width.', logLine: 47, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'ODS GRAPHICS ON — default dimensions 640x480.', logLine: 48, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'PROC SGRENDER template applied: Kaplan_Meier_Plot.', logLine: 49, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'PROCEDURE SGRENDER used (Total process time): real time 0.08 seconds', logLine: 50, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'At-risk table generated: 6 time points, 2 groups.', logLine: 51, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414', logLine: 52, programLine: 0, affectedCode: '' },
+    { level: 'NOTE' as const, code: '', description: 'QUIT statement used.', logLine: 53, programLine: 0, affectedCode: '' },
+  ],
+  rawLogLines: [
+    { lineNum: 1, text: 'NOTE: SAS (r) Proprietary Software 9.4  TS1M6', level: 'NOTE' as const },
+    { lineNum: 2, text: 'NOTE: Copyright (c) 2002-2012 by SAS Institute Inc., Cary, NC, USA.', level: 'NOTE' as const },
+    { lineNum: 3, text: '      Licensed to ATLAS BIOANALYTICS, Site 0123456789.' },
+    { lineNum: 4, text: 'NOTE: ---------------------------------------------------------', level: 'NOTE' as const },
+    { lineNum: 5, text: '1    %include "/programs/fig_km_15_1_1.sas";' },
+    { lineNum: 6, text: '2          cluster_1, hba1c1( RLG_A,RLG_B,RLG_N,RLG_C ) = /+ m/' },
+    { lineNum: 7, text: '3    proc sql;' },
+    { lineNum: 8, text: 'NOTE: PROCEDURE SQL used (Total process time):', level: 'NOTE' as const },
+    { lineNum: 9, text: '      real time           0.02 seconds' },
+    { lineNum: 10, text: '      cpu time            0.01 seconds' },
+    { lineNum: 11, text: 'NOTE: Table WORK.ATLAS_UPCIO created, with 1024 rows and 8 columns.', level: 'NOTE' as const },
+    { lineNum: 12, text: '4    proc sort data=atlas_upcio; by paramcd visitnum; run;' },
+    { lineNum: 13, text: 'NOTE: PROCEDURE SORT used (Total process time):', level: 'NOTE' as const },
+    { lineNum: 14, text: '      real time           0.04 seconds' },
+    { lineNum: 15, text: 'NOTE: DATA statement used (Total process time):', level: 'NOTE' as const },
+    { lineNum: 16, text: '      real time           0.03 seconds' },
+    { lineNum: 17, text: '      cpu time            0.02 seconds' },
+    { lineNum: 18, text: 'WARNING: Variable PARAM not found in WORK.ATLAS_UPCIO.', level: 'WARNING' as const },
+    { lineNum: 19, text: '5    data km_prep; set adtte; where paramcd="TTDE" and saffl="Y"; run;' },
+    { lineNum: 20, text: 'NOTE: PROC MEANS used — 512 observations read.', level: 'NOTE' as const },
+    { lineNum: 21, text: '      real time           0.06 seconds' },
+    { lineNum: 22, text: 'ERROR 388-185: Expecting an arithmetic operator.', level: 'ERROR' as const },
+    { lineNum: 23, text: '                                               !' },
+    { lineNum: 24, text: '                                               ;' },
+    { lineNum: 25, text: '6    %m_u_figure( inds=adtte, type=KM, group=trtan, time=aval, censor=cnsr );' },
+    { lineNum: 26, text: 'ERROR 76-322: Syntax error, statement will be ignored.', level: 'ERROR' as const },
+    { lineNum: 27, text: '      proc means data=;' },
+    { lineNum: 28, text: '                     ^' },
+    { lineNum: 29, text: '7    proc lifetest data=km_prep method=km plots=survival(atrisk);' },
+    { lineNum: 30, text: 'NOTE: PARMACRO= CHEMISTRY matched 48 observations.', level: 'NOTE' as const },
+    { lineNum: 31, text: '      time aval * cnsr(1);' },
+    { lineNum: 32, text: 'NOTE: PROCEDURE FREQ used (Total process time): real time 0.01 seconds', level: 'NOTE' as const },
+    { lineNum: 33, text: '      strata trtan;' },
+    { lineNum: 34, text: 'NOTE: Dataset WORK.KM_DATA has 256 observations and 12 variables.', level: 'NOTE' as const },
+    { lineNum: 35, text: '      run;' },
+    { lineNum: 36, text: 'NOTE: PROCEDURE LIFETEST used (Total process time): real time 0.12 seconds', level: 'NOTE' as const },
+    { lineNum: 37, text: '8    ods rtf file="/output/figure_15_1_1.rtf";' },
+    { lineNum: 38, text: 'NOTE: PROCEDURE TEMPLATE used (Total process time): real time 0.01 seconds', level: 'NOTE' as const },
+    { lineNum: 39, text: 'NOTE: Output added to ODS LISTING destination.', level: 'NOTE' as const },
+    { lineNum: 40, text: 'NOTE: RTF file written: /output/figure_15_1_1.rtf (245 KB)', level: 'NOTE' as const },
+    { lineNum: 41, text: '9    proc sgrender data=km_data template=Kaplan_Meier_Plot;' },
+    { lineNum: 42, text: 'ERROR 180-322: Statement is not valid or it is used out of proper order.', level: 'ERROR' as const },
+    { lineNum: 43, text: '      run cancel;' },
+    { lineNum: 44, text: 'NOTE: Macro variable TRTAN resolved to 2.', level: 'NOTE' as const },
+    { lineNum: 45, text: 'NOTE: Macro GENERATE_FIGURE completed with return code 0.', level: 'NOTE' as const },
+    { lineNum: 46, text: 'NOTE: DATA step merge: WORK.ADTTE + WORK.ADSL — 512 obs merged.', level: 'NOTE' as const },
+    { lineNum: 47, text: 'NOTE: Variable AVAL formatted with BEST12. width.', level: 'NOTE' as const },
+    { lineNum: 48, text: 'NOTE: ODS GRAPHICS ON — default dimensions 640x480.', level: 'NOTE' as const },
+    { lineNum: 49, text: 'NOTE: PROC SGRENDER template applied: Kaplan_Meier_Plot.', level: 'NOTE' as const },
+    { lineNum: 50, text: 'NOTE: PROCEDURE SGRENDER used (Total process time): real time 0.08 seconds', level: 'NOTE' as const },
+    { lineNum: 51, text: 'NOTE: At-risk table generated: 6 time points, 2 groups.', level: 'NOTE' as const },
+    { lineNum: 52, text: 'NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414', level: 'NOTE' as const },
+    { lineNum: 53, text: 'NOTE: QUIT statement used.', level: 'NOTE' as const },
+  ],
+};
+
+const successStructuredLog = {
+  summary: { error: 0, warning: 1, note: 24 },
+  entries: errorStructuredLog.entries.filter(e => e.level !== 'ERROR'),
+  rawLogLines: errorStructuredLog.rawLogLines.filter(l => l.level !== 'ERROR'),
+};
+
 function ShellPreview({
   onBlockClick,
   onMetadataClick,
@@ -2907,6 +3097,8 @@ function ShellPreview({
   onShowMedianLinesChange,
   onShowRiskTableChange,
   associatedTLStatus = 'pending',
+  rtfOpen,
+  onToggleRtf,
 }: {
   onBlockClick: () => void;
   onMetadataClick: () => void;
@@ -2929,128 +3121,235 @@ function ShellPreview({
   showRiskTable?: boolean;
   onShowCIChange?: (v: boolean) => void;
   onShowCensorMarksChange?: (v: boolean) => void;
-  onShowMedianLinesChange?: (v: boolean) => void;
   onShowRiskTableChange?: (v: boolean) => void;
   associatedTLStatus?: string;
+  rtfOpen?: boolean;
+  onToggleRtf?: () => void;
 }) {
+  const [logExpanded, setLogExpanded] = useState(false);
+  const activeLogData = successStructuredLog;
   const shellData = shellTableData[selectedItemName] || shellTableData['Table 14.1.1'];
   const metadataMinWidth = 280;
   return (
     <div className="flex h-full flex-col overflow-hidden bg-white">
       <PanelHeader
         noBorder={true}
-        title={selectedItemName || "Shell preview"}
+        title={
+          <div className="flex items-center gap-[12px]">
+            <span>{selectedItemName || "Shell preview"}</span>
+            {docType === 'figure' && onToggleRtf && (
+              <Button
+                variant={rtfOpen ? "secondary" : "ghost"}
+                size="sm"
+                onClick={onToggleRtf}
+              >
+                RTF Preview
+              </Button>
+            )}
+          </div>
+        }
         actions={
-          <TooltipText label="Open Metadata">
-            <button
-              onClick={onMetadataClick}
-              className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
-                metadataOpen ? "bg-az-secondary" : "hover:bg-black/5"
-              }`}
-              aria-label="Toggle metadata"
-            >
-              <LocalIcon src={fileInfoIconUrl} className="h-[16px] w-[16px]" color={metadataOpen ? "#830051" : "#888E8E"} />
-            </button>
-          </TooltipText>
+          <div className="flex items-center gap-[8px]">
+            <TooltipText label="Open Metadata">
+              <button
+                onClick={onMetadataClick}
+                className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
+                  metadataOpen ? "bg-az-secondary" : "hover:bg-black/5"
+                }`}
+                aria-label="Toggle metadata"
+              >
+                <LocalIcon src={fileInfoIconUrl} className="h-[16px] w-[16px]" color={metadataOpen ? "#830051" : "#888E8E"} />
+              </button>
+            </TooltipText>
+          </div>
         }
       />
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-h-0 min-w-0 flex-1 overflow-auto p-[12px]">
-          {docType === 'figure' ? (
-            <div className="max-w-[540px] mx-auto py-[16px] px-[8px]">
-              <KMPlot
-                mode="shell"
-                showCI={true}
-                showCensorMarks={true}
-                showMedianLines={true}
-                showRiskTable={true}
-                figureNumber={selectedItemName}
-              />
+        {docType === 'figure' ? (
+          <div className="flex w-full h-full min-h-0 overflow-x-auto overflow-y-hidden">
+            <div className="flex-1 min-w-[360px] overflow-y-auto overflow-x-hidden p-[16px] bg-white">
+              <div className="w-full max-w-[540px] mx-auto">
+                <KMPlot
+                  mode="shell"
+                  showCI={true}
+                  showCensorMarks={true}
+                  showMedianLines={true}
+                  showRiskTable={true}
+                  figureNumber={selectedItemName}
+                />
+              </div>
             </div>
-          ) : (
-            <>
-              {/* Title header - Styled like Listing's Shell preview header */}
-              <div className="h-[72px] min-w-max border-b-2 border-black flex flex-col items-center justify-start px-[16px] pt-[16px] bg-white text-black mb-[16px]">
-                <h1 className="t-shell-title text-center tracking-[-0.01em]">
-                  {shellData.tableNumber}. {shellData.tableTitle}
+            {rtfOpen && (
+              <div className="flex-1 min-w-[360px] border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[16px] bg-white">
+                  <div className="w-full max-w-[540px] mx-auto">
+                    <KMPlot
+                      mode="runtime"
+                      showCI={true}
+                      showCensorMarks={true}
+                      showMedianLines={true}
+                      showRiskTable={true}
+                      figureNumber={selectedItemName}
+                    />
+                  </div>
+                </div>
+                <div className="flex shrink-0 flex-col border-t border-graphite-10 bg-bg-panel">
+                  <div className="flex h-[40px] shrink-0 items-center gap-[4px] pl-[16px] pr-[8px]">
+                    <p className="t-small text-text-primary">Log</p>
+                    <div className="flex items-center">
+                      <TooltipText label={logExpanded ? "Collapse Log" : "Expand Log"}>
+                        <button
+                          onClick={() => setLogExpanded((v) => !v)}
+                          className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                          aria-label={logExpanded ? "Collapse Log" : "Expand Log"}
+                        >
+                          <LocalIcon src={logExpanded ? contractUpDownIconUrl : expandUpDownIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+                        </button>
+                      </TooltipText>
+                    </div>
+                  </div>
+                  {logExpanded && (
+                    <div className="max-h-[240px] overflow-auto px-[8px] pb-[8px]">
+                      {activeLogData.entries.map((entry, idx) => (
+                        <div
+                          key={idx}
+                          className="flex w-full items-start gap-[8px] rounded-[4px] px-[8px] py-[4px] text-left text-[12px] leading-[18px] font-mono hover:bg-white/60 cursor-default"
+                        >
+                          <div className="flex w-[16px] h-[16px] shrink-0 items-center justify-center pt-[1px]">
+                            {entry.level === 'ERROR' && (
+                              <LocalIcon src={closeCircleIconUrl} className="h-[16px] w-[16px]" color="#C5221F" />
+                            )}
+                            {entry.level === 'WARNING' && (
+                              <LocalIcon src={alertIconUrl} className="h-[16px] w-[16px]" color="#B06000" />
+                            )}
+                          </div>
+                          <span className="shrink-0 min-w-0 flex-1 whitespace-pre-wrap break-words text-text-primary">
+                            {entry.code ? `${entry.code}: ` : ''}{entry.description}
+                          </span>
+                          {entry.level !== 'NOTE' && (
+                            <>
+                              <span className="shrink-0 text-text-secondary tabular-nums min-w-[60px] truncate text-right" title="Affected Code">{entry.affectedCode}</span>
+                              <span className="shrink-0 text-text-secondary tabular-nums min-w-[32px] text-right" title="Log Line">L{entry.logLine}</span>
+                              <span className="shrink-0 text-text-secondary tabular-nums min-w-[32px] text-right" title="Program Line">P{entry.programLine}</span>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+            <div className="min-w-max p-[24px]">
+              <div className={`w-max bg-white text-black ${!metadataOpen ? 'mx-auto' : ''}`}>
+                {/* Study Info & Page Info */}
+              {(shellData.studyInfo || shellData.pageInfo) && (
+                <div className="flex justify-between items-end w-full mb-[24px]">
+                  <div className="t-body text-[12px] leading-[18px] whitespace-pre-wrap">{shellData.studyInfo}</div>
+                  <div className="t-body text-[12px] leading-[18px] text-right">{shellData.pageInfo}</div>
+                </div>
+              )}
+
+              {/* Title header */}
+              <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black">
+                <h1 className="t-body text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">
+                  {shellData.tableNumber}
+                  {shellData.tableTitle && (
+                    <>
+                      <br />
+                      {shellData.tableTitle}
+                    </>
+                  )}
                 </h1>
-                <p className="font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676] mt-[4px]">
-                  {shellData.population}
-                </p>
+                {shellData.population && (
+                  <p className="t-body text-[14px] leading-[20px] text-center mt-[4px]">
+                    {shellData.population}
+                  </p>
+                )}
               </div>
 
-              <div className="relative inline-block min-w-full">
-                <table className="w-full border-separate border-spacing-0 font-['Inter',sans-serif] text-black">
+              <div className="relative inline-block w-full">
+                <table className="w-full border-separate border-spacing-0 font-['Inter',sans-serif] text-black border-t-2 border-black">
                   <thead>
                     {/* Column group header */}
                     <tr className="group">
-                      <th className="bg-white text-left t-shell-header py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default min-w-[180px]">
-                        {selectedItemName.startsWith('Listing') ? 'Subject ID' : 'Parameter'}
-                      </th>
-                      {shellData.columnGroups.map((group, gi) => (
-                        <th
-                          key={gi}
-                          colSpan={group.span}
-                          className="text-center t-shell-header py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default"
-                          style={{ whiteSpace: 'pre-line' }}
-                        >
-                          {group.name}
-                        </th>
-                      ))}
-                    </tr>
-                    {/* Sub-column header */}
-                    <tr className="group">
-                      <th className="bg-white text-left t-shell-header py-[4px] px-[8px] whitespace-nowrap border-r border-b-2 border-black border-border-default">
-                        
-                      </th>
-                      {shellData.columns.map((col, ci) => (
-                        <th
-                          key={ci}
-                          className="text-center t-shell-header py-[4px] px-[6px] whitespace-nowrap border-r border-b-2 border-black border-border-default last:border-r-0"
-                        >
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {shellData.rows.map((row, ri) => (
-                      <tr
-                        key={ri}
-                        className="group hover:bg-az-secondary cursor-pointer"
-                        onClick={onBlockClick}
+                      <th className="bg-white text-left text-[14px] leading-[20px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default min-w-[180px]">
+                      Table/Listing Field
+                    </th>
+                    {shellData.columnGroups.map((cg, cgi) => (
+                      <th
+                        key={cgi}
+                        colSpan={cg.span}
+                        className="bg-bg-panel text-center text-[14px] leading-[20px] font-semibold py-[6px] px-[8px] border-r border-b border-border-default last:border-r-0"
                       >
-                        <td
-                          className={`${
-                            row.isHeader ? 'bg-bg-panel font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
-                          } text-left text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
-                          style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
-                        >
-                          {row.category}
-                        </td>
-                        {row.values.map((val, vi) => (
-                          <td
-                            key={vi}
-                            className={`text-center text-[12px] leading-[18px] ${
-                              row.isHeader ? 'bg-bg-panel font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
-                            } py-[6px] px-[6px] whitespace-nowrap border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
-                          >
-                            {val}
-                          </td>
+                        {cg.name.split('\n').map((line, idx) => (
+                          <div key={idx}>{line}</div>
                         ))}
-                      </tr>
+                      </th>
                     ))}
-                  </tbody>
-                </table>
+                  </tr>
+                  {/* Standard columns header */}
+                  <tr>
+                    <th className="bg-white text-left text-[14px] leading-[20px] font-semibold text-text-secondary py-[6px] px-[8px] border-r border-b border-border-default min-w-[180px]">
+                      {shellData.columns[0] || ""}
+                    </th>
+                    {shellData.columns.slice(1).map((col, ci) => (
+                      <th
+                        key={ci}
+                        className="bg-white text-center text-[14px] leading-[20px] font-semibold text-text-secondary py-[6px] px-[8px] border-r border-b border-border-default last:border-r-0"
+                      >
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {shellData.rows.map((row, ri) => (
+                    <tr
+                      key={ri}
+                      className="group hover:bg-az-secondary cursor-pointer"
+                      onClick={onBlockClick}
+                    >
+                      <td
+                        className={`${
+                          row.isHeader ? 'bg-bg-panel font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
+                        } text-left text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+                        style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
+                      >
+                        {row.category}
+                      </td>
+                      {row.values.map((val, vi) => (
+                        <td
+                          key={vi}
+                          className={`text-center text-[12px] leading-[18px] ${
+                            row.isHeader ? 'bg-bg-panel font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
+                          } py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+                        >
+                          {val}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* Footnotes */}
+            {shellData.footnotes && shellData.footnotes.length > 0 && (
+              <div className="mt-[16px] flex flex-col gap-[4px] w-full text-left">
+                {shellData.footnotes.map((fn, idx) => (
+                  <p key={idx} className="t-body text-[12px] leading-[18px] text-text-secondary whitespace-pre-wrap">
+                    {fn}
+                  </p>
+                ))}
               </div>
-              {/* Shell note */}
-              <div className="mt-[12px] flex items-center gap-[4px]">
-                <div className="h-[6px] w-[6px] rounded-full bg-brand-1" />
-                <p className="t-small text-text-secondary">Shell preview — data shown is illustrative structure. Click a row to view metadata.</p>
-              </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
+      </div>
+      )}
         {/* Metadata left-edge drag handle — uses WorkspaceDivider pattern */}
         {metadataOpen && (
           <WorkspaceDivider onDrag={(delta) => onMetadataResize(-delta)} />
@@ -3332,7 +3631,7 @@ function BlocksTabContent({
             data-block-id={block.id}
             className={`px-[16px] py-[14px] ${blockIndex !== blocks.length - 1 ? 'border-b border-[#E5E8E8]' : ''}`}
           >
-            <p className="t-body-bold text-text-primary mb-[12px]">{block.name}</p>
+            <p className="text-[14px] font-bold text-text-primary mb-[12px]">{block.name}</p>
             <div className="flex flex-col gap-[12px]">
               {block.fields.map((field) => (
                 <div key={field.id}>
@@ -4278,7 +4577,7 @@ function MetadataPanel({
               handleUpdateCode();
             }}
             disabled={isLocked}
-            className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-body-medium ${isLocked ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-brand-1-hover active:scale-[0.98]'}`}
+            className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isLocked ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
           >
             <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={isLocked ? '#888E8E' : 'white'} />
             Add Changes to Chat
@@ -4449,15 +4748,11 @@ ods graphics off;`;
     setUserCode(codeContent);
     setLastRunCode(codeContent);
     setSavedCode(codeContent);
-    setHasRunOnce(false);
   }, [selectedItem, codeContent]);
 
   const codeLines = userCode.split('\n');
 
   const [logExpanded, setLogExpanded] = useState(true);
-  const [figureView, setFigureView] = useState<'preview' | 'code'>('code');
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const [hasRunOnce, setHasRunOnce] = useState(false);
   const codeTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const [selectedCodeLine, setSelectedCodeLine] = useState<number | null>(null);
@@ -4493,123 +4788,22 @@ ods graphics off;`;
     }
   };
 
-  // Structured log data — error scenario
-  const errorStructuredLog = {
-    summary: { error: 3, warning: 1, note: 24 },
-    entries: [
-      { level: 'ERROR' as const, code: '388-185', description: 'Expecting an arithmetic operator.', logLine: 22, programLine: 84, affectedCode: '! ;' },
-      { level: 'ERROR' as const, code: '76-322', description: 'Syntax error, statement will be ignored.', logLine: 26, programLine: 88, affectedCode: 'proc means data=;' },
-      { level: 'ERROR' as const, code: '180-322', description: 'Statement is not valid or it is used out of proper order.', logLine: 42, programLine: 132, affectedCode: 'run cancel;' },
-      { level: 'WARNING' as const, code: '1001', description: 'Variable PARAM not found in WORK.ATLAS_UPCIO.', logLine: 18, programLine: 34, affectedCode: 'PARAM' },
-      { level: 'NOTE' as const, code: '', description: 'SAS (r) Proprietary Software 9.4 TS1M6', logLine: 1, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'Copyright (c) 2002-2012 by SAS Institute Inc., Cary, NC, USA.', logLine: 2, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'PROCEDURE SQL used (Total process time): real time 0.02 seconds', logLine: 8, programLine: 3, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'Table WORK.ATLAS_UPCIO created, with 1024 rows and 8 columns.', logLine: 11, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'PROCEDURE SORT used (Total process time): real time 0.04 seconds', logLine: 13, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'DATA statement used (Total process time): real time 0.03 seconds', logLine: 15, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'PROC MEANS used — 512 observations read.', logLine: 20, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'PARMACRO= CHEMISTRY matched 48 observations.', logLine: 30, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'PROCEDURE FREQ used (Total process time): real time 0.01 seconds', logLine: 32, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'Dataset WORK.KM_DATA has 256 observations and 12 variables.', logLine: 34, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'PROCEDURE LIFETEST used (Total process time): real time 0.12 seconds', logLine: 36, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'PROCEDURE TEMPLATE used (Total process time): real time 0.01 seconds', logLine: 38, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'Output added to ODS LISTING destination.', logLine: 39, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'RTF file written: /output/figure_15_1_1.rtf (245 KB)', logLine: 40, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'Macro variable TRTAN resolved to 2.', logLine: 44, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'Macro GENERATE_FIGURE completed with return code 0.', logLine: 45, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'DATA step merge: WORK.ADTTE + WORK.ADSL — 512 obs merged.', logLine: 46, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'Variable AVAL formatted with BEST12. width.', logLine: 47, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'ODS GRAPHICS ON — default dimensions 640x480.', logLine: 48, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'PROC SGRENDER template applied: Kaplan_Meier_Plot.', logLine: 49, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'PROCEDURE SGRENDER used (Total process time): real time 0.08 seconds', logLine: 50, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'At-risk table generated: 6 time points, 2 groups.', logLine: 51, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414', logLine: 52, programLine: 0, affectedCode: '' },
-      { level: 'NOTE' as const, code: '', description: 'QUIT statement used.', logLine: 53, programLine: 0, affectedCode: '' },
-    ],
-    rawLogLines: [
-      { lineNum: 1, text: 'NOTE: SAS (r) Proprietary Software 9.4  TS1M6', level: 'NOTE' as const },
-      { lineNum: 2, text: 'NOTE: Copyright (c) 2002-2012 by SAS Institute Inc., Cary, NC, USA.', level: 'NOTE' as const },
-      { lineNum: 3, text: '      Licensed to ATLAS BIOANALYTICS, Site 0123456789.' },
-      { lineNum: 4, text: 'NOTE: ---------------------------------------------------------', level: 'NOTE' as const },
-      { lineNum: 5, text: '1    %include "/programs/fig_km_15_1_1.sas";' },
-      { lineNum: 6, text: '2          cluster_1, hba1c1( RLG_A,RLG_B,RLG_N,RLG_C ) = /+ m/' },
-      { lineNum: 7, text: '3    proc sql;' },
-      { lineNum: 8, text: 'NOTE: PROCEDURE SQL used (Total process time):', level: 'NOTE' as const },
-      { lineNum: 9, text: '      real time           0.02 seconds' },
-      { lineNum: 10, text: '      cpu time            0.01 seconds' },
-      { lineNum: 11, text: 'NOTE: Table WORK.ATLAS_UPCIO created, with 1024 rows and 8 columns.', level: 'NOTE' as const },
-      { lineNum: 12, text: '4    proc sort data=atlas_upcio; by paramcd visitnum; run;' },
-      { lineNum: 13, text: 'NOTE: PROCEDURE SORT used (Total process time):', level: 'NOTE' as const },
-      { lineNum: 14, text: '      real time           0.04 seconds' },
-      { lineNum: 15, text: 'NOTE: DATA statement used (Total process time):', level: 'NOTE' as const },
-      { lineNum: 16, text: '      real time           0.03 seconds' },
-      { lineNum: 17, text: '      cpu time            0.02 seconds' },
-      { lineNum: 18, text: 'WARNING: Variable PARAM not found in WORK.ATLAS_UPCIO.', level: 'WARNING' as const },
-      { lineNum: 19, text: '5    data km_prep; set adtte; where paramcd="TTDE" and saffl="Y"; run;' },
-      { lineNum: 20, text: 'NOTE: PROC MEANS used — 512 observations read.', level: 'NOTE' as const },
-      { lineNum: 21, text: '      real time           0.06 seconds' },
-      { lineNum: 22, text: 'ERROR 388-185: Expecting an arithmetic operator.', level: 'ERROR' as const },
-      { lineNum: 23, text: '                                               !' },
-      { lineNum: 24, text: '                                               ;' },
-      { lineNum: 25, text: '6    %m_u_figure( inds=adtte, type=KM, group=trtan, time=aval, censor=cnsr );' },
-      { lineNum: 26, text: 'ERROR 76-322: Syntax error, statement will be ignored.', level: 'ERROR' as const },
-      { lineNum: 27, text: '      proc means data=;' },
-      { lineNum: 28, text: '                     ^' },
-      { lineNum: 29, text: '7    proc lifetest data=km_prep method=km plots=survival(atrisk);' },
-      { lineNum: 30, text: 'NOTE: PARMACRO= CHEMISTRY matched 48 observations.', level: 'NOTE' as const },
-      { lineNum: 31, text: '      time aval * cnsr(1);' },
-      { lineNum: 32, text: 'NOTE: PROCEDURE FREQ used (Total process time): real time 0.01 seconds', level: 'NOTE' as const },
-      { lineNum: 33, text: '      strata trtan;' },
-      { lineNum: 34, text: 'NOTE: Dataset WORK.KM_DATA has 256 observations and 12 variables.', level: 'NOTE' as const },
-      { lineNum: 35, text: '      run;' },
-      { lineNum: 36, text: 'NOTE: PROCEDURE LIFETEST used (Total process time): real time 0.12 seconds', level: 'NOTE' as const },
-      { lineNum: 37, text: '8    ods rtf file="/output/figure_15_1_1.rtf";' },
-      { lineNum: 38, text: 'NOTE: PROCEDURE TEMPLATE used (Total process time): real time 0.01 seconds', level: 'NOTE' as const },
-      { lineNum: 39, text: 'NOTE: Output added to ODS LISTING destination.', level: 'NOTE' as const },
-      { lineNum: 40, text: 'NOTE: RTF file written: /output/figure_15_1_1.rtf (245 KB)', level: 'NOTE' as const },
-      { lineNum: 41, text: '9    proc sgrender data=km_data template=Kaplan_Meier_Plot;' },
-      { lineNum: 42, text: 'ERROR 180-322: Statement is not valid or it is used out of proper order.', level: 'ERROR' as const },
-      { lineNum: 43, text: '      run cancel;' },
-      { lineNum: 44, text: 'NOTE: Macro variable TRTAN resolved to 2.', level: 'NOTE' as const },
-      { lineNum: 45, text: 'NOTE: Macro GENERATE_FIGURE completed with return code 0.', level: 'NOTE' as const },
-      { lineNum: 46, text: 'NOTE: DATA step merge: WORK.ADTTE + WORK.ADSL — 512 obs merged.', level: 'NOTE' as const },
-      { lineNum: 47, text: 'NOTE: Variable AVAL formatted with BEST12. width.', level: 'NOTE' as const },
-      { lineNum: 48, text: 'NOTE: ODS GRAPHICS ON — default dimensions 640x480.', level: 'NOTE' as const },
-      { lineNum: 49, text: 'NOTE: PROC SGRENDER template applied: Kaplan_Meier_Plot.', level: 'NOTE' as const },
-      { lineNum: 50, text: 'NOTE: PROCEDURE SGRENDER used (Total process time): real time 0.08 seconds', level: 'NOTE' as const },
-      { lineNum: 51, text: 'NOTE: At-risk table generated: 6 time points, 2 groups.', level: 'NOTE' as const },
-      { lineNum: 52, text: 'NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414', level: 'NOTE' as const },
-      { lineNum: 53, text: 'NOTE: QUIT statement used.', level: 'NOTE' as const },
-    ],
-  };
 
-  // Structured log data — success scenario (no errors)
-  const successStructuredLog = {
-    summary: { error: 0, warning: 1, note: 24 },
-    entries: errorStructuredLog.entries.filter(e => e.level !== 'ERROR'),
-    rawLogLines: errorStructuredLog.rawLogLines.filter(l => l.level !== 'ERROR'),
-  };
 
   const hasCodeError = userCode.toLowerCase().includes('error');
   const activeLogData = hasCodeError ? errorStructuredLog : successStructuredLog;
 
   const handleLogEntryClick = (programLine: number) => {
-    if (figureView !== 'code') {
-      setFigureView('code');
-    }
-    
     setTimeout(() => {
       if (codeTextAreaRef.current) {
         const lines = userCode.split('\n');
         let charCount = 0;
         for (let i = 0; i < programLine - 1 && i < lines.length; i++) {
-          charCount += lines[i].length + 1; // +1 for '\n'
+          charCount += lines[i].length + 1;
         }
         codeTextAreaRef.current.focus();
         codeTextAreaRef.current.setSelectionRange(charCount, charCount + (lines[programLine - 1]?.length || 0));
-        
-        // Approximate scroll calculation
-        const lineHeight = 20; // 20px per line based on leading-[20px]
+        const lineHeight = 20;
         const parentContainer = codeTextAreaRef.current.closest('.code-panel-scroll-container');
         if (parentContainer) {
           parentContainer.scrollTop = (programLine - 1) * lineHeight;
@@ -4649,6 +4843,19 @@ ods graphics off;`;
           <span>{isSaving ? "Saving" : isCodeUnsaved ? "Save" : "Saved"}</span>
         </div>
       </Button>
+      <TooltipText label={isLocked ? "Unlock Table Code" : "Lock Table Code"}>
+        <Button 
+          variant="primary" 
+          size="sm" 
+          onClick={onToggleLock}
+          className="w-[102px]"
+        >
+          <div className="flex items-center gap-[4px] justify-center w-full">
+            <LocalIcon src={isLocked ? lockIconUrl : unlockIconUrl} className="w-[14px] h-[14px]" color="white" />
+            <span>{isLocked ? "Unlock Code" : "Lock Code"}</span>
+          </div>
+        </Button>
+      </TooltipText>
       {[
         { label: "Copy Code", icon: copyIconUrl },
         { label: "Version History", icon: historyIconUrl },
@@ -4659,28 +4866,10 @@ ods graphics off;`;
           </button>
         </TooltipText>
       ))}
-      <TooltipText label={isLocked ? "Unlock Table Code" : "Lock Table Code"}>
-        <button
-          onClick={onToggleLock}
-          className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${isLocked ? "bg-az-secondary" : "hover:bg-black/5"}`}
-          aria-label={isLocked ? "Unlock code" : "Lock code"}
-        >
-          {isLocked
-            ? <LockTreeIcon className="h-[16px] w-[16px]" color="var(--color-brand-1)" />
-            : <UnlockTreeIcon className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />}
-        </button>
-      </TooltipText>
     </>
   );
 
-  const handleRetry = () => {
-    setHasRunOnce(true);
-    setPreviewLoading(true);
-    setTimeout(() => {
-      setPreviewLoading(false);
-      setLastRunCode(userCode);
-    }, 1500);
-  };
+
 
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-white code-panel-container">
@@ -4708,115 +4897,12 @@ ods graphics off;`;
       `}} />
       <PanelHeader
         title={
-          docType === 'figure' ? (
-            <SegmentedControl
-              size="sm"
-              value={figureView}
-              onChange={(v) => {
-                const nextView = v as 'preview' | 'code';
-                setFigureView(nextView);
-                if (nextView === 'preview') {
-                  setHasRunOnce(true);
-                  setSavedCode(userCode); // Force Save
-
-                  if (userCode !== lastRunCode) {
-                    setPreviewLoading(true);
-                    setTimeout(() => {
-                      setPreviewLoading(false);
-                      setLastRunCode(userCode);
-                    }, 1500);
-                  }
-                }
-              }}
-              options={[
-                {
-                  value: 'preview',
-                  ariaLabel: 'Preview RTF',
-                  tooltip: 'Preview',
-                  icon: (active) => (
-                    <LocalIcon src={eyeLineIconUrl} className="h-[16px] w-[16px]" color={active ? "var(--color-text-primary)" : "var(--color-text-secondary)"} />
-                  ),
-                },
-                {
-                  value: 'code',
-                  ariaLabel: 'Code',
-                  tooltip: 'Code',
-                  icon: (active) => (
-                    <LocalIcon src={codeSlashIconUrl} className="h-[16px] w-[16px]" color={active ? "var(--color-text-primary)" : "var(--color-text-secondary)"} />
-                  ),
-                },
-              ]}
-            />
-          ) : (
-            <LocalIcon src={codeSlashIconUrl} className="w-[16px] h-[16px]" color="#888E8E" />
-          )
+          <LocalIcon src={codeSlashIconUrl} className="w-[16px] h-[16px]" color="#888E8E" />
         }
-        actions={docType === 'figure' && figureView === 'preview' ? undefined : toolbarButtons}
+        actions={toolbarButtons}
       />
       <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container">
-        {docType === 'figure' && figureView === 'preview' ? (
-          previewLoading ? (
-            <div className="flex flex-col items-center justify-center h-full p-[24px] select-none text-text-secondary min-h-[300px]">
-              <div className="relative w-[36px] h-[36px] mb-[12px] flex items-center justify-center">
-                <div className="w-[28px] h-[28px] border-4 border-az-secondary border-t-[#830051] rounded-full animate-spin" />
-              </div>
-              <p className="text-[13px] leading-[20px] font-semibold text-text-primary animate-pulse">
-                Loading Preview...Please wait
-              </p>
-              <p className="text-[11px] leading-[16px] text-text-secondary mt-[4px]">
-                Running SAS compiler and rendering SVG output
-              </p>
-            </div>
-          ) : userCode.toLowerCase().includes('error') ? (
-            // Code Execution Error State
-            <div className="flex flex-col items-center justify-center h-full p-[24px] select-none text-text-secondary min-h-[300px]">
-              <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#FCE8E6] text-[#C5221F] mb-[12px]">
-                <SvgIcon className="h-[20px] w-[20px]" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor" />
-                </SvgIcon>
-              </div>
-              <p className="t-body-bold text-[#C5221F]">
-                Generation Failed
-              </p>
-              <p className="text-[12px] leading-[18px] text-text-secondary mt-[4px] text-center max-w-[280px]">
-                Generation failed, please check the Log
-              </p>
-            </div>
-          ) : userCode.toLowerCase().includes('timeout') ? (
-            // External Service Error State
-            <div className="flex flex-col items-center justify-center h-full p-[24px] select-none text-text-secondary min-h-[300px]">
-              <div className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#FEF7E0] text-[#B06000] mb-[12px]">
-                <SvgIcon className="h-[20px] w-[20px]" viewBox="0 0 24 24">
-                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z" fill="currentColor" />
-                </SvgIcon>
-              </div>
-              <p className="t-body-bold text-text-primary">
-                Service Unavailable
-              </p>
-              <p className="text-[12px] leading-[18px] text-text-secondary mt-[4px] text-center max-w-[320px]">
-                The generation service is temporarily unavailable, unrelated to code. Please try again later.
-              </p>
-              <button
-                onClick={handleRetry}
-                className="mt-[16px] px-[16px] py-[6px] bg-brand-1 hover:bg-brand-1-hover text-white text-[12px] font-semibold rounded-[4px] transition-colors shadow-sm active:scale-[0.96]"
-              >
-                Retry
-              </button>
-            </div>
-          ) : (
-            // Success State (KMPlot)
-            <div className="max-w-[540px] mx-auto py-[16px] px-[8px]">
-              <KMPlot
-                mode="runtime"
-                showCI={true}
-                showCensorMarks={true}
-                showMedianLines={true}
-                showRiskTable={true}
-                figureNumber={selectedItem}
-              />
-            </div>
-          )
-        ) : docType === 'figure' ? (
+        {docType === 'figure' ? (
           <div className="flex flex-1 min-w-max font-mono text-[13px] leading-[20px]">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[54px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
@@ -4948,54 +5034,7 @@ ods graphics off;`;
           </div>
         )}
       </div>
-      {docType === 'figure' && hasRunOnce && (
-        <div className="flex shrink-0 flex-col border-t border-graphite-10">
-          <div className="flex h-[40px] shrink-0 items-center gap-[4px] bg-bg-panel pl-[16px] pr-[8px]">
-            <p className="t-small text-text-primary">Log</p>
-            <div className="ml-auto flex items-center">
-              <TooltipText label={logExpanded ? "Collapse Log" : "Expand Log"}>
-                <button
-                  onClick={() => setLogExpanded((v) => !v)}
-                  className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                  aria-label={logExpanded ? "Collapse Log" : "Expand Log"}
-                >
-                  <LocalIcon src={logExpanded ? contractUpDownIconUrl : expandUpDownIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-                </button>
-              </TooltipText>
-            </div>
-          </div>
-          {logExpanded && (
-            <div className="max-h-[240px] overflow-auto bg-bg-panel px-[8px] pb-[8px]">
-              {activeLogData.entries.map((entry, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => entry.programLine ? handleLogEntryClick(entry.programLine) : undefined}
-                  className={`flex w-full items-start gap-[8px] rounded-[4px] px-[8px] py-[4px] text-left text-[12px] leading-[18px] font-mono hover:bg-white/60 ${entry.programLine ? 'cursor-pointer' : 'cursor-default'}`}
-                >
-                  <div className="flex w-[16px] h-[16px] shrink-0 items-center justify-center pt-[1px]">
-                    {entry.level === 'ERROR' && (
-                      <LocalIcon src={closeCircleIconUrl} className="h-[16px] w-[16px]" color="#C5221F" />
-                    )}
-                    {entry.level === 'WARNING' && (
-                      <LocalIcon src={alertIconUrl} className="h-[16px] w-[16px]" color="#B06000" />
-                    )}
-                  </div>
-                  <span className="shrink-0 min-w-0 flex-1 whitespace-pre-wrap break-words text-text-primary">
-                    {entry.code ? `${entry.code}: ` : ''}{entry.description}
-                  </span>
-                  {entry.level !== 'NOTE' && (
-                    <>
-                      <span className="shrink-0 text-text-secondary tabular-nums min-w-[60px] truncate text-right" title="Affected Code">{entry.affectedCode}</span>
-                      <span className="shrink-0 text-text-secondary tabular-nums min-w-[32px] text-right" title="Log Line">L{entry.logLine}</span>
-                      <span className="shrink-0 text-text-secondary tabular-nums min-w-[32px] text-right" title="Program Line">P{entry.programLine}</span>
-                    </>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+
     </div>
   );
 }
@@ -5080,11 +5119,20 @@ function WorkspaceContent({
   const shellPreviewOpen = panelView !== 'code';
   const codeOpen = panelView !== 'shell';
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [rtfOpen, setRtfOpen] = useState(true);
   const [aiCopilotOpen, setAiCopilotOpen] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [shellPreviewWidth, setShellPreviewWidth] = useState(560);
   const [metadataWidth, setMetadataWidth] = useState(380);
   const [aiCopilotWidth, setAiCopilotWidth] = useState(360);
+  const [treeListAutoCollapsed, setTreeListAutoCollapsed] = useState(false);
+
+  // If TreeList is opened (e.g. manually by the user), clear the auto-collapsed flag
+  useEffect(() => {
+    if (treeListOpen) {
+      setTreeListAutoCollapsed(false);
+    }
+  }, [treeListOpen]);
 
   const [showCI, setShowCI] = useState(true);
   const [showCensorMarks, setShowCensorMarks] = useState(true);
@@ -5095,6 +5143,9 @@ function WorkspaceContent({
   const contentAreaRef = useRef<HTMLDivElement>(null);
   const [contentAreaWidth, setContentAreaWidth] = useState(0);
   const [contentAreaHeight, setContentAreaHeight] = useState(0);
+
+  const workspaceContainerRef = useRef<HTMLDivElement>(null);
+  const [workspaceWidth, setWorkspaceWidth] = useState(0);
 
   // Refs for panel widths — used by compression effect to read latest values without re-running on width changes
   const metadataWidthRef = useRef(metadataWidth);
@@ -5130,12 +5181,12 @@ function WorkspaceContent({
 
   const constraints = {
     treeList: { min: 180, max: 320 },
-    shellPreview: { min: 320, max: 800 },
+    shellPreview: { min: 320, max: 1200 },
     metadata: panelView === 'shell'
       ? { min: 320, max: 640 }
       : { min: 280, max: 520 },
-    code: { min: 360 },
-    aiCopilot: { min: 300, max: 460 },
+    code: { min: 300 },
+    aiCopilot: { min: 300, max: 1000 },
   };
 
   // Dynamic metadata max: can't exceed Shell width (no fixed deduction)
@@ -5148,23 +5199,24 @@ function WorkspaceContent({
     (shellPreviewOpen && !codeOpen && aiCopilotOpen ? 1 : 0) +
     (codeOpen && aiCopilotOpen ? 1 : 0);
 
-  // Shell can grow until Code (flex-1) hits its minimum
-  const dynamicShellMax = contentAreaWidth > 0
+  // Total width of the workspace content area + TreeList
+  const totalWidth = contentAreaWidth + (treeListOpen ? (treeListWidth + 1) : 0);
+  const flexPanelMin = codeOpen ? constraints.code.min : constraints.shellPreview.min;
+  const otherPanelsMin = (shellPreviewOpen && codeOpen) ? constraints.shellPreview.min : 0;
+  const currentDividers = (treeListOpen ? 1 : 0) + tableDividerCount * DIVIDER_W;
+
+  // Shell can grow until Code (flex-1) hits its minimum, with TreeList compressed and collapsed if needed
+  const dynamicShellMax = totalWidth > 0
     ? Math.max(constraints.shellPreview.min,
-        contentAreaWidth
+        totalWidth
         - (codeOpen ? constraints.code.min : 0)
         - (aiCopilotOpen ? aiCopilotWidth : 0)
-        - tableDividerCount * DIVIDER_W)
+        - currentDividers)
     : constraints.shellPreview.max;
 
-  // AI can grow until Code (or Shell if flex-1) hits its minimum
-  const dynamicAiMax = contentAreaWidth > 0
-    ? Math.max(constraints.aiCopilot.min,
-        contentAreaWidth
-        - (codeOpen ? constraints.code.min : 0)
-        - (shellPreviewOpen && codeOpen ? shellPreviewWidth : 0)
-        - (shellPreviewOpen && !codeOpen ? constraints.shellPreview.min : 0)
-        - tableDividerCount * DIVIDER_W)
+  // AI can grow until the flex-1 panel and any other fixed panels hit their minimums, with TreeList compressed and collapsed if needed
+  const dynamicAiMax = totalWidth > 0
+    ? Math.max(constraints.aiCopilot.min, totalWidth - flexPanelMin - otherPanelsMin - currentDividers)
     : constraints.aiCopilot.max;
 
   // Total minimum width for horizontal scroll fallback
@@ -5193,6 +5245,16 @@ function WorkspaceContent({
     return () => observer.disconnect();
   }, []);
 
+  // Measure stable workspace container width
+  useEffect(() => {
+    if (!workspaceContainerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      setWorkspaceWidth(entries[0].contentRect.width);
+    });
+    observer.observe(workspaceContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const lastPanelLayoutRef = useRef<PanelLayout>('horizontal');
   useEffect(() => {
     if (panelLayout === 'vertical' && contentAreaHeight > 0) {
@@ -5204,31 +5266,32 @@ function WorkspaceContent({
     lastPanelLayoutRef.current = panelLayout;
   }, [panelLayout, contentAreaHeight]);
 
-  // Adaptive panel compression: when Code < min, compress panels in order meta → shell → tree → AI
-  // Only runs on structural changes (content area resize, panel open/close), NOT on width changes from dragging
+  // Adaptive panel compression: when the flex-1 panel shrinks below its minimum,
+  // compress other panels in order: metadata -> shell -> tree width -> tree collapse -> AI
+  // Runs both on structural changes and during active dragging of panels
   useEffect(() => {
-    if (contentAreaWidth === 0) return;
-    if (!codeOpen) return; // Don't compress when Code panel isn't visible
+    if (workspaceWidth === 0) return;
 
-    const shellW = shellPreviewOpen ? shellPreviewWidthRef.current : 0;
-    const aiW = aiCopilotOpen ? aiCopilotWidthRef.current : 0;
-    const codeMin = constraints.code.min;
-    const dividerW = 1;
-    const dividerCount =
-      (shellPreviewOpen && codeOpen ? 1 : 0) +
-      (shellPreviewOpen && !codeOpen && aiCopilotOpen ? 1 : 0) +
-      (codeOpen && aiCopilotOpen ? 1 : 0);
-    const totalDividers = dividerCount * dividerW;
+    // Synchronously calculate expectedContentAreaWidth to prevent race condition loop during layout toggle
+    const expectedContentAreaWidth = workspaceWidth - (treeListOpen ? (treeListWidth + 1) : 0);
 
-    const availableForCode = contentAreaWidth - shellW - aiW - totalDividers;
+    // Determine the min width of the flex-1 panel (Code if open, otherwise Shell Preview)
+    const flexPanelMin = codeOpen ? constraints.code.min : constraints.shellPreview.min;
 
-    if (availableForCode < codeMin) {
-      const deficit = codeMin - availableForCode;
+    // Calculate width of all fixed (shrink-0) panels in the layout
+    const shellW = (shellPreviewOpen && codeOpen) ? shellPreviewWidth : 0;
+    const aiW = aiCopilotOpen ? aiCopilotWidth : 0;
+    const totalDividers = tableDividerCount * DIVIDER_W;
+
+    const availableForFlex = expectedContentAreaWidth - shellW - aiW - totalDividers;
+
+    if (availableForFlex < flexPanelMin) {
+      const deficit = flexPanelMin - availableForFlex;
       let remaining = deficit;
 
       // 1. Compress metadata (if open and above min)
       if (metadataOpen && remaining > 0) {
-        const excess = metadataWidthRef.current - constraints.metadata.min;
+        const excess = metadataWidth - constraints.metadata.min;
         const reduce = Math.min(excess, remaining);
         if (reduce > 0) {
           setMetadataWidth((w) => w - reduce);
@@ -5236,9 +5299,9 @@ function WorkspaceContent({
         }
       }
 
-      // 2. Compress shell (if open and above min)
-      if (shellPreviewOpen && remaining > 0) {
-        const excess = shellPreviewWidthRef.current - constraints.shellPreview.min;
+      // 2. Compress shell (if open, fixed in both mode, and above min)
+      if (shellPreviewOpen && codeOpen && remaining > 0) {
+        const excess = shellPreviewWidth - constraints.shellPreview.min;
         const reduce = Math.min(excess, remaining);
         if (reduce > 0) {
           setShellPreviewWidth((w) => w - reduce);
@@ -5246,9 +5309,9 @@ function WorkspaceContent({
         }
       }
 
-      // 3. Compress tree (if open and above min)
+      // 3. Compress tree width (if open and above min)
       if (treeListOpen && remaining > 0) {
-        const excess = treeListWidthRef.current - constraints.treeList.min;
+        const excess = treeListWidth - constraints.treeList.min;
         const reduce = Math.min(excess, remaining);
         if (reduce > 0) {
           setTreeListWidth((w) => w - reduce);
@@ -5256,18 +5319,48 @@ function WorkspaceContent({
         }
       }
 
-      // 4. Compress AI (if open and above min)
+      // 4. Auto-collapse TreeList if still not enough space (with a 30px buffer to prevent jitter and immediate snapping)
+      const COLLAPSE_BUFFER = 30;
+      if (treeListOpen) {
+        if (remaining > COLLAPSE_BUFFER) {
+          setTreeListOpen(false);
+          setTreeListAutoCollapsed(true);
+          remaining -= treeListWidth;
+        } else {
+          // Within buffer: allow the flex panel to absorb the remaining deficit without collapsing TreeList or compressing AI
+          remaining = 0;
+        }
+      }
+
+      // 5. Compress AI (if open and above min)
       if (aiCopilotOpen && remaining > 0) {
-        const excess = aiCopilotWidthRef.current - constraints.aiCopilot.min;
+        const excess = aiCopilotWidth - constraints.aiCopilot.min;
         const reduce = Math.min(excess, remaining);
         if (reduce > 0) {
           setAiCopilotWidth((w) => w - reduce);
           remaining -= reduce;
         }
       }
+    } else if (!treeListOpen && treeListAutoCollapsed) {
+      // Auto-expand TreeList when user shrinks AI panel (with a 30px buffer to prevent rapid toggle loops)
+      const EXPAND_BUFFER = 30;
+      if (availableForFlex >= flexPanelMin + treeListWidth + 1 + EXPAND_BUFFER) {
+        setTreeListOpen(true);
+        setTreeListAutoCollapsed(false);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentAreaWidth, shellPreviewOpen, codeOpen, aiCopilotOpen, metadataOpen]);
+  }, [
+    workspaceWidth,
+    shellPreviewOpen,
+    codeOpen,
+    aiCopilotOpen,
+    metadataOpen,
+    shellPreviewWidth,
+    aiCopilotWidth,
+    treeListOpen,
+    treeListWidth,
+    treeListAutoCollapsed,
+  ]);
 
   const isTableSelected = useCallback((id: string | null) => (
     Boolean(id && programs.some((program) => program.tables.some((table) => table.id === id)))
@@ -5301,13 +5394,23 @@ function WorkspaceContent({
     }
   };
 
-  // Set default panel layout based on doc type (listing=vertical, table=horizontal)
+  const [isLayoutUserOverridden, setIsLayoutUserOverridden] = useState(false);
+
+  const handleManualPanelLayoutChange = (layout: PanelLayout) => {
+    setPanelLayout(layout);
+    setIsLayoutUserOverridden(true);
+  };
+
+  // Set default panel layout based on doc type (listing/figure = vertical, table = horizontal)
+  // Only applies if user hasn't explicitly overridden the layout preference
   useEffect(() => {
-    setPanelLayout(docType === 'listing' ? 'vertical' : 'horizontal');
+    if (!isLayoutUserOverridden) {
+      setPanelLayout(docType === 'table' ? 'horizontal' : 'vertical');
+    }
     if (docType === 'listing' || docType === 'figure') {
       setActiveView('table');
     }
-  }, [docType]);
+  }, [docType, isLayoutUserOverridden]);
 
   const handleShellPagePreviewChange = (_active: boolean) => {
     // Page preview mode change callback — could trigger AI Copilot or other actions
@@ -5401,7 +5504,7 @@ function WorkspaceContent({
 
   return (
     <div className="flex h-full min-w-0 flex-1 bg-bg-panel">
-      <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
+      <div ref={workspaceContainerRef} className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         <div
           className="shrink-0 overflow-hidden"
           style={{
@@ -5513,10 +5616,12 @@ function WorkspaceContent({
             panelView={panelView}
             onPanelViewChange={handlePanelViewChange}
             panelLayout={panelLayout}
-            onPanelLayoutChange={setPanelLayout}
+            onPanelLayoutChange={handleManualPanelLayoutChange}
             docType={docType}
+            rtfOpen={rtfOpen}
+            onToggleRtf={() => setRtfOpen(v => !v)}
           />
-          <div ref={contentAreaRef} className="relative flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
+          <div ref={contentAreaRef} className="relative flex min-h-0 flex-1 overflow-hidden">
             {docType === 'listing' ? (
               // Listing layout with configurable panel direction (vertical = top/bottom, horizontal = left/right)
               <div className="flex min-w-0 flex-1 overflow-hidden">
@@ -5528,10 +5633,10 @@ function WorkspaceContent({
                         ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
                         : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
                       }
-                      className={`overflow-hidden flex flex-col ${panelView === 'both' ? 'shrink-0' : ''} ${
+                      className={`h-full flex flex-col overflow-hidden flex flex-col ${panelView === 'both' ? 'shrink-0' : ''} ${
                         panelLayout === 'vertical'
                           ? (panelView === 'both' ? 'border-b border-graphite-10' : '')
-                          : (panelView === 'both' || aiCopilotOpen ? 'border-r border-graphite-10' : '')
+                          : (panelView === 'both' ? 'border-r border-graphite-10' : '')
                       }`}
                     >
                       <ListingShellPreview
@@ -5575,7 +5680,7 @@ function WorkspaceContent({
                       <WorkspaceDivider
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
-                        onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, constraints.shellPreview.max))}
+                        onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, dynamicShellMax))}
                       />
                     )
                   )}
@@ -5597,7 +5702,7 @@ function WorkspaceContent({
                   <WorkspaceDivider
                     onDragStart={() => setIsResizing(true)}
                     onDragEnd={() => setIsResizing(false)}
-                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, constraints.aiCopilot.max))}
+                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
                   />
                 )}
 
@@ -5630,10 +5735,10 @@ function WorkspaceContent({
                   {/* Shell Preview with subordinate Metadata card */}
                   {shellPreviewOpen && (
                     <div
-                      className={`overflow-hidden ${panelView === 'shell' ? 'flex-1' : 'shrink-0'} ${
+                      className={`h-full flex flex-col overflow-hidden ${panelView === 'shell' ? 'flex-1' : 'shrink-0'} ${
                         panelLayout === 'vertical'
                           ? (codeOpen ? 'border-b border-graphite-10' : '')
-                          : (codeOpen || aiCopilotOpen ? 'border-r border-graphite-10' : '')
+                          : (codeOpen ? 'border-r border-graphite-10' : '')
                       }`}
                       style={panelLayout === 'vertical'
                         ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
@@ -5665,6 +5770,8 @@ function WorkspaceContent({
                         onShowMedianLinesChange={setShowMedianLines}
                         onShowRiskTableChange={setShowRiskTable}
                         associatedTLStatus={associatedTLStatus}
+                        rtfOpen={rtfOpen}
+                        onToggleRtf={() => setRtfOpen(v => !v)}
                       />
                     </div>
                   )}
@@ -5686,7 +5793,7 @@ function WorkspaceContent({
                       <WorkspaceDivider
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
-                        onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, Math.min(constraints.shellPreview.max, dynamicShellMax)))}
+                        onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, dynamicShellMax))}
                       />
                     )
                   )}
@@ -5713,7 +5820,7 @@ function WorkspaceContent({
                   <WorkspaceDivider
                     onDragStart={() => setIsResizing(true)}
                     onDragEnd={() => setIsResizing(false)}
-                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, Math.min(constraints.aiCopilot.max, dynamicAiMax)))}
+                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
                   />
                 )}
 
@@ -5722,7 +5829,7 @@ function WorkspaceContent({
                   <WorkspaceDivider
                     onDragStart={() => setIsResizing(true)}
                     onDragEnd={() => setIsResizing(false)}
-                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, Math.min(constraints.aiCopilot.max, dynamicAiMax)))}
+                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
                   />
                 )}
 
@@ -6288,7 +6395,7 @@ function HomePage({
                 </button>
                 <button
                   onClick={onCreateEvent}
-                  className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:bg-brand-1-hover active:scale-[0.96] whitespace-nowrap shrink-0"
+                  className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96] whitespace-nowrap shrink-0"
                   style={{ whiteSpace: 'nowrap' }}
                 >
                   <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />

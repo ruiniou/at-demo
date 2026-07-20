@@ -169,24 +169,24 @@ export function KMPlot({
   return (
     <div className="flex flex-col select-none font-sans w-full text-text-primary">
       {/* Title area */}
-      <div className="mb-[8px] flex flex-col items-center">
+      <div className="mb-[12px] flex flex-col items-center">
         {mode === 'shell' ? (
-          <h2 className="t-shell-title text-[#6f7676] italic text-center">
+          <h2 className="t-body text-[14px] leading-[20px] font-bold text-[#6f7676] italic text-center tracking-[-0.01em]">
             {figureNumber}: [Figure Title Placeholder]
           </h2>
         ) : (
-          <h2 className="t-shell-title text-text-primary text-center">
+          <h2 className="t-body text-[14px] leading-[20px] font-bold text-text-primary text-center tracking-[-0.01em]">
             {figureNumber}: {displayTitle}
           </h2>
         )}
-        <p className="text-[10px] leading-[14px] text-text-secondary mt-[2px]">
+        <p className="t-body text-[10px] leading-[14px] text-text-secondary mt-[4px]">
           Population: Full Analysis Set (FAS) · Unit: {timeUnit}
         </p>
       </div>
 
       {/* SVG Plot */}
       <div className="flex justify-center p-[12px]">
-        <svg width={width} height={height} className="overflow-visible">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto overflow-visible">
           {/* Grid Lines */}
           {gridYValues.map((val) => (
             <line
@@ -400,15 +400,15 @@ export function KMPlot({
 
       {/* Risk Table */}
       {showRiskTable && (
-        <div className="mt-[12px] w-full overflow-x-auto">
+        <div className="mt-[12px] w-full">
           <table className="w-full text-[10px] border-collapse font-sans">
             <thead>
               <tr className="border-b border-border-default">
-                <th className="text-left t-shell-header py-[4px] px-[8px] text-text-primary w-[110px]">
+                <th className="text-left font-bold py-[4px] px-[8px] text-text-primary w-[110px]">
                   Number at Risk
                 </th>
                 {ticksX.map((tick) => (
-                  <th key={tick} className="text-center t-shell-header py-[4px] px-[4px] text-text-secondary">
+                  <th key={tick} className="text-center font-semibold py-[4px] px-[4px] text-text-secondary">
                     {tick}
                   </th>
                 ))}
@@ -416,7 +416,7 @@ export function KMPlot({
             </thead>
             <tbody>
               <tr className="border-b border-border-default last:border-0">
-                <td className="text-left t-shell-cell font-medium py-[4px] px-[8px]" style={{ color: group1.color }}>
+                <td className="text-left font-semibold py-[4px] px-[8px]" style={{ color: group1.color }}>
                   <span className="font-mono font-bold mr-[4px]">──</span> {group1.label}
                 </td>
                 {group1.risk.map((val, idx) => (
@@ -426,7 +426,7 @@ export function KMPlot({
                 ))}
               </tr>
               <tr>
-                <td className="text-left t-shell-cell font-medium py-[4px] px-[8px]" style={{ color: group2.color }}>
+                <td className="text-left font-semibold py-[4px] px-[8px]" style={{ color: group2.color }}>
                   <span className="font-mono font-bold mr-[4px]">- -</span> {group2.label}
                 </td>
                 {group2.risk.map((val, idx) => (

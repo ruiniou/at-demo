@@ -46,3 +46,39 @@
 * **经验教训 (Takeaways)**：
   处理包含长文本的自定义 `sticky` 表格时，绝不能依赖浏览器的自适应列宽机制。必须通过**独立边框 (border-separate)** 和 **强行指定外层表格总宽度**，才能确保 JS 计算的偏移量与 DOM 渲染的尺寸做到完美的像素级对齐。
 
+---
+
+### [2026-07-16] 局部状态下沉导致的 ReferenceError 白屏崩溃
+
+* **现象与触发条件**：
+  在最近加入 Figure RTF Preview 功能时，点击主页的“Event”卡片或侧边树的“Figure”节点后，界面完全白屏（崩溃）。这是由于 React 渲染在遇到致命错误且没有局部 ErrorBoundary 捕获时，卸载了整棵组件树。
+* **根本原因 (Root Cause)**：
+  在 `ShellPreview` 组件内增加控制 RTF 展开的 `rtfOpen` 逻辑时，我错误地在 TypeScript 的 Props 接口中添加了 `rtfOpen?: boolean`，但**在实际函数参数解构中遗漏了它**。
+  因此，组件内部引用的 `rtfOpen` 是 `undefined` 且未声明（Undeclared）。当执行到 `{rtfOpen && (...) }` 时，触发了 `ReferenceError: rtfOpen is not defined`，导致组件渲染崩溃。由于打包工具 (Vite/esbuild) 默认只做类型剥离，不抛出强类型错误，构建阶段也没有暴露出这个致命问题。
+* **解决方案 (Solution)**：
+  1. 将 `rtfOpen` 的状态从组件局部状态提升 (Hoist) 到了外层的 `WorkspaceContent` 中进行统一管理，并将 `rtfOpen` 和控制开关的 `onToggleRtf` 作为 Props 正确传递并解构到 `ShellPreview` 中。
+  2. 利用提升后的 `rtfOpen` 状态，传递 `hideToolbar={docType === 'figure' && rtfOpen}` 给同级的 `CodePanel` 组件，实现了需求中“切到 RTF Preview 时隐藏 CodePanel 右侧工具条”的跨组件联动控制。
+* **经验教训 (Takeaways)**：
+  1. TypeScript 中定义了 Interface 不代表运行时有解构该变量。要确保解构的完整性。
+  2. **Vite 的默认 `npm run build` 不包含 Type Check！** 它只会剥离类型。在需要严格检查时，应配置 `tsc --noEmit` 进行类型验证。
+  3. 当需要跨并级组件（`ShellPreview` 和 `CodePanel`）联动状态时，不要在内部随意 `useState`，要及时将状态提升到共同的最近父节点，或者使用 Context/状态管理。
+
+---
+
+### [2026-07-20] 布局组件间异步 ResizeObserver 触发的闭环状态震荡与白屏崩溃 (Maximum update depth exceeded)
+
+* **现象与触发条件**：
+  当用户点击悬浮的 AI Copilot 按钮以打开 AI 面板时，如果屏幕剩余空间有限，页面会瞬间崩溃并呈现完全白屏。
+* **根本原因 (Root Cause)**：
+  1. **空间不足触发折叠**：当 AI 面板展开（占用 360px）导致其余主面板（Code / Shell）宽度低于其设定的 Minimum 约束时，系统会触发自动收起左侧 `TreeList` 导航树的动作 (`setTreeListOpen(false)`)。
+  2. **Resize 触发与状态滞后**：`TreeList` 收起后，DOM 重排释放了其原本占用的空间，右侧主内容区（由 `contentAreaRef` 绑定）宽度增加，随后异步触发 `ResizeObserver` 回调以更新 `contentAreaWidth`。
+  3. **竞态震荡 (Race Condition State Jitter)**：在 `TreeList` 变为 `false` 的那一瞬间，React 触发了重新渲染，但此时 `ResizeObserver` 尚未运行完（`contentAreaWidth` 依然是旧的小宽度）。这就导致 `useEffect` 在这一帧中认为可用空间依旧极度匮乏，转而开始强行压缩 AI 面板宽度（`setAiCopilotWidth` 变小）。
+  4. **震荡死锁**：在下一帧中，`ResizeObserver` 完成回调使 `contentAreaWidth` 变大，`useEffect` 发现空间重新变得富余，从而又将 `TreeList` 重新展开 (`setTreeListOpen(true)`)。展开后 `contentAreaWidth` 再次缩小，再次触发折叠。
+  由此，`treeListOpen` 在 `true` 和 `false` 之间陷入永无止境的死循环，最终耗尽 React 调用栈抛出 `Maximum update depth exceeded` 崩溃白屏。
+* **解决方案 (Solution)**：
+  1. 建立一个全新的 `workspaceContainerRef` 绑定在整个工作区（包含 TreeList）的最外层容器上，并通过 `ResizeObserver` 独立测量其静态总宽度 `workspaceWidth`。因为该容器宽度只受外部浏览器尺寸影响，内部面板的相互挤压/收缩不会对其造成任何变动，从而使其成为一个绝对稳定的基准。
+  2. 在 `useEffect` 压缩逻辑中，不直接使用会发生状态滞后的 `contentAreaWidth`。而是用静态稳定的 `workspaceWidth` 与当前最新的 `treeListOpen` 状态进行**同步计算**：`const expectedContentAreaWidth = workspaceWidth - (treeListOpen ? (treeListWidth + 1) : 0);`。
+  3. 这种同步计算使得在 `treeListOpen` 发生变更的同一帧渲染里，宽度数值能够瞬间计算并更新到位，完美避开了等待 `ResizeObserver` 异步回调所产生的滞后空窗期，从根源上打破了状态震荡环路。
+* **经验教训 (Takeaways)**：
+  在使用 `ResizeObserver` 观察 DOM 尺寸并驱动 React 内部复杂联动布局（如多面板挤压、自动折叠）时，一定要警惕“**组件状态变更 -> 改变 DOM 尺寸 -> ResizeObserver 运行 -> 重新计算并触发二次状态变更**”所形成的潜在循环反馈链。
+  若要保证多面板自适应收缩的稳定，应当尽可能基于**包含所有自适应元素的外部固定容器总宽度**去进行同步数学计算，而不是让各组件各自观察自己的 DOM 变化并互相影响。

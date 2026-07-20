@@ -17,8 +17,8 @@ export function AIUserPrompt({
   return (
     <div
       className={[
-        "bg-bg-panel rounded-[8px] px-[10px] py-[8px]",
-        "flex flex-col gap-[4px] justify-end",
+        "bg-bg-panel border border-graphite-10 rounded-[8px] px-[12px] py-[8px]",
+        "flex flex-col gap-[4px] justify-end max-w-[85%] self-end",
         className,
       ].join(" ")}
     >
@@ -27,7 +27,7 @@ export function AIUserPrompt({
           <AITagMini>{tag}</AITagMini>
         </div>
       )}
-      <div className="flex flex-col gap-[4px] t-body text-text-secondary break-words whitespace-pre-wrap w-full">
+      <div className="flex flex-col gap-[4px] t-body text-text-primary font-normal break-words whitespace-pre-wrap w-full">
         {paragraphs.map((para, idx) => (
           <p key={idx} className="break-words whitespace-pre-wrap">{para}</p>
         ))}
