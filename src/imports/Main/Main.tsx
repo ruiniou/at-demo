@@ -3131,7 +3131,7 @@ function ShellPreview({
   const shellData = shellTableData[selectedItemName] || shellTableData['Table 14.1.1'];
   const metadataMinWidth = 280;
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-white">
+    <div className="flex h-full flex-col min-w-0 overflow-hidden bg-white">
       <PanelHeader
         noBorder={true}
         title={
@@ -3164,11 +3164,12 @@ function ShellPreview({
           </div>
         }
       />
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden">
         {docType === 'figure' ? (
-          <div className="flex w-full h-full min-h-0 overflow-x-auto overflow-y-hidden">
-            <div className="flex-1 min-w-[360px] overflow-y-auto overflow-x-hidden p-[16px] bg-white">
-              <div className="w-full max-w-[540px] mx-auto">
+          <div className="flex-1 min-w-0 h-full overflow-auto">
+            <div className="flex h-full min-w-max">
+              <div className="flex-1 min-w-[540px] overflow-y-auto overflow-x-hidden p-[16px] bg-white">
+              <div className={`w-[540px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
                 <KMPlot
                   mode="shell"
                   showCI={true}
@@ -3180,9 +3181,9 @@ function ShellPreview({
               </div>
             </div>
             {rtfOpen && (
-              <div className="flex-1 min-w-[360px] border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden">
+              <div className="flex-1 min-w-[540px] border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden">
                 <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[16px] bg-white">
-                  <div className="w-full max-w-[540px] mx-auto">
+                  <div className="w-[540px] mx-auto">
                     <KMPlot
                       mode="runtime"
                       showCI={true}
@@ -3240,6 +3241,7 @@ function ShellPreview({
                 </div>
               </div>
             )}
+            </div>
           </div>
         ) : (
           <div className="min-h-0 min-w-0 flex-1 overflow-auto">
@@ -5729,13 +5731,13 @@ function WorkspaceContent({
               </div>
             ) : (
               // Table Layout — supports both horizontal (default) and vertical panel layout
-              <div className="flex h-full flex-1" style={{ minWidth: panelLayout === 'vertical' ? undefined : `${tableTotalMinWidth}px` }}>
+              <div className="flex h-full flex-1 min-w-0" style={{ minWidth: panelLayout === 'vertical' ? undefined : `${tableTotalMinWidth}px` }}>
                 {/* Shell + Code area — direction depends on panelLayout */}
                 <div className="flex min-w-0 flex-1 overflow-hidden" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}>
                   {/* Shell Preview with subordinate Metadata card */}
                   {shellPreviewOpen && (
                     <div
-                      className={`h-full flex flex-col overflow-hidden ${panelView === 'shell' ? 'flex-1' : 'shrink-0'} ${
+                      className={`h-full flex flex-col min-w-0 overflow-hidden ${panelView === 'shell' ? 'flex-1' : 'shrink-0'} ${
                         panelLayout === 'vertical'
                           ? (codeOpen ? 'border-b border-graphite-10' : '')
                           : (codeOpen ? 'border-r border-graphite-10' : '')
