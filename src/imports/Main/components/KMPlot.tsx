@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import figureIconUrl from '../../../icons/Figure.svg';
+import tableIconUrl from '../../../icons/Table.svg';
+
+const filterBrand = "brightness(0) saturate(100%) invert(13%) sepia(85%) saturate(2902%) hue-rotate(309deg) brightness(77%) contrast(111%)";
 
 interface KMPlotProps {
   mode: 'shell' | 'runtime';
@@ -9,6 +13,7 @@ interface KMPlotProps {
   showRiskTable: boolean;
   title?: string;
   figureNumber?: string;
+  onBlockClick?: () => void;
 }
 
 export function KMPlot({
@@ -20,6 +25,7 @@ export function KMPlot({
   showRiskTable,
   title,
   figureNumber = 'Figure 15.1.1',
+  onBlockClick,
 }: KMPlotProps) {
   // Chart dimensions
   const width = 520;
@@ -166,8 +172,84 @@ export function KMPlot({
   const defaultTitle = 'PFS (Progression-Free Survival) by Treatment Group';
   const displayTitle = title || defaultTitle;
 
+  const [selectedBlock, setSelectedBlock] = useState<'chart' | 'table'>('chart');
+
+  if (mode === 'runtime') {
+    const isChartSelected = selectedBlock === 'chart';
+    const isTableSelected = selectedBlock === 'table';
+
+    return (
+      <div className="flex flex-col gap-[16px] w-full text-text-primary">
+        {/* Chart Component Spatial Box */}
+        <div 
+          className={`w-full rounded-[4px] border border-dashed bg-transparent p-[16px] cursor-pointer transition-all duration-180 ${
+            isChartSelected 
+              ? 'border-[#830051] shadow-[0_0_0_4px_#F4E8EE]' 
+              : 'border-[#E8EAEB] border-graphite-10 shadow-none hover:border-[#830051]/50'
+          }`}
+          onClick={() => {
+            setSelectedBlock('chart');
+            onBlockClick?.();
+          }}
+        >
+          <div className="flex items-center gap-[8px] mb-[16px]">
+            <img src={figureIconUrl} alt="" className="w-[16px] h-[16px] shrink-0" style={{ filter: filterBrand }} />
+            <span className="text-[12px] font-medium text-[#888E8E]">Chart</span>
+          </div>
+          <div className="flex justify-center p-[8px]">
+            {/* Extremely simple schematic SVG chart */}
+            <svg viewBox="0 0 200 100" className="w-full max-w-[300px] h-auto overflow-visible opacity-50">
+              {/* Axes */}
+              <line x1="10" y1="90" x2="190" y2="90" stroke="#E8EAEB" strokeWidth="2" />
+              <line x1="10" y1="10" x2="10" y2="90" stroke="#E8EAEB" strokeWidth="2" />
+              {/* Step lines */}
+              <path d="M10 20 H50 V40 H100 V60 H140 V80 H190" fill="none" stroke="#830051" strokeWidth="2" />
+              <path d="M10 30 H60 V50 H110 V70 H150 V85 H190" fill="none" stroke="#D97706" strokeWidth="2" strokeDasharray="4,4" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Risk Table Component Spatial Box */}
+        {showRiskTable && (
+          <div 
+            className={`w-full rounded-[4px] border border-dashed bg-transparent p-[16px] cursor-pointer transition-all duration-180 ${
+              isTableSelected 
+                ? 'border-[#830051] shadow-[0_0_0_4px_#F4E8EE]' 
+                : 'border-[#E8EAEB] border-graphite-10 shadow-none hover:border-[#830051]/50'
+            }`}
+            onClick={() => {
+              setSelectedBlock('table');
+              onBlockClick?.();
+            }}
+          >
+            <div className="flex items-center gap-[8px] mb-[16px]">
+              <img src={tableIconUrl} alt="" className="w-[16px] h-[16px] shrink-0" style={{ filter: filterBrand }} />
+              <span className="text-[12px] font-medium text-[#888E8E]">At-risk Table</span>
+            </div>
+            <table className="w-full text-center text-[10px] text-[#A6AAAA] border-collapse">
+              <tbody>
+                {[1, 2, 3].map((row) => (
+                  <tr key={row}>
+                    {[1, 2, 3].map((col) => (
+                      <td key={col} className="border border-[#E8EAEB] py-[8px] w-1/3">
+                        —
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col select-none font-sans w-full text-text-primary">
+    <div 
+      className="flex flex-col select-none font-sans w-full text-text-primary cursor-pointer hover:bg-black/5 p-[8px] rounded-[4px] transition-colors"
+      onClick={onBlockClick}
+    >
       {/* Title area */}
       <div className="mb-[8px] flex flex-col items-center">
         {mode === 'shell' ? (

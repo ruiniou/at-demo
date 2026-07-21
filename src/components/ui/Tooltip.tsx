@@ -19,22 +19,17 @@ export function Tooltip({ label, children, align = "center", className = "" }: T
     color: "#F8F7F7",
     boxShadow: "0px 2px 4px rgba(0,0,0,0.08)",
     minHeight: "auto",
-    ...(align === "left"
-      ? {
-          maxWidth: "232px",
-          wordBreak: "break-word",
-          whiteSpace: "normal",
-        }
-      : {
-          whiteSpace: "nowrap",
-        }),
+    maxWidth: "232px",
+    wordBreak: "break-word",
+    whiteSpace: "normal",
+    textAlign: "left",
   };
 
   return (
     <AntdTooltip
       title={label}
       placement={align === "left" ? "bottomLeft" : "bottom"}
-      align={{ offset: align === "left" ? [0, 0] : [0, 2] }}
+      align={align === "left" ? undefined : { offset: [0, 2] }}
       arrow={false}
       autoAdjustOverflow={true}
       getPopupContainer={() => document.body}
