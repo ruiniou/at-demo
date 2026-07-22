@@ -29,7 +29,6 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
-  color: #8C8F8F;
 }
 .t-body-compact {
   font-family: var(--font-body);
@@ -60,7 +59,6 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 24px;
-  color: #830051;
 }
 .t-table {
   font-family: var(--font-body);
@@ -135,7 +133,6 @@
   font-size: var(--text-sm, 12px);
   font-weight: var(--font-weight-normal, 400);
   line-height: 1.4;
-  color: var(--color-text-secondary, #8C8F8F);
 }
 
 /* Custom Scrollbar Styles */

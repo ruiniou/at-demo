@@ -133,7 +133,7 @@ function StatusLabel({ children, icon }: { children: React.ReactNode; icon?: Rea
       <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
         {icon || <div className="w-[12px] h-[12px] border-2 border-[#888E8E] border-t-transparent rounded-full animate-spin" />}
       </div>
-      <p className="t-body-secondary">
+      <p className="t-body-secondary text-text-secondary">
         {children}
       </p>
     </div>
@@ -320,7 +320,7 @@ function InlineHighlight({ children }: { children: React.ReactNode }) {
 
 function Hyperlink({ children, href = "#", onClick }: { children: React.ReactNode; href?: string; onClick?: () => void }) {
   return (
-    <a href={href} onClick={(e) => { if(onClick) { e.preventDefault(); onClick(); } }} className="t-link hover:underline transition-all cursor-pointer">
+    <a href={href} onClick={(e) => { if(onClick) { e.preventDefault(); onClick(); } }} className="t-link text-brand-1 hover:underline transition-all cursor-pointer">
       {children}
     </a>
   );
@@ -3130,13 +3130,16 @@ function ShellPreview({
           <div className="flex items-center gap-[12px]">
             <span>{selectedItemName || "Shell preview"}</span>
             {docType === 'figure' && onToggleRtf && (
-              <Button
-                variant={rtfOpen ? "secondary" : "ghost"}
-                size="sm"
+              <button
                 onClick={onToggleRtf}
+                className={`t-small flex items-center justify-center px-[8px] py-[4px] rounded-[4px] transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 active:scale-[0.96] ${
+                  rtfOpen 
+                    ? "font-bold bg-az-secondary text-[#830051]" 
+                    : "font-normal bg-transparent text-text-secondary hover:bg-black/5 hover:text-text-primary"
+                }`}
               >
                 Spatial View
-              </Button>
+              </button>
             )}
           </div>
         }
