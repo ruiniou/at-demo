@@ -1,0 +1,170 @@
+{
+  "$metadata": {
+    "designSystem": "AZ Design System",
+    "category": "typography",
+    "strategy": "semantic typography tokens",
+    "version": "2.0"
+  },
+
+  "fontFamily": {
+    "heading": { "$value": "Roboto Slab, Noto Sans SC, sans-serif" },
+    "body": { "$value": "Inter, Noto Sans SC, sans-serif" },
+    "mono": { "$value": "Menlo, Courier New, Courier, monospace" }
+  },
+
+  "fontWeight": {
+    "normal": { "$value": 400 },
+    "medium": { "$value": 500 },
+    "semibold": { "$value": 600 },
+    "bold": { "$value": 700 }
+  },
+
+  "fontSize": {
+    "2xs": { "$value": "10px" },
+    "xs": { "$value": "11px" },
+    "sm": { "$value": "12px" },
+    "base": { "$value": "13px" },
+    "md": { "$value": "14px" },
+    "lg": { "$value": "16px" },
+    "xl": { "$value": "18px" },
+    "2xl": { "$value": "20px" },
+    "3xl": { "$value": "24px" },
+    "4xl": { "$value": "28px" },
+    "5xl": { "$value": "36px" }
+  },
+
+  "lineHeight": {
+    "none": { "$value": "1" },
+    "tight": { "$value": "1.2" },
+    "snug": { "$value": "1.25" },
+    "normal": { "$value": "1.4" },
+    "relaxed": { "$value": "1.5" },
+    "14px": { "$value": "14px" },
+    "16px": { "$value": "16px" },
+    "18px": { "$value": "18px" },
+    "20px": { "$value": "20px" },
+    "22px": { "$value": "22px" },
+    "24px": { "$value": "24px" },
+    "28px": { "$value": "28px" },
+    "32px": { "$value": "32px" }
+  },
+
+  "semantic": {
+    "display-1": {
+      "fontFamily": "{fontFamily.heading}",
+      "fontSize": "{fontSize.5xl}",
+      "fontWeight": "{fontWeight.semibold}",
+      "lineHeight": "{lineHeight.tight}",
+      "$description": "Largest display heading"
+    },
+    "title-1": {
+      "fontFamily": "{fontFamily.heading}",
+      "fontSize": "{fontSize.3xl}",
+      "fontWeight": "{fontWeight.semibold}",
+      "lineHeight": "{lineHeight.32px}"
+    },
+    "title-2": {
+      "fontFamily": "{fontFamily.heading}",
+      "fontSize": "{fontSize.2xl}",
+      "fontWeight": "{fontWeight.semibold}",
+      "lineHeight": "{lineHeight.28px}"
+    },
+    "title-3": {
+      "fontFamily": "{fontFamily.heading}",
+      "fontSize": "{fontSize.xl}",
+      "fontWeight": "{fontWeight.semibold}",
+      "lineHeight": "{lineHeight.24px}"
+    },
+    "heading": {
+      "fontFamily": "{fontFamily.heading}",
+      "fontSize": "{fontSize.lg}",
+      "fontWeight": "{fontWeight.semibold}",
+      "lineHeight": "{lineHeight.22px}",
+      "$description": "Standard section heading"
+    },
+    "body": {
+      "fontFamily": "{fontFamily.body}",
+      "fontSize": "{fontSize.md}",
+      "fontWeight": "{fontWeight.normal}",
+      "lineHeight": "{lineHeight.24px}",
+      "$description": "Default body text"
+    },
+    "body-medium": {
+      "fontFamily": "{fontFamily.body}",
+      "fontSize": "{fontSize.md}",
+      "fontWeight": "{fontWeight.medium}",
+      "lineHeight": "{lineHeight.24px}",
+      "$description": "Emphasized body text (e.g. for links or accents)"
+    },
+    "body-secondary": {
+      "fontFamily": "{fontFamily.body}",
+      "fontSize": "{fontSize.md}",
+      "fontWeight": "{fontWeight.normal}",
+      "lineHeight": "{lineHeight.20px}",
+      "$description": "Body text with slightly tighter line height"
+    },
+    "body-compact": {
+      "fontFamily": "{fontFamily.body}",
+      "fontSize": "{fontSize.md}",
+      "fontWeight": "{fontWeight.normal}",
+      "lineHeight": "{lineHeight.18px}",
+      "$description": "Compact body text for dense UI areas"
+    },
+    "caption": {
+      "fontFamily": "{fontFamily.body}",
+      "fontSize": "{fontSize.base}",
+      "fontWeight": "{fontWeight.normal}",
+      "lineHeight": "{lineHeight.20px}",
+      "$description": "Caption text (13px)"
+    },
+    "table": {
+      "fontFamily": "{fontFamily.body}",
+      "fontSize": "{fontSize.base}",
+      "fontWeight": "{fontWeight.normal}",
+      "lineHeight": "{lineHeight.16px}",
+      "$description": "Table cell content (13px)"
+    },
+    "small": {
+      "fontFamily": "{fontFamily.body}",
+      "fontSize": "{fontSize.sm}",
+      "fontWeight": "{fontWeight.normal}",
+      "lineHeight": "{lineHeight.16px}",
+      "$description": "Small auxiliary text (12px)"
+    },
+    "small-medium": {
+      "fontFamily": "{fontFamily.body}",
+      "fontSize": "{fontSize.sm}",
+      "fontWeight": "{fontWeight.medium}",
+      "lineHeight": "{lineHeight.18px}",
+      "$description": "Emphasized small text (12px)"
+    },
+    "micro": {
+      "fontFamily": "{fontFamily.body}",
+      "fontSize": "{fontSize.2xs}",
+      "fontWeight": "{fontWeight.medium}",
+      "lineHeight": "{lineHeight.14px}",
+      "$description": "Micro text for very small labels (10px)"
+    },
+    "code-editor": {
+      "fontFamily": "{fontFamily.mono}",
+      "fontSize": "{fontSize.md}",
+      "fontWeight": "{fontWeight.normal}",
+      "lineHeight": "{lineHeight.relaxed}",
+      "$description": "Code block content in editor (14px)"
+    },
+    "code-shell": {
+      "fontFamily": "{fontFamily.mono}",
+      "fontSize": "{fontSize.sm}",
+      "fontWeight": "{fontWeight.normal}",
+      "lineHeight": "{lineHeight.normal}",
+      "$description": "Terminal / shell preview text (12px)"
+    },
+    "code": {
+      "fontFamily": "{fontFamily.mono}",
+      "fontSize": "{fontSize.sm}",
+      "fontWeight": "{fontWeight.normal}",
+      "lineHeight": "{lineHeight.snug}",
+      "$description": "Inline code tag (12px)"
+    }
+  }
+}

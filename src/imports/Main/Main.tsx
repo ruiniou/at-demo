@@ -1462,8 +1462,8 @@ function PanelHeader({
   noBorder?: boolean;
 }) {
   return (
-    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between bg-white px-[12px] ${noBorder ? '' : 'border-b border-graphite-10'}`}>
-      <div className="t-small truncate text-black flex items-center">{title}</div>
+    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between bg-white pl-[12px] pr-[16px] py-0 ${noBorder ? '' : 'border-b border-graphite-10'}`}>
+      <div className="truncate flex items-center">{title}</div>
       {actions && <div className="flex items-center gap-[4px]">{actions}</div>}
     </div>
   );
@@ -2782,6 +2782,22 @@ interface ShellTableData {
 }
 
 const shellTableData: Record<string, ShellTableData> = {
+  'Figure 15.1.1': {
+    tableNumber: 'Figure 15.1.1',
+    tableTitle: 'Kaplan-Meier plot of progression-free survival by treatment group',
+    studyInfo: 'AstraZeneca Page [X]\nStudy number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, <<Data cut-off ddmmmyyyy>>',
+    pageInfo: '',
+    population: '(Safety analysis set)',
+    footnotes: [
+      '[a] ITT Population: All randomized subjects. Subjects are summarised in the arm to which they were randomised.',
+      '[b] Kaplan-Meier estimates are used for survival curves. Median survival time and 95% CI are calculated.',
+      '[c] Cross marks indicate censored observations (e.g., lost to follow-up or administrative censoring).',
+      'Source: eTMF Data snapshot <<Data cut-off ddmmmyyyy>>.'
+    ],
+    columnGroups: [],
+    columns: [],
+    rows: []
+  },
   'Table 14.1.1': {
     tableNumber: 'Table 14.1.1',
     tableTitle: 'Disposition',
@@ -3128,7 +3144,7 @@ function ShellPreview({
         noBorder={true}
         title={
           <div className="flex items-center gap-[12px]">
-            <span>{selectedItemName || "Shell preview"}</span>
+            <span className="font-['PingFang_SC'] text-[12px] font-normal leading-[20px] text-[#3F4444]">{selectedItemName || "Shell preview"}</span>
             {docType === 'figure' && onToggleRtf && (
               <button
                 onClick={onToggleRtf}
@@ -3163,8 +3179,34 @@ function ShellPreview({
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full overflow-auto">
             <div className="flex h-full min-w-max">
-              <div className="flex-1 min-w-[540px] overflow-y-auto overflow-x-hidden p-[16px] bg-white">
-              <div className={`w-[540px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
+              <div className="flex-1 min-w-[540px] overflow-y-auto overflow-x-hidden pl-[16px] pr-[4px] py-0 bg-white">
+              <div className={`w-[540px] bg-white text-black p-0 ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
+                <div className="flex flex-col py-[12px] px-0 gap-[16px] w-full">
+                  {/* Study Info & Page Info */}
+                  {(shellData.studyInfo || shellData.pageInfo) && (
+                    <div className="flex justify-between items-end w-full">
+                      <div className="font-['Inter'] text-[12px] font-normal leading-[16px] text-[#8C8F8F] whitespace-pre-wrap">{shellData.studyInfo}</div>
+                      <div className="font-['Inter'] text-[12px] font-normal leading-[16px] text-[#8C8F8F] text-right">{shellData.pageInfo}</div>
+                    </div>
+                  )}
+                  {/* Title header */}
+                  <div className="flex flex-col items-center justify-center gap-[2px] w-full">
+                    <h1 className="font-['Inter'] text-[14px] font-medium leading-[24px] text-[#3F4444] text-center m-0">
+                      {shellData.tableNumber}
+                    </h1>
+                    {shellData.tableTitle && (
+                      <p className="font-['Inter'] text-[12px] font-normal leading-[16px] text-[#8C8F8F] text-center m-0">
+                        {shellData.tableTitle}
+                      </p>
+                    )}
+                    {shellData.population && (
+                      <p className="font-['Inter'] text-[12px] font-normal leading-[16px] text-[#8C8F8F] text-center m-0">
+                        {shellData.population}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
                 <KMPlot
                   mode="shell"
                   showCI={true}
@@ -3174,6 +3216,17 @@ function ShellPreview({
                   figureNumber={selectedItemName}
                   onBlockClick={onBlockClick}
                 />
+
+                {/* Footnotes */}
+                {shellData.footnotes && shellData.footnotes.length > 0 && (
+                  <div className="flex flex-col gap-[4px] w-full text-left mt-[16px]">
+                    {shellData.footnotes.map((fn, idx) => (
+                      <p key={idx} className="font-['Inter'] text-[10px] font-normal leading-[14px] text-[#8C8F8F] whitespace-pre-wrap m-0">
+                        {fn}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             {rtfOpen && (

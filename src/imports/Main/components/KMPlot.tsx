@@ -250,21 +250,7 @@ export function KMPlot({
       className="flex flex-col select-none font-sans w-full text-text-primary cursor-pointer hover:bg-black/5 p-[8px] rounded-[4px] transition-colors"
       onClick={onBlockClick}
     >
-      {/* Title area */}
-      <div className="mb-[8px] flex flex-col items-center">
-        {mode === 'shell' ? (
-          <h2 className="text-[13px] leading-[18px] font-bold text-[#6f7676] italic text-center">
-            {figureNumber}: [Figure Title Placeholder]
-          </h2>
-        ) : (
-          <h2 className="text-[13px] leading-[18px] font-bold text-text-primary text-center">
-            {figureNumber}: {displayTitle}
-          </h2>
-        )}
-        <p className="text-[10px] leading-[14px] text-text-secondary mt-[2px]">
-          Population: Full Analysis Set (FAS) · Unit: {timeUnit}
-        </p>
-      </div>
+
 
       {/* SVG Plot */}
       <div className="flex justify-center p-[12px]">
