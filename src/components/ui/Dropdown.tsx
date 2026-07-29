@@ -63,13 +63,13 @@ export function Dropdown({
   if (customBoxClass) {
     boxClasses = customBoxClass;
   } else if (disabled) {
-    boxClasses = "border-[1px] border-graphite-10 bg-transparent cursor-not-allowed";
+    boxClasses = "border border-[#EBECEC] bg-bg-panel cursor-not-allowed";
   } else if (error) {
-    boxClasses = "border-[1.5px] border-[#E03B3B] bg-white";
+    boxClasses = "border border-[#E03B3B] bg-white";
   } else if (isOpen) {
-    boxClasses = "border-[1px] border-brand-1 bg-white";
+    boxClasses = "border border-brand-1 bg-white";
   } else {
-    boxClasses = "border-[1px] border-graphite-10 bg-white hover:bg-bg-panel hover:border-border-default";
+    boxClasses = "border border-[#D8DADA] bg-white hover:bg-bg-panel hover:border-border-default";
   }
 
   // Label + star colors
@@ -81,11 +81,11 @@ export function Dropdown({
     <div className={`flex flex-col gap-[6px] w-full text-left relative ${className}`} ref={dropdownRef}>
       {label && (
         <div className="flex items-center gap-[2px]">
-          <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: labelColor }}>
+          <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: labelColor }}>
             {label}
           </span>
           {required && (
-            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: starColor }}>*</span>
+            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: starColor }}>*</span>
           )}
         </div>
       )}
@@ -93,14 +93,14 @@ export function Dropdown({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`relative flex w-full items-center justify-between transition-colors after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0 ${triggerClassName || 'h-[36px] rounded-[4px] pl-[12px] pr-[10px]'} ${boxClasses}`}
+        className={`relative flex w-full items-center justify-between transition-colors after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0 ${triggerClassName || 'h-[32px] rounded-[2px] pl-[8px] pr-[8px]'} ${boxClasses}`}
       >
         <span
           style={{
             fontFamily: "'PingFang SC', sans-serif",
             fontWeight: 400,
             fontSize: 12,
-            lineHeight: "20px",
+            lineHeight: "18px",
             color: textColor,
             maxWidth: "calc(100% - 24px)",
             overflow: "hidden",

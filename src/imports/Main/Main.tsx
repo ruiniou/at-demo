@@ -64,6 +64,9 @@ import { AIThinkingStatus } from "../../components/ui/AI-ThinkingStatus";
 import ChatBox from "./components/ChatBox";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
+import { OptionLabel } from "../../components/ui/OptionLabel";
+import { Input } from "../../components/ui/Input";
+import shiningFillIconUrl from "../../icons/shining-fill.svg";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -216,13 +219,17 @@ function ReviewItemRow({ item, onJumpToMetadata }: { item: ReviewItem, onJumpToM
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onJumpToMetadata?.(item.blockId, item.fieldId)}
-      className={`flex items-center gap-[8px] px-[12px] py-[6px] border-b-[0.6px] border-[#D8DADA] last:border-b-0 cursor-pointer transition-colors ${hovered ? 'bg-bg-panel' : 'bg-transparent'}`}
+      className={`flex items-center gap-[8px] h-[32px] px-[10px] py-[6px] border-b-[0.6px] border-border-default last:border-b-0 cursor-pointer transition-colors ${hovered ? 'bg-bg-panel rounded-[4px]' : 'bg-transparent'}`}
     >
       <div className="shrink-0 flex items-center">
         <MetadataBadge type={item.type} interactive={false} className="!ml-0" />
       </div>
-      <span className="text-[12px] text-text-primary font-normal shrink-0">{item.fieldName}</span>
-      <span className="text-[12px] text-text-secondary font-normal truncate">{item.tooltip}</span>
+      <span className="flex-1 min-w-0 max-w-[120px] text-[12px] leading-[18px] font-medium text-text-primary truncate">
+        {item.fieldName}
+      </span>
+      <span className="flex-1 min-w-0 text-[12px] leading-[16px] font-normal text-text-secondary truncate">
+        {item.tooltip}
+      </span>
     </div>
   );
 }
@@ -232,27 +239,28 @@ function ToBeReviewedBlock({ items, onJumpToMetadata }: { items: ReviewItem[], o
   const [headerHovered, setHeaderHovered] = useState(false);
 
   return (
-    <div className="border-[0.6px] border-[#D8DADA] rounded-[8px] w-full overflow-hidden bg-white mb-[8px]">
+    <div className="border border-graphite-10 rounded-[6px] w-full overflow-hidden bg-white mb-[8px]">
       <div
         onMouseEnter={() => setHeaderHovered(true)}
         onMouseLeave={() => setHeaderHovered(false)}
-        className={`flex items-center justify-between px-[10px] py-[8px] cursor-pointer transition-colors ${
+        className={`flex items-center gap-[6px] px-[12px] py-[8px] cursor-pointer transition-colors ${
           headerHovered ? 'bg-bg-panel' : 'bg-transparent'
         }`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-[6px]">
-          <div className="w-[16px] h-[16px] flex items-center justify-center">
-            <svg className={`w-full h-full transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12.0001 13.1714L16.9499 8.22168L18.3641 9.63589L12.0001 15.9999L5.63623 9.63589L7.05044 8.22168L12.0001 13.1714Z" fill="#888E8E"/>
-            </svg>
-          </div>
-          <p className="t-body font-semibold text-text-primary">To be Reviewed ({items.length})</p>
+        <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
+          <svg className={`w-full h-full transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.0001 13.1714L16.9499 8.22168L18.3641 9.63589L12.0001 15.9999L5.63623 9.63589L7.05044 8.22168L12.0001 13.1714Z" fill="#888E8E"/>
+          </svg>
+        </div>
+        <p className="text-[14px] leading-[24px] font-medium text-text-primary">To be Reviewed</p>
+        <div className="flex items-center justify-center h-[16px] min-w-[16px] px-[4px] py-px rounded-[16px] bg-graphite-10 shrink-0">
+          <span className="text-[10px] leading-[14px] font-medium text-text-secondary">{items.length}</span>
         </div>
       </div>
       
       {isExpanded && (
-        <div className="flex flex-col border-t-[0.6px] border-[#D8DADA]">
+        <div className="flex flex-col border-t border-graphite-10">
           {items.map((item, idx) => (
             <ReviewItemRow key={idx} item={item} onJumpToMetadata={onJumpToMetadata} />
           ))}
@@ -423,10 +431,9 @@ function ChatConversation({
                         <p className="t-body text-text-primary leading-relaxed">
                           I have parsed the uploaded Shell file and successfully inferred the structure for SAS Code generation.
                         </p>
-                        <SpatialViewCard onClick={onOpenSpatialView} />
                       </div>
 
-                      <div className="flex flex-col mb-[8px]">
+                      <div className="flex flex-col">
                         <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 1: KM Plot Chart</h1>
                         <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
                           <li className="t-body text-text-primary">
@@ -436,9 +443,24 @@ function ChatConversation({
                             <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>CNSR</InlineHighlight>, <InlineHighlight>PARAMCD</InlineHighlight></span>
                           </li>
                         </ul>
+                        <div style={{ borderTop: '1px dashed var(--color-border-subtle)', width: '100%', margin: '8px 0' }}></div>
+                        <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Axis Setup</h1>
+                        <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
+                          <li className="t-body text-text-primary">
+                            <span>X-Axis: <InlineHighlight>Months</InlineHighlight> | Ticks <InlineHighlight>0, 3, 6, 9, 12</InlineHighlight></span>
+                          </li>
+                          <li className="t-body text-text-primary">
+                            <span>Y-Axis: <InlineHighlight>Probability</InlineHighlight> | Range <InlineHighlight>0.0 - 1.0</InlineHighlight></span>
+                          </li>
+                          <li className="t-body text-text-primary">
+                            <span>Reference: Contains <InlineHighlight>Median</InlineHighlight> line</span>
+                          </li>
+                        </ul>
                       </div>
 
-                      <div className="flex flex-col mb-[8px]">
+                      <Divider className="!my-[8px]" />
+
+                      <div className="flex flex-col">
                         <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 2: Number at Risk Table</h1>
                         <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
                           <li className="t-body text-text-primary">
@@ -646,7 +668,7 @@ function AICopilotPanel({
         {hasCodeDiff ? (
           <ChatBox onSubmit={handleSubmit} pending={true} />
         ) : (
-          <AIInputBox disabled={isPending} onSubmit={handleSubmit} value={currentVal} onValueChange={setCurrentVal} focusTrigger={focusTrigger} />
+          <AIInputBox disabled={isPending} onSubmit={handleSubmit} value={currentVal} onValueChange={setCurrentVal} focusTrigger={focusTrigger} placeholder={docType === 'figure' ? "Type to adjust axis, add component, or edit details..." : "Ask me anything..."} />
         )}
         {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
       </div>
@@ -848,7 +870,8 @@ function CodeStatusDot({ color }: { color: string }) {
   return <span className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: color }} />;
 }
 
-function TooltipText({ label, children, align = "center" }: { label: React.ReactNode; children: React.ReactNode; align?: "center" | "left" }) {
+function TooltipText({ label, children, align = "center", disabled = false }: { label: React.ReactNode; children: React.ReactNode; align?: "center" | "left"; disabled?: boolean }) {
+  if (disabled) return <>{children}</>;
   return (
     <Tooltip label={label} align={align}>
       {children}
@@ -865,6 +888,8 @@ function WorkspaceModal({
   onPrimary,
   onSecondary,
   onClose,
+  dangerPrimary = false,
+  iconColor,
 }: {
   isOpen: boolean;
   title: string;
@@ -874,6 +899,8 @@ function WorkspaceModal({
   onPrimary: () => void;
   onSecondary: () => void;
   onClose: () => void;
+  dangerPrimary?: boolean;
+  iconColor?: string;
 }) {
   if (!isOpen) return null;
 
@@ -883,8 +910,8 @@ function WorkspaceModal({
       <div className="relative w-[400px] max-w-[90vw] rounded-[8px] bg-white shadow-[0px_4px_6px_rgba(0,0,0,0.15)]">
         <div className="flex items-center justify-between border-b border-[#E5E8E8] px-[24px] pb-[17px] pt-[16px]">
           <div className="flex min-w-0 items-center gap-[8px]">
-            <ErrorWarningIcon className="w-[20px] h-[20px] shrink-0" color="#F0AB00" />
-            <h2 className="t-heading text-text-primary">{title}</h2>
+            <ErrorWarningIcon className="w-[20px] h-[20px] shrink-0" color={iconColor || (dangerPrimary ? "#CC2C3C" : "#F0AB00")} />
+            <h2 className="text-[16px] font-semibold leading-[22px] text-text-primary">{title}</h2>
           </div>
           <button
             onClick={onClose}
@@ -895,18 +922,18 @@ function WorkspaceModal({
           </button>
         </div>
         <div className="px-[24px] py-[20px]">
-          <p className="t-body-secondary text-[#656969]">{description}</p>
+          <p className="text-[14px] leading-[24px] text-text-secondary">{description}</p>
         </div>
         <div className="flex items-center justify-end gap-[12px] border-t border-[#E5E8E8] px-[24px] pb-[20px] pt-[21px]">
           <button
             onClick={onSecondary}
-            className="h-[36px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-panel active:scale-[0.96]"
+            className="h-[36px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[12px] text-[14px] font-medium leading-[24px] text-text-primary hover:bg-bg-panel active:scale-[0.96]"
           >
             {secondaryLabel}
           </button>
           <button
             onClick={onPrimary}
-            className="h-[36px] rounded-[4px] bg-brand-1 px-[12px] t-body-secondary text-white hover:bg-[#6D0043] active:scale-[0.96]"
+            className={`h-[36px] rounded-[4px] px-[12px] text-[14px] font-medium leading-[24px] text-white active:scale-[0.96] ${dangerPrimary ? 'bg-[#CC2C3C] hover:bg-[#b02030]' : 'bg-brand-1 hover:bg-[#6D0043]'}`}
           >
             {primaryLabel}
           </button>
@@ -3145,18 +3172,6 @@ function ShellPreview({
         title={
           <div className="flex items-center gap-[12px]">
             <span className="font-['PingFang_SC'] text-[12px] font-normal leading-[20px] text-[#3F4444]">{selectedItemName || "Shell preview"}</span>
-            {docType === 'figure' && onToggleRtf && (
-              <button
-                onClick={onToggleRtf}
-                className={`t-small flex items-center justify-center px-[8px] py-[4px] rounded-[4px] transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 active:scale-[0.96] ${
-                  rtfOpen 
-                    ? "font-bold bg-az-secondary text-[#830051]" 
-                    : "font-normal bg-transparent text-text-secondary hover:bg-black/5 hover:text-text-primary"
-                }`}
-              >
-                Spatial View
-              </button>
-            )}
           </div>
         }
         actions={
@@ -3455,11 +3470,11 @@ function MetadataBadge({ type, tooltip, className = '', interactive = true }: Me
     ? 'Inferred from standard TTE dataset naming convention.'
     : 'Conflicting value detected with SAP specification.';
 
-  const baseClasses = `inline-flex h-[20px] items-center justify-center px-[4px] text-[11px] leading-[14px] font-normal rounded-[4px] select-none ml-[8px]`;
+  const baseClasses = `inline-flex h-[20px] items-center justify-center px-[4px] text-[13px] leading-[20px] font-normal rounded-[4px] select-none ml-[6px] whitespace-nowrap`;
   
   const stateClasses = isInfer
-    ? `border border-[#E8EAEB] border-graphite-10 text-text-secondary bg-white ${interactive ? 'cursor-pointer hover:bg-black/5 hover:border-black/20 transition-all duration-180' : ''}`
-    : `bg-[#FCE8F3] text-status-error text-[#C5221F] ${interactive ? 'cursor-pointer hover:bg-[#F8D5E8] transition-all duration-180' : ''}`;
+    ? `border border-[#D8DADA] text-[#888E8E] bg-white ${interactive ? 'cursor-pointer hover:bg-bg-panel transition-all duration-180' : ''}`
+    : `border border-[#F6CCE2] text-status-error bg-[#FDF2F7] ${interactive ? 'cursor-pointer hover:bg-[#F9E0EE] transition-all duration-180' : ''}`;
 
   const badgeContent = (
     <span className={`${baseClasses} ${stateClasses} ${className}`}>
@@ -3478,6 +3493,9 @@ function MetadataBadge({ type, tooltip, className = '', interactive = true }: Me
 
 interface MetadataBlock {
   id: string;
+  name?: string;
+  state?: 'ready' | 'loading';
+  deprecated?: boolean;
   fields: MetadataField[];
 }
 
@@ -3550,29 +3568,7 @@ function GroupCodeViewer({ lines }: { lines: string[] }) {
   );
 }
 
-// ── Figure Block Items Data for Components Tab ──
-const METADATA_FIGURE_BLOCK_ITEMS_DATA = [
-  {
-    id: 'kmCurve',
-    name: 'KM Plot Chart',
-    fields: [
-      { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', type: 'text' as const, required: true },
-      { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text' as const, required: true },
-      { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text' as const, required: true, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
-      { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', type: 'tag' as const, required: true, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on typical KM Plot requirements.' },
-    ],
-  },
-  {
-    id: 'riskTable',
-    name: 'Number at Risk Table',
-    fields: [
-      { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text' as const, required: true },
-      { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text' as const, required: true },
-      { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text' as const, required: true, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
-      { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', type: 'tag' as const, required: true, badge: 'conflict' as const, badgeTooltip: 'Conflicting variable: TRTA used instead of TRT01P.' },
-    ],
-  },
-];
+// Removed METADATA_FIGURE_BLOCK_ITEMS_DATA, now using figureComponents state
 
 // ── Block Items Data for Blocks Tab Two-Column Layout ──
 const METADATA_BLOCK_ITEMS_DATA = [
@@ -3644,53 +3640,258 @@ const METADATA_BLOCK_ITEMS_DATA = [
   },
 ];
 
+const COMPONENT_TYPE_OPTIONS = ['Chart', 'Table', 'Annotation', 'Legend', 'Text Block'] as const;
+
+const INSTRUCTION_PLACEHOLDERS: Record<string, string> = {
+  Chart: "Specify chart features e.g. KM survival curve with 95% CI bands, tick marks for censored data, and hazard ratio annotation.",
+  Table: "Specify table specs e.g. Number at Risk row below X-axis at time points 0, 6, 12, 18, 24 months grouped by treatment arm.",
+  Annotation: "Specify callouts e.g. Add median survival time annotation and log-rank p-value text box in upper right quadrant.",
+  Legend: "Specify legend style e.g. Display treatment arm color keys and line style indicators placed at top-right corner.",
+  'Text Block': "Specify footnote or header specs e.g. Provide dataset specifications, cutoff date, and SAS macro parameters."
+};
+
+interface AddMenuProps {
+  anchorRect: DOMRect;
+  onClose: () => void;
+  onGenerate: (name: string, type: string, instructions: string) => void;
+  lastSubmission?: { name: string; type: string; instructions: string } | null;
+  isGenerating?: boolean;
+}
+
+function AddComponentMenu({ anchorRect, onClose, onGenerate, lastSubmission, isGenerating = false }: AddMenuProps) {
+  const [name, setName] = useState(() => (isGenerating && lastSubmission ? lastSubmission.name : ''));
+  const [type, setType] = useState<string>(() => (isGenerating && lastSubmission ? lastSubmission.type : ''));
+  const [instructions, setInstructions] = useState(() => (isGenerating && lastSubmission ? lastSubmission.instructions : ''));
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const inputBorder = '1px solid #ebecec';
+  const menuWidth = 260;
+  const left = Math.min(anchorRect.left, Math.max(8, window.innerWidth - menuWidth - 8));
+  const isSubmitDisabled = isGenerating || !name.trim() || !type;
+
+  const menu = (
+    <div
+      style={{
+        position: 'fixed',
+        top: anchorRect.bottom + 4,
+        left,
+        width: menuWidth,
+        zIndex: 9999,
+        transformOrigin: 'top left',
+        transform: mounted ? 'scale(1) translateY(0)' : 'scale(0.96) translateY(-4px)',
+        opacity: mounted ? 1 : 0,
+        transition: 'transform 180ms cubic-bezier(0.2,0,0,1), opacity 140ms cubic-bezier(0.2,0,0,1)',
+      }}
+      ref={menuRef}
+    >
+      <div
+        className="bg-white rounded-[8px] flex flex-col overflow-hidden"
+        style={{ border: '1px solid #d8dada', boxShadow: '0px 4px 6px rgba(0,0,0,0.15)' }}
+      >
+        <div className="h-[40px] shrink-0 flex items-center px-[12px] border-b border-border-default">
+          <p className="t-body-medium text-text-primary whitespace-nowrap">
+            Add Component
+          </p>
+        </div>
+        <div className="flex flex-col gap-[16px] p-[12px]">
+          <Input
+            label="Name"
+            required
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="Input name..."
+          />
+          <Dropdown
+            label="Type"
+            required
+            placeholder="Select a component type"
+            value={type}
+            onChange={val => setType(val)}
+            options={COMPONENT_TYPE_OPTIONS.map(opt => ({ label: opt, value: opt }))}
+          />
+          <div className="flex flex-col gap-[6px] w-full text-left">
+            <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: "#3C4242" }}>
+              Custom instructions
+            </span>
+            <div className="bg-white h-[90px] rounded-[4px] border border-graphite-10 hover:border-border-default hover:bg-bg-panel transition-colors relative overflow-hidden">
+              <textarea
+                value={instructions}
+                onChange={e => setInstructions(e.target.value)}
+                placeholder={type && INSTRUCTION_PLACEHOLDERS[type] ? INSTRUCTION_PLACEHOLDERS[type] : "Describe the component specifications, required variables, or custom styling rules..."}
+                className="w-full h-full resize-none p-[8px_12px] t-small text-text-primary placeholder:text-text-secondary outline-none bg-transparent"
+              />
+            </div>
+          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={isSubmitDisabled}
+            className="w-full gap-[6px] flex-nowrap whitespace-nowrap"
+            onClick={() => {
+              if (isSubmitDisabled) return;
+              onGenerate(name, type, instructions);
+              onClose();
+            }}
+          >
+            <img src={shiningFillIconUrl} className="w-[14px] h-[14px] shrink-0" style={{ filter: 'brightness(0) invert(1)', opacity: isSubmitDisabled ? 0.6 : 1 }} alt="AI" />
+            <span className="whitespace-nowrap">{isGenerating ? 'Generating' : 'Generate'}</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(menu, document.body);
+}
+
+interface MoreOptionsMenuProps {
+  anchorRect: DOMRect;
+  isDeprecated: boolean;
+  onClose: () => void;
+  onDeprecate: () => void;
+  onDelete: () => void;
+}
+
+function MoreOptionsMenu({ anchorRect, isDeprecated, onClose, onDeprecate, onDelete }: MoreOptionsMenuProps) {
+  const [mounted, setMounted] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const menuWidth = 160;
+  const left = Math.min(anchorRect.left, Math.max(8, window.innerWidth - menuWidth - 8));
+
+  const menu = (
+    <div
+      ref={menuRef}
+      style={{
+        position: 'fixed',
+        top: anchorRect.bottom + 4,
+        left,
+        zIndex: 9999,
+        transformOrigin: 'top left',
+        transform: mounted ? 'scale(1) translateY(0)' : 'scale(0.96) translateY(-4px)',
+        opacity: mounted ? 1 : 0,
+        transition: 'transform 140ms cubic-bezier(0.2,0,0,1), opacity 120ms',
+      }}
+    >
+      <div className="bg-white rounded-[8px] overflow-hidden" style={{ border: '1px solid var(--color-border-default)', boxShadow: '0px 2px 6px rgba(0,0,0,0.10)' }}>
+        <div className="flex flex-col p-[4px]">
+          <button
+            type="button"
+            onClick={() => { onDeprecate(); onClose(); }}
+            className="flex items-center gap-[6px] px-[4px] py-[6px] rounded-[2px] hover:bg-bg-panel transition-colors whitespace-nowrap w-full text-left active:scale-[0.97] transition-transform"
+          >
+            <div className="relative shrink-0 size-[16px]">
+              <div className="absolute" style={{ inset: '8.33% 8.34% 8.34% 8.33%' }}>
+                <svg className="absolute block inset-0 size-full" fill="none" viewBox="0 0 13.333 13.333" preserveAspectRatio="none">
+                  <path d="M6.66699 0C10.3487 0.000175812 13.333 2.9852 13.333 6.66699C13.3328 10.3486 10.3486 13.3328 6.66699 13.333C2.9852 13.333 0.000175816 10.3487 0 6.66699C0 2.98509 2.98509 0 6.66699 0ZM6.66699 1.33301C3.72147 1.33301 1.33301 3.72147 1.33301 6.66699C1.33318 9.61238 3.72158 12 6.66699 12C9.61227 11.9998 11.9998 9.61227 12 6.66699C12 3.72158 9.61238 1.33318 6.66699 1.33301ZM9.92773 8.98438C9.80013 9.16338 9.65578 9.33452 9.49512 9.49512C9.33452 9.65578 9.16338 9.80013 8.98438 9.92773L3.40625 4.34863C3.5338 4.16969 3.67735 3.99844 3.83789 3.83789C3.99844 3.67735 4.16969 3.5338 4.34863 3.40625L9.92773 8.98438Z" fill="var(--color-text-secondary)" />
+                </svg>
+              </div>
+            </div>
+            <span className="t-small text-text-primary">
+              {isDeprecated ? 'Remove Deprecation' : 'Mark as Deprecated'}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { onDelete(); onClose(); }}
+            className="flex items-center gap-[6px] px-[4px] py-[6px] rounded-[2px] hover:bg-[#fff5f5] transition-colors whitespace-nowrap w-full text-left active:scale-[0.97] transition-transform"
+          >
+            <div className="overflow-hidden relative shrink-0 size-[16px]">
+              <img src={deleteBinIconUrl} className="w-full h-full" style={{ filter: 'invert(27%) sepia(85%) saturate(5833%) hue-rotate(345deg) brightness(97%) contrast(85%)' }} alt="delete" />
+            </div>
+            <span className="t-small text-status-error">
+              Delete Component
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(menu, document.body);
+}
+
 function BlocksTabContent({
   blocks,
   confirmedBlocks,
   onToggleConfirm,
   isLocked,
+  onGenerateComponent,
+  onDeprecateComponent,
+  onDeleteComponent
 }: {
   blocks: any;
   confirmedBlocks: Record<string, boolean>;
   onToggleConfirm: (blockId: string, fieldId: string) => void;
   isLocked?: boolean;
+  onGenerateComponent?: (name: string, type: string, instructions: string) => void;
+  onDeprecateComponent?: (id: string) => void;
+  onDeleteComponent?: (id: string) => void;
+  onFieldEdit?: (blockId: string, fieldId: string, value: string) => void;
 }) {
   const FieldCheckboxIcon = (confirmed: boolean) => {
     if (!confirmed) return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 20 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
     return <><rect width="20" height="20" rx="1" fill="var(--color-brand-1)" /><path d="M15.6567 7.58563L9.99951 13.2419L10.0005 13.2429L8.58545 14.6569L7.17139 13.2429V13.2419L4.34326 10.4138L5.75732 8.99969L8.58545 11.8278L14.2427 6.17157L15.6567 7.58563Z" fill="white" /></>;
   };
-  const [selectedBlockId, setSelectedBlockId] = useState('');
+  const [selectedBlockId, setSelectedBlockId] = useState('all');
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const isScrollSyncActive = useRef(true);
+  
+  const [addMenuAnchor, setAddMenuAnchor] = useState<DOMRect | null>(null);
+  const [moreMenuAnchor, setMoreMenuAnchor] = useState<{ rect: DOMRect; blockId: string; isDeprecated: boolean } | null>(null);
+
+  // Fallback to 'all' if the currently selected block is deleted
+  useEffect(() => {
+    if (selectedBlockId !== 'all' && !blocks.find((b: any) => b.id === selectedBlockId)) {
+      setSelectedBlockId('all');
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [blocks, selectedBlockId]);
 
   const handleSidebarClick = (blockId: string) => {
     setSelectedBlockId(blockId);
-    isScrollSyncActive.current = false;
-    sectionRefs.current[blockId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(() => { isScrollSyncActive.current = true; }, 600);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   };
-
-  // Scroll-sync: update selected sidebar item based on scroll position
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const handleScroll = () => {
-      if (!isScrollSyncActive.current) return;
-      const containerRect = container.getBoundingClientRect();
-      let closestId = blocks[0]?.id || '';
-      let closestDist = Infinity;
-      for (const block of blocks) {
-        const el = sectionRefs.current[block.id];
-        if (!el) continue;
-        const dist = Math.abs(el.getBoundingClientRect().top - containerRect.top);
-        if (dist < closestDist) { closestDist = dist; closestId = block.id; }
-      }
-      setSelectedBlockId(closestId);
-    };
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [blocks]);
 
   const LinkIcon = () => (
     <SvgIcon className="h-[12px] w-[12px] inline-block ml-[4px]" viewBox="0 0 24 24">
@@ -3698,85 +3899,228 @@ function BlocksTabContent({
     </SvgIcon>
   );
 
+  const [lastFormSubmission, setLastFormSubmission] = useState<{ name: string; type: string; instructions: string } | null>(null);
+  const isGenerating = blocks.some((b: any) => b.state === 'loading');
+  const prevLoadingIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const loadingBlock = blocks.find((b: any) => b.state === 'loading');
+    if (loadingBlock && loadingBlock.id !== prevLoadingIdRef.current) {
+      prevLoadingIdRef.current = loadingBlock.id;
+      setSelectedBlockId(loadingBlock.id);
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [blocks]);
+
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
+      {addMenuAnchor && onGenerateComponent && (
+        <AddComponentMenu
+          anchorRect={addMenuAnchor}
+          onClose={() => setAddMenuAnchor(null)}
+          onGenerate={(n, t, i) => {
+            setLastFormSubmission({ name: n, type: t, instructions: i });
+            onGenerateComponent(n, t, i);
+          }}
+          lastSubmission={lastFormSubmission}
+          isGenerating={isGenerating}
+        />
+      )}
+      {moreMenuAnchor && onDeprecateComponent && onDeleteComponent && (
+        <MoreOptionsMenu
+          anchorRect={moreMenuAnchor.rect}
+          isDeprecated={moreMenuAnchor.isDeprecated}
+          onClose={() => setMoreMenuAnchor(null)}
+          onDeprecate={() => onDeprecateComponent(moreMenuAnchor.blockId)}
+          onDelete={() => onDeleteComponent(moreMenuAnchor.blockId)}
+        />
+      )}
       {/* Left sidebar — block navigation */}
-      <div className="w-[160px] shrink min-w-[90px] border-r border-[#E5E8E8] overflow-y-auto bg-white">
-        {blocks.map((block) => (
+      <div className="w-[176px] shrink min-w-[90px] border-r border-[#E5E8E8] overflow-y-overlay bg-white flex flex-col gap-[2px] pt-[4px] pl-[4px] pb-[8px] pr-[4px]">
+        <div className="relative group" data-menu-open={!!addMenuAnchor}>
           <button
-            key={block.id}
-            onClick={() => handleSidebarClick(block.id)}
-            className={`w-full text-left px-[12px] py-[10px] t-small leading-[1.3] transition-colors truncate ${
-              selectedBlockId === block.id
-                ? 'bg-az-secondary text-brand-1 font-medium border-l-[3px] border-l-brand-1 pl-[9px]'
-                : 'text-text-primary hover:bg-bg-panel border-l-[3px] border-l-transparent pl-[9px]'
+            onClick={() => handleSidebarClick('all')}
+            className={`group flex items-center w-full h-[32px] pl-[8px] pr-[4px] py-[6px] rounded-[4px] transition-colors text-left shrink-0 gap-[4px] ${
+              selectedBlockId === 'all'
+                ? 'bg-az-secondary'
+                : 'bg-transparent hover:bg-bg-panel'
             }`}
-            title={block.name}
+            title="All"
           >
-            {block.name}
+            <p className={`flex-1 min-w-0 truncate text-[12px] font-medium leading-[18px] ${
+              selectedBlockId === 'all' ? 'text-brand-1' : 'text-text-primary'
+            }`}>
+              All
+            </p>
+            {onGenerateComponent && (
+              <div className="hidden group-hover:flex group-data-[menu-open=true]:flex items-center shrink-0">
+                <TooltipText label="Add Component" align="center" disabled={!!addMenuAnchor}>
+                  <div
+                    role="button"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setAddMenuAnchor(prev => prev ? null : rect);
+                    }}
+                    className={`flex items-center justify-center shrink-0 w-[24px] h-[24px] rounded-[4px] ${
+                      !!addMenuAnchor
+                        ? 'bg-black/5'
+                        : 'bg-transparent hover:bg-black/5'
+                    }`}
+                  >
+                     <img src={addLineIconUrl} className="w-[16px] h-[16px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="add" />
+                  </div>
+                </TooltipText>
+              </div>
+            )}
           </button>
-        ))}
+        </div>
+        {blocks.map((block: any) => {
+          const isSelected = selectedBlockId === block.id;
+          const blockName = block.name || block.fields?.find((f: any) => f.id.includes('Label') || f.id.includes('Title') || f.label === 'Component Label' || f.label === 'Block Title')?.value || block.id;
+          return (
+            <div key={block.id} className="relative group" data-menu-open={moreMenuAnchor?.blockId === block.id}>
+              <button
+                onClick={() => handleSidebarClick(block.id)}
+                className={`group flex items-center w-full h-[32px] pl-[8px] pr-[4px] py-[6px] rounded-[4px] transition-colors text-left shrink-0 gap-[4px] ${
+                  isSelected
+                    ? 'bg-az-secondary'
+                    : 'bg-transparent hover:bg-bg-panel'
+                }`}
+                title={blockName}
+              >
+                <p className={`flex-1 min-w-0 truncate text-[12px] font-medium leading-[18px] ${
+                  block.deprecated ? 'line-through text-[#888e8e]' : isSelected ? 'text-brand-1' : 'text-text-primary'
+                }`}>
+                  {blockName}
+                </p>
+                {block.state === 'loading' ? (
+                  <div className="flex items-center shrink-0">
+                    <img src={aiProcessingIconUrl} className="size-[16px]" alt="loading" />
+                  </div>
+                ) : onDeprecateComponent && onDeleteComponent ? (
+                  <div className="hidden group-hover:flex group-data-[menu-open=true]:flex items-center shrink-0">
+                    <TooltipText label="More" align="center" disabled={moreMenuAnchor?.blockId === block.id}>
+                      <div
+                        role="button"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setMoreMenuAnchor(prev => (prev?.blockId === block.id ? null : { rect, blockId: block.id, isDeprecated: !!block.deprecated }));
+                        }}
+                        className={`flex items-center justify-center shrink-0 w-[24px] h-[24px] rounded-[4px] ${
+                          moreMenuAnchor?.blockId === block.id
+                            ? 'bg-black/5'
+                            : 'bg-transparent hover:bg-black/5'
+                        }`}
+                      >
+                         <img src={moreIconUrl} className="w-[16px] h-[16px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="more" />
+                      </div>
+                    </TooltipText>
+                  </div>
+                ) : null}
+              </button>
+            </div>
+          );
+        })}
+        {blocks.length === 0 && (
+          <div className="px-[8px] py-[6px]">
+            <p className="t-small text-text-secondary">No Components Yet</p>
+          </div>
+        )}
       </div>
 
       {/* Right content — scrollable block sections */}
-      <div ref={scrollContainerRef} className="flex-1 min-w-[180px] overflow-y-auto">
-        {blocks.map((block, blockIndex) => (
-          <div
-            key={block.id}
-            ref={(el) => { sectionRefs.current[block.id] = el; }}
-            data-block-id={block.id}
-            className={`px-[16px] py-[14px] ${blockIndex !== blocks.length - 1 ? 'border-b border-[#E5E8E8]' : ''}`}
-          >
-            <p className="text-[14px] font-bold text-text-primary mb-[12px]">{block.name}</p>
-            <div className="flex flex-col gap-[12px]">
-              {block.fields.map((field) => (
-                <div key={field.id}>
-                  <div className="flex h-[20px] items-center justify-between mb-[4px]">
-                    <p className="t-small text-text-secondary flex items-center">
-                      {field.required && <span className="text-[#D32F2F] mr-[4px]">*</span>}
-                      {field.label}
-                      {field.hasLink && <LinkIcon />}
-                      {(field as any).badge && <MetadataBadge type={(field as any).badge} tooltip={(field as any).badgeTooltip} />}
-                    </p>
-                    <button
-                      onClick={isLocked ? undefined : () => onToggleConfirm(block.id, field.id)}
-                      disabled={isLocked}
-                      className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                      aria-label={confirmedBlocks[`${block.id}_${field.id}`] ? "Unconfirm" : "Confirm"}
-                    >
-                      <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{FieldCheckboxIcon(!!confirmedBlocks[`${block.id}_${field.id}`])}</SvgIcon>
-                    </button>
-                  </div>
-                  {field.type === 'tag' ? (
-                    <div className={`flex flex-wrap gap-[4px] min-h-[32px] px-[8px] py-[4px] rounded-[4px] border items-center ${
-                      isLocked ? 'border-transparent bg-bg-panel' : 'border-border-default bg-white'
-                    }`}>
-                      <span className={`inline-flex items-center gap-[6px] h-[24px] px-[8px] rounded-[12px] t-small ${
-                        isLocked ? 'bg-[#EBEBEB] text-[#B2B4B4]' : 'bg-[#F0F0F0] text-text-primary'
-                      }`}>
-                        {field.value}
-                        {!isLocked && (
-                          <button className="flex items-center justify-center h-[14px] w-[14px] rounded-full text-text-secondary hover:text-text-primary text-[13px] leading-none">×</button>
-                        )}
-                      </span>
-                    </div>
-                  ) : (
-                    <input
-                      type="text"
-                      value={field.value}
-                      readOnly
-                      className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[4px] border t-small outline-none focus:outline-none ${
-                        isLocked
-                          ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed'
-                          : 'bg-white border-border-default text-text-primary'
-                      }`}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+      <div ref={scrollContainerRef} className="flex-1 min-w-[180px] overflow-y-scroll overflow-x-hidden">
+        {blocks.length === 0 ? (
+          <div className="flex w-full h-full items-center justify-center">
+            <p className="t-small text-text-secondary">No Components</p>
           </div>
-        ))}
+        ) : (selectedBlockId === 'all' ? blocks : blocks.filter((b: any) => b.id === selectedBlockId)).map((block: any, blockIndex: number, arr: any[]) => {
+          const fieldIsDisabled = isLocked || block.deprecated;
+          const blockName = block.name || block.fields?.find((f: any) => f.id.includes('Label') || f.id.includes('Title') || f.label === 'Component Label' || f.label === 'Block Title')?.value || block.id;
+          return (
+            <div
+              key={block.id}
+              ref={(el) => { sectionRefs.current[block.id] = el; }}
+              data-block-id={block.id}
+              className={`pl-[16px] pr-[4px] py-[14px] ${blockIndex !== arr.length - 1 ? 'border-b border-[#E5E8E8]' : ''}`}
+            >
+              {block.state === 'loading' ? (
+                <div>
+                  <div className="h-[20px] w-[120px] rounded-[2px] bg-[#F2F4F4] animate-pulse mb-[12px]" />
+                  <div className="flex flex-col gap-[12px]">
+                    <div className="h-[32px] w-[80%] rounded-[2px] bg-[#F2F4F4] animate-pulse" />
+                    <div className="h-[32px] w-[60%] rounded-[2px] bg-[#F2F4F4] animate-pulse" />
+                    <div className="h-[32px] w-[100%] rounded-[2px] bg-[#F2F4F4] animate-pulse" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-[14px] font-bold mb-[12px] text-text-primary break-words">{blockName}</p>
+                  {block.deprecated && (
+                    <div className="mb-[12px] bg-bg-panel border border-border-default rounded-[4px] p-[8px] flex items-center gap-[8px]">
+                      <div className="w-[20px] h-[20px] shrink-0 rounded-[4px] bg-black/5 flex items-center justify-center">
+                        <svg className="w-[14px] h-[14px]" fill="none" viewBox="0 0 13.333 13.333">
+                          <path d="M6.66699 0C10.3487 0.000175812 13.333 2.9852 13.333 6.66699C13.3328 10.3486 10.3486 13.3328 6.66699 13.333C2.9852 13.333 0.000175816 10.3487 0 6.66699C0 2.98509 2.98509 0 6.66699 0ZM6.66699 1.33301C3.72147 1.33301 1.33301 3.72147 1.33301 6.66699C1.33318 9.61238 3.72158 12 6.66699 12C9.61227 11.9998 11.9998 9.61227 12 6.66699C12 3.72158 9.61238 1.33318 6.66699 1.33301ZM9.92773 8.98438C9.80013 9.16338 9.65578 9.33452 9.49512 9.49512C9.33452 9.65578 9.16338 9.80013 8.98438 9.92773L3.40625 4.34863C3.5338 4.16969 3.67735 3.99844 3.83789 3.83789C3.99844 3.67735 4.16969 3.5338 4.34863 3.40625L9.92773 8.98438Z" fill="#888E8E" />
+                        </svg>
+                      </div>
+                      <p className="t-small text-text-secondary">
+                        AI will skip deprecated components in code updates.
+                      </p>
+                    </div>
+                  )}
+                  <div className={`flex flex-col gap-[12px] ${block.deprecated ? 'opacity-40 pointer-events-none' : ''}`}>
+                    {block.fields.map((field: any) => (
+                      <div key={field.id}>
+                        <div className="flex h-[20px] items-center justify-between mb-[4px] min-w-0">
+                          <div className="flex items-center gap-[2px] min-w-0 flex-1">
+                            <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: '#3C4242' }} className="truncate">
+                              {field.label}
+                            </span>
+                            {field.required && (
+                              <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: '#830051' }} className="shrink-0">*</span>
+                            )}
+                            {field.hasLink && <LinkIcon />}
+                            {(field as any).badge && <span className="shrink-0"><MetadataBadge type={(field as any).badge} tooltip={(field as any).badgeTooltip} /></span>}
+                          </div>
+                          <button
+                            onClick={fieldIsDisabled ? undefined : () => onToggleConfirm(block.id, field.id)}
+                            disabled={fieldIsDisabled}
+                            className="flex h-[16px] w-[16px] items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 ml-[8px]"
+                            aria-label={confirmedBlocks[`${block.id}_${field.id}`] ? "Unconfirm" : "Confirm"}
+                          >
+                            <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{FieldCheckboxIcon(!!confirmedBlocks[`${block.id}_${field.id}`])}</SvgIcon>
+                          </button>
+                        </div>
+                        {field.type === 'tag' ? (
+                          <div className="flex flex-nowrap gap-[4px] h-[32px] px-[8px] py-[4px] rounded-[2px] border border-[#D8DADA] bg-white items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            <span className="inline-flex items-center gap-[6px] h-[24px] px-[8px] rounded-[12px] t-small bg-[#F0F0F0] text-[#3C4242] shrink-0 max-w-full">
+                              <span className="truncate">{field.value}</span>
+                              {!fieldIsDisabled && (
+                                <button className="flex items-center justify-center h-[14px] w-[14px] rounded-full text-text-secondary hover:text-text-primary text-[13px] leading-none shrink-0">×</button>
+                              )}
+                            </span>
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            value={field.value}
+                            readOnly={fieldIsDisabled}
+                            onChange={fieldIsDisabled ? undefined : (e) => onFieldEdit?.(block.id, field.id, e.target.value)}
+                            className="w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border border-[#D8DADA] bg-white text-[#3C4242] t-small outline-none focus:outline-none focus:border-brand-1"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -3967,7 +4311,7 @@ function MetadataPanel({
         ...b,
         fields: b.fields.map(f => {
           const fallbackField = fallbackBlock?.fields.find(fb => fb.id === f.id);
-          const baseField = f.id === 'associatedTL' ? { ...f, status: 'default', dependencyState: 'S1' } : f;
+          const baseField = (f.id === 'associatedTL' || f.id === 'figureType') ? { ...f, status: 'default' as FieldStatus, dependencyState: f.id === 'associatedTL' ? 'S1' : f.dependencyState } : f;
           return {
             ...baseField,
             badge: baseField.badge ?? fallbackField?.badge,
@@ -3980,48 +4324,87 @@ function MetadataPanel({
   });
   useEffect(() => { sessionStorage.setItem('metadataBlocks_figure', JSON.stringify(figureBlocks)); }, [figureBlocks]);
 
-  const [figureComponents, setFigureComponents] = useState<MetadataBlock[]>(() => {
-    const fallback = [
-      {
-        id: 'comp1',
-        fields: [
-          { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', status: 'default' as FieldStatus, confirmed: false },
-          { id: 'compType1', label: 'Component Type', value: 'Chart', status: 'default' as FieldStatus, confirmed: false },
-          { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
-          { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on typical KM Plot requirements.' },
-        ]
-      },
-      {
-        id: 'comp2',
-        fields: [
-          { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', status: 'default' as FieldStatus, confirmed: false },
-          { id: 'compType2', label: 'Component Type', value: 'Table', status: 'default' as FieldStatus, confirmed: false },
-          { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
-          { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting variable: TRTA used instead of TRT01P.' },
-        ]
-      }
-    ];
-    const stored = loadFromSession('metadataComponents_figure', fallback);
-    if (!Array.isArray(stored)) return fallback;
-    const migrated = stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
+  const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
+    {
+      id: 'kmCurve',
+      name: 'KM Plot Chart',
+      state: 'ready' as const,
+      deprecated: false,
+      fields: [
+        { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false },
+        { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false },
+        { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
+        { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on typical KM Plot requirements.' },
+      ]
+    },
+    {
+      id: 'riskTable',
+      name: 'Number at Risk Table',
+      state: 'ready' as const,
+      deprecated: false,
+      fields: [
+        { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false },
+        { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false },
+        { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
+        { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting variable: TRTA used instead of TRT01P.' },
+      ]
+    }
+  ];
+
+  const [figureComponents, setFigureComponents] = useState<MetadataBlock[]>(INITIAL_FIGURE_COMPONENTS);
+  useEffect(() => { sessionStorage.removeItem('metadataComponents_figure'); }, []);
+
+  const [hasMetadataComponentEdits, setHasMetadataComponentEdits] = useState(false);
+
+  const handleGenerateComponent = (name: string, type: string, instructions: string) => {
+    const newId = `generated-${Date.now()}`;
+    const label = name.trim() || instructions.trim().split(/\s+/).slice(0, 4).join(' ') || type;
     
-    return migrated.map(b => {
-      const fallbackBlock = fallback.find(fb => fb.id === b.id);
+    const loadingBlock: MetadataBlock = {
+      id: newId,
+      name: label,
+      state: 'loading',
+      deprecated: false,
+      fields: []
+    };
+    
+    setFigureComponents(prev => [...prev, loadingBlock]);
+    
+    setTimeout(() => {
+      setFigureComponents(prev => prev.map(b => b.id === newId ? {
+        ...b,
+        state: 'ready',
+        fields: [
+          { id: `${newId}_l`, label: 'Component Label', value: label, type: 'text', required: true, status: 'default', confirmed: false },
+          { id: `${newId}_t`, label: 'Component Type', value: type, type: 'text', required: true, status: 'default', confirmed: false },
+          { id: `${newId}_d`, label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default', confirmed: false, badge: 'ai-infer', badgeTooltip: 'Inferred' },
+          { id: `${newId}_v`, label: 'Source Variable(s)', value: 'AVAL, PARAM', type: 'tag', required: true, status: 'default', confirmed: false, badge: 'ai-infer', badgeTooltip: 'Inferred' }
+        ]
+      } : b));
+      setHasMetadataComponentEdits(true);
+    }, 3600);
+  };
+
+  const handleDeprecateComponent = (id: string) => {
+    setFigureComponents(prev => prev.map(b => b.id === id ? { ...b, deprecated: !b.deprecated } : b));
+    setHasMetadataComponentEdits(true);
+  };
+
+  const handleDeleteComponent = (id: string) => {
+    setFigureComponents(prev => prev.filter(b => b.id !== id));
+    setHasMetadataComponentEdits(true);
+  };
+
+  const handleFieldEditComponent = (blockId: string, fieldId: string, value: string) => {
+    setFigureComponents(prev => prev.map(b => {
+      if (b.id !== blockId) return b;
       return {
         ...b,
-        fields: b.fields.map(f => {
-          const fallbackField = fallbackBlock?.fields.find(fb => fb.id === f.id);
-          return {
-            ...f,
-            badge: f.badge ?? fallbackField?.badge,
-            badgeTooltip: f.badgeTooltip ?? fallbackField?.badgeTooltip,
-            dependencyState: f.dependencyState ?? fallbackField?.dependencyState
-          };
-        })
+        fields: b.fields.map(f => f.id === fieldId ? { ...f, value, status: 'edited' as const } : f)
       };
-    });
-  });
-  useEffect(() => { sessionStorage.setItem('metadataComponents_figure', JSON.stringify(figureComponents)); }, [figureComponents]);
+    }));
+    setHasMetadataComponentEdits(true);
+  };
 
   // Helper functions for configuration changes
   const areColumnCountsEqual = (a: Record<string, number>, b: Record<string, number>) => {
@@ -4081,8 +4464,8 @@ function MetadataPanel({
 
   const figureTotalFieldsBasic = figureBlocks.reduce((s, b) => s + b.fields.length, 0);
   const figureConfirmedCountBasic = figureBlocks.reduce((s, b) => s + b.fields.filter(f => f.confirmed).length, 0);
-  const figureTotalFieldsComponents = METADATA_FIGURE_BLOCK_ITEMS_DATA.reduce((sum, b) => sum + b.fields.length, 0);
-  const figureConfirmedCountComponents = METADATA_FIGURE_BLOCK_ITEMS_DATA.reduce((sum, b) => sum + b.fields.filter(f => blockItemConfirmed[`${b.id}_${f.id}`]).length, 0);
+  const figureTotalFieldsComponents = figureComponents.filter(c => c.state !== 'loading' && !c.deprecated).reduce((sum, b) => sum + b.fields.length, 0);
+  const figureConfirmedCountComponents = figureComponents.filter(c => c.state !== 'loading' && !c.deprecated).reduce((sum, b) => sum + b.fields.filter(f => blockItemConfirmed[`${b.id}_${f.id}`]).length, 0);
 
   const totalFields = docType === 'listing'
     ? (isBasicTab ? listingTotalFields : listingColumnTotalFields)
@@ -4109,7 +4492,7 @@ function MetadataPanel({
   const hasAnyEdits = docType === 'listing'
     ? (hasListingBasicEdits || hasListingColumnEdits)
     : docType === 'figure'
-      ? figureBlocks.some(b => b.fields.some(f => f.status === 'edited')) || figureComponents.some(b => b.fields.some(f => f.status === 'edited'))
+      ? hasMetadataComponentEdits || figureBlocks.some(b => b.fields.some(f => f.status === 'edited')) || figureComponents.some(b => b.fields.some(f => f.status === 'edited'))
       : (groupStatus === 'edited' || blockFields.some(f => f.status === 'edited') || blocks.some(b => b.fields.some(f => f.status === 'edited')));
 
   const selectAllState: "empty" | "indeterminate" | "checked" = confirmedCount === 0 ? "empty" : confirmedCount === confirmableFields ? "checked" : "indeterminate";
@@ -4194,7 +4577,7 @@ function MetadataPanel({
         setFigureBlocks(prev => prev.map(b => ({ ...b, fields: b.fields.map(f => ({ ...f, confirmed: confirm })) })));
       } else {
         const newConfirmed: Record<string, boolean> = {};
-        METADATA_FIGURE_BLOCK_ITEMS_DATA.forEach(b => {
+        figureComponents.forEach(b => {
           b.fields.forEach(f => {
             newConfirmed[`${b.id}_${f.id}`] = confirm;
           });
@@ -4257,7 +4640,7 @@ function MetadataPanel({
     if (status === "edited") {
       return { containerBg: "bg-[#FCEECC]", containerBorder: "border-[#F0AB00]", inputBorder: "border-transparent" };
     }
-    return { containerBg: "bg-white", containerBorder: "border-transparent", inputBorder: "border-[#999]" };
+    return { containerBg: "bg-white", containerBorder: "border-transparent", inputBorder: "border-[#D8DADA]" };
   };
 
   const selectAllCheckboxIcon = () => {
@@ -4272,6 +4655,7 @@ function MetadataPanel({
   };
 
   const groupStyles = getFieldStyles(groupStatus, false);
+  const [deleteConfirmBlockId, setDeleteConfirmBlockId] = useState<string | null>(null);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
@@ -4317,7 +4701,7 @@ function MetadataPanel({
       </div>
 
       {/* Content */}
-      <div className={`min-h-0 flex-1 overflow-auto p-[4px]`}>
+      <div className={`min-h-0 flex-1 ${activeTab === "blocks" && docType !== 'listing' ? 'flex flex-col' : 'overflow-auto [scrollbar-gutter:stable] p-[4px]'}`}>
         {activeTab === "basic" && (
           <div className="flex flex-col gap-[4px]">
             {docType === 'listing' ? (
@@ -4348,8 +4732,13 @@ function MetadataPanel({
                       <div key={field.id} ref={el => { fieldRefs.current[field.id] = el; }} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                         <div className="flex flex-col gap-[4px] p-[8px]">
                           <div className="flex h-[20px] items-center justify-between">
-                            <div className="flex items-center">
-                              <p className="t-small text-text-primary">{field.label}</p>
+                            <div className="flex items-center gap-[2px]">
+                              <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: isLocked ? '#B2B4B4' : '#3C4242' }}>
+                                {field.label}
+                              </span>
+                              {field.required && (
+                                <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: isLocked ? '#B2B4B4' : '#830051' }}>*</span>
+                              )}
                               {field.badge && <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} />}
                             </div>
                             <button
@@ -4367,12 +4756,12 @@ function MetadataPanel({
                               value={displayValue}
                               readOnly={isLocked || isReadOnlyField}
                               onChange={isLocked || isReadOnlyField ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${
+                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${
                                 isReadOnlyField
-                                  ? 'border-transparent bg-transparent pl-0 text-text-primary' // Hide border and style nicely for read-only config fields
+                                  ? 'border-transparent bg-transparent pl-0 text-[#3C4242]' // Hide border and style nicely for read-only config fields
                                   : isLocked
                                     ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed'
-                                    : `bg-white ${styles.inputBorder || 'border-border-default'}`
+                                    : `bg-white ${styles.inputBorder || 'border-[#D8DADA] focus:border-brand-1'}`
                               }`}
                             />
                           </div>
@@ -4428,8 +4817,13 @@ function MetadataPanel({
                         <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                           <div className="flex flex-col gap-[4px] p-[8px]">
                             <div className="flex h-[20px] items-center justify-between">
-                              <div className="flex items-center gap-[8px]">
-                                <p className="t-small text-text-primary shrink-0">{field.label}</p>
+                              <div className="flex items-center gap-[2px]">
+                                <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: isLocked ? '#B2B4B4' : '#3C4242' }}>
+                                  {field.label}
+                                </span>
+                                {field.required && (
+                                  <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: isLocked ? '#B2B4B4' : '#830051' }}>*</span>
+                                )}
                                 {field.badge && <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} />}
                               </div>
                               <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
@@ -4525,8 +4919,13 @@ function MetadataPanel({
                       >
                         <div className="flex flex-col gap-[4px] p-[8px]">
                           <div className="flex h-[20px] items-center justify-between">
-                            <div className="flex items-center">
-                              <p className="t-small text-text-primary">{field.label}</p>
+                            <div className="flex items-center gap-[2px]">
+                              <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: isLocked ? '#B2B4B4' : '#3C4242' }}>
+                                {field.label}
+                              </span>
+                              {field.required && (
+                                <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: isLocked ? '#B2B4B4' : '#830051' }}>*</span>
+                              )}
                               {field.badge && <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} />}
                             </div>
                             <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
@@ -4538,7 +4937,7 @@ function MetadataPanel({
                           <div className="relative">
                             <input type="text" value={field.value} readOnly={isLocked}
                               onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
+                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-[#D8DADA] focus:border-brand-1'}`}`} />
                             
                             {!isLocked && field.status === 'default' && (
                               <div className="absolute right-[8px] top-[8px] pointer-events-none">
@@ -4562,8 +4961,13 @@ function MetadataPanel({
                       <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                         <div className="flex flex-col gap-[4px] p-[8px]">
                           <div className="flex h-[20px] items-center justify-between">
-                            <div className="flex items-center">
-                              <p className="t-small text-text-primary">{field.label}</p>
+                            <div className="flex items-center gap-[2px]">
+                              <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: isLocked ? '#B2B4B4' : '#3C4242' }}>
+                                {field.label}
+                              </span>
+                              {field.required && (
+                                <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: isLocked ? '#B2B4B4' : '#830051' }}>*</span>
+                              )}
                               {field.badge && <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} />}
                             </div>
                             <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
@@ -4575,7 +4979,7 @@ function MetadataPanel({
                           <div className="relative">
                             <input type="text" value={field.value} readOnly={isLocked}
                               onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-text-primary outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-border-default'}`}`} />
+                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-[#D8DADA] focus:border-brand-1'}`}`} />
                             {!isLocked && field.status === 'default' && (
                               <div className="absolute right-[8px] top-[8px] pointer-events-none">
                                 <SvgIcon className="h-[16px] w-[16px]"><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>
@@ -4630,8 +5034,13 @@ function MetadataPanel({
                   <div key={field.id} ref={el => { fieldRefs.current[field.id] = el; }} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                     <div className="flex flex-col gap-[4px] p-[8px]">
                       <div className="flex h-[20px] items-center justify-between">
-                        <div className="flex items-center">
-                          <p className="t-small text-text-primary">{field.label}</p>
+                        <div className="flex items-center gap-[2px]">
+                          <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: isLocked ? '#B2B4B4' : '#3C4242' }}>
+                            {field.label}
+                          </span>
+                          {field.required && (
+                            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: isLocked ? '#B2B4B4' : '#830051' }}>*</span>
+                          )}
                           {field.badge && <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} />}
                         </div>
                         <button
@@ -4664,10 +5073,14 @@ function MetadataPanel({
           ) : docType === 'figure' ? (
             <BlocksTabContent
               // @ts-ignore
-              blocks={METADATA_FIGURE_BLOCK_ITEMS_DATA}
+              blocks={figureComponents}
               confirmedBlocks={blockItemConfirmed}
               onToggleConfirm={(blockId, fieldId) => setBlockItemConfirmed(prev => ({ ...prev, [`${blockId}_${fieldId}`]: !prev[`${blockId}_${fieldId}`] }))}
               isLocked={isLocked}
+              onGenerateComponent={handleGenerateComponent}
+              onDeprecateComponent={handleDeprecateComponent}
+              onDeleteComponent={(id) => setDeleteConfirmBlockId(id)}
+              onFieldEdit={handleFieldEditComponent}
             />
           ) : (
             <BlocksTabContent
@@ -4762,6 +5175,25 @@ function MetadataPanel({
           }
           setFigureBlocks(newBlocks);
           setShowDepUpdateModal(false);
+        }}
+      />
+
+      {/* Delete Component Confirmation Modal */}
+      <WorkspaceModal
+        isOpen={!!deleteConfirmBlockId}
+        onClose={() => setDeleteConfirmBlockId(null)}
+        title="Delete This Component?"
+        description="This action cannot be undone. To temporarily retire it, use [Deprecate Component] instead."
+        primaryLabel="Delete"
+        secondaryLabel="Cancel"
+        dangerPrimary={true}
+        iconColor="#CC2C3C"
+        onSecondary={() => setDeleteConfirmBlockId(null)}
+        onPrimary={() => {
+          if (deleteConfirmBlockId) {
+            handleDeleteComponent(deleteConfirmBlockId);
+          }
+          setDeleteConfirmBlockId(null);
         }}
       />
     </div>
@@ -5280,7 +5712,7 @@ function WorkspaceContent({
   const [aiCopilotOpen, setAiCopilotOpen] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [shellPreviewWidth, setShellPreviewWidth] = useState(560);
-  const [metadataWidth, setMetadataWidth] = useState(380);
+  const [metadataWidth, setMetadataWidth] = useState(440);
   const [aiCopilotWidth, setAiCopilotWidth] = useState(360);
   const [treeListAutoCollapsed, setTreeListAutoCollapsed] = useState(false);
 
@@ -5541,6 +5973,7 @@ function WorkspaceContent({
   useEffect(() => {
     if (docType === 'figure') {
       setRtfOpen(false);
+      setPanelView('both');
     } else {
       setRtfOpen(true);
     }
@@ -5662,9 +6095,6 @@ function WorkspaceContent({
 
   const handlePanelViewChange = (v: PanelView) => {
     setPanelView(v);
-    if (v === 'shell' || v === 'code') {
-      setMetadataOpen(false);
-    }
   };
 
   return (

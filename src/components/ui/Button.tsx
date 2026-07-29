@@ -8,7 +8,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = "", variant = "primary", size = "default", disabled = false, children, ...props }, ref) => {
     // Base styles — text uses inline style to avoid globals.css cascade issues
-    const baseStyles = "inline-flex items-center justify-center gap-[4px] whitespace-nowrap rounded-[4px] transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 disabled:pointer-events-none active:scale-[0.96]";
+    const baseStyles = "inline-flex items-center justify-center gap-[4px] whitespace-nowrap flex-nowrap shrink-0 rounded-[4px] transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 disabled:pointer-events-none active:scale-[0.96]";
 
     // Variant styles — Figma 221-516 (Primary), 221-554 (Secondary)
     const variants: Record<string, string> = {
@@ -48,7 +48,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
         {...props}
       >
-        {useTextStyle ? <span style={textStyle}>{children}</span> : children}
+        {useTextStyle ? (
+          <span className="inline-flex items-center justify-center gap-[4px] whitespace-nowrap flex-nowrap shrink-0" style={textStyle}>
+            {children}
+          </span>
+        ) : (
+          children
+        )}
       </button>
     );
   }

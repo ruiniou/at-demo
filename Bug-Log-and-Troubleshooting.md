@@ -99,3 +99,20 @@
   1. **防御性 CSS**：在深层嵌套的 Flex 布局中包裹宽内容（如大表格、画布）时，**务必在沿途的 Flex 容器上习惯性加上 `min-w-0` / `min-h-0`**，防止尺寸级联失控。
   2. **不要滥用 Absolute**：排查“元素被挤飞”问题时，千万别用 `position: absolute` 去强行打补丁（这会引发拖拽失效、遮挡等二次 Bug）。正解是从内向外检查，揪出那个漏写了 `min-w-0` 或 `overflow-hidden` 的中间层容器。
 
+---
+
+### [2026-07-29] 自定义 WebKit 滚动条导致 overlay 失效及列表宽度抖动挤压
+
+* **现象**：
+  在 Metadata 面板右侧，当点击左侧不同的 Component 项时，由于右侧内容长短变化引起垂直滚动条的出现与消失。这使得右侧列表在带有滚动条和不带滚动条的状态间来回切换，反复占用和释放 10px 的物理宽度，导致列表内容发生令人不悦的宽度抖动与挤压。
+* **根本原因 (Root Cause)**：
+  项目全局 CSS (`globals.css`) 中使用了 `::-webkit-scrollbar { width: 10px; }` 覆盖了浏览器原生的滚动条样式。这导致 WebKit 浏览器下原生的 `overflow-y: overlay` 特性失效，滚动条从“悬浮不占位（Overlay）”退化为了“占据实际排版宽度的普通块（Auto）”。
+  因此，当通过 `overflow-y-overlay` (实际上退化为了 auto) 来控制长列表时，滚动条的显隐就会牵连整个 Flex 容器内容区的可用宽度，引发 Layout Shift。
+* **解决方案 (Solution)**：
+  1. 放弃在容易引发抖动的具体业务列表容器上使用 `overflow-y-auto` 或 `overflow-y-overlay`。
+  2. **在特定组件局部**（例如 `MetadataPanel` 的长列表外层），将其 CSS 类名精准替换为 `overflow-y-scroll`。
+  3. 由于全局已经配置了 `::-webkit-scrollbar-track { background: transparent; }`，即使内容很短不需要滚动时，局部强制保留的 10px 滚动条轨道也是完全透明不可见的，不会影响视觉美观，却完美地永久预留了滚动条的空间，彻底消除了抖动。
+* **经验教训 (Takeaways)**：
+  1. **自定义滚动条的代价**：一旦在 Web 项目中自定义了 `::-webkit-scrollbar` 宽度，就会破坏 Mac 系统自带的原生 zero-width overlay 浮动特性。
+  2. **警惕“全局防抖”的副作用**：**绝对不要**试图在 `globals.css` 中用 `* { overflow-y: scroll !important; }` 去做全局防抖！这会导致页面中原本完美贴合的静态 Flex 容器和网格布局莫名其妙被吃掉 10px 宽度，从而引发全站大面积的排版破坏。
+  3. **防抖动（Layout Shift）最佳实践**：针对长短高度会发生剧烈变化的**具体业务列表区**，最优解是在**局部组件**上直接使用 `overflow-y-scroll`（或 `scrollbar-gutter: stable`）常驻预留空间，配合透明的 Track 背景色即可兼顾美观与极度稳定的排版体验。

@@ -36,15 +36,23 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className={`flex flex-col gap-[6px] w-full text-left ${className}`}>
         {label && (
           <div className="flex items-center gap-[2px]">
-            <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: labelColor }}>
+            <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: labelColor }}>
               {label}
             </span>
             {required && (
-              <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: starColor }}>*</span>
+              <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: starColor }}>*</span>
             )}
           </div>
         )}
-        <div className={`flex h-[36px] items-center rounded-[4px] px-[12px] transition-colors ${boxClasses}`}>
+        <div className={`flex h-[32px] items-center rounded-[2px] px-[8px] transition-colors ${
+          disabled
+            ? "border border-[#EBECEC] bg-bg-panel"
+            : error
+              ? "border border-[#E03B3B] bg-white"
+              : isFocused
+                ? "border border-brand-1 bg-white"
+                : "border border-[#D8DADA] bg-white hover:bg-bg-panel hover:border-border-default"
+        }`}>
           <input
             ref={ref}
             disabled={disabled}
@@ -56,7 +64,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               fontFamily: "'PingFang SC', sans-serif",
               fontWeight: 400,
               fontSize: 12,
-              lineHeight: "20px",
+              lineHeight: "18px",
               color: inputColor,
             }}
             {...props}

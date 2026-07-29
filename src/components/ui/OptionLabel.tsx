@@ -8,8 +8,8 @@ export interface OptionLabelProps {
   sub?: string;
   /** Whether this option is selected */
   selected?: boolean;
-  /** "single" = check icon, "multi" = checkbox */
-  type?: "single" | "multi";
+  /** "single" = check icon, "multi" = checkbox, "highlight" = background highlight without check icon */
+  type?: "single" | "multi" | "highlight";
   /** Click handler */
   onClick?: () => void;
   className?: string;
@@ -30,38 +30,43 @@ export function OptionLabel({
   className = "",
 }: OptionLabelProps) {
   const isSingle = type === "single";
+  const isHighlight = type === "highlight";
   const gap = isSingle ? "gap-[6px]" : "gap-[8px]";
-  const padding = isSingle ? "p-[2px_4px_2px_2px]" : "p-[2px_4px]";
+
+  const highlightBg = selected ? "bg-az-secondary" : "hover:bg-bg-panel";
+  const highlightTextColor = selected ? "text-brand-1" : "text-text-primary";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center ${gap} ${padding} rounded-[2px] text-left transition-colors hover:bg-bg-panel ${className}`}
+      className={`flex h-[32px] w-full items-center ${gap} px-[6px] rounded-[2px] text-left transition-colors ${isHighlight ? highlightBg : 'hover:bg-bg-panel'} ${isHighlight ? 'active:scale-[0.98]' : ''} ${className}`}
     >
-      {isSingle ? (
-        /* Single select: check-line icon, visible only when selected */
-        <img
-          src={checkIconUrl}
-          alt=""
-          className="h-[16px] w-[16px] shrink-0"
-          style={{ opacity: selected ? 1 : 0 }}
-        />
-      ) : (
-        /* Multi-select: checkbox square 14x14 */
-        <span
-          className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border ${
-            selected
-              ? "border-brand-1 bg-brand-1"
-              : "border-[#D8DADA] bg-white"
-          }`}
-        >
-          {selected && (
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-              <path d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" fill="white"/>
-            </svg>
-          )}
-        </span>
+      {!isHighlight && (
+        isSingle ? (
+          /* Single select: check-line icon, visible only when selected */
+          <img
+            src={checkIconUrl}
+            alt=""
+            className="h-[16px] w-[16px] shrink-0"
+            style={{ opacity: selected ? 1 : 0 }}
+          />
+        ) : (
+          /* Multi-select: checkbox square 14x14 */
+          <span
+            className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border ${
+              selected
+                ? "border-brand-1 bg-brand-1"
+                : "border-[#D8DADA] bg-white"
+            }`}
+          >
+            {selected && (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                <path d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" fill="white"/>
+              </svg>
+            )}
+          </span>
+        )
       )}
 
       <span
@@ -69,9 +74,9 @@ export function OptionLabel({
           fontFamily: "'PingFang SC', sans-serif",
           fontWeight: 400,
           fontSize: 12,
-          lineHeight: "20px",
-          color: "#3F4444",
+          lineHeight: "18px",
         }}
+        className={isHighlight ? highlightTextColor : "text-[#3F4444]"}
       >
         {label}
       </span>
@@ -82,7 +87,7 @@ export function OptionLabel({
             fontFamily: "'PingFang SC', sans-serif",
             fontWeight: 400,
             fontSize: 12,
-            lineHeight: "20px",
+            lineHeight: "18px",
             color: "#888E8E",
           }}
         >
