@@ -1,7 +1,7 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import aiSubmitIconUrl from "../../icons/AI-submit.svg";
 
-const SINGLE_LINE_HEIGHT = 24;
+const SINGLE_LINE_HEIGHT = 28;
 const MAX_TEXTAREA_HEIGHT = 140;
 
 export interface AIInputBoxProps {

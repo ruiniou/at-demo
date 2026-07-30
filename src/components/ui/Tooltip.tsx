@@ -35,7 +35,7 @@ export function Tooltip({ label, children, align = "center", className = "" }: T
       getPopupContainer={() => document.body}
       zIndex={9999}
       color="#3C4242"
-      overlayInnerStyle={overlayInnerStyle}
+      styles={{ container: overlayInnerStyle }}
       transitionName=""
       mouseEnterDelay={0}
       mouseLeaveDelay={0}

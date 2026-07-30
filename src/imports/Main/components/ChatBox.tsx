@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import aiSubmitIconUrl from "../../../icons/AI-submit.svg";
+import fileInfoLineUrl from "../../../icons/file-info-line.svg";
 
 // ==================== SVGs from Figma ====================
 
@@ -62,10 +63,11 @@ export type ChatBoxStatus = "Default" | "Focused" | "Typed" | "Max height";
 export interface ChatBoxProps {
   onSubmit: (text: string) => void;
   pending?: boolean;
+  metadataChangesCount?: number;
   className?: string;
 }
 
-export default function ChatBox({ onSubmit, pending = false, className = "" }: ChatBoxProps) {
+export default function ChatBox({ onSubmit, pending = false, metadataChangesCount = 0, className = "" }: ChatBoxProps) {
   // --- Core Functional States ---
   const [inputText, setInputText] = useState<string>("");
   const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -166,15 +168,17 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
         className={`content-stretch flex flex-col items-center justify-end px-[2px] relative rounded-[10px] w-full transition-all duration-200 ${
           pending 
             ? "bg-az-secondary gap-[4px] pb-[2px] pt-[8px]" 
+            : metadataChangesCount > 0
+            ? "border border-graphite-10 gap-[4px] pb-[2px] pt-[8px]"
             : ""
         }`}
         style={{
-          border: pending ? "0.6px solid rgba(131, 0, 81, 0.15)" : "none"
+          border: pending ? "0.6px solid rgba(131, 0, 81, 0.15)" : undefined
         }}
       >
         
         {/* --- Pending Wrap (Shown if pending = true) --- */}
-        {pending && (
+        {pending ? (
           <div 
             className={`content-stretch flex flex-col gap-[6px] items-start overflow-clip relative shrink-0 w-full transition-all duration-300 ${
               pendingExpanded ? "h-[109px]" : "h-auto"
@@ -218,7 +222,25 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
               </div>
             )}
           </div>
-        )}
+        ) : metadataChangesCount > 0 ? (
+          <div className="content-stretch flex flex-col gap-[6px] items-start overflow-clip relative shrink-0 w-full">
+            <div className="content-stretch flex gap-[6px] items-center justify-center px-[8px] relative shrink-0 w-full">
+              <div className="content-stretch flex flex-[1_0_0] gap-[8px] items-center min-w-px relative">
+                <div className="overflow-clip relative shrink-0 size-[16px] flex items-center justify-center">
+                  <img src={fileInfoLineUrl} alt="Metadata changes" className="size-[16px]" style={{ filter: 'invert(37%) sepia(5%) saturate(543%) hue-rotate(137deg) brightness(98%) contrast(85%)' }} />
+                </div>
+                <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-text-primary text-center whitespace-nowrap">
+                  <p className="leading-[24px]">Metadata Changes</p>
+                </div>
+                <div className="bg-graphite-10 content-stretch flex items-center justify-center px-[4px] py-px relative rounded-[16px] shrink-0 min-w-[16px] h-[16px]">
+                  <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-text-secondary whitespace-nowrap">
+                    <p className="leading-[14px]">{metadataChangesCount}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* --- Inputbox Container --- */}
         {isNotPendingAndIsDefaultOrFocusedOrTypedOrMaxHeight && (
@@ -245,7 +267,7 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                         setInputText(e.target.value);
                       }}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ask me anything..."
+                      placeholder="Ask Me Anything..."
                       className="w-full t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none resize-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] max-h-[140px] pr-[12px] overflow-y-auto chat-maxheight-textarea"
                       rows={4}
                     />
@@ -287,7 +309,7 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                             handleSend();
                           }
                         }}
-                        placeholder="Ask me anything..."
+                        placeholder="Ask Me Anything..."
                         className="flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px]"
                       />
                     )}
@@ -302,7 +324,13 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                 onClick={handleSend}
                 className="bg-brand-1 hover:opacity-90 transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95 animate-none"
               >
-                <SendIcon className="size-[12px]" color="white" />
+                <img
+                  src={aiSubmitIconUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="w-[11px] h-[12px] block shrink-0"
+                  style={{ filter: "brightness(0) invert(1)" }}
+                />
               </button>
             </div>
           </div>
@@ -324,7 +352,7 @@ export default function ChatBox({ onSubmit, pending = false, className = "" }: C
                       handleSend();
                     }
                   }}
-                  placeholder="Ask me anything..."
+                  placeholder="Ask Me Anything..."
                   className="flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px]"
                 />
               </div>

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import arrowIconUrl from "../../icons/arrow-down-s-line.svg";
+import { FormItem } from "./FormItem";
 import { OptionLabel } from "./OptionLabel";
 import { DropdownOption } from "./Dropdown";
 import { Tag } from "./Tag";
@@ -15,6 +16,7 @@ export interface MultiSelectDropdownProps {
   className?: string;
   error?: string;
   disabled?: boolean;
+  badge?: React.ReactNode;
 }
 
 export function MultiSelectDropdown({
@@ -22,11 +24,12 @@ export function MultiSelectDropdown({
   options,
   value,
   onChange,
-  placeholder = "Select…",
+  placeholder = "Select options",
   required = false,
   className = "",
   error,
   disabled = false,
+  badge,
 }: MultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpandedTags, setIsExpandedTags] = useState(false);
@@ -45,21 +48,20 @@ export function MultiSelectDropdown({
 
   const selectedOptions = options.filter((opt) => value.includes(opt.value));
 
-  // Border + bg per state
+  // Border + bg per state (Figma 549:1458 — Select, MultiSelect=true)
   let boxClasses = "";
   if (disabled) {
-    boxClasses = "border-[1px] border-graphite-10 bg-transparent cursor-not-allowed";
+    boxClasses = "border border-form-border bg-bg-panel cursor-not-allowed";
   } else if (error) {
-    boxClasses = "border-[1.5px] border-[#E03B3B] bg-white";
+    boxClasses = "border-[1.5px] border-az-danger bg-white";
   } else if (isOpen) {
-    boxClasses = "border-[1px] border-brand-1 bg-white";
+    boxClasses = "border border-brand-1 bg-white shadow-[0px_0px_0px_2px_var(--color-az-secondary)]";
   } else {
-    boxClasses = "border-[1px] border-graphite-10 bg-white hover:bg-bg-panel hover:border-border-default";
+    boxClasses = "border border-form-border bg-white hover:border-graphite-50";
   }
 
   // Label + star colors
-  const labelColor = disabled ? "#D8DADA" : "#3C4242";
-  const starColor = disabled ? "#D8DADA" : "#830051";
+  const labelColor = disabled ? "var(--color-graphite-20)" : "var(--color-text-primary)";
 
   const handleToggleOption = (optValue: string) => {
     if (value.includes(optValue)) {
@@ -80,20 +82,19 @@ export function MultiSelectDropdown({
     : selectedOptions;
 
   return (
-    <div className={`flex flex-col gap-[6px] w-full text-left relative ${className}`} ref={dropdownRef}>
-      {label && (
-        <div className="flex items-center gap-[2px]">
-          <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 12, lineHeight: "20px", color: labelColor }}>
-            {label}
-          </span>
-          {required && (
-            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 600, fontSize: 12, color: starColor }}>*</span>
-          )}
-        </div>
-      )}
+    <FormItem
+      label={label}
+      labelClassName="t-small-medium"
+      required={required}
+      disabled={disabled}
+      error={error}
+      badge={badge}
+      className={className}
+    >
+      <div className="relative" ref={dropdownRef}>
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`relative flex min-h-[36px] w-full items-center justify-between rounded-[4px] pl-[8px] pr-[30px] py-[4px] transition-colors cursor-pointer ${boxClasses}`}
+        className={`relative flex min-h-[32px] w-full items-center justify-between rounded-[4px] pl-[4px] pr-[30px] py-[4px] transition-[border-color,box-shadow,background-color] cursor-pointer ${boxClasses}`}
       >
         <div className="flex flex-wrap gap-[4px] items-center w-full">
           {selectedOptions.length > 0 ? (
@@ -103,7 +104,7 @@ export function MultiSelectDropdown({
                   <Tag
                     onClose={disabled ? undefined : (e) => handleRemoveTag(opt.value, e as any)}
                     className="max-h-[26px] py-[1px] px-[4px]"
-                    style={{ maxWidth: "calc(100% - 12px)" }}
+                    style={{ maxWidth: "160px" }}
                   >
                     {opt.label}
                   </Tag>
@@ -129,8 +130,8 @@ export function MultiSelectDropdown({
                 fontWeight: 400,
                 fontSize: 12,
                 lineHeight: "20px",
-                color: disabled ? "#D8DADA" : "#888E8E",
-                paddingLeft: "4px"
+                color: disabled ? "var(--color-graphite-40)" : "var(--color-text-secondary)",
+                paddingLeft: "8px"
               }}
             >
               {placeholder}
@@ -146,13 +147,13 @@ export function MultiSelectDropdown({
       </div>
 
       {error && (
-        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "#E03B3B" }}>
+        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "var(--color-form-error)" }}>
           {error}
         </span>
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 top-[100%] z-[100] mt-[2px] flex flex-col gap-[2px] rounded-[4px] border border-graphite-10 bg-white p-[4px] shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
+        <div className="absolute left-0 right-0 top-[100%] z-[100] mt-[4px] flex flex-col gap-[2px] rounded-[4px] border border-form-border bg-white p-[4px] shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
           <div className="flex max-h-[200px] flex-col gap-[2px] overflow-y-auto">
             {options.map((opt) => {
               const isSelected = value.includes(opt.value);
@@ -169,6 +170,7 @@ export function MultiSelectDropdown({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </FormItem>
   );
 }

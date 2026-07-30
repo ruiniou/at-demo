@@ -3,6 +3,7 @@ import { Button } from "./Button";
 import { SegmentedControl } from "./SegmentedControl";
 import { SearchBar } from "./SearchBar";
 import { Tooltip } from "./Tooltip";
+import { FormItem } from "./FormItem";
 
 // Icon imports
 import uploadIconUrl from "../../icons/upload-2-line.svg";
@@ -131,7 +132,7 @@ export function UploadCard({
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="Search…"
+                placeholder="Search..."
                 background="light"
                 className="w-full"
                 autoFocus
@@ -267,13 +268,13 @@ export function UploadCard({
 
 
   return (
-    <div className="flex flex-col gap-[6px]">
-      <div className="flex min-h-[24px] items-center justify-between">
-        <div className="flex items-center gap-[2px]">
-          <span className="t-small-medium text-text-primary">{label}</span>
-          {required && <span className="font-[Inter] text-[12px] font-semibold text-az-danger">*</span>}
-        </div>
-        {showSegmented && (
+    <FormItem
+      label={label}
+      labelClassName="t-small-medium"
+      headerClassName={showSegmented ? "min-h-[24px]" : "min-h-[20px]"}
+      required={required}
+      actionButton={
+        showSegmented ? (
           <SegmentedControl
             size="sm"
             options={[
@@ -286,9 +287,10 @@ export function UploadCard({
               if (v === "0") setDropdownOpen(false);
             }} 
           />
-        )}
-      </div>
+        ) : undefined
+      }
+    >
       {uploadArea}
-    </div>
+    </FormItem>
   );
 }

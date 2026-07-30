@@ -181,6 +181,7 @@
   --color-graphite-10: #ECECEC;
   --color-graphite-20: #D9DADA;
   --color-graphite-40: #B2B4B4;
+  --color-graphite-50: #888E8E;
   --color-graphite-60: #8C8F8F;
   --color-graphite-80: #656969;
   --color-graphite-100: #3F4444;
@@ -202,6 +203,10 @@
   --color-overlay: rgba(0, 0, 0, 0.4);
   --color-back-blur: rgba(248, 247, 247, 0.8);
   --color-gray-overlay: rgba(217, 218, 218, 0.75);
+
+  /* Form field tokens — Figma 549:1437 Input / 549:1458 Select */
+  --color-form-border: #EBECEC; /* AZ palette Graphite/10 */
+  --color-form-error: #E03B3B;
 
   /* Multi-dimensional status tokens */
   --color-status-success-bg: #F6CCE2;

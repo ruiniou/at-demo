@@ -193,7 +193,7 @@ function InlineVariableList({ variables, selected, onToggle, onRemove, onBrowseA
             <SearchBar
               value={search}
               onChange={setSearch}
-              placeholder="Search variables…"
+              placeholder="Search Variables..."
               background="light"
               autoFocus
             />
@@ -379,7 +379,7 @@ function BrowseVariablesModal({
           <SearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Search variables…"
+            placeholder="Search Variables..."
             background="light"
             className="flex-1 my-[4px]"
           />

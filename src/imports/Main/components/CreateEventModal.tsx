@@ -3,7 +3,7 @@ import { Checkbox } from "../../../components/ui/Checkbox";
 import { Badge } from "../../../components/ui/Badge";
 import { UploadCard, UploadStatus } from "../../../components/ui/UploadCard";
 import { Button } from "../../../components/ui/Button";
-import { Input } from "../../../components/ui/Input";
+import { FormInputField as Input } from "../../../components/ui/FormInputField";
 import { Dropdown, DropdownOption } from "../../../components/ui/Dropdown";
 import { MultiSelectDropdown } from "../../../components/ui/MultiSelectDropdown";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
@@ -169,10 +169,10 @@ function OptionalSection() {
       <div className="h-0 w-full border-t border-graphite-10" />
       {isExpanded && (
         <div className="flex flex-col gap-[16px] px-[10px] py-[12px]">
-          <MultiSelectDropdown label="Tables to parse" placeholder="Select tables to parse" options={tablesToParseOptions} value={tablesToParse} onChange={setTablesToParse} />
-          <Dropdown label="Reference Study" placeholder="Select reference study" options={refStudyOptions} value={refStudyValue} onChange={setRefStudyValue} />
-          <Dropdown label="Reference Event" placeholder="Select reference event" options={refEventOptions} value={refEventValue} onChange={setRefEventValue} />
-          <Input label="Program Path" placeholder="e.g. /studies/ABC-01/programs/primary" value={programPath} onChange={setProgramPath} />
+          <MultiSelectDropdown label="Tables to parse" placeholder="Optional" options={tablesToParseOptions} value={tablesToParse} onChange={setTablesToParse} />
+          <Dropdown label="Reference Study" placeholder="Optional" options={refStudyOptions} value={refStudyValue} onChange={setRefStudyValue} />
+          <Dropdown label="Reference Event" placeholder="Optional" options={refEventOptions} value={refEventValue} onChange={setRefEventValue} />
+          <Input label="Program Path" placeholder="Optional" value={programPath} onChange={(e) => setProgramPath(e.target.value)} />
         </div>
       )}
     </div>
@@ -474,11 +474,11 @@ export default function CreateEventModal({
             <div className="flex min-h-0 flex-1 border-t border-graphite-10">
               {/* Left column */}
               <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] border-r border-graphite-10 p-[20px]">
-                <Dropdown label="Therapeutic Area" required placeholder="Select TA" options={taOptions} value={taValue} onChange={setTaValue} />
-                <MultiSelectDropdown label="Project Code" required placeholder="Select Project Code" options={projectOptions} value={projectCodes} onChange={setProjectCodes} />
-                <MultiSelectDropdown label="Study Code" required placeholder="Select Study Code" options={studyOptions} value={studyCodes} onChange={setStudyCodes} />
-                <Input label="Event Name" required placeholder="e.g. CSR Interim Analysis" value={eventName} onChange={setEventName} />
-                <Dropdown label="O_GEM Version" required placeholder="Select O_GEM Version" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
+                <Dropdown label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} />
+                <MultiSelectDropdown label="Project Code" required placeholder="Required" options={projectOptions} value={projectCodes} onChange={setProjectCodes} />
+                <MultiSelectDropdown label="Study Code" required placeholder="Required" options={studyOptions} value={studyCodes} onChange={setStudyCodes} />
+                <Input label="Event Name" required placeholder="Required" value={eventName} onChange={(e) => setEventName(e.target.value)} />
+                <Dropdown label="O_GEM Version" required placeholder="Required" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
                 <OptionalSection />
               </div>
               {/* Right column */}

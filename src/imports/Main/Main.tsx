@@ -57,15 +57,20 @@ import { KMPlot } from "./components/KMPlot";
 import { Button } from "../../components/ui/Button";
 import { Tooltip } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
+import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
+import { FormTextArea as Textarea } from "../../components/ui/FormTextArea";
 import { AIInputBox } from "../../components/ui/AI-InputBox";
 import { AIUserPrompt } from "../../components/ui/AI-UserPrompt";
 import { AICodeDiff } from "../../components/ui/AI-CodeDiff";
 import { AIThinkingStatus } from "../../components/ui/AI-ThinkingStatus";
+import { AIUpdatedBlock } from "../../components/ui/AI-UpdatedBlock";
 import ChatBox from "./components/ChatBox";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { OptionLabel } from "../../components/ui/OptionLabel";
-import { Input } from "../../components/ui/Input";
+import { FormInputField as Input } from "../../components/ui/FormInputField";
+import { Input as BaseInput } from "../../components/ui/Input";
+import { FormItem } from "../../components/ui/FormItem";
 import shiningFillIconUrl from "../../icons/shining-fill.svg";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -74,6 +79,13 @@ const clamp = (value: number, min: number, max: number) => Math.max(min, Math.mi
 const MarkdownTable = lazy(() => import("./components/MarkdownTable"));
 const CodeDiffBlock = lazy(() => import("./components/CodeDiffBlock"));
 const AskUserComponent = lazy(() => import("./components/AskUserComponent"));
+
+export interface MetaDiffItem {
+  fieldId: string;
+  label: string;
+  oldValue: string;
+  newValue: string;
+}
 
 // ==================== Icons ====================
 
@@ -210,7 +222,16 @@ function SpatialViewCard({ onClick }: { onClick?: () => void }) {
   );
 }
 
-type ReviewItem = { type: 'ai-infer' | 'conflict', fieldName: string, tooltip: string, blockId: string, fieldId: string };
+export type ReviewItem = { type: 'ai-infer' | 'conflict', fieldName: string, tooltip: string, blockId: string, fieldId: string };
+
+export const DEFAULT_FIGURE_REVIEW_ITEMS: ReviewItem[] = [
+  { type: 'ai-infer', fieldName: 'Input Dataset(s)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'figBasic', fieldId: 'inputDataset' },
+  { type: 'conflict', fieldName: 'General Filter', tooltip: 'Conflicting value detected with SAP specification.', blockId: 'figBasic', fieldId: 'generalFilter' },
+  { type: 'ai-infer', fieldName: 'Source Dataset(s) (KM Plot Chart)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'kmCurve', fieldId: 'sourceDataset1' },
+  { type: 'ai-infer', fieldName: 'Source Variable(s) (KM Plot Chart)', tooltip: 'Inferred based on typical KM Plot requirements.', blockId: 'kmCurve', fieldId: 'sourceVariable1' },
+  { type: 'ai-infer', fieldName: 'Source Dataset(s) (Number at Risk Table)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'riskTable', fieldId: 'sourceDataset2' },
+  { type: 'conflict', fieldName: 'Source Variable(s) (Number at Risk Table)', tooltip: 'Conflicting variable: TRTA used instead of TRT01P.', blockId: 'riskTable', fieldId: 'sourceVariable2' }
+];
 
 function ReviewItemRow({ item, onJumpToMetadata }: { item: ReviewItem, onJumpToMetadata?: (blockId: string, fieldId: string) => void }) {
   const [hovered, setHovered] = useState(false);
@@ -219,7 +240,7 @@ function ReviewItemRow({ item, onJumpToMetadata }: { item: ReviewItem, onJumpToM
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => onJumpToMetadata?.(item.blockId, item.fieldId)}
-      className={`flex items-center gap-[8px] h-[32px] px-[10px] py-[6px] border-b-[0.6px] border-border-default last:border-b-0 cursor-pointer transition-colors ${hovered ? 'bg-bg-panel rounded-[4px]' : 'bg-transparent'}`}
+      className={`flex items-center gap-[8px] h-[32px] px-[10px] py-[6px] cursor-pointer transition-colors ${hovered ? 'bg-bg-panel rounded-[4px]' : 'bg-transparent'}`}
     >
       <div className="shrink-0 flex items-center">
         <MetadataBadge type={item.type} interactive={false} className="!ml-0" />
@@ -260,7 +281,7 @@ function ToBeReviewedBlock({ items, onJumpToMetadata }: { items: ReviewItem[], o
       </div>
       
       {isExpanded && (
-        <div className="flex flex-col border-t border-graphite-10">
+        <div className="flex flex-col border-t border-graphite-10 max-h-[210px] overflow-y-auto [scrollbar-width:thin]">
           {items.map((item, idx) => (
             <ReviewItemRow key={idx} item={item} onJumpToMetadata={onJumpToMetadata} />
           ))}
@@ -357,7 +378,7 @@ function Divider({ className }: { className?: string }) {
 // ==================== Chat Conversation & Main Panel ====================
 
 type Message = {
-  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete';
+  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete' | 'ai_update_complete';
   content?: string;
   hasTag?: boolean;
   answers?: { q: string; a: string }[];
@@ -370,7 +391,8 @@ function ChatConversation({
   onOpenCodePanel,
   onOpenSpatialView,
   onJumpToMetadata,
-  docType
+  docType,
+  reviewItems
 }: { 
   messages: Message[]; 
   isPending: boolean; 
@@ -378,6 +400,7 @@ function ChatConversation({
   onOpenSpatialView?: () => void;
   onJumpToMetadata?: (blockId: string, fieldId: string) => void;
   docType?: DocumentType;
+  reviewItems?: ReviewItem[];
 }) {
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
@@ -477,11 +500,7 @@ function ChatConversation({
                       </p>
 
                       <ToBeReviewedBlock 
-                        items={[
-                          { type: 'ai-infer', fieldName: 'Source Dataset(s) (KM Plot Chart)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'b1', fieldId: 'f1' },
-                          { type: 'ai-infer', fieldName: 'Source Variable(s) (KM Plot Chart)', tooltip: 'Inferred based on typical KM Plot requirements.', blockId: 'b1', fieldId: 'f2' },
-                          { type: 'conflict', fieldName: 'Source Variable(s) (Number at Risk Table)', tooltip: 'SAP indicates TRT01P should be used.', blockId: 'b2', fieldId: 'f2' }
-                        ]}
+                        items={reviewItems && reviewItems.length > 0 ? reviewItems : DEFAULT_FIGURE_REVIEW_ITEMS}
                         onJumpToMetadata={onJumpToMetadata}
                       />
                     </>
@@ -529,6 +548,21 @@ function ChatConversation({
                 </div>
               </div>
             )}
+            {msg.type === 'ai_update_complete' && (
+              <div className="flex flex-col gap-[12px] w-full relative">
+                <AIThinkingStatus status="completed" />
+                <div className="flex flex-col w-full px-[10px] relative gap-[12px]">
+                  <div className="flex flex-col gap-[8px] mb-[8px]">
+                    <p className="t-body text-text-primary leading-relaxed">
+                      I have updated the metadata and code based on your changes. Please review the differences below.
+                    </p>
+                  </div>
+                  <div className="relative w-full mt-[4px]">
+                    <AICodeDiff />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </React.Fragment>
       ))}
@@ -545,7 +579,13 @@ function AICopilotPanel({
   onOpenCodePanel,
   onOpenSpatialView,
   onJumpToMetadata,
-  docType
+  docType,
+  metadataChangesCount,
+  metaDiffItems,
+  reviewItems,
+  metaUpdateActive,
+  onMetaCancel,
+  onMetaProceed,
 }: {
   panelWidth: number;
   onClose: () => void;
@@ -556,6 +596,12 @@ function AICopilotPanel({
   onOpenSpatialView?: () => void;
   onJumpToMetadata?: (blockId: string, fieldId: string) => void;
   docType?: DocumentType;
+  metadataChangesCount?: number;
+  metaDiffItems?: MetaDiffItem[];
+  reviewItems?: ReviewItem[];
+  metaUpdateActive?: boolean;
+  onMetaCancel?: () => void;
+  onMetaProceed?: () => void;
 }) {
   const [messages, setMessages] = useState<Message[]>(() => {
     if (docType === 'figure') return [{ type: 'ai_complete' }];
@@ -578,6 +624,7 @@ function AICopilotPanel({
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const chatAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (focusTrigger > 0 && inputRef.current) {
@@ -585,9 +632,15 @@ function AICopilotPanel({
     }
   }, [focusTrigger]);
 
+  useEffect(() => {
+    if (chatAreaRef.current) {
+      chatAreaRef.current.scrollTop = chatAreaRef.current.scrollHeight;
+    }
+  }, [messages, metaUpdateActive]);
+
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
-  const hasCodeDiff = messages.some(m => m.type === 'ai_complete');
+  const hasCodeDiff = messages.some(m => m.type === 'ai_update_complete' || (docType === 'listing' && m.type === 'ai_complete'));
 
   const handleAskUserSubmit = (answers: { q: string; a: string }[]) => {
     setMessages(prev => prev.filter(m => m.type !== 'ai_ask_user').concat([{ type: 'ask_user_result', answers }]));
@@ -609,10 +662,21 @@ function AICopilotPanel({
     setMessages(prev => [...prev, { type: 'user', content: text }]);
     setCurrentVal("");
     setIsPending(true);
+
+    if (metaUpdateActive) {
+      onMetaProceed?.();
+    }
+
     setMessages(prev => [...prev, { type: 'ai_thinking' }]);
     setTimeout(() => {
-      setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_ask_user' } : m));
-    }, 1500);
+      if (docType === 'figure') {
+        setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_update_complete' as const } : m));
+        setIsPending(false);
+      } else {
+        setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_ask_user' as const } : m));
+        // for listing, keep original behavior
+      }
+    }, 2000);
   };
 
   return (
@@ -636,7 +700,7 @@ function AICopilotPanel({
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={chatAreaRef} className="flex-1 overflow-y-auto scroll-smooth">
         {messages.length === 0 ? (
           <div className="absolute top-[40px] inset-x-0 flex flex-col items-center pt-[180px] gap-[12px]">
             <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
@@ -650,7 +714,38 @@ function AICopilotPanel({
             onOpenSpatialView={onOpenSpatialView}
             onJumpToMetadata={onJumpToMetadata}
             docType={docType}
+            reviewItems={reviewItems}
           />
+        )}
+        {metaUpdateActive && metaDiffItems && metaDiffItems.length > 0 && (
+          <div className="px-[20px] pb-[10px]">
+            <AIUpdatedBlock
+              title="To be Updated"
+              count={metaDiffItems.length}
+              expanded="scrollable"
+              scrollHeight={210}
+              toggleable={true}
+              items={metaDiffItems.map(d => {
+                const oldVal = d.oldValue && d.oldValue.trim() !== '' ? d.oldValue : 'Empty';
+                const newVal = d.newValue && d.newValue.trim() !== '' ? d.newValue : 'Empty';
+                return {
+                  label: d.label,
+                  text: `~~${oldVal}~~ → ${newVal}`,
+                  onClick: () => onJumpToMetadata?.('', d.fieldId)
+                };
+              })}
+              onCancel={() => onMetaCancel?.()}
+              onProceed={() => {
+                onMetaProceed?.();
+                setIsPending(true);
+                setMessages(prev => [...prev, { type: 'ai_thinking' as const }]);
+                setTimeout(() => {
+                  setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_update_complete' as const } : m));
+                  setIsPending(false);
+                }, 2000);
+              }}
+            />
+          </div>
         )}
       </div>
 
@@ -665,10 +760,12 @@ function AICopilotPanel({
             />
           </Suspense>
         )}
-        {hasCodeDiff ? (
+        {metaUpdateActive && metaDiffItems && metaDiffItems.length > 0 ? (
+          <ChatBox onSubmit={handleSubmit} metadataChangesCount={metaDiffItems.length} />
+        ) : hasCodeDiff ? (
           <ChatBox onSubmit={handleSubmit} pending={true} />
         ) : (
-          <AIInputBox disabled={isPending} onSubmit={handleSubmit} value={currentVal} onValueChange={setCurrentVal} focusTrigger={focusTrigger} placeholder={docType === 'figure' ? "Type to adjust axis, add component, or edit details..." : "Ask me anything..."} />
+          <AIInputBox disabled={isPending} onSubmit={handleSubmit} value={currentVal} onValueChange={setCurrentVal} focusTrigger={focusTrigger} />
         )}
         {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
       </div>
@@ -3134,9 +3231,25 @@ function ShellPreview({
   associatedTLStatus = 'pending',
   rtfOpen,
   onToggleRtf,
+  onMetaDiffChange,
+  onRequestUpdateCode,
+  baselineAdvanceTrigger,
+  metaUpdateActive,
+  metaUpdateProcessing,
+  submittedDiffItems,
+  targetFieldId,
+  onReviewItemsChange,
 }: {
   onBlockClick: () => void;
   onMetadataClick: () => void;
+  onMetaDiffChange?: (diffItems: MetaDiffItem[]) => void;
+  onRequestUpdateCode?: () => void;
+  baselineAdvanceTrigger?: number;
+  metaUpdateActive?: boolean;
+  metaUpdateProcessing?: boolean;
+  submittedDiffItems?: MetaDiffItem[];
+  targetFieldId?: string;
+  onReviewItemsChange?: (items: ReviewItem[]) => void;
   metadataOpen: boolean;
   onMetadataClose: () => void;
   metadataWidth: number;
@@ -3156,6 +3269,7 @@ function ShellPreview({
   showRiskTable?: boolean;
   onShowCIChange?: (v: boolean) => void;
   onShowCensorMarksChange?: (v: boolean) => void;
+  onShowMedianLinesChange?: (v: boolean) => void;
   onShowRiskTableChange?: (v: boolean) => void;
   associatedTLStatus?: string;
   rtfOpen?: boolean;
@@ -3434,7 +3548,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)]">
-              <MetadataPanel onClose={onMetadataClose} docType={docType} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} />
+              <MetadataPanel onClose={onMetadataClose} docType={docType} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} onReviewItemsChange={onReviewItemsChange} />
             </div>
           )}
         </div>
@@ -3443,7 +3557,7 @@ function ShellPreview({
   );
 }
 
-type FieldStatus = "default" | "edited";
+type FieldStatus = "default" | "edited" | "error";
 
 interface MetadataField {
   id: string;
@@ -3454,6 +3568,7 @@ interface MetadataField {
   dependencyState?: 'S0' | 'S1' | 'S2' | 'S3' | 'S4';
   badge?: 'ai-infer' | 'conflict';
   badgeTooltip?: string;
+  errorMessage?: string;
 }
 
 interface MetadataBadgeProps {
@@ -3470,11 +3585,11 @@ function MetadataBadge({ type, tooltip, className = '', interactive = true }: Me
     ? 'Inferred from standard TTE dataset naming convention.'
     : 'Conflicting value detected with SAP specification.';
 
-  const baseClasses = `inline-flex h-[20px] items-center justify-center px-[4px] text-[13px] leading-[20px] font-normal rounded-[4px] select-none ml-[6px] whitespace-nowrap`;
+  const baseClasses = `inline-flex w-[56px] h-[20px] items-center justify-center px-[4px] text-[13px] leading-[20px] font-normal rounded-[4px] select-none ml-[6px] whitespace-nowrap`;
   
   const stateClasses = isInfer
     ? `border border-[#D8DADA] text-[#888E8E] bg-white ${interactive ? 'cursor-pointer hover:bg-bg-panel transition-all duration-180' : ''}`
-    : `border border-[#F6CCE2] text-status-error bg-[#FDF2F7] ${interactive ? 'cursor-pointer hover:bg-[#F9E0EE] transition-all duration-180' : ''}`;
+    : `bg-status-success-bg text-az-danger ${interactive ? 'cursor-pointer hover:opacity-90 transition-all duration-180' : ''}`;
 
   const badgeContent = (
     <span className={`${baseClasses} ${stateClasses} ${className}`}>
@@ -3576,22 +3691,22 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'nicotine',
     name: 'Nicotine use',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true },
-      { id: 'variable', label: 'Variable', value: 'NICSTT', type: 'tag' as const, required: true },
-      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true },
-      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true },
-      { id: 'formatName', label: 'Format Name', value: 'nicstt_cat', type: 'text' as const, hasLink: true },
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+      { id: 'variable', label: 'Variable', value: 'NICSTT', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'NICSTT', value: 'NICSTT'}, {label: 'ALCSTT', value: 'ALCSTT'}, {label: 'AVAL', value: 'AVAL'}] },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_CUM', value: 'BLK_CUM'}, {label: 'BLK_FREQ', value: 'BLK_FREQ'}] },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
+      { id: 'formatName', label: 'Format Name', value: 'nicstt_cat', type: 'text' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'nicstt_cat', value: 'nicstt_cat'}, {label: 'alcstt_cat', value: 'alcstt_cat'}] },
     ],
   },
   {
     id: 'alcohol',
     name: 'Alcohol use',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true },
-      { id: 'variable', label: 'Variable', value: 'ALCSTT', type: 'tag' as const, required: true },
-      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true },
-      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true },
-      { id: 'formatName', label: 'Format Name', value: 'alcstt_cat', type: 'text' as const, hasLink: true },
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+      { id: 'variable', label: 'Variable', value: 'ALCSTT', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'NICSTT', value: 'NICSTT'}, {label: 'ALCSTT', value: 'ALCSTT'}, {label: 'AVAL', value: 'AVAL'}] },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_CUM', value: 'BLK_CUM'}, {label: 'BLK_FREQ', value: 'BLK_FREQ'}] },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
+      { id: 'formatName', label: 'Format Name', value: 'alcstt_cat', type: 'text' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'nicstt_cat', value: 'nicstt_cat'}, {label: 'alcstt_cat', value: 'alcstt_cat'}] },
     ],
   },
   {
@@ -3720,28 +3835,25 @@ function AddComponentMenu({ anchorRect, onClose, onGenerate, lastSubmission, isG
             required
             value={name}
             onChange={e => setName(e.target.value)}
-            placeholder="Input name..."
+            placeholder="Required"
           />
           <Dropdown
             label="Type"
             required
-            placeholder="Select a component type"
+            placeholder="Required"
             value={type}
             onChange={val => setType(val)}
             options={COMPONENT_TYPE_OPTIONS.map(opt => ({ label: opt, value: opt }))}
           />
-          <div className="flex flex-col gap-[6px] w-full text-left">
-            <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: "#3C4242" }}>
-              Custom instructions
-            </span>
-            <div className="bg-white h-[90px] rounded-[4px] border border-graphite-10 hover:border-border-default hover:bg-bg-panel transition-colors relative overflow-hidden">
-              <textarea
-                value={instructions}
-                onChange={e => setInstructions(e.target.value)}
-                placeholder={type && INSTRUCTION_PLACEHOLDERS[type] ? INSTRUCTION_PLACEHOLDERS[type] : "Describe the component specifications, required variables, or custom styling rules..."}
-                className="w-full h-full resize-none p-[8px_12px] t-small text-text-primary placeholder:text-text-secondary outline-none bg-transparent"
-              />
-            </div>
+          <div className="mt-[4px]">
+            <Textarea
+              label="Custom instructions"
+              value={instructions}
+              onChange={e => setInstructions(e.target.value)}
+              placeholder={type && INSTRUCTION_PLACEHOLDERS[type] ? INSTRUCTION_PLACEHOLDERS[type] : "Describe the component specifications, required variables, or custom styling rules..."}
+              style={{ resize: "none" }}
+              className="h-[90px]"
+            />
           </div>
           <Button
             variant="primary"
@@ -3854,20 +3966,27 @@ function MoreOptionsMenu({ anchorRect, isDeprecated, onClose, onDeprecate, onDel
 function BlocksTabContent({
   blocks,
   confirmedBlocks,
-  onToggleConfirm,
+  onToggleBlockConfirm,
   isLocked,
   onGenerateComponent,
   onDeprecateComponent,
-  onDeleteComponent
+  onDeleteComponent,
+  onFieldEdit,
+  getEffectiveStatus,
+  getFieldStyles,
+  fieldRefs
 }: {
   blocks: any;
   confirmedBlocks: Record<string, boolean>;
-  onToggleConfirm: (blockId: string, fieldId: string) => void;
+  onToggleBlockConfirm: (blockId: string) => void;
   isLocked?: boolean;
   onGenerateComponent?: (name: string, type: string, instructions: string) => void;
   onDeprecateComponent?: (id: string) => void;
   onDeleteComponent?: (id: string) => void;
   onFieldEdit?: (blockId: string, fieldId: string, value: string) => void;
+  getEffectiveStatus?: (fieldId: string | null, status: FieldStatus, currentValue: string | null) => FieldStatus;
+  getFieldStyles?: (status: FieldStatus, isReadOnlyField?: boolean) => { containerBg: string; containerBorder: string; inputBorder: string };
+  fieldRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
 }) {
   const FieldCheckboxIcon = (confirmed: boolean) => {
     if (!confirmed) return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 20 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
@@ -4059,7 +4178,18 @@ function BlocksTabContent({
                 </div>
               ) : (
                 <>
-                  <p className="text-[14px] font-bold mb-[12px] text-text-primary break-words">{blockName}</p>
+                  <div className="flex items-center justify-between mb-[12px]">
+                    <p className="text-[14px] font-bold text-text-primary break-words m-0">{blockName}</p>
+                    <button
+                      onClick={fieldIsDisabled ? undefined : () => onToggleBlockConfirm(block.id)}
+                      disabled={fieldIsDisabled}
+                      className="flex h-[16px] w-[16px] items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+                    >
+                      <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">
+                        {FieldCheckboxIcon(block.fields.length > 0 && block.fields.every((f: any) => confirmedBlocks[`${block.id}_${f.id}`]))}
+                      </SvgIcon>
+                    </button>
+                  </div>
                   {block.deprecated && (
                     <div className="mb-[12px] bg-bg-panel border border-border-default rounded-[4px] p-[8px] flex items-center gap-[8px]">
                       <div className="w-[20px] h-[20px] shrink-0 rounded-[4px] bg-black/5 flex items-center justify-center">
@@ -4073,48 +4203,56 @@ function BlocksTabContent({
                     </div>
                   )}
                   <div className={`flex flex-col gap-[12px] ${block.deprecated ? 'opacity-40 pointer-events-none' : ''}`}>
-                    {block.fields.map((field: any) => (
-                      <div key={field.id}>
-                        <div className="flex h-[20px] items-center justify-between mb-[4px] min-w-0">
-                          <div className="flex items-center gap-[2px] min-w-0 flex-1">
-                            <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: '#3C4242' }} className="truncate">
-                              {field.label}
-                            </span>
-                            {field.required && (
-                              <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: '#830051' }} className="shrink-0">*</span>
-                            )}
-                            {field.hasLink && <LinkIcon />}
-                            {(field as any).badge && <span className="shrink-0"><MetadataBadge type={(field as any).badge} tooltip={(field as any).badgeTooltip} /></span>}
-                          </div>
-                          <button
-                            onClick={fieldIsDisabled ? undefined : () => onToggleConfirm(block.id, field.id)}
-                            disabled={fieldIsDisabled}
-                            className="flex h-[16px] w-[16px] items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 ml-[8px]"
-                            aria-label={confirmedBlocks[`${block.id}_${field.id}`] ? "Unconfirm" : "Confirm"}
-                          >
-                            <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{FieldCheckboxIcon(!!confirmedBlocks[`${block.id}_${field.id}`])}</SvgIcon>
-                          </button>
+                    {block.fields.map((field: any) => {
+                      const badgeNode = field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined;
+                      
+                      const labelWithLink = field.hasLink ? (
+                        <div className="flex items-center gap-[2px]">
+                          {field.label}
+                          <LinkIcon />
                         </div>
-                        {field.type === 'tag' ? (
-                          <div className="flex flex-nowrap gap-[4px] h-[32px] px-[8px] py-[4px] rounded-[2px] border border-[#D8DADA] bg-white items-center overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                            <span className="inline-flex items-center gap-[6px] h-[24px] px-[8px] rounded-[12px] t-small bg-[#F0F0F0] text-[#3C4242] shrink-0 max-w-full">
-                              <span className="truncate">{field.value}</span>
-                              {!fieldIsDisabled && (
-                                <button className="flex items-center justify-center h-[14px] w-[14px] rounded-full text-text-secondary hover:text-text-primary text-[13px] leading-none shrink-0">×</button>
-                              )}
-                            </span>
-                          </div>
-                        ) : (
-                          <input
-                            type="text"
-                            value={field.value}
-                            readOnly={fieldIsDisabled}
-                            onChange={fieldIsDisabled ? undefined : (e) => onFieldEdit?.(block.id, field.id, e.target.value)}
-                            className="w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border border-[#D8DADA] bg-white text-[#3C4242] t-small outline-none focus:outline-none focus:border-brand-1"
-                          />
-                        )}
-                      </div>
-                    ))}
+                      ) : field.label;
+
+                      const effectiveInputType = field.inputType || (field.type === 'tag' ? 'multiselect' : 'input');
+
+                      return (
+                        <div key={field.id} ref={el => { if (el && fieldRefs) fieldRefs.current[field.id] = el; }} className="bg-white rounded-[4px] border border-transparent p-[4px]">
+                          {effectiveInputType === 'multiselect' ? (
+                            <MultiSelectDropdown
+                              label={labelWithLink as any}
+                              required={field.required}
+                              disabled={fieldIsDisabled}
+                              badge={badgeNode}
+                              placeholder={field.required ? "Required" : "Optional"}
+                              options={field.options || []}
+                              value={field.value ? field.value.split(', ') : []}
+                              onChange={(val) => onFieldEdit?.(block.id, field.id, val.join(', '))}
+                            />
+                          ) : effectiveInputType === 'dropdown' ? (
+                            <Dropdown
+                              label={labelWithLink as any}
+                              required={field.required}
+                              disabled={fieldIsDisabled}
+                              badge={badgeNode}
+                              placeholder={field.required ? "Required" : "Optional"}
+                              options={field.options || []}
+                              value={field.value}
+                              onChange={(val) => onFieldEdit?.(block.id, field.id, val)}
+                            />
+                          ) : (
+                            <Input
+                              label={labelWithLink as any}
+                              required={field.required}
+                              disabled={fieldIsDisabled}
+                              badge={badgeNode}
+                              placeholder={field.required ? "Required" : "Optional"}
+                              value={field.value}
+                              onChange={(e) => onFieldEdit?.(block.id, field.id, e.target.value)}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </>
               )}
@@ -4144,6 +4282,14 @@ interface MetadataPanelProps {
   pageBreakColumnBaseline?: { pageSepActive: boolean; pageColumnCounts: Record<string, number>; pageBreakColumns: number[] } | null;
   onPageBreakColumnBaselineChange?: (baseline: { pageSepActive: boolean; pageColumnCounts: Record<string, number>; pageBreakColumns: number[] }) => void;
   onAddChangesToChat?: (text: string) => void;
+  onMetaDiffChange?: (diffItems: MetaDiffItem[]) => void;
+  onRequestUpdateCode?: () => void;
+  baselineAdvanceTrigger?: number;
+  metaUpdateActive?: boolean;
+  metaUpdateProcessing?: boolean;
+  submittedDiffItems?: MetaDiffItem[];
+  targetFieldId?: string;
+  onReviewItemsChange?: (items: ReviewItem[]) => void;
   associatedTLStatus?: string;
   onJumpToTL?: (name: string) => void;
 }
@@ -4154,7 +4300,7 @@ function MetadataPanel({
   repeatColumnBaseline = null, onRepeatColumnBaselineChange,
   pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
   idpageBaseline = null, idlistBaseline = null, onIdpageBaselineChange, onIdlistBaselineChange,
-  onAddChangesToChat, associatedTLStatus = 'pending', onJumpToTL,
+  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, baselineAdvanceTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], targetFieldId, onReviewItemsChange, associatedTLStatus = 'pending', onJumpToTL,
 }: MetadataPanelProps) {
   const [activeTab, setActiveTab] = useState<"basic" | "blocks">("basic");
   const loadFromSession = <T,>(key: string, fallback: T): T => { try { const raw = sessionStorage.getItem(key); return raw ? (JSON.parse(raw) as T) : fallback; } catch { return fallback; } };
@@ -4283,46 +4429,22 @@ function MetadataPanel({
   const [showDepDropdown, setShowDepDropdown] = useState(false);
 
   // ── Figure States ──
-  const [figureBlocks, setFigureBlocks] = useState<MetadataBlock[]>(() => {
-    const fallback = [
-      {
-        id: 'figBasic',
-        fields: [
-          { id: 'associatedTL', label: 'Associated Table/Listing', value: 'Table 14.1.4', status: 'default' as FieldStatus, confirmed: false, dependencyState: 'S1' },
-          { id: 'figureType', label: 'Figure Type', value: 'KM', status: 'default' as FieldStatus, confirmed: false },
-          { id: 'inputDataset', label: 'Input Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
-          { id: 'pageBy', label: 'Page by', value: 'TRTA', status: 'default' as FieldStatus, confirmed: false },
-          { id: 'programName', label: 'Program Name', value: 'f_kmplot', status: 'default' as FieldStatus, confirmed: false },
-          { id: 'macroName', label: 'Macro(s)', value: 'm_kmplot', status: 'default' as FieldStatus, confirmed: false },
-          { id: 'generalFilter', label: 'General Filter', value: "SAFFL='Y'", status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting value detected with SAP specification.' },
-          { id: 'groupName', label: 'Group', value: 'Treatment Group', status: 'default' as FieldStatus, confirmed: false },
-        ]
-      }
-    ];
-    const stored = loadFromSession('metadataBlocks_figure', fallback);
-    if (!Array.isArray(stored)) return fallback;
-    
-    const migrated = stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
-    
-    // Force associatedTL to default on mount to clear stuck testing state and restore missing fields from fallback
-    return migrated.map(b => {
-      const fallbackBlock = fallback.find(fb => fb.id === b.id);
-      return {
-        ...b,
-        fields: b.fields.map(f => {
-          const fallbackField = fallbackBlock?.fields.find(fb => fb.id === f.id);
-          const baseField = (f.id === 'associatedTL' || f.id === 'figureType') ? { ...f, status: 'default' as FieldStatus, dependencyState: f.id === 'associatedTL' ? 'S1' : f.dependencyState } : f;
-          return {
-            ...baseField,
-            badge: baseField.badge ?? fallbackField?.badge,
-            badgeTooltip: baseField.badgeTooltip ?? fallbackField?.badgeTooltip,
-            dependencyState: baseField.dependencyState ?? fallbackField?.dependencyState
-          };
-        })
-      };
-    });
-  });
-  useEffect(() => { sessionStorage.setItem('metadataBlocks_figure', JSON.stringify(figureBlocks)); }, [figureBlocks]);
+  const [figureBlocks, setFigureBlocks] = useState<MetadataBlock[]>(() => [
+    {
+      id: 'figBasic',
+      fields: [
+        { id: 'associatedTL', label: 'Associated Table/Listing', value: 'Table 14.1.4', status: 'default' as FieldStatus, confirmed: false, dependencyState: 'S1' },
+        { id: 'figureType', label: 'Figure Type', value: 'KM', status: 'default' as FieldStatus, confirmed: false },
+        { id: 'inputDataset', label: 'Input Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
+        { id: 'pageBy', label: 'Page by', value: 'TRTA', status: 'default' as FieldStatus, confirmed: false },
+        { id: 'programName', label: 'Program Name', value: 'f_kmplot', status: 'default' as FieldStatus, confirmed: false },
+        { id: 'macroName', label: 'Macro(s)', value: 'm_kmplot', status: 'default' as FieldStatus, confirmed: false },
+        { id: 'generalFilter', label: 'General Filter', value: "SAFFL='Y'", status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting value detected with SAP specification.' },
+        { id: 'groupName', label: 'Group', value: 'Treatment Group', status: 'default' as FieldStatus, confirmed: false },
+      ]
+    }
+  ]);
+  useEffect(() => { sessionStorage.removeItem('metadataBlocks_figure'); }, []);
 
   const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
     {
@@ -4331,10 +4453,10 @@ function MetadataPanel({
       state: 'ready' as const,
       deprecated: false,
       fields: [
-        { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false },
-        { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false },
-        { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
-        { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on typical KM Plot requirements.' },
+        { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+        { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
+        { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+        { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on typical KM Plot requirements.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}] },
       ]
     },
     {
@@ -4343,10 +4465,10 @@ function MetadataPanel({
       state: 'ready' as const,
       deprecated: false,
       fields: [
-        { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false },
-        { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false },
-        { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
-        { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting variable: TRTA used instead of TRT01P.' },
+        { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+        { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
+        { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+        { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting variable: TRTA used instead of TRT01P.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}] },
       ]
     }
   ];
@@ -4355,6 +4477,220 @@ function MetadataPanel({
   useEffect(() => { sessionStorage.removeItem('metadataComponents_figure'); }, []);
 
   const [hasMetadataComponentEdits, setHasMetadataComponentEdits] = useState(false);
+
+  const [figureFieldBaseline, setFigureFieldBaseline] = useState<Record<string, string>>(() => {
+    const baseline: Record<string, string> = {};
+    figureBlocks.forEach(b => b.fields.forEach(f => { baseline[f.id] = f.value; }));
+    figureComponents.forEach(b => b.fields.forEach(f => { baseline[f.id] = f.value; }));
+    return baseline;
+  });
+
+  const [figureComponentDeprecatedBaseline, setFigureComponentDeprecatedBaseline] = useState<Record<string, boolean>>(() => {
+    const baseline: Record<string, boolean> = {};
+    figureComponents.forEach(c => { baseline[c.id] = !!c.deprecated; });
+    return baseline;
+  });
+
+  const [figureComponentListBaseline, setFigureComponentListBaseline] = useState<{ id: string; name: string }[]>(() => {
+    return figureComponents.map(c => ({ id: c.id, name: c.name || c.id }));
+  });
+
+  const metaDiffItems = useMemo<MetaDiffItem[]>(() => {
+    const items: MetaDiffItem[] = [];
+
+    // 1. Basic Block Field Edits (skip tag fields)
+    figureBlocks.forEach(b => b.fields.forEach(f => {
+      if (f.type === 'tag') return;
+      const baseVal = figureFieldBaseline[f.id];
+      if (baseVal !== undefined && baseVal !== f.value) {
+        items.push({ fieldId: f.id, label: f.label, oldValue: baseVal, newValue: f.value });
+      }
+    }));
+
+    // 2. Component Field Edits (skip tag fields)
+    figureComponents.forEach(b => {
+      const isNewComp = !figureComponentListBaseline.some(cb => cb.id === b.id);
+      if (isNewComp) return;
+
+      b.fields.forEach(f => {
+        if (f.type === 'tag') return;
+        const baseVal = figureFieldBaseline[f.id];
+        if (baseVal !== undefined && baseVal !== f.value) {
+          const blockName = b.name || 'Component';
+          items.push({ fieldId: f.id, label: `${blockName} > ${f.label}`, oldValue: baseVal, newValue: f.value });
+        }
+      });
+    });
+
+    // 3. Component Deprecation / Undeprecation
+    figureComponents.forEach(c => {
+      const baseDep = figureComponentDeprecatedBaseline[c.id];
+      const isNewComp = !figureComponentListBaseline.some(cb => cb.id === c.id);
+      if (!isNewComp && baseDep !== undefined && baseDep !== !!c.deprecated) {
+        const blockName = c.name || 'Component';
+        items.push({
+          fieldId: `deprecate_${c.id}`,
+          label: `${blockName} Status`,
+          oldValue: baseDep ? 'Deprecated' : 'Active',
+          newValue: c.deprecated ? 'Deprecated' : 'Active'
+        });
+      }
+    });
+
+    // 4. Component Deletion
+    figureComponentListBaseline.forEach(baseComp => {
+      const exists = figureComponents.some(c => c.id === baseComp.id);
+      if (!exists) {
+        items.push({
+          fieldId: `delete_${baseComp.id}`,
+          label: `Component: ${baseComp.name}`,
+          oldValue: 'Existing Component',
+          newValue: 'Deleted'
+        });
+      }
+    });
+
+    // 5. Component Addition (state === 'ready')
+    figureComponents.forEach(c => {
+      if (c.state === 'ready') {
+        const inBaseline = figureComponentListBaseline.some(cb => cb.id === c.id);
+        if (!inBaseline) {
+          const blockName = c.name || 'New Component';
+          items.push({
+            fieldId: `add_${c.id}`,
+            label: 'Add Component',
+            oldValue: '(None)',
+            newValue: blockName
+          });
+        }
+      }
+    });
+
+    return items;
+  }, [figureBlocks, figureComponents, figureFieldBaseline, figureComponentDeprecatedBaseline, figureComponentListBaseline]);
+
+  const newDiffItems = useMemo<MetaDiffItem[]>(() => {
+    if (!metaUpdateProcessing) return metaDiffItems;
+    return metaDiffItems.filter(diff => 
+      !submittedDiffItems.some(sub => sub.fieldId === diff.fieldId && sub.newValue === diff.newValue)
+    );
+  }, [metaDiffItems, metaUpdateProcessing, submittedDiffItems]);
+
+  const [lastBaselineTrigger, setLastBaselineTrigger] = useState(0);
+  useEffect(() => {
+    if (baselineAdvanceTrigger && baselineAdvanceTrigger > lastBaselineTrigger) {
+      setFigureFieldBaseline(prev => {
+        const updated = { ...prev };
+        submittedDiffItems.forEach(sub => {
+          if (!sub.fieldId.startsWith('deprecate_') && !sub.fieldId.startsWith('delete_') && !sub.fieldId.startsWith('add_')) {
+            updated[sub.fieldId] = sub.newValue;
+          }
+        });
+        submittedDiffItems.forEach(sub => {
+          if (sub.fieldId.startsWith('add_')) {
+            const compId = sub.fieldId.replace('add_', '');
+            const comp = figureComponents.find(c => c.id === compId);
+            if (comp) {
+              comp.fields.forEach(f => { updated[f.id] = f.value; });
+            }
+          }
+        });
+        return updated;
+      });
+
+      setFigureComponentDeprecatedBaseline(prev => {
+        const updated = { ...prev };
+        submittedDiffItems.forEach(sub => {
+          if (sub.fieldId.startsWith('deprecate_')) {
+            const compId = sub.fieldId.replace('deprecate_', '');
+            updated[compId] = (sub.newValue === 'Deprecated');
+          }
+        });
+        return updated;
+      });
+
+      setFigureComponentListBaseline(prev => {
+        let updated = [...prev];
+        submittedDiffItems.forEach(sub => {
+          if (sub.fieldId.startsWith('delete_')) {
+            const compId = sub.fieldId.replace('delete_', '');
+            updated = updated.filter(c => c.id !== compId);
+          } else if (sub.fieldId.startsWith('add_')) {
+            const compId = sub.fieldId.replace('add_', '');
+            const comp = figureComponents.find(c => c.id === compId);
+            if (comp && !updated.some(c => c.id === compId)) {
+              updated.push({ id: compId, name: comp.name || compId });
+            }
+          }
+        });
+        return updated;
+      });
+      
+      setFigureBlocks(prev => prev.map(b => ({
+        ...b,
+        fields: b.fields.map(f => {
+          const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === f.id && sub.newValue === f.value);
+          return isSubmitted ? { ...f, status: 'default' as const } : f;
+        })
+      })));
+      
+      setFigureComponents(prev => prev.map(b => ({
+        ...b,
+        fields: b.fields.map(f => {
+          const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === f.id && sub.newValue === f.value);
+          return isSubmitted ? { ...f, status: 'default' as const } : f;
+        })
+      })));
+
+      setLastBaselineTrigger(baselineAdvanceTrigger);
+    }
+  }, [baselineAdvanceTrigger, submittedDiffItems, figureComponents, lastBaselineTrigger]);
+
+  const reviewItems = useMemo<ReviewItem[]>(() => {
+    const items: ReviewItem[] = [];
+
+    // 1. Basic Fields with badge
+    figureBlocks.forEach(b => {
+      b.fields.forEach(f => {
+        if (f.badge && !f.confirmed) {
+          items.push({
+            type: f.badge,
+            fieldName: f.label,
+            tooltip: f.badgeTooltip || '',
+            blockId: b.id,
+            fieldId: f.id
+          });
+        }
+      });
+    });
+
+    // 2. Component Fields with badge
+    figureComponents.forEach(b => {
+      if (b.deprecated || b.state === 'loading') return;
+      b.fields.forEach(f => {
+        const isConfirmed = blockItemConfirmed[`${b.id}_${f.id}`];
+        if (f.badge && !isConfirmed) {
+          const compName = b.name || 'Component';
+          items.push({
+            type: f.badge,
+            fieldName: `${f.label} (${compName})`,
+            tooltip: f.badgeTooltip || '',
+            blockId: b.id,
+            fieldId: f.id
+          });
+        }
+      });
+    });
+
+    return items;
+  }, [figureBlocks, figureComponents, blockItemConfirmed]);
+
+  useEffect(() => {
+    if (docType === 'figure') {
+      onMetaDiffChange?.(metaDiffItems);
+      onReviewItemsChange?.(reviewItems);
+    }
+  }, [metaDiffItems, reviewItems, docType, onMetaDiffChange, onReviewItemsChange]);
 
   const handleGenerateComponent = (name: string, type: string, instructions: string) => {
     const newId = `generated-${Date.now()}`;
@@ -4442,6 +4778,25 @@ function MetadataPanel({
       }, 150);
     }
   }, []);
+
+  useEffect(() => {
+    if (targetFieldId) {
+      const cleanId = targetFieldId.replace('deprecate_', '').replace('delete_', '').replace('add_', '');
+      const isCompField = figureComponents.some(c => c.id === cleanId || c.fields.some(f => f.id === cleanId));
+      if (isCompField) {
+        setActiveTab("blocks");
+      } else {
+        setActiveTab("basic");
+      }
+
+      setTimeout(() => {
+        const el = fieldRefs.current[cleanId] || fieldRefs.current[targetFieldId];
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 200);
+    }
+  }, [targetFieldId, figureComponents]);
 
   // ── Stats ──
   const isBasicTab = activeTab === 'basic';
@@ -4630,16 +4985,27 @@ function MetadataPanel({
     }
   };
 
+  const getEffectiveStatus = (fieldId: string | null, status: FieldStatus, currentValue: string | null) => {
+    if (metaUpdateProcessing && fieldId && currentValue !== null) {
+      if (submittedDiffItems.some(sub => sub.fieldId === fieldId && sub.newValue === currentValue)) {
+        return 'default';
+      }
+    }
+    return status;
+  };
+
   const getFieldStyles = (status: FieldStatus, isReadOnlyField: boolean = false) => {
     if (isReadOnlyField) {
-      if (status === 'edited') {
-        return { containerBg: "bg-[#FCEECC]", containerBorder: "border-[#F0AB00]", inputBorder: "border-transparent" };
-      }
+      // Temporarily hide 'edited' status styling
+      // if (status === 'edited') {
+      //   return { containerBg: "bg-[#FCEECC]", containerBorder: "border-[#F0AB00]", inputBorder: "border-transparent" };
+      // }
       return { containerBg: "bg-transparent", containerBorder: "border-transparent", inputBorder: "border-transparent" };
     }
-    if (status === "edited") {
-      return { containerBg: "bg-[#FCEECC]", containerBorder: "border-[#F0AB00]", inputBorder: "border-transparent" };
-    }
+    // Temporarily hide 'edited' status styling
+    // if (status === "edited") {
+    //   return { containerBg: "bg-[#FCEECC]", containerBorder: "border-[#F0AB00]", inputBorder: "border-transparent" };
+    // }
     return { containerBg: "bg-white", containerBorder: "border-transparent", inputBorder: "border-[#D8DADA]" };
   };
 
@@ -4717,7 +5083,7 @@ function MetadataPanel({
                     const isConfirmed = isFieldLayoutEdited ? false : field.confirmed;
                     const isReadOnlyField = field.id === 'idlist' || field.id === 'idpage';
 
-                    const styles = getFieldStyles(fieldStatus, isReadOnlyField);
+                    const styles = getFieldStyles(getEffectiveStatus(field.id, fieldStatus, field.value), isReadOnlyField);
 
                     // Compute values for idlist and idpage
                     let displayValue = field.value;
@@ -4730,41 +5096,33 @@ function MetadataPanel({
 
                     return (
                       <div key={field.id} ref={el => { fieldRefs.current[field.id] = el; }} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
-                        <div className="flex flex-col gap-[4px] p-[8px]">
-                          <div className="flex h-[20px] items-center justify-between">
-                            <div className="flex items-center gap-[2px]">
-                              <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: isLocked ? '#B2B4B4' : '#3C4242' }}>
-                                {field.label}
-                              </span>
-                              {field.required && (
-                                <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: isLocked ? '#B2B4B4' : '#830051' }}>*</span>
-                              )}
-                              {field.badge && <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} />}
-                            </div>
-                            <button
-                              onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)}
-                              disabled={isLocked}
-                              className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                              aria-label={isConfirmed ? "Unconfirm" : "Confirm"}
-                            >
-                              <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(isConfirmed)}</SvgIcon>
-                            </button>
-                          </div>
-                          <div className="relative">
-                            <input
-                              type="text"
+                        <div className="p-[8px]">
+                          <FormItem
+                            label={field.label}
+                            required={field.required}
+                            disabled={isLocked}
+                            badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
+                            actionButton={
+                              <button
+                                onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)}
+                                disabled={isLocked}
+                                className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                aria-label={isConfirmed ? "Unconfirm" : "Confirm"}
+                              >
+                                <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(isConfirmed)}</SvgIcon>
+                              </button>
+                            }
+                            error={fieldStatus === 'error' ? field.errorMessage : undefined}
+                          >
+                            <BaseInput
                               value={displayValue}
                               readOnly={isLocked || isReadOnlyField}
+                              disabled={isLocked && !isReadOnlyField}
+                              readOnlyView={isReadOnlyField}
+                              hasError={fieldStatus === 'error'}
                               onChange={isLocked || isReadOnlyField ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${
-                                isReadOnlyField
-                                  ? 'border-transparent bg-transparent pl-0 text-[#3C4242]' // Hide border and style nicely for read-only config fields
-                                  : isLocked
-                                    ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed'
-                                    : `bg-white ${styles.inputBorder || 'border-[#D8DADA] focus:border-brand-1'}`
-                              }`}
                             />
-                          </div>
+                          </FormItem>
                         </div>
                       </div>
                     );
@@ -4777,7 +5135,7 @@ function MetadataPanel({
                 {figureBlocks.map((block) =>
                   block.fields.map((field) => {
                     const isAssociatedTL = field.id === 'associatedTL';
-                    const styles = getFieldStyles(field.status, false);
+                    const styles = getFieldStyles(getEffectiveStatus(field.id, field.status, field.value), false);
 
                     if (isAssociatedTL) {
                       const state = field.dependencyState || 'S1';
@@ -4815,23 +5173,20 @@ function MetadataPanel({
 
                       return (
                         <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
-                          <div className="flex flex-col gap-[4px] p-[8px]">
-                            <div className="flex h-[20px] items-center justify-between">
-                              <div className="flex items-center gap-[2px]">
-                                <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: isLocked ? '#B2B4B4' : '#3C4242' }}>
-                                  {field.label}
-                                </span>
-                                {field.required && (
-                                  <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: isLocked ? '#B2B4B4' : '#830051' }}>*</span>
-                                )}
-                                {field.badge && <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} />}
-                              </div>
-                              <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
-                                className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                                aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
-                                <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                              </button>
-                            </div>
+                          <div className="p-[8px]">
+                            <FormItem
+                              label={field.label}
+                              required={field.required}
+                              disabled={isLocked}
+                              badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
+                              actionButton={
+                                <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                                  className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                  aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                                  <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                                </button>
+                              }
+                            >
                             
                             <div className="relative w-full flex items-center gap-[16px]">
                               <div className="flex-1 min-w-0">
@@ -4858,7 +5213,7 @@ function MetadataPanel({
                                     }
                                   }}
                                   disabled={isLocked}
-                                  placeholder="No associated Table/Listing"
+                                  placeholder="Optional"
                                   customBoxClass={isS0 ? undefined : `border-[1px] ${borderClass} ${bgClass}`}
                                   customTextColor={isS0 ? undefined : textColorHex}
                                   customTextStyle={{ textDecoration: isS3 ? 'line-through' : 'none' }}
@@ -4908,8 +5263,9 @@ function MetadataPanel({
                                 </div>
                               )}
                             </div>
-                          </div>
+                          </FormItem>
                         </div>
+                      </div>
                       );
                     }
 
@@ -4917,34 +5273,29 @@ function MetadataPanel({
                       <div key={field.id}
                         className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}
                       >
-                        <div className="flex flex-col gap-[4px] p-[8px]">
-                          <div className="flex h-[20px] items-center justify-between">
-                            <div className="flex items-center gap-[2px]">
-                              <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: isLocked ? '#B2B4B4' : '#3C4242' }}>
-                                {field.label}
-                              </span>
-                              {field.required && (
-                                <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: isLocked ? '#B2B4B4' : '#830051' }}>*</span>
-                              )}
-                              {field.badge && <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} />}
-                            </div>
-                            <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
-                              className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                              aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
-                              <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                            </button>
-                          </div>
-                          <div className="relative">
-                            <input type="text" value={field.value} readOnly={isLocked}
+                        <div className="p-[8px]">
+                          <FormItem
+                            label={field.label}
+                            required={field.required}
+                            disabled={isLocked}
+                            badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
+                            actionButton={
+                              <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                                className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                                <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                              </button>
+                            }
+                            error={field.status === 'error' ? field.errorMessage : undefined}
+                          >
+                            <BaseInput
+                              value={field.value}
+                              readOnly={isLocked}
+                              disabled={isLocked}
+                              hasError={field.status === 'error'}
                               onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-[#D8DADA] focus:border-brand-1'}`}`} />
-                            
-                            {!isLocked && field.status === 'default' && (
-                              <div className="absolute right-[8px] top-[8px] pointer-events-none">
-                                <SvgIcon className="h-[16px] w-[16px]"><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>
-                              </div>
-                            )}
-                          </div>
+                            />
+                          </FormItem>
                         </div>
                       </div>
                     );
@@ -4956,36 +5307,32 @@ function MetadataPanel({
               <>
                 {blocks.map((block) =>
                   block.fields.map((field) => {
-                    const styles = getFieldStyles(field.status, false);
+                    const styles = getFieldStyles(getEffectiveStatus(field.id, field.status, field.value), false);
                     return (
                       <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
-                        <div className="flex flex-col gap-[4px] p-[8px]">
-                          <div className="flex h-[20px] items-center justify-between">
-                            <div className="flex items-center gap-[2px]">
-                              <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 12, lineHeight: "20px", color: isLocked ? '#B2B4B4' : '#3C4242' }}>
-                                {field.label}
-                              </span>
-                              {field.required && (
-                                <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 12, color: isLocked ? '#B2B4B4' : '#830051' }}>*</span>
-                              )}
-                              {field.badge && <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} />}
-                            </div>
-                            <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
-                              className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                              aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
-                              <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                            </button>
-                          </div>
-                          <div className="relative">
-                            <input type="text" value={field.value} readOnly={isLocked}
+                        <div className="p-[8px]">
+                          <FormItem
+                            label={field.label}
+                            required={field.required}
+                            disabled={isLocked}
+                            badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
+                            actionButton={
+                              <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                                className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                                <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                              </button>
+                            }
+                            error={field.status === 'error' ? field.errorMessage : undefined}
+                          >
+                            <BaseInput
+                              value={field.value}
+                              readOnly={isLocked}
+                              disabled={isLocked}
+                              hasError={field.status === 'error'}
                               onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              className={`w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border t-small text-[#3C4242] outline-none focus:outline-none ${isLocked ? 'bg-bg-panel border-transparent text-[#B2B4B4] cursor-not-allowed' : `bg-white ${styles.inputBorder || 'border-[#D8DADA] focus:border-brand-1'}`}`} />
-                            {!isLocked && field.status === 'default' && (
-                              <div className="absolute right-[8px] top-[8px] pointer-events-none">
-                                <SvgIcon className="h-[16px] w-[16px]"><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>
-                              </div>
-                            )}
-                          </div>
+                            />
+                          </FormItem>
                         </div>
                       </div>
                     );
@@ -5029,7 +5376,7 @@ function MetadataPanel({
             // Listing Column Tab
             <div className="flex flex-col gap-[4px]">
               {listingColumnFields.map((field) => {
-                const styles = getFieldStyles(field.status, false);
+                const styles = getFieldStyles(getEffectiveStatus(field.id, field.status, field.value), false);
                 return (
                   <div key={field.id} ref={el => { fieldRefs.current[field.id] = el; }} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                     <div className="flex flex-col gap-[4px] p-[8px]">
@@ -5075,18 +5422,43 @@ function MetadataPanel({
               // @ts-ignore
               blocks={figureComponents}
               confirmedBlocks={blockItemConfirmed}
-              onToggleConfirm={(blockId, fieldId) => setBlockItemConfirmed(prev => ({ ...prev, [`${blockId}_${fieldId}`]: !prev[`${blockId}_${fieldId}`] }))}
+              onToggleBlockConfirm={(blockId) => {
+                const block = figureComponents.find((b: any) => b.id === blockId);
+                if (!block) return;
+                const allConfirmed = block.fields.length > 0 && block.fields.every((f: any) => blockItemConfirmed[`${blockId}_${f.id}`]);
+                const nextState = !allConfirmed;
+                setBlockItemConfirmed(prev => {
+                  const next = { ...prev };
+                  block.fields.forEach((f: any) => {
+                    next[`${blockId}_${f.id}`] = nextState;
+                  });
+                  return next;
+                });
+              }}
               isLocked={isLocked}
               onGenerateComponent={handleGenerateComponent}
               onDeprecateComponent={handleDeprecateComponent}
               onDeleteComponent={(id) => setDeleteConfirmBlockId(id)}
               onFieldEdit={handleFieldEditComponent}
+              fieldRefs={fieldRefs}
             />
           ) : (
             <BlocksTabContent
               blocks={METADATA_BLOCK_ITEMS_DATA}
               confirmedBlocks={blockItemConfirmed}
-              onToggleConfirm={(blockId, fieldId) => setBlockItemConfirmed(prev => ({ ...prev, [`${blockId}_${fieldId}`]: !prev[`${blockId}_${fieldId}`] }))}
+              onToggleBlockConfirm={(blockId) => {
+                const block = METADATA_BLOCK_ITEMS_DATA.find(b => b.id === blockId);
+                if (!block) return;
+                const allConfirmed = block.fields.length > 0 && block.fields.every((f: any) => blockItemConfirmed[`${blockId}_${f.id}`]);
+                const nextState = !allConfirmed;
+                setBlockItemConfirmed(prev => {
+                  const next = { ...prev };
+                  block.fields.forEach((f: any) => {
+                    next[`${blockId}_${f.id}`] = nextState;
+                  });
+                  return next;
+                });
+              }}
               isLocked={isLocked}
             />
           )
@@ -5094,65 +5466,72 @@ function MetadataPanel({
       </div>
 
       {/* Add Changes to Chat Button */}
-      {hasAnyEdits && (
-        <div className="border-t border-border-default p-[12px] flex justify-start">
-          <button
-            onClick={isLocked ? undefined : () => {
-              if (docType === 'listing') {
-                const changes: string[] = [];
-                listingBlocks.forEach(b => {
-                  b.fields.forEach(f => {
-                    if (f.id === 'idlist' && isRepeatColumnEdited) {
-                      const displayValue = Array.from({ length: columnCount }, (_, i) => frozenUntilIndex !== null && i <= frozenUntilIndex ? 'Y' : 'N').join('#');
-                      changes.push(`- ${f.label}: ${displayValue}`);
-                    } else if (f.id === 'idpage' && isPageBreakColumnEdited) {
-                      const displayValue = Array.from({ length: columnCount }, (_, i) => pageBreakColumns.includes(i - 1) ? 'Y' : 'N').join('#');
-                      changes.push(`- ${f.label}: ${displayValue}`);
-                    } else if (f.status === 'edited' && f.id !== 'idlist' && f.id !== 'idpage') {
-                      changes.push(`- ${f.label}: ${f.value}`);
-                    }
+      {docType === 'figure' ? (
+        ((metaUpdateProcessing && newDiffItems.length > 0) || (!metaUpdateProcessing && metaDiffItems.length > 0 && !metaUpdateActive)) && (
+          <div className="border-t border-border-default p-[12px] flex justify-start">
+            <button
+              onClick={isLocked || metaUpdateProcessing ? undefined : () => {
+                onRequestUpdateCode?.();
+              }}
+              disabled={isLocked || metaUpdateProcessing}
+              className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${(isLocked || metaUpdateProcessing) ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
+            >
+              <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={(isLocked || metaUpdateProcessing) ? '#888E8E' : 'white'} />
+              Update Code
+              {!metaUpdateProcessing && (
+                <div className="flex items-center justify-center h-[16px] min-w-[16px] px-[4px] py-px rounded-[16px] bg-white/20 shrink-0">
+                  <span className="text-[10px] leading-[14px] font-medium text-white">{metaDiffItems.length}</span>
+                </div>
+              )}
+            </button>
+          </div>
+        )
+      ) : (
+        hasAnyEdits && (
+          <div className="border-t border-border-default p-[12px] flex justify-start">
+            <button
+              onClick={isLocked ? undefined : () => {
+                if (docType === 'listing') {
+                  const changes: string[] = [];
+                  listingBlocks.forEach(b => {
+                    b.fields.forEach(f => {
+                      if (f.id === 'idlist' && isRepeatColumnEdited) {
+                        const displayValue = Array.from({ length: columnCount }, (_, i) => frozenUntilIndex !== null && i <= frozenUntilIndex ? 'Y' : 'N').join('#');
+                        changes.push(`- ${f.label}: ${displayValue}`);
+                      } else if (f.id === 'idpage' && isPageBreakColumnEdited) {
+                        const displayValue = Array.from({ length: columnCount }, (_, i) => pageBreakColumns.includes(i - 1) ? 'Y' : 'N').join('#');
+                        changes.push(`- ${f.label}: ${displayValue}`);
+                      } else if (f.status === 'edited' && f.id !== 'idlist' && f.id !== 'idpage') {
+                        changes.push(`- ${f.label}: ${f.value}`);
+                      }
+                    });
                   });
-                });
-                const columnChanges: string[] = [];
-                listingColumnFields.forEach(f => {
-                  if (f.status === 'edited') {
-                    columnChanges.push(`- ${f.label}: ${f.value}`);
-                  }
-                });
-
-                let text = `You are given metadata changes for this listing. Apply these changes to update the code accordingly.`;
-                if (changes.length > 0) {
-                  text += `\n\n====================\nLISTING LEVEL CHANGES\n` + changes.join('\n');
-                }
-                if (columnChanges.length > 0) {
-                  text += `\n\n====================\nCOLUMN LEVEL CHANGES\n` + columnChanges.join('\n');
-                }
-                onAddChangesToChat?.(text);
-              } else if (docType === 'figure') {
-                const changes: string[] = [];
-                figureBlocks.forEach(b => {
-                  b.fields.forEach(f => {
+                  const columnChanges: string[] = [];
+                  listingColumnFields.forEach(f => {
                     if (f.status === 'edited') {
-                      changes.push(`- ${f.label}: ${f.value}`);
+                      columnChanges.push(`- ${f.label}: ${f.value}`);
                     }
                   });
-                });
 
-                let text = `You are given metadata changes for this figure. Apply these changes to update the code accordingly.`;
-                if (changes.length > 0) {
-                  text += `\n\n====================\nFIGURE LEVEL CHANGES\n` + changes.join('\n');
+                  let text = `You are given metadata changes for this listing. Apply these changes to update the code accordingly.`;
+                  if (changes.length > 0) {
+                    text += `\n\n====================\nLISTING LEVEL CHANGES\n` + changes.join('\n');
+                  }
+                  if (columnChanges.length > 0) {
+                    text += `\n\n====================\nCOLUMN LEVEL CHANGES\n` + columnChanges.join('\n');
+                  }
+                  onAddChangesToChat?.(text);
                 }
-                onAddChangesToChat?.(text);
-              }
-              handleUpdateCode();
-            }}
-            disabled={isLocked}
-            className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isLocked ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
-          >
-            <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={isLocked ? '#888E8E' : 'white'} />
-            Add Changes to Chat
-          </button>
-        </div>
+                handleUpdateCode();
+              }}
+              disabled={isLocked}
+              className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isLocked ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
+            >
+              <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={isLocked ? '#888E8E' : 'white'} />
+              Add Changes to Chat
+            </button>
+          </div>
+        )
       )}
 
       {/* Figure Dependency Update Modal */}
@@ -5679,6 +6058,13 @@ function WorkspaceContent({
   treeListWidth: number;
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const [metaDiffItems, setMetaDiffItems] = useState<MetaDiffItem[]>([]);
+  const [metaUpdateActive, setMetaUpdateActive] = useState(false);
+  const [metaUpdateProcessing, setMetaUpdateProcessing] = useState(false);
+  const [submittedDiffItems, setSubmittedDiffItems] = useState<MetaDiffItem[]>([]);
+  const [baselineAdvanceTrigger, setBaselineAdvanceTrigger] = useState(0);
+  const [targetMetadataFieldId, setTargetMetadataFieldId] = useState<string | null>(null);
+  const [reviewItems, setReviewItems] = useState<ReviewItem[]>(DEFAULT_FIGURE_REVIEW_ITEMS);
   const [programs, setPrograms] = useState<ProgramItem[]>([
     {
       id: 'p1',
@@ -6145,7 +6531,7 @@ function WorkspaceContent({
             <SearchBar
               value={treeSearchQuery}
               onChange={setTreeSearchQuery}
-              placeholder="Search"
+              placeholder="Search..."
               background="dark"
               className="mx-[8px] my-[2px] shrink-0"
             />
@@ -6321,8 +6707,26 @@ function WorkspaceContent({
                       onOpenSpatialView={() => setRtfOpen(true)}
                       onJumpToMetadata={(blockId, fieldId) => {
                         setMetadataOpen(true);
+                        if (fieldId) {
+                          setTargetMetadataFieldId(fieldId);
+                        }
                       }}
                       docType={docType}
+                      metaDiffItems={metaDiffItems}
+                      metaUpdateActive={metaUpdateActive}
+                      onMetaCancel={() => setMetaUpdateActive(false)}
+                      onMetaProceed={() => {
+                        setMetaUpdateActive(false);
+                        setMetaUpdateProcessing(true);
+                        setSubmittedDiffItems(metaDiffItems);
+                        setTimeout(() => {
+                          setBaselineAdvanceTrigger(prev => prev + 1);
+                          setTimeout(() => {
+                            setMetaUpdateProcessing(false);
+                            setSubmittedDiffItems([]);
+                          }, 50);
+                        }, 2500);
+                      }}
                     />
                   )}
                 </div>
@@ -6374,6 +6778,17 @@ function WorkspaceContent({
                         associatedTLStatus={associatedTLStatus}
                         rtfOpen={rtfOpen}
                         onToggleRtf={() => setRtfOpen(v => !v)}
+                        onMetaDiffChange={setMetaDiffItems}
+                        onRequestUpdateCode={() => {
+                          setMetaUpdateActive(true);
+                          setAiCopilotOpen(true);
+                        }}
+                        baselineAdvanceTrigger={baselineAdvanceTrigger}
+                        metaUpdateActive={metaUpdateActive}
+                        metaUpdateProcessing={metaUpdateProcessing}
+                        submittedDiffItems={submittedDiffItems}
+                        targetFieldId={targetMetadataFieldId || undefined}
+                        onReviewItemsChange={setReviewItems}
                       />
                     </div>
                   )}
@@ -6455,8 +6870,26 @@ function WorkspaceContent({
                       onOpenSpatialView={() => setRtfOpen(true)}
                       onJumpToMetadata={(blockId, fieldId) => {
                         setMetadataOpen(true);
+                        if (fieldId) {
+                          setTargetMetadataFieldId(fieldId);
+                        }
                       }}
                       docType={docType}
+                      metaDiffItems={metaDiffItems}
+                      metaUpdateActive={metaUpdateActive}
+                      onMetaCancel={() => setMetaUpdateActive(false)}
+                      onMetaProceed={() => {
+                        setMetaUpdateActive(false);
+                        setMetaUpdateProcessing(true);
+                        setSubmittedDiffItems(metaDiffItems);
+                        setTimeout(() => {
+                          setBaselineAdvanceTrigger(prev => prev + 1);
+                          setTimeout(() => {
+                            setMetaUpdateProcessing(false);
+                            setSubmittedDiffItems([]);
+                          }, 50);
+                        }, 2500);
+                      }}
                     />
                   )}
                 </div>
