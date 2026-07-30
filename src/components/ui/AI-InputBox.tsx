@@ -83,26 +83,6 @@ export function AIInputBox({
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: `
-        .ai-inputbox-textarea::-webkit-scrollbar {
-          width: 4px;
-        }
-        .ai-inputbox-textarea::-webkit-scrollbar-track {
-          background: transparent;
-          border: none;
-        }
-        .ai-inputbox-textarea::-webkit-scrollbar-thumb {
-          background-color: rgba(216, 218, 218, 0.75);
-          border-radius: 8px;
-        }
-        .ai-inputbox-textarea::-webkit-scrollbar-thumb:hover {
-          background-color: #B2B4B4;
-        }
-        .ai-inputbox-textarea {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(216, 218, 218, 0.75) transparent;
-        }
-      `}} />
 
       <form
         onSubmit={handleSubmit}
@@ -138,7 +118,7 @@ export function AIInputBox({
                 ? "placeholder:text-graphite-20"
                 : "placeholder:text-graphite-40",
               isMaxHeight
-                ? "max-h-[140px] overflow-y-auto ai-inputbox-textarea"
+                ? "max-h-[140px] overflow-y-auto scrollbar-compact"
                 : "",
               disabled ? "cursor-not-allowed" : "",
             ].join(" ")}

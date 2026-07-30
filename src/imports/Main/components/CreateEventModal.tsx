@@ -267,7 +267,7 @@ function Step2Body() {
     else setSelectedRows(new Set(mockTaskRows.map((_, i) => i)));
   };
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto p-[20px_24px] [scrollbar-gutter:stable]">
+    <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto p-[20px_24px] scrollbar-compact">
       {/* Section title */}
       <div className="flex shrink-0 items-center justify-between">
         <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 14, color: "#000000" }}>Task Assignment</span>
@@ -473,7 +473,7 @@ export default function CreateEventModal({
             /* Step 1 - Upload Specs & Configs */
             <div className="flex min-h-0 flex-1 border-t border-graphite-10">
               {/* Left column */}
-              <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] border-r border-graphite-10 p-[20px]">
+              <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto scrollbar-compact border-r border-graphite-10 p-[20px]">
                 <Dropdown label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} />
                 <MultiSelectDropdown label="Project Code" required placeholder="Required" options={projectOptions} value={projectCodes} onChange={setProjectCodes} />
                 <MultiSelectDropdown label="Study Code" required placeholder="Required" options={studyOptions} value={studyCodes} onChange={setStudyCodes} />
@@ -482,7 +482,7 @@ export default function CreateEventModal({
                 <OptionalSection />
               </div>
               {/* Right column */}
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto [scrollbar-gutter:stable] p-[18px_20px_20px_20px]">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto scrollbar-compact p-[18px_20px_20px_20px]">
                  <UploadCard 
                   label="ADaM Spec" 
                   required 

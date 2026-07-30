@@ -281,7 +281,7 @@ function ToBeReviewedBlock({ items, onJumpToMetadata }: { items: ReviewItem[], o
       </div>
       
       {isExpanded && (
-        <div className="flex flex-col border-t border-graphite-10 max-h-[210px] overflow-y-auto [scrollbar-width:thin]">
+        <div className="flex flex-col border-t border-graphite-10 max-h-[210px] overflow-y-auto scrollbar-compact">
           {items.map((item, idx) => (
             <ReviewItemRow key={idx} item={item} onJumpToMetadata={onJumpToMetadata} />
           ))}
@@ -4055,7 +4055,7 @@ function BlocksTabContent({
         />
       )}
       {/* Left sidebar — block navigation */}
-      <div className="w-[176px] shrink min-w-[90px] border-r border-[#E5E8E8] overflow-y-overlay bg-white flex flex-col gap-[2px] pt-[4px] pl-[4px] pb-[8px] pr-[4px]">
+      <div className="w-[176px] shrink min-w-[90px] border-r border-[#E5E8E8] overflow-y-auto scrollbar-compact bg-white flex flex-col gap-[2px] pt-[4px] pl-[4px] pb-[8px] pr-[4px]">
         <div className="relative group" data-menu-open={!!addMenuAnchor}>
           <button
             onClick={() => handleSidebarClick('all')}
@@ -5067,7 +5067,7 @@ function MetadataPanel({
       </div>
 
       {/* Content */}
-      <div className={`min-h-0 flex-1 ${activeTab === "blocks" && docType !== 'listing' ? 'flex flex-col' : 'overflow-auto [scrollbar-gutter:stable] p-[4px]'}`}>
+      <div className={`min-h-0 flex-1 ${activeTab === "blocks" && docType !== 'listing' ? 'flex flex-col' : 'overflow-auto scrollbar-compact p-[4px]'}`}>
         {activeTab === "basic" && (
           <div className="flex flex-col gap-[4px]">
             {docType === 'listing' ? (
@@ -5846,22 +5846,6 @@ ods graphics off;`;
           background-color: rgba(131, 0, 81, 0.15) !important;
           color: inherit !important;
         }
-        .code-panel-scroll-container::-webkit-scrollbar {
-          width: 14px;
-          height: 14px;
-        }
-        .code-panel-scroll-container::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .code-panel-scroll-container::-webkit-scrollbar-thumb {
-          background-color: rgba(216, 218, 218, 0.75);
-          border: 2px solid transparent;
-          border-radius: 7px;
-          background-clip: padding-box;
-        }
-        .code-panel-scroll-container::-webkit-scrollbar-thumb:hover {
-          background-color: #B2B4B4;
-        }
       `}} />
       <PanelHeader
         title={
@@ -5869,7 +5853,7 @@ ods graphics off;`;
         }
         actions={toolbarButtons}
       />
-      <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container">
+      <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container scrollbar-code">
         {docType === 'figure' ? (
           <div className="flex flex-1 min-w-max font-mono text-[13px] leading-[20px]">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[54px] sticky left-0 z-10">

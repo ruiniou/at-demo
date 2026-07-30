@@ -120,48 +120,8 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
   return (
     <div className={`flex flex-col w-full relative ${className}`}>
       
-      {/* CSS style block for browser-native transparent track scrollbars */}
-      <style dangerouslySetInnerHTML={{__html: `
-        /* Scrollable pending changes list scrollbar */
-        .chat-pending-list::-webkit-scrollbar {
-          width: 4px;
-        }
-        .chat-pending-list::-webkit-scrollbar-track {
-          background: transparent;
-          border: none;
-        }
-        .chat-pending-list::-webkit-scrollbar-thumb {
-          background-color: #E6CCDC;
-          border-radius: 8px;
-        }
-        .chat-pending-list::-webkit-scrollbar-thumb:hover {
-          background-color: #CC99B9;
-        }
-        .chat-pending-list {
-          scrollbar-width: thin;
-          scrollbar-color: #E6CCDC transparent;
-        }
-
-        /* Max height text area scrollbar */
-        .chat-maxheight-textarea::-webkit-scrollbar {
-          width: 4px;
-        }
-        .chat-maxheight-textarea::-webkit-scrollbar-track {
-          background: transparent;
-          border: none;
-        }
-        .chat-maxheight-textarea::-webkit-scrollbar-thumb {
-          background-color: rgba(216, 218, 218, 0.75);
-          border-radius: 8px;
-        }
-        .chat-maxheight-textarea::-webkit-scrollbar-thumb:hover {
-          background-color: #B2B4B4;
-        }
-        .chat-maxheight-textarea {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(216, 218, 218, 0.75) transparent;
-        }
-      `}} />
+      
+      {/* CSS style block removed — now using global scrollbar-compact + scrollbar-colored classes */}
 
       {/* ==================== FIGMA COMPONENT ==================== */}
       <div 
@@ -203,7 +163,7 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
 
             {/* Expanded List - Aligned precisely with the header icons and texts. No hover offsets. */}
             {pendingExpanded && (
-              <div className="content-stretch flex flex-col gap-[4px] items-start px-[8px] pb-[6px] relative shrink-0 w-full overflow-y-auto chat-pending-list flex-1">
+              <div className="content-stretch flex flex-col gap-[4px] items-start px-[8px] pb-[6px] relative shrink-0 w-full overflow-y-auto scrollbar-compact scrollbar-colored flex-1">
                 {[
                   "Lines 10-11",
                   "Lines 10-11",
@@ -268,7 +228,7 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
                       }}
                       onKeyDown={handleKeyDown}
                       placeholder="Ask Me Anything..."
-                      className="w-full t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none resize-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] max-h-[140px] pr-[12px] overflow-y-auto chat-maxheight-textarea"
+                      className="w-full t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none resize-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] max-h-[140px] pr-[12px] overflow-y-auto scrollbar-compact"
                       rows={4}
                     />
                   </div>
