@@ -1249,7 +1249,7 @@ function TreeStatusControl({
 }) {
   if (item.docType === 'figure' && isFigureQueued) {
     return (
-      <TooltipText label="Queued — Waiting for Table 14.1.4 to complete">
+      <TooltipText label="Queued — Waiting for Table 14.1.1 to complete">
         <span className="cursor-help">
           <CodeStatusSlot>
             <div className="flex items-center justify-center w-[16px] h-[16px]">
@@ -1963,6 +1963,23 @@ function ListingShellPreview({
 
   const totalListingWidth = useMemo(() => listingColumns.reduce((sum, col) => sum + col.widthPx, 0), [listingColumns]);
 
+  // Preserve horizontal scroll position when metadata panel opens/closes
+  const prevMetadataOpenRef = useRef(metadataOpen);
+  useEffect(() => {
+    if (prevMetadataOpenRef.current === metadataOpen) return;
+    prevMetadataOpenRef.current = metadataOpen;
+    const container = listingScrollContainerRef.current;
+    if (!container) return;
+    const scrollRatio = container.scrollWidth > container.clientWidth
+      ? container.scrollLeft / (container.scrollWidth - container.clientWidth)
+      : 0;
+    requestAnimationFrame(() => {
+      if (container.scrollWidth > container.clientWidth) {
+        container.scrollLeft = scrollRatio * (container.scrollWidth - container.clientWidth);
+      }
+    });
+  }, [metadataOpen]);
+
   const handleMetadataDividerDrag = (delta: number) => {
     onMetadataResize(-delta);
   };
@@ -2479,7 +2496,7 @@ function ListingShellPreview({
     <div className="h-full bg-white flex flex-col overflow-hidden">
       {/* Top Bar */}
       <div className="bg-white h-[40px] shrink-0 w-full flex items-center justify-between px-[12px]">
-        <p className="t-small truncate text-black">{selectedItemName || 'Shell preview'}</p>
+        <p className="t-small truncate text-text-primary">{selectedItemName || 'Shell preview'}</p>
         <div className="flex items-center gap-[10px]">
           <div className="flex items-center gap-[8px]">
             {/* Page separator / Preview button */}
@@ -2604,13 +2621,13 @@ function ListingShellPreview({
               <div className="relative">
                 {/* Study Info & Page Info */}
                 <div className="flex justify-between items-end w-full mb-[24px]">
-                  <div className="t-body text-[12px] leading-[18px] whitespace-pre-wrap">AstraZeneca<br/>Study number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, &lt;&lt;Data cut-off ddmmyyyy&gt;&gt;</div>
-                  <div className="t-body text-[12px] leading-[18px] text-right">Page 266 of 280</div>
+                  <div className="t-small text-text-secondary whitespace-pre-wrap">AstraZeneca<br/>Study number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, &lt;&lt;Data cut-off ddmmyyyy&gt;&gt;</div>
+                  <div className="t-small text-text-secondary text-right">Page 266 of 280</div>
                 </div>
 
                 {/* Title header */}
                 <div className="min-w-max flex flex-col items-center justify-center pb-[12px]">
-                  <h1 className="t-body text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">
+                  <h1 className="t-body-medium text-center tracking-[-0.01em]">
                     Appendix 16.2.12<br />
                     Tumour assessment details by blinded independent central review (ITT analysis set)<br />
                     Subject identifier: &lt;&lt;Exxxxxxxx&gt;&gt;
@@ -2618,7 +2635,7 @@ function ListingShellPreview({
                 </div>
 
                 {/* Subheader */}
-                <div className="w-full text-left t-body text-[12px] leading-[18px] mb-[12px] mt-[12px]">
+                <div className="w-full text-left t-small mb-[12px] mt-[12px]">
                   <p>G. Target lesion details</p>
                   <p>Reviewer: [[Radiologist 1|Radiologist 2]]*, Review identification number: &lt;&lt;xxxxxxx&gt;&gt;</p>
                   <p>Planned treatment group: &lt;&lt;AZD1 (low dose)&gt;&gt;, Duration of actual exposure (months) [a]: &lt;&lt;xx&gt;&gt;, Death study day [b]: &lt;&lt;xx&gt;&gt;</p>
@@ -2645,7 +2662,7 @@ function ListingShellPreview({
                               key={column.key}
                               ref={(node) => { thRefs.current[columnIndex] = node; }}
                               style={cellStyle}
-                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-black border-r-graphite-10 px-[8px] py-[6px] text-left align-middle text-[14px] leading-[20px] font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
+                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-black border-r-border-default last:border-r-0 px-[8px] py-[6px] text-left align-middle text-[14px] leading-[20px] font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
                               onMouseEnter={() => {
                                 if (draggingBreak === null && draggingFreeze === null && columnIndex < firstPageBreakIndex) {
                                   setHoveredFreezeColumn(columnIndex);
@@ -2734,7 +2751,7 @@ function ListingShellPreview({
                           if (frozen) { cellStyle.left = `${getFrozenLeft(columnIndex)}px`; cellStyle.zIndex = 20; cellStyle.backgroundColor = 'white'; }
                           if (shadows.length) cellStyle.boxShadow = shadows.join(', ');
                           return (
-                            <td key={`${rowIndex}-${column.key}`} style={cellStyle} className={`border-r border-b border-b-border-default group-last:border-b-2 group-last:border-b-black border-border-default px-[8px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-pre-wrap break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
+                            <td key={`${rowIndex}-${column.key}`} style={cellStyle} className={`border-r border-b border-b-border-default group-last:border-b-2 group-last:border-b-black border-border-default last:border-r-0 px-[8px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-pre-wrap break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
                               <div className="w-full overflow-hidden">
                                 {(row as Record<string, string>)[column.key]}
                               </div>
@@ -2845,7 +2862,7 @@ function ListingShellPreview({
                 {/* Footnotes */}
                 <div className="mt-[16px] flex flex-col gap-[4px] w-full text-left">
                   {listingFootnotes.map((fn, idx) => (
-                    <p key={idx} className="t-body text-[12px] leading-[18px] text-text-secondary whitespace-pre-wrap">
+                    <p key={idx} className="t-small text-text-secondary whitespace-pre-wrap">
                       {fn}
                     </p>
                   ))}
@@ -2980,83 +2997,105 @@ const shellTableData: Record<string, ShellTableData> = {
       { category: 'Withdrawal by subject', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
     ],
   },
-  'Table 14.1.2': {
-    tableNumber: 'Table 14.1.2',
-    tableTitle: 'Baseline Disease Characteristics',
-    population: 'Safety Analysis Set',
+  'Table 14.1.6.1': {
+    tableNumber: 'Table 14.1.6.1',
+    tableTitle: 'Baseline characteristics (ITT analysis set)',
+    studyInfo: 'AstraZeneca\nStudy number D1234C00001 <<Study name>> - <<Deliverable if not final>>, <<Dummy Treatment>>, <<Data cut-off ddmmmyyyy>>',
+    pageInfo: 'Page x of y',
+    population: '',
     columnGroups: [
-      { name: 'Placebo\n(N=120)', span: 3 },
-      { name: 'AZD0780 10mg\n(N=118)', span: 3 },
-      { name: 'AZD0780 20mg\n(N=122)', span: 3 },
-      { name: 'Total\n(N=360)', span: 3 },
+      { name: 'AZD999\n1 mg/kg\nN=xxx', span: 1 },
+      { name: 'AZD999\n2 mg/kg\nN=xxx', span: 1 },
+      { name: 'AZD999\nTotal\nN=xxx', span: 1 },
+      { name: 'Investigator choice of therapy\nN=xxx', span: 1 },
+      { name: 'Total\nN=xxx', span: 1 },
     ],
-    columns: ['N', 'Mean (SD)', 'Median', 'N', 'Mean (SD)', 'Median', 'N', 'Mean (SD)', 'Median', 'N', 'Mean (SD)', 'Median'],
+    columns: ['', '', '', '', ''],
     rows: [
-      { category: 'Age (years)', values: ['120', '58.3 (12.1)', '59.0', '118', '57.8 (11.7)', '58.0', '122', '59.1 (12.4)', '60.0', '360', '58.4 (12.0)', '59.0'] },
-      { category: 'BMI (kg/m²)', values: ['120', '26.8 (4.2)', '26.4', '118', '26.5 (3.9)', '26.2', '122', '27.1 (4.5)', '26.8', '360', '26.8 (4.2)', '26.5'] },
-      { category: 'HbA1c (%)', values: ['120', '8.2 (1.1)', '8.1', '118', '8.3 (1.0)', '8.2', '122', '8.2 (1.2)', '8.1', '360', '8.2 (1.1)', '8.1'] },
-      { category: 'Fasting Plasma Glucose (mg/dL)', values: ['120', '172.5 (38.4)', '168.0', '118', '175.2 (40.1)', '170.0', '122', '170.8 (36.7)', '165.0', '360', '172.8 (38.3)', '168.0'] },
-      { category: 'LDL-C (mg/dL)', values: ['120', '112.3 (28.5)', '110.0', '118', '115.8 (30.2)', '112.0', '122', '110.5 (27.9)', '108.0', '360', '112.8 (28.8)', '110.0'] },
-      { category: 'eGFR (mL/min/1.73m²)', values: ['120', '78.5 (16.2)', '80.0', '118', '76.8 (15.8)', '78.0', '122', '79.2 (16.5)', '81.0', '360', '78.2 (16.1)', '79.0'] },
-      { category: 'Duration of Diabetes (years)', values: ['120', '7.2 (5.1)', '6.0', '118', '7.8 (5.4)', '7.0', '122', '7.0 (4.8)', '6.0', '360', '7.3 (5.1)', '6.0'] },
+      { category: 'Height (cm)', values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n', indent: 1, values: ['xxx', 'xxx', 'xxx', 'xxx', 'xxx'] },
+      { category: 'Mean', indent: 1, values: ['xx.x', 'xx.x', 'xx.x', 'xx.x', 'xx.x'] },
+      { category: 'SD', indent: 1, values: ['xx.x', 'xx.x', 'xx.x', 'xx.x', 'xx.x'] },
+      { category: 'Min', indent: 1, values: ['x', 'x', 'x', 'x', 'x'] },
+      { category: 'Median', indent: 1, values: ['xx.x', 'xx.x', 'xx.x', 'xx.x', 'xx.x'] },
+      { category: 'Max', indent: 1, values: ['xxx', 'xxx', 'xxx', 'xxx', 'xxx'] },
+      { category: 'Weight (kg)', values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n', indent: 1, values: ['xxx', 'xxx', 'xxx', 'xxx', 'xxx'] },
+      { category: 'Mean', indent: 1, values: ['xx.x', 'xx.x', 'xx.x', 'xx.x', 'xx.x'] },
+      { category: 'SD', indent: 1, values: ['xx.x', 'xx.x', 'xx.x', 'xx.x', 'xx.x'] },
+      { category: 'Min', indent: 1, values: ['x', 'x', 'x', 'x', 'x'] },
+      { category: 'Median', indent: 1, values: ['xx.x', 'xx.x', 'xx.x', 'xx.x', 'xx.x'] },
+      { category: 'Max', indent: 1, values: ['xxx', 'xxx', 'xxx', 'xxx', 'xxx'] },
+      { category: 'Weight group (kg)', values: ['', '', '', '', ''], isHeader: true },
+      { category: '<50', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: '>=50 - <70', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: '>=70 - <90', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: '>=90', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'Missing', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'BMI (kg/m2)', values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n', indent: 1, values: ['xxx', 'xxx', 'xxx', 'xxx', 'xxx'] },
+      { category: 'Mean', indent: 1, values: ['xx.x', 'xx.x', 'xx.x', 'xx.x', 'xx.x'] },
+      { category: 'SD', indent: 1, values: ['xx.x', 'xx.x', 'xx.x', 'xx.x', 'xx.x'] },
+      { category: 'Min', indent: 1, values: ['x', 'x', 'x', 'x', 'x'] },
+      { category: 'Median', indent: 1, values: ['xx.x', 'xx.x', 'xx.x', 'xx.x', 'xx.x'] },
+      { category: 'Max', indent: 1, values: ['xxx', 'xxx', 'xxx', 'xxx', 'xxx'] },
+      { category: 'BMI Group (kg/m2)', values: ['', '', '', '', ''], isHeader: true },
+      { category: '<18.5', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: '>=18.5 - <25.0', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: '>=25 - <30', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: '>=30', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'Missing', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
+      { category: 'Nicotine use', values: ['', '', '', '', ''], isHeader: true },
+      { category: 'Never', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Former', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Current', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Missing', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Alcohol use', values: ['', '', '', '', ''], isHeader: true },
+      { category: 'Never', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Former', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Current', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Missing', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'ECOG performance status', values: ['', '', '', '', ''], isHeader: true },
+      { category: '(0) Fully active', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '(1) Restricted in physically strenuous activity', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '(2) Ambulatory and capable of all selfcare', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '(3) Capable of only limited selfcare', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '(4) Completely disabled', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: '(5) Death', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
+      { category: 'Missing', indent: 1, values: ['', '', '', '', ''], isHeader: true },
+      { category: 'n (%)', indent: 2, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
     ],
+    footnotes: [
+      'Refer to the statistical analysis plan for full ECOG performance status score descriptions.',
+      'BMI Body mass index; ECOG Eastern Cooperative Oncology Group; m2 Square meter; n Number of subjects in analysis for a continuous variable and number of subjects per category for a categorical variable; N Number of subjects per treatment group; SD Standard deviation.',
+      '<<output program path>> <<output file name>> <<date/time>>'
+    ]
   },
-  'Table 14.1.3': {
-    tableNumber: 'Table 14.1.3',
-    tableTitle: 'Prior and Concomitant Medications',
-    population: 'Safety Analysis Set',
-    columnGroups: [
-      { name: 'Placebo\n(N=120)', span: 2 },
-      { name: 'AZD0780 10mg\n(N=118)', span: 2 },
-      { name: 'AZD0780 20mg\n(N=122)', span: 2 },
-      { name: 'Total\n(N=360)', span: 2 },
-    ],
-    columns: ['n', '(%)', 'n', '(%)', 'n', '(%)', 'n', '(%)'],
-    rows: [
-      { category: 'Any Prior Medication', values: ['118', '(98.3)', '116', '(98.3)', '120', '(98.4)', '354', '(98.3)'], isHeader: true },
-      { category: 'Metformin', indent: 1, values: ['105', '(87.5)', '103', '(87.3)', '108', '(88.5)', '316', '(87.8)'] },
-      { category: 'Sulfonylurea', indent: 1, values: ['42', '(35.0)', '45', '(38.1)', '40', '(32.8)', '127', '(35.3)'] },
-      { category: 'DPP-4 Inhibitor', indent: 1, values: ['28', '(23.3)', '25', '(21.2)', '30', '(24.6)', '83', '(23.1)'] },
-      { category: 'SGLT2 Inhibitor', indent: 1, values: ['35', '(29.2)', '32', '(27.1)', '38', '(31.1)', '105', '(29.2)'] },
-      { category: 'GLP-1 Receptor Agonist', indent: 1, values: ['18', '(15.0)', '15', '(12.7)', '20', '(16.4)', '53', '(14.7)'] },
-      { category: 'Insulin', indent: 1, values: ['22', '(18.3)', '20', '(16.9)', '25', '(20.5)', '67', '(18.6)'] },
-      { category: 'Statins', indent: 1, values: ['78', '(65.0)', '76', '(64.4)', '82', '(67.2)', '236', '(65.6)'] },
-      { category: 'Antihypertensives', indent: 1, values: ['65', '(54.2)', '62', '(52.5)', '68', '(55.7)', '195', '(54.2)'] },
-      { category: 'Any Concomitant Medication', values: ['115', '(95.8)', '113', '(95.8)', '118', '(96.7)', '346', '(96.1)'], isHeader: true },
-      { category: 'Metformin', indent: 1, values: ['102', '(85.0)', '100', '(84.7)', '105', '(86.1)', '307', '(85.3)'] },
-      { category: 'SGLT2 Inhibitor', indent: 1, values: ['32', '(26.7)', '30', '(25.4)', '35', '(28.7)', '97', '(26.9)'] },
-    ],
-  },
-  'Table 14.1.4': {
-    tableNumber: 'Table 14.1.4',
-    tableTitle: 'Adverse Events Summary by System Organ Class',
-    population: 'Safety Analysis Set',
-    columnGroups: [
-      { name: 'Placebo\n(N=120)', span: 3 },
-      { name: 'AZD0780 10mg\n(N=118)', span: 3 },
-      { name: 'AZD0780 20mg\n(N=122)', span: 3 },
-      { name: 'Total\n(N=360)', span: 3 },
-    ],
-    columns: ['Subjects with AE', 'n', '(%)', 'Subjects with AE', 'n', '(%)', 'Subjects with AE', 'n', '(%)', 'Subjects with AE', 'n', '(%)'],
-    rows: [
-      { category: 'Any Adverse Event', values: ['78', '78', '(65.0)', '85', '85', '(72.0)', '92', '92', '(75.4)', '255', '255', '(70.8)'], isHeader: true },
-      { category: 'Gastrointestinal Disorders', values: ['22', '22', '(18.3)', '35', '38', '(32.2)', '41', '45', '(36.9)', '98', '105', '(29.2)'], isHeader: true },
-      { category: 'Nausea', indent: 1, values: ['5', '5', '(4.2)', '15', '18', '(15.3)', '18', '22', '(18.0)', '38', '45', '(12.5)'] },
-      { category: 'Diarrhoea', indent: 1, values: ['3', '3', '(2.5)', '8', '9', '(7.6)', '10', '12', '(9.8)', '21', '24', '(6.7)'] },
-      { category: 'Vomiting', indent: 1, values: ['2', '2', '(1.7)', '5', '6', '(5.1)', '7', '8', '(6.6)', '14', '16', '(4.4)'] },
-      { category: 'Metabolism and Nutrition Disorders', values: ['15', '15', '(12.5)', '20', '22', '(18.6)', '24', '27', '(22.1)', '59', '64', '(17.8)'], isHeader: true },
-      { category: 'Hypoglycaemia', indent: 1, values: ['4', '4', '(3.3)', '8', '9', '(7.6)', '10', '12', '(9.8)', '22', '25', '(6.9)'] },
-      { category: 'Decreased appetite', indent: 1, values: ['2', '2', '(1.7)', '6', '7', '(5.9)', '8', '9', '(7.4)', '16', '18', '(5.0)'] },
-      { category: 'Nervous System Disorders', values: ['18', '18', '(15.0)', '22', '25', '(21.2)', '26', '30', '(24.6)', '66', '73', '(20.3)'], isHeader: true },
-      { category: 'Headache', indent: 1, values: ['8', '8', '(6.7)', '10', '12', '(10.2)', '12', '14', '(11.5)', '30', '34', '(9.4)'] },
-      { category: 'Dizziness', indent: 1, values: ['4', '4', '(3.3)', '6', '7', '(5.9)', '8', '9', '(7.4)', '18', '20', '(5.6)'] },
-      { category: 'Infections and Infestations', values: ['25', '25', '(20.8)', '28', '32', '(27.1)', '32', '38', '(31.1)', '85', '95', '(26.4)'], isHeader: true },
-      { category: 'Nasopharyngitis', indent: 1, values: ['8', '8', '(6.7)', '10', '11', '(9.3)', '12', '14', '(11.5)', '30', '33', '(9.2)'] },
-      { category: 'Upper respiratory tract infection', indent: 1, values: ['5', '5', '(4.2)', '6', '7', '(5.9)', '7', '8', '(6.6)', '18', '20', '(5.6)'] },
-      { category: 'General Disorders', values: ['12', '12', '(10.0)', '15', '16', '(13.6)', '18', '20', '(16.4)', '45', '48', '(13.3)'], isHeader: true },
-      { category: 'Fatigue', indent: 1, values: ['5', '5', '(4.2)', '8', '9', '(7.6)', '10', '11', '(9.0)', '23', '25', '(6.9)'] },
-    ],
-  },
+
   'Listing 16.2.1': {
     tableNumber: 'Listing 16.2.1',
     tableTitle: 'Individual Subject Data - Vital Signs',
@@ -3076,37 +3115,7 @@ const shellTableData: Record<string, ShellTableData> = {
       { category: '102-003', values: ['102', 'AZD0780 10mg', 'Screening', '2026-01-20', '148', '92', '80', '36.8'] },
     ],
   },
-  'Listing 16.2.2': {
-    tableNumber: 'Listing 16.2.2',
-    tableTitle: 'Individual Subject Data - Laboratory Results',
-    population: 'Safety Analysis Set',
-    columnGroups: [{ name: 'Subject-Level Data', span: 8 }],
-    columns: ['Subject ID', 'Visit', 'Date', 'HbA1c (%)', 'FPG (mg/dL)', 'LDL-C (mg/dL)', 'eGFR (mL/min)', 'ALT (U/L)'],
-    rows: [
-      { category: '101-001', values: ['Baseline', '2026-02-01', '8.2', '175', '112', '79', '28'] },
-      { category: '101-001', values: ['Week 4', '2026-03-01', '7.9', '158', '108', '80', '26'] },
-      { category: '101-001', values: ['Week 12', '2026-04-26', '7.1', '142', '98', '81', '24'] },
-      { category: '101-002', values: ['Baseline', '2026-02-04', '8.5', '182', '118', '76', '32'] },
-      { category: '101-002', values: ['Week 4', '2026-03-04', '8.3', '178', '115', '77', '30'] },
-      { category: '101-002', values: ['Week 12', '2026-04-29', '8.2', '175', '112', '78', '31'] },
-      { category: '102-003', values: ['Baseline', '2026-02-06', '8.0', '168', '110', '82', '25'] },
-      { category: '102-003', values: ['Week 12', '2026-05-01', '7.2', '145', '95', '83', '22'] },
-    ],
-  },
-  'Listing 16.2.3': {
-    tableNumber: 'Listing 16.2.3',
-    tableTitle: 'Adverse Events Listing',
-    population: 'Safety Analysis Set',
-    columnGroups: [{ name: 'AE-Level Data', span: 9 }],
-    columns: ['Subject ID', 'Treatment', 'AE Term (MEDDRA)', 'SOC', 'Severity', 'Onset Date', 'End Date', 'Outcome', 'Causality'],
-    rows: [
-      { category: '101-001', values: ['AZD0780 20mg', 'Nausea', 'GI Disorders', 'Mild', '2026-02-15', '2026-02-18', 'Recovered', 'Related'] },
-      { category: '101-001', values: ['AZD0780 20mg', 'Headache', 'Nervous Sys', 'Mild', '2026-03-02', '2026-03-03', 'Recovered', 'Related'] },
-      { category: '101-002', values: ['Placebo', 'Nasopharyngitis', 'Infections', 'Mild', '2026-03-10', '2026-03-14', 'Recovered', 'Not Related'] },
-      { category: '102-003', values: ['AZD0780 10mg', 'Diarrhoea', 'GI Disorders', 'Moderate', '2026-02-20', '2026-02-23', 'Recovered', 'Related'] },
-      { category: '102-003', values: ['AZD0780 10mg', 'Hypoglycaemia', 'Metab/Nutr', 'Mild', '2026-03-15', '2026-03-15', 'Recovered', 'Related'] },
-    ],
-  },
+
 };
 
 const errorStructuredLog = {
@@ -3285,7 +3294,7 @@ function ShellPreview({
         noBorder={true}
         title={
           <div className="flex items-center gap-[12px]">
-            <span className="font-['PingFang_SC'] text-[12px] font-normal leading-[20px] text-[#3F4444]">{selectedItemName || "Shell preview"}</span>
+            <span className="t-small text-text-primary truncate">{selectedItemName || "Shell preview"}</span>
           </div>
         }
         actions={
@@ -3308,28 +3317,29 @@ function ShellPreview({
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full overflow-auto scrollbar-code">
             <div className="flex h-full min-w-max">
-              <div className="flex-1 min-w-[540px] overflow-y-auto overflow-x-hidden pl-[16px] pr-[4px] py-0 bg-white scrollbar-code">
-              <div className={`w-[540px] bg-white text-black p-0 ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
-                <div className="flex flex-col py-[12px] px-0 gap-[16px] w-full">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white scrollbar-code">
+              <div className={`w-full max-w-[90%] bg-white text-black ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
+                <div className="flex flex-col p-[24px] gap-[16px] w-full">
                   {/* Study Info & Page Info */}
                   {(shellData.studyInfo || shellData.pageInfo) && (
                     <div className="flex justify-between items-end w-full">
-                      <div className="font-['Inter'] text-[12px] font-normal leading-[16px] text-[#8C8F8F] whitespace-pre-wrap">{shellData.studyInfo}</div>
-                      <div className="font-['Inter'] text-[12px] font-normal leading-[16px] text-[#8C8F8F] text-right">{shellData.pageInfo}</div>
+                      <div className="t-small text-text-secondary whitespace-pre-wrap">{shellData.studyInfo}</div>
+                      <div className="t-small text-text-secondary text-right">{shellData.pageInfo}</div>
                     </div>
                   )}
                   {/* Title header */}
-                  <div className="flex flex-col items-center justify-center gap-[2px] w-full">
-                    <h1 className="font-['Inter'] text-[14px] font-medium leading-[24px] text-[#3F4444] text-center m-0">
+                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black">
+                    <h1 className="t-body-medium text-center tracking-[-0.01em]">
                       {shellData.tableNumber}
+                      {shellData.tableTitle && (
+                        <>
+                          <br />
+                          {shellData.tableTitle}
+                        </>
+                      )}
                     </h1>
-                    {shellData.tableTitle && (
-                      <p className="font-['Inter'] text-[12px] font-normal leading-[16px] text-[#8C8F8F] text-center m-0">
-                        {shellData.tableTitle}
-                      </p>
-                    )}
                     {shellData.population && (
-                      <p className="font-['Inter'] text-[12px] font-normal leading-[16px] text-[#8C8F8F] text-center m-0">
+                      <p className="t-body text-[14px] leading-[20px] text-center mt-[4px]">
                         {shellData.population}
                       </p>
                     )}
@@ -3350,7 +3360,7 @@ function ShellPreview({
                 {shellData.footnotes && shellData.footnotes.length > 0 && (
                   <div className="flex flex-col gap-[4px] w-full text-left mt-[16px]">
                     {shellData.footnotes.map((fn, idx) => (
-                      <p key={idx} className="font-['Inter'] text-[10px] font-normal leading-[14px] text-[#8C8F8F] whitespace-pre-wrap m-0">
+                      <p key={idx} className="t-small text-text-secondary whitespace-pre-wrap m-0">
                         {fn}
                       </p>
                     ))}
@@ -3359,9 +3369,9 @@ function ShellPreview({
               </div>
             </div>
             {rtfOpen && (
-              <div className="flex-1 min-w-[540px] border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden">
+              <div className="flex-1 border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden">
                 <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[16px] bg-white scrollbar-code">
-                  <div className="w-[540px] mx-auto">
+                  <div className="w-full max-w-[90%] mx-auto">
                     <KMPlot
                       mode="runtime"
                       showCI={true}
@@ -3426,113 +3436,137 @@ function ShellPreview({
             </div>
           </div>
         ) : (
-          <div className="min-h-0 min-w-0 flex-1 overflow-auto">
-            <div className="min-w-max p-[24px]">
-              <div className={`w-max bg-white text-black ${!metadataOpen ? 'mx-auto' : ''}`}>
-                {/* Study Info & Page Info */}
-              {(shellData.studyInfo || shellData.pageInfo) && (
-                <div className="flex justify-between items-end w-full mb-[24px]">
-                  <div className="t-body text-[12px] leading-[18px] whitespace-pre-wrap">{shellData.studyInfo}</div>
-                  <div className="t-body text-[12px] leading-[18px] text-right">{shellData.pageInfo}</div>
-                </div>
-              )}
+          (() => {
+            const totalDataCols = shellData.columnGroups?.reduce((acc, cg) => acc + (cg.span || 1), 0) || 0;
+            const actualDataCols = totalDataCols > 0 ? totalDataCols : (shellData.columns ? shellData.columns.length : 0);
+            const firstColWidth = 280;
+            const dataColWidth = 140;
+            const totalTableWidth = firstColWidth + actualDataCols * dataColWidth;
 
-              {/* Title header */}
-              <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black">
-                <h1 className="t-body text-[14px] leading-[20px] font-bold text-center tracking-[-0.01em]">
-                  {shellData.tableNumber}
-                  {shellData.tableTitle && (
-                    <>
-                      <br />
-                      {shellData.tableTitle}
-                    </>
+            return (
+              <div className="min-h-0 min-w-0 flex-1 overflow-auto scrollbar-code">
+                <div className="min-w-max p-[24px]">
+                  <div className={`bg-white text-black ${!metadataOpen ? 'mx-auto' : ''}`} style={{ width: `${totalTableWidth}px` }}>
+                    {/* Study Info & Page Info */}
+                  {(shellData.studyInfo || shellData.pageInfo) && (
+                    <div className="flex justify-between items-end w-full mb-[24px]">
+                      <div className="t-small text-text-secondary whitespace-pre-wrap">{shellData.studyInfo}</div>
+                      <div className="t-small text-text-secondary text-right">{shellData.pageInfo}</div>
+                    </div>
                   )}
-                </h1>
-                {shellData.population && (
-                  <p className="t-body text-[14px] leading-[20px] text-center mt-[4px]">
-                    {shellData.population}
-                  </p>
-                )}
-              </div>
 
-              <div className="relative inline-block w-full">
-                <table className="w-full border-separate border-spacing-0 font-['Inter',sans-serif] text-black border-t-2 border-black">
-                  <thead>
-                    {/* Column group header */}
-                    <tr className="group">
-                      <th className="bg-white text-left text-[14px] leading-[20px] font-bold py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default min-w-[180px]">
-                      Table/Listing Field
-                    </th>
-                    {shellData.columnGroups.map((cg, cgi) => (
-                      <th
-                        key={cgi}
-                        colSpan={cg.span}
-                        className="bg-bg-panel text-center text-[14px] leading-[20px] font-semibold py-[6px] px-[8px] border-r border-b border-border-default last:border-r-0"
-                      >
-                        {cg.name.split('\n').map((line, idx) => (
-                          <div key={idx}>{line}</div>
+                  {/* Title header */}
+                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black">
+                    <h1 className="t-body-medium text-center tracking-[-0.01em]">
+                      {shellData.tableNumber}
+                      {shellData.tableTitle && (
+                        <>
+                          <br />
+                          {shellData.tableTitle}
+                        </>
+                      )}
+                    </h1>
+                    {shellData.population && (
+                      <p className="t-body text-[14px] leading-[20px] text-center mt-[4px]">
+                        {shellData.population}
+                      </p>
+                    )}
+                  </div>
+
+                  {(() => {
+                    const hasSubHeader = Boolean(shellData.columns && shellData.columns.length > 0 && shellData.columns.some(c => c.trim() !== ''));
+
+                    return (
+                      <div className="relative inline-block min-w-max">
+                        <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-text-primary border-t-2 border-black" style={{ width: `${totalTableWidth}px` }}>
+                          <colgroup>
+                            <col style={{ width: `${firstColWidth}px`, minWidth: `${firstColWidth}px` }} />
+                            {Array.from({ length: actualDataCols }).map((_, i) => (
+                              <col key={i} style={{ width: `${dataColWidth}px`, minWidth: `${dataColWidth}px` }} />
+                            ))}
+                          </colgroup>
+                      <thead>
+                        {/* Column group header */}
+                        <tr className="group">
+                          <th className={`bg-white text-left align-middle text-[14px] leading-[20px] font-bold py-[6px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-black'} border-r-border-default`}>
+                            Table/Listing Field
+                          </th>
+                          {shellData.columnGroups.map((cg, cgi) => (
+                            <th
+                              key={cgi}
+                              colSpan={cg.span}
+                              className={`bg-white text-left align-middle text-[14px] leading-[20px] font-bold text-text-primary py-[6px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-black'} border-r-border-default last:border-r-0`}
+                            >
+                              {cg.name.split('\n').map((line, idx) => (
+                                <div key={idx}>{line}</div>
+                              ))}
+                            </th>
+                          ))}
+                        </tr>
+                        {/* Standard columns header */}
+                        {hasSubHeader && (
+                          <tr>
+                            <th className="bg-white text-left align-middle text-[14px] leading-[20px] font-bold text-text-primary py-[6px] px-[8px] border-r border-b-2 border-black border-r-border-default">
+                              {/* Empty cell under Table/Listing Field */}
+                            </th>
+                            {shellData.columns.map((col, ci) => (
+                              <th
+                                key={ci}
+                                className="bg-white text-left align-middle text-[14px] leading-[20px] font-bold text-text-primary py-[6px] px-[8px] border-r border-b-2 border-black border-r-border-default last:border-r-0"
+                              >
+                                {col}
+                              </th>
+                            ))}
+                          </tr>
+                        )}
+                      </thead>
+                      <tbody>
+                        {shellData.rows.map((row, ri) => (
+                          <tr
+                            key={ri}
+                            className="group hover:bg-az-secondary cursor-pointer"
+                            onClick={onBlockClick}
+                          >
+                            <td
+                              className={`${
+                                row.isHeader ? 'bg-white font-bold text-text-primary group-hover:bg-az-secondary' : 'bg-white font-normal text-text-primary group-hover:bg-az-secondary'
+                              } text-left align-middle text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-pre-wrap break-words border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+                              style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
+                            >
+                              {row.category}
+                            </td>
+                            {row.values.map((val, vi) => (
+                              <td
+                                key={vi}
+                                className={`text-left align-middle text-[12px] leading-[18px] ${
+                                  row.isHeader ? 'bg-white font-bold text-text-primary group-hover:bg-az-secondary' : 'bg-white font-normal text-text-primary group-hover:bg-az-secondary'
+                                } py-[6px] px-[8px] whitespace-pre-wrap break-words border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+                              >
+                                {val}
+                              </td>
+                            ))}
+                          </tr>
                         ))}
-                      </th>
-                    ))}
-                  </tr>
-                  {/* Standard columns header */}
-                  <tr>
-                    <th className="bg-white text-left text-[14px] leading-[20px] font-semibold text-text-secondary py-[6px] px-[8px] border-r border-b border-border-default min-w-[180px]">
-                      {shellData.columns[0] || ""}
-                    </th>
-                    {shellData.columns.slice(1).map((col, ci) => (
-                      <th
-                        key={ci}
-                        className="bg-white text-center text-[14px] leading-[20px] font-semibold text-text-secondary py-[6px] px-[8px] border-r border-b border-border-default last:border-r-0"
-                      >
-                        {col}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {shellData.rows.map((row, ri) => (
-                    <tr
-                      key={ri}
-                      className="group hover:bg-az-secondary cursor-pointer"
-                      onClick={onBlockClick}
-                    >
-                      <td
-                        className={`${
-                          row.isHeader ? 'bg-bg-panel font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
-                        } text-left text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
-                        style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
-                      >
-                        {row.category}
-                      </td>
-                      {row.values.map((val, vi) => (
-                        <td
-                          key={vi}
-                          className={`text-center text-[12px] leading-[18px] ${
-                            row.isHeader ? 'bg-bg-panel font-semibold text-text-primary' : 'bg-white text-text-primary group-hover:bg-az-secondary'
-                          } py-[6px] px-[8px] whitespace-nowrap border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
-                        >
-                          {val}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
             {/* Footnotes */}
             {shellData.footnotes && shellData.footnotes.length > 0 && (
               <div className="mt-[16px] flex flex-col gap-[4px] w-full text-left">
                 {shellData.footnotes.map((fn, idx) => (
-                  <p key={idx} className="t-body text-[12px] leading-[18px] text-text-secondary whitespace-pre-wrap">
+                  <p key={idx} className="t-small text-text-secondary whitespace-pre-wrap">
                     {fn}
                   </p>
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
-      </div>
+        );
+      })()
       )}
         {/* Metadata left-edge drag handle — uses WorkspaceDivider pattern */}
         {metadataOpen && (
@@ -4433,7 +4467,7 @@ function MetadataPanel({
     {
       id: 'figBasic',
       fields: [
-        { id: 'associatedTL', label: 'Associated Table/Listing', value: 'Table 14.1.4', status: 'default' as FieldStatus, confirmed: false, dependencyState: 'S1' },
+        { id: 'associatedTL', label: 'Associated Table/Listing', value: 'Table 14.1.1', status: 'default' as FieldStatus, confirmed: false, dependencyState: 'S1' },
         { id: 'figureType', label: 'Figure Type', value: 'KM', status: 'default' as FieldStatus, confirmed: false },
         { id: 'inputDataset', label: 'Input Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
         { id: 'pageBy', label: 'Page by', value: 'TRTA', status: 'default' as FieldStatus, confirmed: false },
@@ -5194,7 +5228,7 @@ function MetadataPanel({
                                   value={isS0 ? null : field.value}
                                   options={[
                                     { label: 'Table 14.1.1', value: 'Table 14.1.1' },
-                                    { label: 'Table 14.1.4', value: 'Table 14.1.4' },
+                                    { label: 'Table 14.1.1', value: 'Table 14.1.1' },
                                     { label: 'Listing 16.2.1', value: 'Listing 16.2.1' },
                                   ]}
                                   onChange={(val) => {
@@ -6056,19 +6090,15 @@ function WorkspaceContent({
       status: 'pending',
       isExpanded: true,
       tables: [
-        { id: 't1', name: 'Table 14.1.4', status: 'pending' },
-        { id: 't2', name: 'Table 14.1.3', status: 'analyzing' },
-        { id: 't3', name: 'Table 14.1.2', status: 'modified', pendingChanges: 3 },
         { id: 't4', name: 'Table 14.1.1', status: 'error', errorMessage: 'Failed to parse table structure' },
+        { id: 't2', name: 'Table 14.1.6.1', status: 'pending' },
         { id: 'l1', name: 'Listing 16.2.1', status: 'pending', docType: 'listing' },
-        { id: 'l2', name: 'Listing 16.2.2', status: 'pending', docType: 'listing' },
-        { id: 'l3', name: 'Listing 16.2.3', status: 'pending', docType: 'listing' },
         { id: 'f1', name: 'Figure 15.1.1', status: 'pending', docType: 'figure' },
       ],
     },
 
   ]);
-  const [selectedId, setSelectedId] = useState<string | null>('t1');
+  const [selectedId, setSelectedId] = useState<string | null>('t4');
   const [currentEvent] = useState('CSR Interim Analysis');
   const [modalState, setModalState] = useState<{
     type: 'locked-by-parent' | null;
