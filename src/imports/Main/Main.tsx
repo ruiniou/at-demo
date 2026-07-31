@@ -2565,7 +2565,7 @@ function ListingShellPreview({
         <div
           ref={listingScrollContainerRef}
           onScroll={(e) => setIsScrolled(e.currentTarget.scrollLeft > 0)}
-          className={`relative flex-1 overflow-auto scrollbar-code ${pageSepActive ? 'bg-[#f2f3f3]' : ''}`}
+          className={`relative flex-1 overflow-auto ${pageSepActive ? 'bg-[#f2f3f3]' : ''}`}
         >
           {pageSepActive && createPortal(
             <div className="fixed inset-0 z-[100] bg-border-default">
@@ -2637,22 +2637,26 @@ function ListingShellPreview({
             <div className={`w-max bg-white text-black rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`}>
               <div className="relative">
                 {/* Study Info & Page Info */}
-                <div className="flex justify-between items-end w-full mb-[24px]">
+                <div className="flex justify-between items-end w-full mb-[16px]">
                   <div className="t-small text-text-secondary whitespace-pre-wrap">AstraZeneca<br/>Study number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, &lt;&lt;Data cut-off ddmmyyyy&gt;&gt;</div>
                   <div className="t-small text-text-secondary text-right">Page 266 of 280</div>
                 </div>
 
                 {/* Title header */}
-                <div className="min-w-max flex flex-col items-center justify-center pb-[12px]">
+                <div className="min-w-max flex flex-col items-center justify-center pb-[12px] gap-[4px]">
                   <h1 className="t-body-medium text-center tracking-[-0.01em]">
-                    Appendix 16.2.12<br />
-                    Tumour assessment details by blinded independent central review (ITT analysis set)<br />
-                    Subject identifier: &lt;&lt;Exxxxxxxx&gt;&gt;
+                    Appendix 16.2.12
                   </h1>
+                  <h2 className="t-small text-text-secondary text-center font-normal">
+                    Tumour assessment details by blinded independent central review (ITT analysis set)
+                  </h2>
+                  <h2 className="t-small text-text-secondary text-center font-normal">
+                    Subject identifier: &lt;&lt;Exxxxxxxx&gt;&gt;
+                  </h2>
                 </div>
 
                 {/* Subheader */}
-                <div className="w-full text-left t-small mb-[12px] mt-[12px]">
+                <div className="w-full text-left t-small mb-[12px] text-text-secondary">
                   <p>G. Target lesion details</p>
                   <p>Reviewer: [[Radiologist 1|Radiologist 2]]*, Review identification number: &lt;&lt;xxxxxxx&gt;&gt;</p>
                   <p>Planned treatment group: &lt;&lt;AZD1 (low dose)&gt;&gt;, Duration of actual exposure (months) [a]: &lt;&lt;xx&gt;&gt;, Death study day [b]: &lt;&lt;xx&gt;&gt;</p>
@@ -3349,7 +3353,7 @@ function ShellPreview({
       <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-graphite-10">
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full flex">
-            <div className="flex-1 min-w-0 h-full overflow-auto scrollbar-code">
+            <div className="flex-1 min-w-0 h-full overflow-auto">
               <div className={`${zoomScale !== 1 ? 'min-w-max' : 'w-full'} p-[16px]`} style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
               <div className={`w-full bg-white text-black rounded-[4px] p-[16px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
                 <div className="flex flex-col gap-[16px] w-full">
@@ -3361,20 +3365,19 @@ function ShellPreview({
                     </div>
                   )}
                   {/* Title header */}
-                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black">
+                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black gap-[4px]">
                     <h1 className="t-body-medium text-center tracking-[-0.01em]">
                       {shellData.tableNumber}
-                      {shellData.tableTitle && (
-                        <>
-                          <br />
-                          {shellData.tableTitle}
-                        </>
-                      )}
                     </h1>
+                    {shellData.tableTitle && (
+                      <h2 className="t-small text-text-secondary text-center font-normal">
+                        {shellData.tableTitle}
+                      </h2>
+                    )}
                     {shellData.population && (
-                      <p className="t-body text-[14px] leading-[20px] text-center mt-[4px]">
+                      <h2 className="t-small text-text-secondary text-center font-normal">
                         {shellData.population}
-                      </p>
+                      </h2>
                     )}
                   </div>
                 </div>
@@ -3403,7 +3406,7 @@ function ShellPreview({
             </div>
             {rtfOpen && (
               <div className="flex-1 border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden">
-                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[16px] bg-white scrollbar-code">
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[16px] bg-white">
                   <div className="w-full max-w-[90%] mx-auto">
                     <KMPlot
                       mode="runtime"
@@ -3434,7 +3437,7 @@ function ShellPreview({
                     </div>
                   </div>
                   {logExpanded && (
-                    <div className="max-h-[240px] overflow-auto scrollbar-code px-[8px] pb-[8px]">
+                    <div className="max-h-[240px] overflow-auto px-[8px] pb-[8px]">
                       {activeLogData.entries.map((entry, idx) => (
                         <div
                           key={idx}
@@ -3477,32 +3480,31 @@ function ShellPreview({
             const totalTableWidth = firstColWidth + actualDataCols * dataColWidth;
 
             return (
-              <div className="min-h-0 min-w-0 flex-1 overflow-auto scrollbar-code">
+              <div className="min-h-0 min-w-0 flex-1 overflow-auto">
                 <div className="min-w-max p-[16px]" style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
                   <div className={`bg-white text-black rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`} style={{ width: `${totalTableWidth + 32}px` }}>
                     {/* Study Info & Page Info */}
                   {(shellData.studyInfo || shellData.pageInfo) && (
-                    <div className="flex justify-between items-end w-full mb-[24px]">
+                    <div className="flex justify-between items-end w-full mb-[16px]">
                       <div className="t-small text-text-secondary whitespace-pre-wrap">{shellData.studyInfo}</div>
                       <div className="t-small text-text-secondary text-right">{shellData.pageInfo}</div>
                     </div>
                   )}
 
                   {/* Title header */}
-                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black">
+                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black gap-[4px]">
                     <h1 className="t-body-medium text-center tracking-[-0.01em]">
                       {shellData.tableNumber}
-                      {shellData.tableTitle && (
-                        <>
-                          <br />
-                          {shellData.tableTitle}
-                        </>
-                      )}
                     </h1>
+                    {shellData.tableTitle && (
+                      <h2 className="t-small text-text-secondary text-center font-normal">
+                        {shellData.tableTitle}
+                      </h2>
+                    )}
                     {shellData.population && (
-                      <p className="t-body text-[14px] leading-[20px] text-center mt-[4px]">
+                      <h2 className="t-small text-text-secondary text-center font-normal">
                         {shellData.population}
-                      </p>
+                      </h2>
                     )}
                   </div>
 
