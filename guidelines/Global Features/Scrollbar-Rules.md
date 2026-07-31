@@ -8,8 +8,8 @@
 
 | 滚动条类型 | CSS 类名 | 容器宽度 | 滑块宽度 | 默认状态 | Hover 状态 (滑块) | Hover 触发逻辑 | 适用场景 |
 |---|---|---|---|---|---|---|---|
-| **默认滚动条** | *(全局默认)* | 12px | 8px | `rgba(216, 218, 218, 0.75)` | `#B2B4B4` | 常驻显示 | 侧边栏、Dropdown、Modal、AI 对话区域等常规面板 |
-| **核心编辑区** | `.scrollbar-code` | 16px | 12px | 完全透明 (隐藏) | `#B2B4B4` | 鼠标进入容器区域时，显示为 `rgba(216, 218, 218, 0.75)` | Code Editor, Shell Preview, Listing Preview, Log 面板 |
+| **默认滚动条** | *(全局默认)* | 12px | 8px | `color-mix(in srgb, var(--color-graphite-20) 75%, transparent)` | `var(--color-graphite-40)` | 常驻显示 | 侧边栏、Dropdown、Modal、AI 对话区域等常规面板 |
+| **核心编辑区** | `.scrollbar-code` | 16px | 12px | 完全透明 (隐藏) | `var(--color-graphite-40)` | 鼠标进入容器区域时，显示为 `color-mix(in srgb, var(--color-graphite-20) 75%, transparent)` | Code Editor, Shell Preview, Listing Preview, Log 面板 |
 | **彩色滚动条** | `.scrollbar-colored` | (继承) | (继承) | `#E6CCDC` | `#CC99B9` | (继承) | 配合特殊底色的组件，如 ToolCallCard (粉色区块) |
 
 *注：所有滑块均要求 8px 圆角，通过 `border: 2px solid transparent; background-clip: padding-box;` 实现容器与滑块间的透明间隙，达到精确控制滑块宽度的目的。*

@@ -144,13 +144,13 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(216, 218, 218, 0.75);
+  background-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #B2B4B4;
+  background-color: var(--color-graphite-40);
 }
 
 /* ── Scrollbar: Code Editor & Shell Preview (16px容器 / 12px圆角 thumb, Hover才显示) ── */
@@ -158,7 +158,7 @@
   --scrollbar-thumb-color: transparent;
 }
 .scrollbar-code:hover {
-  --scrollbar-thumb-color: rgba(216, 218, 218, 0.75);
+  --scrollbar-thumb-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent);
 }
 .scrollbar-code::-webkit-scrollbar {
   width: 16px;
@@ -174,7 +174,7 @@
   background-clip: padding-box;
 }
 .scrollbar-code::-webkit-scrollbar-thumb:hover {
-  background-color: #B2B4B4;
+  background-color: var(--color-graphite-40);
 }
 
 /* ── Colored scrollbar (e.g. for ToolCallCard dropdown or active states) ── */
@@ -189,17 +189,17 @@
 @supports (-moz-appearance: none) {
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(216, 218, 218, 0.75) transparent;
+    scrollbar-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent) transparent;
   }
   *:hover {
-    scrollbar-color: #B2B4B4 transparent;
+    scrollbar-color: var(--color-graphite-40) transparent;
   }
   .scrollbar-code {
     scrollbar-color: transparent transparent;
     scrollbar-width: auto;
   }
   .scrollbar-code:hover {
-    scrollbar-color: rgba(216, 218, 218, 0.75) transparent;
+    scrollbar-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent) transparent;
   }
   .scrollbar-colored {
     scrollbar-color: #E6CCDC transparent;
