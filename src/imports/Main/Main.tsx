@@ -281,7 +281,7 @@ function ToBeReviewedBlock({ items, onJumpToMetadata }: { items: ReviewItem[], o
       </div>
       
       {isExpanded && (
-        <div className="flex flex-col border-t border-graphite-10 max-h-[210px] overflow-y-auto scrollbar-compact">
+        <div className="flex flex-col border-t border-graphite-10 max-h-[210px] overflow-y-auto">
           {items.map((item, idx) => (
             <ReviewItemRow key={idx} item={item} onJumpToMetadata={onJumpToMetadata} />
           ))}
@@ -2531,7 +2531,7 @@ function ListingShellPreview({
         <div
           ref={listingScrollContainerRef}
           onScroll={(e) => setIsScrolled(e.currentTarget.scrollLeft > 0)}
-          className={`relative flex-1 overflow-auto ${pageSepActive ? 'bg-[#f2f3f3]' : 'bg-white'}`}
+          className={`relative flex-1 overflow-auto scrollbar-code ${pageSepActive ? 'bg-[#f2f3f3]' : 'bg-white'}`}
         >
           {pageSepActive && createPortal(
             <div className="fixed inset-0 z-[100] bg-border-default">
@@ -3306,9 +3306,9 @@ function ShellPreview({
       />
       <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden">
         {docType === 'figure' ? (
-          <div className="flex-1 min-w-0 h-full overflow-auto">
+          <div className="flex-1 min-w-0 h-full overflow-auto scrollbar-code">
             <div className="flex h-full min-w-max">
-              <div className="flex-1 min-w-[540px] overflow-y-auto overflow-x-hidden pl-[16px] pr-[4px] py-0 bg-white">
+              <div className="flex-1 min-w-[540px] overflow-y-auto overflow-x-hidden pl-[16px] pr-[4px] py-0 bg-white scrollbar-code">
               <div className={`w-[540px] bg-white text-black p-0 ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
                 <div className="flex flex-col py-[12px] px-0 gap-[16px] w-full">
                   {/* Study Info & Page Info */}
@@ -3360,7 +3360,7 @@ function ShellPreview({
             </div>
             {rtfOpen && (
               <div className="flex-1 min-w-[540px] border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden">
-                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[16px] bg-white">
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[16px] bg-white scrollbar-code">
                   <div className="w-[540px] mx-auto">
                     <KMPlot
                       mode="runtime"
@@ -3391,7 +3391,7 @@ function ShellPreview({
                     </div>
                   </div>
                   {logExpanded && (
-                    <div className="max-h-[240px] overflow-auto px-[8px] pb-[8px]">
+                    <div className="max-h-[240px] overflow-auto scrollbar-code px-[8px] pb-[8px]">
                       {activeLogData.entries.map((entry, idx) => (
                         <div
                           key={idx}
@@ -4055,7 +4055,7 @@ function BlocksTabContent({
         />
       )}
       {/* Left sidebar — block navigation */}
-      <div className="w-[176px] shrink min-w-[90px] border-r border-[#E5E8E8] overflow-y-auto scrollbar-compact bg-white flex flex-col gap-[2px] pt-[4px] pl-[4px] pb-[8px] pr-[4px]">
+      <div className="w-[176px] shrink min-w-[90px] border-r border-[#E5E8E8] overflow-y-auto bg-white flex flex-col gap-[2px] pt-[4px] pl-[4px] pb-[8px] pr-[4px]">
         <div className="relative group" data-menu-open={!!addMenuAnchor}>
           <button
             onClick={() => handleSidebarClick('all')}
@@ -5067,7 +5067,7 @@ function MetadataPanel({
       </div>
 
       {/* Content */}
-      <div className={`min-h-0 flex-1 ${activeTab === "blocks" && docType !== 'listing' ? 'flex flex-col' : 'overflow-auto scrollbar-compact p-[4px]'}`}>
+      <div className={`min-h-0 flex-1 ${activeTab === "blocks" && docType !== 'listing' ? 'flex flex-col' : 'overflow-auto p-[4px]'}`}>
         {activeTab === "basic" && (
           <div className="flex flex-col gap-[4px]">
             {docType === 'listing' ? (

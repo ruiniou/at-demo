@@ -199,7 +199,7 @@ function InlineVariableList({ variables, selected, onToggle, onRemove, onBrowseA
             />
           </div>
           {/* Option list */}
-          <div className="max-h-[200px] overflow-y-auto scrollbar-compact">
+          <div className="max-h-[200px] overflow-y-auto">
             {filtered.length === 0 ? (
               <div className="px-[12px] py-[16px] text-center">
                 <p className="t-small text-[#888E8E]">No matching variables found</p>

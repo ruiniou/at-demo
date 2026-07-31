@@ -177,7 +177,7 @@ export function AIUpdatedBlock({
               "flex flex-col flex-1 min-w-0",
               "pt-[2px] pb-[6px]",
               isExpanded === "scrollable"
-                ? "overflow-y-auto scrollbar-compact"
+                ? "overflow-y-auto"
                 : "",
             ].join(" ")}
             style={

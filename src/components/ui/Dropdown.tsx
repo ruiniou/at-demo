@@ -134,7 +134,7 @@ export function Dropdown({
 
       {isOpen && !disabled && (
         <div className="absolute left-0 right-0 top-[100%] z-[100] mt-[4px] flex flex-col gap-[2px] rounded-[4px] border border-form-border bg-white p-[4px] shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="flex max-h-[200px] flex-col gap-[2px] overflow-y-auto scrollbar-compact">
+          <div className="flex max-h-[200px] flex-col gap-[2px] overflow-y-auto">
             {options.map((opt) => {
               const isSelected = opt.value === value;
               return (

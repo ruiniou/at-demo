@@ -118,7 +118,7 @@ export function AIInputBox({
                 ? "placeholder:text-graphite-20"
                 : "placeholder:text-graphite-40",
               isMaxHeight
-                ? "max-h-[140px] overflow-y-auto scrollbar-compact"
+                ? "max-h-[140px] overflow-y-auto"
                 : "",
               disabled ? "cursor-not-allowed" : "",
             ].join(" ")}
