@@ -1932,6 +1932,13 @@ function ListingShellPreview({
   const [selectedPrintPageIndex, setSelectedPrintPageIndex] = useState(0);
   const [pageSelectionDraft, setPageSelectionDraft] = useState('1');
   const [metadataPending, setMetadataPending] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState('100');
+  const zoomOptions = [
+    { label: '75%', value: '75' },
+    { label: '100%', value: '100' },
+    { label: '200%', value: '200' },
+  ];
+  const zoomScale = Number(zoomLevel) / 100;
 
   const [pageBreakColumns, setPageBreakColumns] = useState<number[]>([]);
   const [repeatColumnBaseline, setRepeatColumnBaseline] = useState<{ frozenUntilIndex: number | null }>({ frozenUntilIndex: null });
@@ -2495,10 +2502,20 @@ function ListingShellPreview({
   return (
     <div className="h-full bg-white flex flex-col overflow-hidden">
       {/* Top Bar */}
-      <div className="bg-white h-[40px] shrink-0 w-full flex items-center justify-between px-[12px]">
+      <div className="bg-white h-[40px] shrink-0 w-full flex items-center justify-between px-[12px] border-b border-graphite-10">
         <p className="t-small truncate text-text-primary">{selectedItemName || 'Shell preview'}</p>
         <div className="flex items-center gap-[10px]">
           <div className="flex items-center gap-[8px]">
+            <div className="w-[76px]">
+              <Dropdown
+                options={zoomOptions}
+                value={zoomLevel}
+                onChange={setZoomLevel}
+                triggerClassName="h-[24px] rounded-[4px] pl-[8px] pr-[4px]"
+                customBoxClass="border border-form-border bg-white hover:border-graphite-50 rounded-[4px]"
+                customTextStyle={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: '20px', color: 'var(--color-text-primary)' }}
+              />
+            </div>
             {/* Page separator / Preview button */}
             <TooltipText label="Print Preview">
               <button
@@ -2544,11 +2561,11 @@ function ListingShellPreview({
       </div>
 
       {/* Content row: shell table + metadata overlay */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative bg-graphite-10">
         <div
           ref={listingScrollContainerRef}
           onScroll={(e) => setIsScrolled(e.currentTarget.scrollLeft > 0)}
-          className={`relative flex-1 overflow-auto scrollbar-code ${pageSepActive ? 'bg-[#f2f3f3]' : 'bg-white'}`}
+          className={`relative flex-1 overflow-auto scrollbar-code ${pageSepActive ? 'bg-[#f2f3f3]' : ''}`}
         >
           {pageSepActive && createPortal(
             <div className="fixed inset-0 z-[100] bg-border-default">
@@ -2616,8 +2633,8 @@ function ListingShellPreview({
           )}
 
           {/* Normal (non-preview) table view */}
-          <div className={`min-w-max p-[24px] ${pageSepActive ? 'hidden' : ''}`}>
-            <div className={`w-max bg-white text-black ${!metadataOpen ? 'mx-auto' : ''}`}>
+          <div className={`min-w-max p-[16px] ${pageSepActive ? 'hidden' : ''}`} style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
+            <div className={`w-max bg-white text-black rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`}>
               <div className="relative">
                 {/* Study Info & Page Info */}
                 <div className="flex justify-between items-end w-full mb-[24px]">
@@ -3288,10 +3305,16 @@ function ShellPreview({
   const activeLogData = successStructuredLog;
   const shellData = shellTableData[selectedItemName] || shellTableData['Table 14.1.1'];
   const metadataMinWidth = 280;
+  const [zoomLevel, setZoomLevel] = useState('100');
+  const zoomOptions = [
+    { label: '75%', value: '75' },
+    { label: '100%', value: '100' },
+    { label: '200%', value: '200' },
+  ];
+  const zoomScale = Number(zoomLevel) / 100;
   return (
     <div className="flex h-full flex-col min-w-0 overflow-hidden bg-white">
       <PanelHeader
-        noBorder={true}
         title={
           <div className="flex items-center gap-[12px]">
             <span className="t-small text-text-primary truncate">{selectedItemName || "Shell preview"}</span>
@@ -3299,6 +3322,16 @@ function ShellPreview({
         }
         actions={
           <div className="flex items-center gap-[8px]">
+            <div className="w-[76px]">
+              <Dropdown
+                options={zoomOptions}
+                value={zoomLevel}
+                onChange={setZoomLevel}
+                triggerClassName="h-[24px] rounded-[4px] pl-[8px] pr-[4px]"
+                customBoxClass="border border-form-border bg-white hover:border-graphite-50 rounded-[4px]"
+                customTextStyle={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: '20px', color: 'var(--color-text-primary)' }}
+              />
+            </div>
             <TooltipText label="Open Metadata">
               <button
                 onClick={onMetadataClick}
@@ -3313,13 +3346,13 @@ function ShellPreview({
           </div>
         }
       />
-      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden">
+      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-graphite-10">
         {docType === 'figure' ? (
-          <div className="flex-1 min-w-0 h-full overflow-auto scrollbar-code">
-            <div className="flex h-full min-w-max">
-              <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white scrollbar-code">
-              <div className={`w-full max-w-[90%] bg-white text-black ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
-                <div className="flex flex-col p-[24px] gap-[16px] w-full">
+          <div className="flex-1 min-w-0 h-full flex">
+            <div className="flex-1 min-w-0 h-full overflow-auto scrollbar-code">
+              <div className={`${zoomScale !== 1 ? 'min-w-max' : 'w-full'} p-[16px]`} style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
+              <div className={`w-full bg-white text-black rounded-[4px] p-[16px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
+                <div className="flex flex-col gap-[16px] w-full">
                   {/* Study Info & Page Info */}
                   {(shellData.studyInfo || shellData.pageInfo) && (
                     <div className="flex justify-between items-end w-full">
@@ -3445,8 +3478,8 @@ function ShellPreview({
 
             return (
               <div className="min-h-0 min-w-0 flex-1 overflow-auto scrollbar-code">
-                <div className="min-w-max p-[24px]">
-                  <div className={`bg-white text-black ${!metadataOpen ? 'mx-auto' : ''}`} style={{ width: `${totalTableWidth}px` }}>
+                <div className="min-w-max p-[16px]" style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
+                  <div className={`bg-white text-black rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`} style={{ width: `${totalTableWidth + 32}px` }}>
                     {/* Study Info & Page Info */}
                   {(shellData.studyInfo || shellData.pageInfo) && (
                     <div className="flex justify-between items-end w-full mb-[24px]">

@@ -141,7 +141,7 @@ export function MultiSelectDropdown({
         <img
           src={arrowIconUrl}
           alt=""
-          className={`absolute right-[10px] top-[50%] translate-y-[-50%] h-[20px] w-[20px] transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className="absolute right-[10px] top-[50%] translate-y-[-50%] h-[20px] w-[20px]"
           style={{ opacity: disabled ? 0.4 : 1 }}
         />
       </div>

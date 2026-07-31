@@ -143,6 +143,15 @@
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+::-webkit-scrollbar-track:vertical {
+  border-left: 1px solid var(--color-graphite-10);
+}
+::-webkit-scrollbar-track:horizontal {
+  border-top: 1px solid var(--color-graphite-10);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
 ::-webkit-scrollbar-thumb {
   background-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent);
   border-radius: 8px;
@@ -153,22 +162,25 @@
   background-color: var(--color-graphite-40);
 }
 
-/* ── Scrollbar: Code Editor & Shell Preview (16px容器 / 12px圆角 thumb, Hover才显示) ── */
-.scrollbar-code {
-  --scrollbar-thumb-color: transparent;
-}
-.scrollbar-code:hover {
-  --scrollbar-thumb-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent);
-}
+/* ── Scrollbar: Code Editor & Shell Preview ── */
 .scrollbar-code::-webkit-scrollbar {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 .scrollbar-code::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--color-graphite-10);
+}
+.scrollbar-code::-webkit-scrollbar-track:vertical {
+  border-left: 1px solid var(--color-graphite-10);
+}
+.scrollbar-code::-webkit-scrollbar-track:horizontal {
+  border-top: 1px solid var(--color-graphite-10);
+}
+.scrollbar-code::-webkit-scrollbar-corner {
+  background: var(--color-graphite-10);
 }
 .scrollbar-code::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb-color);
+  background-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;

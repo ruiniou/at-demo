@@ -120,7 +120,7 @@ export function Dropdown({
           <img
             src={arrowIconUrl}
             alt=""
-            className={`h-[20px] w-[20px] transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className="h-[20px] w-[20px]"
             style={{ opacity: disabled ? 0.4 : 1 }}
           />
         </div>

@@ -116,10 +116,10 @@ export function UploadCard({
         <button
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="flex h-[36px] items-center justify-between rounded-[4px] border border-graphite-10 bg-white pl-[12px] pr-[10px]"
+          className={`flex h-[36px] items-center justify-between rounded-[4px] border bg-white pl-[12px] pr-[10px] transition-[border-color,box-shadow,background-color] ${dropdownOpen ? "border-brand-1 shadow-[0px_0px_0px_2px_var(--color-az-secondary)]" : "border-graphite-10 hover:border-graphite-50"}`}
         >
           <span className="t-small text-text-secondary">Select an existing file…</span>
-          <div className={`transition-transform ${dropdownOpen ? "rotate-180" : ""}`}>
+          <div>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M10 12.5L5 7.5L6.0625 6.4375L10 10.375L13.9375 6.4375L15 7.5L10 12.5Z" fill="#888E8E" />
             </svg>
