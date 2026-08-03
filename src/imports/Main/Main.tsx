@@ -777,7 +777,7 @@ function AICopilotPanel({
 
 type ItemStatus = 'pending' | 'locked' | 'analyzing' | 'error' | 'modified';
 type DocumentType = 'table' | 'listing' | 'figure';
-type ActiveView = 'table' | 'group' | 'listing';
+
 
 type TableItem = {
   id: string;
@@ -967,10 +967,10 @@ function CodeStatusDot({ color }: { color: string }) {
   return <span className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: color }} />;
 }
 
-function TooltipText({ label, children, align = "center", disabled = false }: { label: React.ReactNode; children: React.ReactNode; align?: "center" | "left"; disabled?: boolean }) {
+function TooltipText({ label, children, align = "center", disabled = false, className = "" }: { label: React.ReactNode; children: React.ReactNode; align?: "center" | "left"; disabled?: boolean; className?: string }) {
   if (disabled) return <>{children}</>;
   return (
-    <Tooltip label={label} align={align}>
+    <Tooltip label={label} align={align} className={className}>
       {children}
     </Tooltip>
   );
@@ -1059,11 +1059,11 @@ function PanelViewToggle({
   docType?: DocumentType;
 }) {
   return (
-    <div className="bg-bg-panel flex items-center rounded-[4px]">
-      <TooltipText label="Show Shell">
+    <div className="flex h-[28px] items-center rounded-[4px] border border-graphite-10 bg-bg-panel shrink-0 overflow-hidden">
+      <TooltipText label="Show Shell" className="h-full flex">
         <button
           onClick={() => onChange('shell')}
-          className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
+          className={`flex h-full w-[40px] items-center justify-center relative rounded-[3px] shrink-0 transition-colors ${
             value === 'shell' ? 'bg-white' : ''
           }`}
         >
@@ -1075,7 +1075,7 @@ function PanelViewToggle({
           </p>
         </button>
       </TooltipText>
-      <TooltipText label={layout === 'vertical' ? "Stack View" : "Side-by-Side View"}>
+      <TooltipText label={layout === 'vertical' ? "Stack View" : "Side-by-Side View"} className="h-full flex">
         <button
           onClick={() => {
             if (value === 'both') {
@@ -1084,7 +1084,7 @@ function PanelViewToggle({
               onChange('both');
             }
           }}
-          className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
+          className={`flex h-full w-[28px] items-center justify-center relative rounded-[3px] shrink-0 transition-colors ${
             value === 'both' ? 'bg-white' : ''
           }`}
         >
@@ -1098,10 +1098,10 @@ function PanelViewToggle({
           </div>
         </button>
       </TooltipText>
-      <TooltipText label="Show Code Only">
+      <TooltipText label="Show Code Only" className="h-full flex">
         <button
           onClick={() => onChange('code')}
-          className={`flex gap-[2px] h-[20px] items-center justify-center px-[6px] relative rounded-[3px] shrink-0 transition-colors ${
+          className={`flex h-full w-[40px] items-center justify-center relative rounded-[3px] shrink-0 transition-colors ${
             value === 'code' ? 'bg-white' : ''
           }`}
         >
@@ -1122,8 +1122,7 @@ function ViewToggleBar({
   onToggleTreeList,
   onNavigateHome,
   currentEvent,
-  activeView,
-  onActiveViewChange,
+
   panelView,
   onPanelViewChange,
   panelLayout,
@@ -1136,8 +1135,7 @@ function ViewToggleBar({
   onToggleTreeList: () => void;
   onNavigateHome: () => void;
   currentEvent: string;
-  activeView: ActiveView;
-  onActiveViewChange: (v: ActiveView) => void;
+
   panelView: PanelView;
   onPanelViewChange: (v: PanelView) => void;
   panelLayout: PanelLayout;
@@ -1147,34 +1145,6 @@ function ViewToggleBar({
   onToggleRtf?: () => void;
 }) {
 
-  const viewTabs = (docType === 'listing' || docType === 'figure') ? null : (
-    <>
-      <button
-        onClick={() => onActiveViewChange('table')}
-        className={`w-[120px] h-full flex items-center justify-center gap-[4px] px-[16px] relative active:scale-[0.96] ${
-          activeView === 'table' ? 'bg-white' : ''
-        }`}
-      >
-        {activeView === 'table' && (
-          <div aria-hidden className="absolute border-brand-1 border-b-2 border-solid inset-0 pointer-events-none" />
-        )}
-        <TableTreeIcon color={activeView === 'table' ? '#830051' : '#3C4242'} />
-        <p className={`t-small font-medium ${activeView === 'table' ? 'text-brand-1' : 'text-text-primary'}`}>Table View</p>
-      </button>
-      <button
-        onClick={() => onActiveViewChange('group')}
-        className={`w-[120px] h-full flex items-center justify-center gap-[4px] px-[16px] relative active:scale-[0.96] ${
-          activeView === 'group' ? 'bg-white' : ''
-        }`}
-      >
-        {activeView === 'group' && (
-          <div aria-hidden className="absolute border-brand-1 border-b-2 border-solid inset-0 pointer-events-none" />
-        )}
-        <FolderIcon color={activeView === 'group' ? '#830051' : '#3C4242'} />
-        <p className={`t-small font-medium ${activeView === 'group' ? 'text-brand-1' : 'text-text-primary'}`}>Group View</p>
-      </button>
-    </>
-  );
 
   const rightControls = (
     <div className="flex items-center gap-[12px]">
@@ -1185,8 +1155,8 @@ function ViewToggleBar({
   if (!treeListOpen) {
     // Collapsed: single row with study info + view tabs + panel toggle
     return (
-      <div className="shrink-0 w-full bg-white">
-        <div className="h-[48px] w-full border-b-[0.6px] border-border-default flex items-center px-[12px] justify-between">
+      <div className="shrink-0 w-full">
+        <div className="h-[48px] w-full flex items-center px-[12px] justify-between">
           <div className="flex items-center gap-[8px]">
             <div className="min-w-0">
               <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
@@ -1202,7 +1172,7 @@ function ViewToggleBar({
               </button>
             </TooltipText>
           </div>
-          <div className="flex items-stretch gap-[4px] h-full">{viewTabs}</div>
+          <div className="flex items-stretch gap-[4px] h-full"></div>
           {rightControls}
         </div>
       </div>
@@ -1211,11 +1181,9 @@ function ViewToggleBar({
 
   // Expanded: view tabs row only
   return (
-    <div className="shrink-0 w-full bg-white">
-      <div className="h-[48px] w-full border-b-[0.6px] border-border-default flex items-center bg-white relative">
-        <div className="flex items-stretch justify-center flex-1 h-full">
-          {viewTabs}
-        </div>
+    <div className="shrink-0 w-full">
+      <div className="h-[48px] w-full flex items-center relative">
+
         <div className="absolute right-[12px] top-[12px]">
           {rightControls}
         </div>
@@ -2561,7 +2529,7 @@ function ListingShellPreview({
       </div>
 
       {/* Content row: shell table + metadata overlay */}
-      <div className="flex flex-1 overflow-hidden relative bg-graphite-10">
+      <div className="flex flex-1 overflow-hidden relative bg-graphite-15">
         <div
           ref={listingScrollContainerRef}
           onScroll={(e) => setIsScrolled(e.currentTarget.scrollLeft > 0)}
@@ -2578,7 +2546,7 @@ function ListingShellPreview({
                       key={page.id}
                       ref={(node) => { pageCardRefs.current[page.id] = node; }}
                       onClick={() => handlePageSelectionChange(pageIndex)}
-                      className={`relative overflow-hidden bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)] border border-[#cfd2d2] transition-shadow duration-[180ms]`}
+                      className={`relative overflow-hidden bg-white shadow-elevation-card border border-graphite-10 transition-shadow duration-[180ms]`}
                       style={{ width: `${pageWidthPx}px`, height: `${pageHeightPx}px` }}
                     >
                       <div style={{ transform: `scale(${pageScale / 100})`, transformOrigin: 'top left' }} className="relative">
@@ -2897,7 +2865,7 @@ function ListingShellPreview({
           <>
             <WorkspaceDivider onDrag={handleMetadataDividerDrag} />
             <div className="shrink-0 h-full py-[4px] pr-[4px] relative z-20" style={{ width: `${metadataWidth}px` }}>
-              <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)]">
+              <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
                 <MetadataPanel
                   onClose={onCloseMetadata}
                   isLocked={isLocked}
@@ -3350,12 +3318,12 @@ function ShellPreview({
           </div>
         }
       />
-      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-graphite-10">
+      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-graphite-15">
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full flex">
             <div className="flex-1 min-w-0 h-full overflow-auto">
-              <div className={`${zoomScale !== 1 ? 'min-w-max' : 'w-full'} p-[16px]`} style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
-              <div className={`w-full bg-white text-black rounded-[4px] p-[16px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
+              <div className="min-w-max p-[16px]" style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
+              <div className={`w-max bg-white text-black rounded-[4px] p-[16px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
                 <div className="flex flex-col gap-[16px] w-full">
                   {/* Study Info & Page Info */}
                   {(shellData.studyInfo || shellData.pageInfo) && (
@@ -3616,7 +3584,7 @@ function ShellPreview({
           }}
         >
           {metadataOpen && (
-            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-[0px_10px_30px_rgba(32,37,37,0.12)]">
+            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
               <MetadataPanel onClose={onMetadataClose} docType={docType} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} onReviewItemsChange={onReviewItemsChange} />
             </div>
           )}
@@ -6186,15 +6154,7 @@ function WorkspaceContent({
   const [shellHeight, setShellHeight] = useState(488);
   // Listing view specific states
   const [categoryFilter, setCategoryFilter] = useState<"all" | "table" | "listing" | "figure">("all");
-  const [activeView, setActiveView] = useState<ActiveView>('table');
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>('g1');
-  const groupItems = [
-    { id: 'g1', name: 'Treatment Group' },
-    { id: 'g2', name: 'Population Set' },
-    { id: 'g3', name: 'Analysis Visit' },
-    { id: 'g4', name: 'Baseline Category' },
-    { id: 'g5', name: 'Subgroup Analysis' },
-  ];
+
   const [frozenUntilIndex, setFrozenUntilIndex] = useState<number | null>(null);
   const [pageSepActive, setPageSepActive] = useState(false);
   const [pageColumnCounts, setPageColumnCounts] = useState<Record<string, number>>({});
@@ -6440,9 +6400,6 @@ function WorkspaceContent({
     if (!isLayoutUserOverridden) {
       setPanelLayout(docType === 'table' ? 'horizontal' : 'vertical');
     }
-    if (docType === 'listing' || docType === 'figure') {
-      setActiveView('table');
-    }
   }, [docType, isLayoutUserOverridden]);
 
   const handleShellPagePreviewChange = (_active: boolean) => {
@@ -6500,9 +6457,7 @@ function WorkspaceContent({
     return { ...program, tables: filteredTables };
   });
 
-  const filteredGroups = groupItems.filter((group) =>
-    group.name.toLowerCase().includes(treeSearchQuery.toLowerCase())
-  );
+
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
@@ -6586,41 +6541,18 @@ function WorkspaceContent({
             />
             <div className="min-h-0 flex-1 overflow-auto">
               <div className="flex flex-col gap-[4px] py-[4px] pr-[4px]">
-                {activeView === 'group' ? (
-                  filteredGroups.map((group) => {
-                    const isGroupSelected = selectedGroupId === group.id;
-                    return (
-                      <div
-                        key={group.id}
-                        className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors ${
-                          isGroupSelected ? 'bg-az-secondary' : 'hover:bg-graphite-10'
-                        }`}
-                        onClick={() => setSelectedGroupId(group.id)}
-                      >
-                        <div className="flex h-full items-center pl-[24px] pr-[12px]">
-                          <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
-                            <FolderIcon color={isGroupSelected ? '#830051' : '#888E8E'} />
-                            <p className={`t-small min-w-0 truncate ${isGroupSelected ? 'text-brand-1' : 'text-text-primary'}`}>
-                              {group.name}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  filteredPrograms.map((program) => (
-                    <TreeItem
-                      key={program.id}
-                      program={program}
-                      selectedId={selectedId}
-                      onSelect={handleSelect}
-                      onToggleLock={handleToggleLock}
-                      onToggleExpand={handleToggleExpand}
-                      onShowLockedModal={(programName) => setModalState({ type: 'locked-by-parent', programName })}
-                    />
-                  ))
-                )}
+
+                {filteredPrograms.map((program) => (
+                  <TreeItem
+                    key={program.id}
+                    program={program}
+                    selectedId={selectedId}
+                    onSelect={handleSelect}
+                    onToggleLock={handleToggleLock}
+                    onToggleExpand={handleToggleExpand}
+                    onShowLockedModal={(programName) => setModalState({ type: 'locked-by-parent', programName })}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -6635,23 +6567,26 @@ function WorkspaceContent({
           />
         )}
 
-        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] my-[4px] mr-[4px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
-          <ViewToggleBar
-            treeListOpen={treeListOpen}
-            onToggleTreeList={() => setTreeListOpen(true)}
-            onNavigateHome={onNavigateHome}
-            currentEvent={currentEvent}
-            activeView={activeView}
-            onActiveViewChange={setActiveView}
-            panelView={panelView}
-            onPanelViewChange={handlePanelViewChange}
-            panelLayout={panelLayout}
-            onPanelLayoutChange={handleManualPanelLayoutChange}
-            docType={docType}
-            rtfOpen={rtfOpen}
-            onToggleRtf={() => setRtfOpen(v => !v)}
-          />
-          <div ref={contentAreaRef} className="relative flex min-h-0 flex-1 overflow-hidden">
+        <div className={`flex min-w-0 flex-1 flex-col ${!treeListOpen ? "ml-[4px]" : ""}`}>
+          <div className="shrink-0 w-full overflow-hidden mt-[4px] mr-[4px]">
+            <ViewToggleBar
+              treeListOpen={treeListOpen}
+              onToggleTreeList={() => setTreeListOpen(true)}
+              onNavigateHome={onNavigateHome}
+              currentEvent={currentEvent}
+
+              panelView={panelView}
+              onPanelViewChange={handlePanelViewChange}
+              panelLayout={panelLayout}
+              onPanelLayoutChange={handleManualPanelLayoutChange}
+              docType={docType}
+              rtfOpen={rtfOpen}
+              onToggleRtf={() => setRtfOpen(v => !v)}
+            />
+          </div>
+
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-elevation-panel mb-[4px] mr-[4px]">
+            <div ref={contentAreaRef} className="relative flex min-h-0 flex-1 overflow-hidden">
             {docType === 'listing' ? (
               // Listing layout with configurable panel direction (vertical = top/bottom, horizontal = left/right)
               <div className="flex min-w-0 flex-1 overflow-hidden">
@@ -6949,6 +6884,7 @@ function WorkspaceContent({
           </div>
         </div>
       </div>
+    </div>
 
       <WorkspaceModal
         isOpen={modalState.type === 'locked-by-parent'}
@@ -7445,7 +7381,7 @@ function HomePage({
         )}
 
         {/* Main Container */}
-        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] my-[4px] mr-[4px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
+        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-elevation-panel my-[4px] mr-[4px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
           {/* Expand tree list button when collapsed */}
           {!treeListOpen && (
             <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-border-default">

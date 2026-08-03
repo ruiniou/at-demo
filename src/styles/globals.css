@@ -237,3 +237,20 @@
 .animate-slide-in-up {
   animation: slideInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Design System Elevation Shadows */
+.shadow-elevation-panel {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-elevation-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-elevation-overlay {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-elevation-modal {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
