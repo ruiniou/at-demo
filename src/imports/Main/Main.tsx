@@ -56,6 +56,7 @@ import CreateEventModal from "./components/CreateEventModal";
 import { KMPlot } from "./components/KMPlot";
 import { Button } from "../../components/ui/Button";
 import { Tooltip } from "../../components/ui/Tooltip";
+import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
 import { FormTextArea as Textarea } from "../../components/ui/FormTextArea";
@@ -177,8 +178,8 @@ function ToolCallCard({ toolName, children }: { toolName: string; children?: Rea
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`border-[0.6px] border-graphite-10 rounded-[4px] px-[12px] py-[8px] w-full transition-colors ${
-        hovered ? 'bg-bg-panel' : 'bg-transparent'
+      className={`bg-white border-[0.6px] border-graphite-20 rounded-[8px] px-[12px] py-[8px] w-full transition-colors ${
+        hovered ? 'bg-bg-panel' : 'bg-white'
       }`}
     >
       <div className="flex items-center gap-[4px] h-[30px]">
@@ -260,7 +261,7 @@ function ToBeReviewedBlock({ items, onJumpToMetadata }: { items: ReviewItem[], o
   const [headerHovered, setHeaderHovered] = useState(false);
 
   return (
-    <div className="border border-graphite-10 rounded-[6px] w-full overflow-hidden bg-white mb-[8px]">
+    <div className="border-[0.6px] border-graphite-20 rounded-[8px] w-full overflow-hidden bg-white mb-[8px]">
       <div
         onMouseEnter={() => setHeaderHovered(true)}
         onMouseLeave={() => setHeaderHovered(false)}
@@ -341,7 +342,7 @@ function ErrorMessageWithRetry() {
 
 function InlineHighlight({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-block px-[4px] py-[2px] rounded-[4px] bg-graphite-10 text-[13px] font-mono text-brand-1 leading-none mx-[2px]">
+    <span className="inline-block px-[4px] py-[2px] rounded-[4px] bg-graphite-20 text-[13px] font-mono text-brand-1 leading-none mx-[2px]">
       {children}
     </span>
   );
@@ -406,7 +407,7 @@ function ChatConversation({
   const showAskUser = lastMessage?.type === 'ai_ask_user';
 
   return (
-    <div className="flex flex-col w-full p-[10px] gap-[12px] relative">
+    <div className="flex flex-col w-full px-[8px] py-[10px] gap-[12px] relative">
 
       {messages.map((msg, i) => (
         <React.Fragment key={i}>
@@ -446,58 +447,60 @@ function ChatConversation({
             {msg.type === 'ai_complete' && (
               <div className="flex flex-col gap-[12px] w-full relative">
                 <AIThinkingStatus status="completed" />
-                <div className="flex flex-col w-full px-[10px] relative gap-[12px]">
+                <div className="flex flex-col w-full relative gap-[12px]">
                   
                   {docType === 'figure' ? (
                     <>
-                      <div className="flex flex-col gap-[8px] mb-[8px]">
-                        <p className="t-body text-text-primary leading-relaxed">
-                          I have parsed the uploaded Shell file and successfully inferred the structure for SAS Code generation.
+                      <div className="flex flex-col w-full px-[10px]">
+                        <div className="flex flex-col gap-[8px] mb-[8px]">
+                          <p className="t-body text-text-primary leading-relaxed">
+                            I have parsed the uploaded Shell file and successfully inferred the structure for SAS Code generation.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 1: KM Plot Chart</h1>
+                          <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
+                            <li className="t-body text-text-primary">
+                              <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
+                            </li>
+                            <li className="t-body text-text-primary">
+                              <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>CNSR</InlineHighlight>, <InlineHighlight>PARAMCD</InlineHighlight></span>
+                            </li>
+                          </ul>
+                          <div style={{ borderTop: '1px dashed var(--color-border-subtle)', width: '100%', margin: '8px 0' }}></div>
+                          <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Axis Setup</h1>
+                          <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
+                            <li className="t-body text-text-primary">
+                              <span>X-Axis: <InlineHighlight>Months</InlineHighlight> | Ticks <InlineHighlight>0, 3, 6, 9, 12</InlineHighlight></span>
+                            </li>
+                            <li className="t-body text-text-primary">
+                              <span>Y-Axis: <InlineHighlight>Probability</InlineHighlight> | Range <InlineHighlight>0.0 - 1.0</InlineHighlight></span>
+                            </li>
+                            <li className="t-body text-text-primary">
+                              <span>Reference: Contains <InlineHighlight>Median</InlineHighlight> line</span>
+                            </li>
+                          </ul>
+                        </div>
+
+                        <Divider className="!my-[8px]" />
+
+                        <div className="flex flex-col">
+                          <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 2: Number at Risk Table</h1>
+                          <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
+                            <li className="t-body text-text-primary">
+                              <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
+                            </li>
+                            <li className="t-body text-text-primary">
+                              <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>TRTA</InlineHighlight></span>
+                            </li>
+                          </ul>
+                        </div>
+
+                        <p className="t-body text-text-primary leading-relaxed mb-[12px]">
+                          SAS Code has been generated. <Hyperlink onClick={onOpenCodePanel}>View in Code Panel</Hyperlink>.
                         </p>
                       </div>
-
-                      <div className="flex flex-col">
-                        <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 1: KM Plot Chart</h1>
-                        <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
-                          <li className="t-body text-text-primary">
-                            <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
-                          </li>
-                          <li className="t-body text-text-primary">
-                            <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>CNSR</InlineHighlight>, <InlineHighlight>PARAMCD</InlineHighlight></span>
-                          </li>
-                        </ul>
-                        <div style={{ borderTop: '1px dashed var(--color-border-subtle)', width: '100%', margin: '8px 0' }}></div>
-                        <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Axis Setup</h1>
-                        <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
-                          <li className="t-body text-text-primary">
-                            <span>X-Axis: <InlineHighlight>Months</InlineHighlight> | Ticks <InlineHighlight>0, 3, 6, 9, 12</InlineHighlight></span>
-                          </li>
-                          <li className="t-body text-text-primary">
-                            <span>Y-Axis: <InlineHighlight>Probability</InlineHighlight> | Range <InlineHighlight>0.0 - 1.0</InlineHighlight></span>
-                          </li>
-                          <li className="t-body text-text-primary">
-                            <span>Reference: Contains <InlineHighlight>Median</InlineHighlight> line</span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <Divider className="!my-[8px]" />
-
-                      <div className="flex flex-col">
-                        <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 2: Number at Risk Table</h1>
-                        <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
-                          <li className="t-body text-text-primary">
-                            <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
-                          </li>
-                          <li className="t-body text-text-primary">
-                            <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>TRTA</InlineHighlight></span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <p className="t-body text-text-primary leading-relaxed mb-[12px]">
-                        SAS Code has been generated. <Hyperlink onClick={onOpenCodePanel}>View in Code Panel</Hyperlink>.
-                      </p>
 
                       <ToBeReviewedBlock 
                         items={reviewItems && reviewItems.length > 0 ? reviewItems : DEFAULT_FIGURE_REVIEW_ITEMS}
@@ -506,34 +509,37 @@ function ChatConversation({
                     </>
                   ) : (
                     <>
-                      <div className="relative w-full">
-                        <h1 className="text-[16px] font-bold text-text-primary mb-[10px]" style={{ fontFamily: 'var(--font-body)' }}>Analysis Results Summary</h1>
+                      <div className="flex flex-col w-full px-[10px]">
+                        <div className="relative w-full">
+                          <h1 className="text-[16px] font-bold text-text-primary mb-[10px]" style={{ fontFamily: 'var(--font-body)' }}>Analysis Results Summary</h1>
+                        </div>
+                        <div className="relative w-full">
+                          <p className="t-body text-text-primary p-[4px] mb-[8px] leading-relaxed">
+                            Generated Kaplan-Meier survival plot for <InlineHighlight>OS (Overall Survival)</InlineHighlight> using the ITT population. 
+                            Reference the <Hyperlink>Analysis Plan v1.2</Hyperlink> for further details.
+                          </p>
+                        </div>
+                        <div className="relative w-full mb-[10px]">
+                          <Suspense fallback={<div className="h-20 animate-pulse bg-gray-100 rounded mb-2" />}>
+                            <MarkdownTable />
+                          </Suspense>
+                        </div>
+                        <div className="relative w-full">
+                          <ul className="list-disc pl-[24px] mb-[10px] flex flex-col gap-[4px]">
+                            <li className="t-body text-text-primary">
+                              <strong className="font-semibold text-text-primary">High survival rate</strong> in early stages.
+                            </li>
+                            <li className="t-body text-text-primary">
+                              <strong className="font-semibold text-text-primary">Significant variance</strong> in treatment line 3.
+                            </li>
+                          </ul>
+                        </div>
+                        <Blockquote>
+                          "The integration of survival data confirms the hypothesis proposed in the preliminary report."
+                        </Blockquote>
+                        <Divider className="mb-[12px]" />
                       </div>
-                      <div className="relative w-full">
-                        <p className="t-body text-text-primary p-[4px] mb-[8px] leading-relaxed">
-                          Generated Kaplan-Meier survival plot for <InlineHighlight>OS (Overall Survival)</InlineHighlight> using the ITT population. 
-                          Reference the <Hyperlink>Analysis Plan v1.2</Hyperlink> for further details.
-                        </p>
-                      </div>
-                      <div className="relative w-full mb-[10px]">
-                        <Suspense fallback={<div className="h-20 animate-pulse bg-gray-100 rounded mb-2" />}>
-                          <MarkdownTable />
-                        </Suspense>
-                      </div>
-                      <div className="relative w-full">
-                        <ul className="list-disc pl-[24px] mb-[10px] flex flex-col gap-[4px]">
-                          <li className="t-body text-text-primary">
-                            <strong className="font-semibold text-text-primary">High survival rate</strong> in early stages.
-                          </li>
-                          <li className="t-body text-text-primary">
-                            <strong className="font-semibold text-text-primary">Significant variance</strong> in treatment line 3.
-                          </li>
-                        </ul>
-                      </div>
-                      <Blockquote>
-                        "The integration of survival data confirms the hypothesis proposed in the preliminary report."
-                      </Blockquote>
-                      <Divider />
+                      
                       <div className="relative w-full">
                         <ToolCallCard toolName="read_file" />
                       </div>
@@ -551,8 +557,8 @@ function ChatConversation({
             {msg.type === 'ai_update_complete' && (
               <div className="flex flex-col gap-[12px] w-full relative">
                 <AIThinkingStatus status="completed" />
-                <div className="flex flex-col w-full px-[10px] relative gap-[12px]">
-                  <div className="flex flex-col gap-[8px] mb-[8px]">
+                <div className="flex flex-col w-full relative gap-[12px]">
+                  <div className="flex flex-col gap-[8px] mb-[8px] px-[10px]">
                     <p className="t-body text-text-primary leading-relaxed">
                       I have updated the metadata and code based on your changes. Please review the differences below.
                     </p>
@@ -681,13 +687,13 @@ function AICopilotPanel({
 
   return (
     <div 
-      className="flex flex-col h-full bg-white relative"
+      className="flex flex-col h-full bg-transparent relative"
       style={{ width: panelWidth }}
     >
       {/* Header */}
-      <div className="bg-white h-[40px] flex items-center justify-between px-[12px] border-b border-graphite-10">
+      <div className="bg-transparent h-[40px] flex items-center justify-between px-[12px]">
         <div className="flex items-center gap-[8px]">
-          <AtlasLogoIcon className="h-[16px] w-[16px]" color="var(--color-brand-1)" />
+          <AtlasLogoIcon className="h-[20px] w-[20px]" color="var(--color-brand-1)" />
         </div>
         <button
           onClick={onClose}
@@ -718,7 +724,7 @@ function AICopilotPanel({
           />
         )}
         {metaUpdateActive && metaDiffItems && metaDiffItems.length > 0 && (
-          <div className="px-[20px] pb-[10px]">
+          <div className="px-[8px] pb-[10px]">
             <AIUpdatedBlock
               title="To be Updated"
               count={metaDiffItems.length}
@@ -1217,7 +1223,7 @@ function TreeStatusControl({
 }) {
   if (item.docType === 'figure' && isFigureQueued) {
     return (
-      <TooltipText label="Queued — Waiting for Table 14.1.1 to complete">
+      <TooltipText label="Queued — Waiting for Table 14.1.6.1 to complete">
         <span className="cursor-help">
           <CodeStatusSlot>
             <div className="flex items-center justify-center w-[16px] h-[16px]">
@@ -1449,10 +1455,12 @@ function WorkspaceDivider({
   onDrag,
   onDragStart,
   onDragEnd,
+  className = "",
 }: {
   onDrag: (delta: number) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  className?: string;
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -1489,7 +1497,7 @@ function WorkspaceDivider({
 
   return (
     <div
-      className="relative z-10 w-[1px] shrink-0 cursor-col-resize bg-transparent"
+      className={`relative z-10 w-0 shrink-0 cursor-col-resize bg-transparent -mx-[3px] ${className}`}
       onMouseDown={(event) => {
         event.preventDefault();
         setIsDragging(true);
@@ -1530,12 +1538,12 @@ function CategoryFilter({
             <button
               key={category.id}
               onClick={() => onChange(category.id)}
-              className={`flex h-[24px] items-center gap-[2px] rounded-[4px] px-[4px] active:scale-[0.96] ${
-                isSelected ? "bg-graphite-10" : "hover:bg-graphite-10"
+              className={`flex h-[24px] items-center gap-[4px] px-[8px] rounded-[4px] t-small transition-colors ${
+                isSelected ? "bg-az-secondary text-brand-1 font-medium" : "text-text-secondary hover:bg-graphite-10 hover:text-text-primary"
               }`}
             >
               {category.icon}
-              <p className="t-small whitespace-nowrap text-text-primary">{category.label}</p>
+              <span>{category.label}</span>
             </button>
           );
         })}
@@ -1561,6 +1569,55 @@ function PanelHeader({
   );
 }
 
+// Scales content visually while collapsing its layout box to the scaled size,
+// so the scroll container reserves no dead space at zoom levels below 100%.
+function ZoomContainer({
+  scale,
+  className = "",
+  children,
+}: {
+  scale: number;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const node = innerRef.current;
+    if (!node) return;
+    const measure = () => {
+      setSize({ width: node.scrollWidth, height: node.scrollHeight });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [children]);
+
+  if (scale === 1) {
+    return (
+      <div className={className}>
+        <div ref={innerRef}>{children}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={className}
+      style={size ? { width: size.width * scale, height: size.height * scale } : undefined}
+    >
+      <div
+        ref={innerRef}
+        style={{ transform: `scale(${scale})`, transformOrigin: "top left", width: "max-content" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function ChevronLeftIcon({ color = "#888E8E" }) {
   return (
     <svg className="w-[16px] h-[16px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1581,10 +1638,12 @@ function HorizontalWorkspaceDivider({
   onDrag,
   onDragStart,
   onDragEnd,
+  className = "",
 }: {
   onDrag: (delta: number) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  className?: string;
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -1621,7 +1680,7 @@ function HorizontalWorkspaceDivider({
 
   return (
     <div
-      className="relative h-[3px] shrink-0 cursor-row-resize bg-transparent"
+      className={`relative z-10 h-0 shrink-0 cursor-row-resize bg-transparent -my-[3px] ${className}`}
       onMouseDown={(event) => {
         event.preventDefault();
         setIsDragging(true);
@@ -1902,6 +1961,7 @@ function ListingShellPreview({
   const [metadataPending, setMetadataPending] = useState(false);
   const [zoomLevel, setZoomLevel] = useState('100');
   const zoomOptions = [
+    { label: '50%', value: '50' },
     { label: '75%', value: '75' },
     { label: '100%', value: '100' },
     { label: '200%', value: '200' },
@@ -2601,7 +2661,7 @@ function ListingShellPreview({
           )}
 
           {/* Normal (non-preview) table view */}
-          <div className={`min-w-max p-[16px] ${pageSepActive ? 'hidden' : ''}`} style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
+          <ZoomContainer scale={zoomScale} className={`min-w-max p-[16px] ${pageSepActive ? 'hidden' : ''}`}>
             <div className={`w-max bg-white text-black rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`}>
               <div className="relative">
                 {/* Study Info & Page Info */}
@@ -2858,7 +2918,7 @@ function ListingShellPreview({
                 </div>
               </div>
             </div>
-          </div>
+          </ZoomContainer>
         </div>
 
         {metadataOpen && (
@@ -2927,64 +2987,6 @@ const shellTableData: Record<string, ShellTableData> = {
     columnGroups: [],
     columns: [],
     rows: []
-  },
-  'Table 14.1.1': {
-    tableNumber: 'Table 14.1.1',
-    tableTitle: 'Disposition',
-    studyInfo: 'AstraZeneca\nStudy number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, <<Data cut-off ddmmyyyy>>',
-    pageInfo: 'Page 9 of 280',
-    footnotes: [
-      '[a] Screened subjects are those who signed main informed consent.',
-      '[b] Percentages are based on the number of subjects started treatment.',
-      'Subjects are summarised in the arm to which they were randomised.',
-      'Percentages are based on the number of subjects randomised, with the exception of those marked.',
-      'n Number of subjects per category.',
-      '<<output program path>> <<output file name>> <<date/time>>'
-    ],
-    population: '',
-    columnGroups: [
-      { name: 'AZD0901 1.8\nmg/kg', span: 1 },
-      { name: 'AZD0901 2.2\nmg/kg', span: 1 },
-      { name: 'Investigator\nchoice of\ntherapy', span: 1 },
-      { name: 'Total', span: 1 },
-    ],
-    columns: ['n', 'n', 'n', 'n'],
-    rows: [
-      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: 'Subjects discontinued Ramucirumab', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: 'Subjects discontinued Paclitaxel', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: 'Subjects discontinued Docetaxel', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: 'Subjects discontinued Irinotecan', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: 'Subjects discontinued TAS-102', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: 'Subjects discontinued Apatinib', values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason1>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '<<Reason2>>', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: '...', indent: 1, values: ['xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)', 'xx (xx.x)'] },
-      { category: 'Subjects ongoing in study at data cut-off date', values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
-      { category: 'Subjects withdrawn from study', values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
-      { category: 'Death', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
-      { category: 'Lost to follow-up', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
-      { category: 'Screen failure', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
-      { category: 'Study terminated by sponsor', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
-      { category: 'Withdrawal by subject', indent: 1, values: ['xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)', 'xxx (xx.x)'] },
-    ],
   },
   'Table 14.1.6.1': {
     tableNumber: 'Table 14.1.6.1',
@@ -3202,6 +3204,290 @@ const successStructuredLog = {
   rawLogLines: errorStructuredLog.rawLogLines.filter(l => l.level !== 'ERROR'),
 };
 
+type ShellTableRow = ShellTableData['rows'][number];
+
+interface ShellTableBlock {
+  blockId: string;
+  startRowIndex: number;
+  rowIndexes: number[];
+  parentLabel: string;
+}
+
+/**
+ * Blocks are implicit in ShellTableData.rows: an indent-0 row starts a block and every
+ * following indented row belongs to it. Rows appearing before the first indent-0 row are
+ * collected into an orphan block so malformed data still renders.
+ */
+function deriveTableBlocks(rows: ShellTableRow[]): {
+  blocks: ShellTableBlock[];
+  blockIdByRow: (string | null)[];
+} {
+  const blocks: ShellTableBlock[] = [];
+  const blockIdByRow: (string | null)[] = new Array(rows.length).fill(null);
+  const slug = (text: string) => text.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'row';
+
+  let current: ShellTableBlock | null = null;
+  rows.forEach((row, rowIndex) => {
+    const isBlockStart = !row.indent;
+    if (isBlockStart || current === null) {
+      current = {
+        blockId: isBlockStart ? `block-${rowIndex}-${slug(row.category)}` : 'block-orphan',
+        startRowIndex: rowIndex,
+        rowIndexes: [],
+        parentLabel: isBlockStart ? row.category : '',
+      };
+      blocks.push(current);
+    }
+    current.rowIndexes.push(rowIndex);
+    blockIdByRow[rowIndex] = current.blockId;
+  });
+
+  return { blocks, blockIdByRow };
+}
+
+interface TableBlockMetadata {
+  primaryVariable?: string;
+  variableMappings?: string[];
+  population?: string;
+  displayRule?: string;
+}
+
+/** Mock only — keyed by the block's parent label. Swap this lookup to wire real metadata later. */
+const TABLE_BLOCK_METADATA: Record<string, TableBlockMetadata> = {
+  'Height (cm)': {
+    primaryVariable: 'adsl.HEIGHTBL',
+    variableMappings: ['adsl.HEIGHTBL'],
+    population: 'ITT Analysis Set',
+    displayRule: 'rule: n, Mean (SD), Min, Median, Max',
+  },
+  'Weight (kg)': {
+    primaryVariable: 'adsl.WEIGHTBL',
+    variableMappings: ['adsl.WEIGHTBL', 'adsl.WGTBLU'],
+    population: 'ITT Analysis Set',
+    displayRule: 'rule: n, Mean (SD), Min, Median, Max',
+  },
+  'Weight group (kg)': {
+    primaryVariable: 'adsl.WGTGR1',
+    variableMappings: ['adsl.WGTGR1', 'adsl.WEIGHTBL'],
+    population: 'ITT Analysis Set',
+    displayRule: 'rule: n (%) by weight category, denominator is the number of subjects in the ITT analysis set within each treatment arm',
+  },
+  'BMI (kg/m2)': {
+    primaryVariable: 'adsl.BMIBL',
+    variableMappings: ['adsl.BMIBL', 'adsl.HEIGHTBL', 'adsl.WEIGHTBL'],
+    population: 'ITT Analysis Set',
+    displayRule: 'rule: n, Mean (SD), Min, Median, Max',
+  },
+  // Deliberately >4 mappings to exercise the "+N more" rule.
+  'BMI Group (kg/m2)': {
+    primaryVariable: 'adsl.BMIGR1',
+    variableMappings: ['adsl.BMIGR1', 'adsl.BMIBL', 'adsl.HEIGHTBL', 'adsl.WEIGHTBL', 'adsl.BMIBLU', 'adsl.TRT01AN'],
+    population: 'ITT Analysis Set',
+    displayRule: 'rule: n (%) by WHO BMI category',
+  },
+  'Nicotine use': {
+    primaryVariable: 'adsl.SMOKSTAT',
+    variableMappings: ['adsl.SMOKSTAT'],
+    population: 'ITT Analysis Set',
+    displayRule: 'rule: n (%), subjects with missing status are reported in the Missing row',
+  },
+  'Alcohol use': {
+    primaryVariable: 'adsl.ALCSTAT',
+    variableMappings: ['adsl.ALCSTAT'],
+    population: 'ITT Analysis Set',
+    // No displayRule variants needed here; population intentionally present.
+  },
+  // Deliberately long rule to exercise the 2-line clamp.
+  'ECOG performance status': {
+    primaryVariable: 'adsl.ECOGBL',
+    variableMappings: ['adsl.ECOGBL', 'adsl.ECOGBLN'],
+    population: 'ITT Analysis Set — All Randomized Subjects Who Received At Least One Dose of Study Drug',
+    displayRule: 'rule: n (%) by ECOG performance status score at baseline, categories are presented in ascending score order with the Missing category reported last, percentages based on the number of subjects randomised',
+  },
+};
+
+const TABLE_BLOCK_MAPPING_LIMIT = 4;
+
+function buildBlockTooltipSections(meta: TableBlockMetadata | undefined): TooltipMetadataSection[] {
+  if (!meta) return [];
+  const sections: TooltipMetadataSection[] = [];
+
+  // P1 — Primary Variable first, then the rest; cap at 4 with the 4th slot becoming "+N more".
+  const mappings = meta.variableMappings?.filter(Boolean) ?? [];
+  const ordered = meta.primaryVariable
+    ? [meta.primaryVariable, ...mappings.filter((v) => v !== meta.primaryVariable)]
+    : mappings;
+  if (ordered.length > 0) {
+    const overflow = ordered.length - TABLE_BLOCK_MAPPING_LIMIT;
+    sections.push({
+      label: 'Variable Mapping',
+      values: overflow > 0 ? ordered.slice(0, TABLE_BLOCK_MAPPING_LIMIT - 1) : ordered,
+      more: overflow > 0 ? `+${overflow + 1} more` : undefined,
+    });
+  }
+
+  // P2 — Population, never compressed.
+  if (meta.population) {
+    sections.push({ label: 'Population', values: [meta.population] });
+  }
+
+  // P3 — Display Rule, clamped to 2 lines.
+  if (meta.displayRule) {
+    sections.push({ label: 'Display Rule', values: [meta.displayRule], clampLines: 2 });
+  }
+
+  return sections;
+}
+
+/**
+ * Read-only metadata hover for a table block. Anchored to the block's parent label cell so the
+ * position stays fixed while the pointer moves within the block. Rendered in a portal with fixed
+ * positioning so the table's scroll container cannot clip it, tracks scroll/resize, and flips
+ * below the label when there is not enough room above.
+ */
+function BlockMetadataHover({
+  sections,
+  anchorRef,
+  scrollContainerRef,
+}: {
+  sections: TooltipMetadataSection[];
+  anchorRef: React.RefObject<HTMLElement | null>;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const anchor = anchorRef.current;
+      const node = ref.current;
+      if (!anchor || !node) return;
+
+      const anchorRect = anchor.getBoundingClientRect();
+      const tipRect = node.getBoundingClientRect();
+      const container = scrollContainerRef.current?.getBoundingClientRect();
+      // Sits 2px off the label's own edge; EDGE only keeps it off the container's edges.
+      const GAP = 2;
+      const EDGE = 4;
+      const minTop = (container?.top ?? 0) + EDGE;
+      const maxBottom = (container?.bottom ?? window.innerHeight) - EDGE;
+
+      // Prefer above the label. Flip below only when above is short AND below actually fits,
+      // otherwise clamp to the container top so the block's own rows stay unobscured.
+      let top = anchorRect.top - tipRect.height - GAP;
+      if (top < minTop) {
+        const below = anchorRect.bottom + GAP;
+        top = below + tipRect.height <= maxBottom ? below : minTop;
+      }
+
+      // Left-align with the label text; clamp so it never leaves the container horizontally.
+      const labelLeft = anchorRect.left;
+      const minLeft = (container?.left ?? 0) + EDGE;
+      const maxLeft = (container?.right ?? window.innerWidth) - tipRect.width - EDGE;
+      const left = Math.min(Math.max(labelLeft, minLeft), Math.max(minLeft, maxLeft));
+
+      setPos({ top, left });
+    };
+
+    update();
+
+    // Follow the anchor while anything scrolls (capture catches nested scroll containers).
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [anchorRef, scrollContainerRef]);
+
+  return createPortal(
+    <div
+      ref={ref}
+      className={`fixed z-[9999] pointer-events-none transition-opacity duration-[90ms] ${pos ? 'opacity-100' : 'opacity-0'}`}
+      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0 }}
+    >
+      <div className="w-[240px] rounded-[4px] bg-tooltip-bg px-[8px] py-[6px] text-left shadow-[0px_2px_8px_rgba(0,0,0,0.08)] flex flex-col gap-[8px]">
+        {sections.map((section, i) => (
+          <div key={i} className="flex flex-col gap-[2px] items-stretch">
+            <span className="t-footnote text-tooltip-label">{section.label}</span>
+            {section.values.map((value, j) => (
+              <span
+                key={j}
+                className="t-small text-tooltip-text"
+                style={
+                  section.clampLines
+                    ? {
+                        display: '-webkit-box',
+                        WebkitBoxOrient: 'vertical',
+                        WebkitLineClamp: section.clampLines,
+                        overflow: 'hidden',
+                      }
+                    : undefined
+                }
+              >
+                {value}
+              </span>
+            ))}
+            {section.more && <span className="t-small text-tooltip-label">{section.more}</span>}
+          </div>
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+/** One shell table row. Highlights with its whole block and anchors the block's metadata hover. */
+function ShellTableRowView({
+  row,
+  blockId,
+  active,
+  onHover,
+  onClick,
+  scrollContainerRef,
+}: {
+  row: ShellTableRow;
+  blockId: string | null;
+  active: boolean;
+  onHover: (blockId: string | null) => void;
+  onClick: () => void;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const labelTextRef = useRef<HTMLSpanElement | null>(null);
+  const isBlockStart = !row.indent;
+  const sections = active && isBlockStart ? buildBlockTooltipSections(TABLE_BLOCK_METADATA[row.category]) : [];
+  const cellBg = active ? 'bg-az-secondary' : 'bg-white';
+  const weight = row.isHeader ? 'font-bold text-text-primary' : 'font-normal text-text-primary';
+
+  return (
+    <tr
+      data-block-id={blockId ?? undefined}
+      className="group cursor-pointer"
+      onMouseEnter={() => onHover(blockId)}
+      onClick={onClick}
+    >
+      <td
+        className={`${weight} ${cellBg} text-left align-middle text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-pre-wrap break-words border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+        style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
+      >
+        {/* Anchor on the text itself, not the padded cell, so the hover sits 2px off the label. */}
+        <span ref={labelTextRef} className="inline-block">{row.category}</span>
+        {sections.length > 0 && (
+          <BlockMetadataHover sections={sections} anchorRef={labelTextRef} scrollContainerRef={scrollContainerRef} />
+        )}
+      </td>
+      {row.values.map((val, vi) => (
+        <td
+          key={vi}
+          className={`${weight} ${cellBg} text-left align-middle text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-pre-wrap break-words border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+        >
+          {val}
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 function ShellPreview({
   onBlockClick,
   onMetadataClick,
@@ -3238,7 +3524,7 @@ function ShellPreview({
   targetFieldId,
   onReviewItemsChange,
 }: {
-  onBlockClick: () => void;
+  onBlockClick: (blockName?: string) => void;
   onMetadataClick: () => void;
   onMetaDiffChange?: (diffItems: MetaDiffItem[]) => void;
   onRequestUpdateCode?: () => void;
@@ -3275,10 +3561,29 @@ function ShellPreview({
 }) {
   const [logExpanded, setLogExpanded] = useState(false);
   const activeLogData = successStructuredLog;
-  const shellData = shellTableData[selectedItemName] || shellTableData['Table 14.1.1'];
+  const shellData = shellTableData[selectedItemName] || shellTableData['Table 14.1.6.1'];
+  const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
+  const [targetBlockName, setTargetBlockName] = useState<string | null>(null);
+  const [targetBlockTrigger, setTargetBlockTrigger] = useState(0);
+  const tableScrollRef = useRef<HTMLDivElement | null>(null);
+  const { blocks: tableBlocks, blockIdByRow } = useMemo(() => deriveTableBlocks(shellData.rows || []), [shellData.rows]);
+  const parentLabelByBlockId = useMemo(() => {
+    const map: Record<string, string> = {};
+    tableBlocks.forEach(b => { map[b.blockId] = b.parentLabel; });
+    return map;
+  }, [tableBlocks]);
+
+  // A row click targets the block it belongs to, so the panel can select that block.
+  const handleRowClick = (blockId: string | null) => {
+    const name = blockId ? parentLabelByBlockId[blockId] : undefined;
+    setTargetBlockName(name || null);
+    setTargetBlockTrigger(t => t + 1);
+    onBlockClick(name || undefined);
+  };
   const metadataMinWidth = 280;
   const [zoomLevel, setZoomLevel] = useState('100');
   const zoomOptions = [
+    { label: '50%', value: '50' },
     { label: '75%', value: '75' },
     { label: '100%', value: '100' },
     { label: '200%', value: '200' },
@@ -3322,7 +3627,7 @@ function ShellPreview({
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full flex">
             <div className="flex-1 min-w-0 h-full overflow-auto">
-              <div className="min-w-max p-[16px]" style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
+              <ZoomContainer scale={zoomScale} className="min-w-max p-[16px]">
               <div className={`w-max bg-white text-black rounded-[4px] p-[16px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
                 <div className="flex flex-col gap-[16px] w-full">
                   {/* Study Info & Page Info */}
@@ -3371,7 +3676,7 @@ function ShellPreview({
                   </div>
                 )}
               </div>
-            </div>
+            </ZoomContainer>
             {rtfOpen && (
               <div className="flex-1 border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden">
                 <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[16px] bg-white">
@@ -3448,8 +3753,8 @@ function ShellPreview({
             const totalTableWidth = firstColWidth + actualDataCols * dataColWidth;
 
             return (
-              <div className="min-h-0 min-w-0 flex-1 overflow-auto">
-                <div className="min-w-max p-[16px]" style={{ transform: zoomScale !== 1 ? `scale(${zoomScale})` : undefined, transformOrigin: 'top left', width: zoomScale !== 1 ? `${100 / zoomScale}%` : undefined }}>
+              <div ref={tableScrollRef} className="min-h-0 min-w-0 flex-1 overflow-auto">
+                <ZoomContainer scale={zoomScale} className="min-w-max p-[16px]">
                   <div className={`bg-white text-black rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`} style={{ width: `${totalTableWidth + 32}px` }}>
                     {/* Study Info & Page Info */}
                   {(shellData.studyInfo || shellData.pageInfo) && (
@@ -3523,33 +3828,21 @@ function ShellPreview({
                           </tr>
                         )}
                       </thead>
-                      <tbody>
-                        {shellData.rows.map((row, ri) => (
-                          <tr
-                            key={ri}
-                            className="group hover:bg-az-secondary cursor-pointer"
-                            onClick={onBlockClick}
-                          >
-                            <td
-                              className={`${
-                                row.isHeader ? 'bg-white font-bold text-text-primary group-hover:bg-az-secondary' : 'bg-white font-normal text-text-primary group-hover:bg-az-secondary'
-                              } text-left align-middle text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-pre-wrap break-words border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
-                              style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
-                            >
-                              {row.category}
-                            </td>
-                            {row.values.map((val, vi) => (
-                              <td
-                                key={vi}
-                                className={`text-left align-middle text-[12px] leading-[18px] ${
-                                  row.isHeader ? 'bg-white font-bold text-text-primary group-hover:bg-az-secondary' : 'bg-white font-normal text-text-primary group-hover:bg-az-secondary'
-                                } py-[6px] px-[8px] whitespace-pre-wrap break-words border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
-                              >
-                                {val}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
+                      <tbody onMouseLeave={() => setHoveredBlockId(null)}>
+                        {shellData.rows.map((row, ri) => {
+                          const blockId = blockIdByRow[ri];
+                          return (
+                            <ShellTableRowView
+                              key={ri}
+                              row={row}
+                              blockId={blockId}
+                              active={blockId !== null && blockId === hoveredBlockId}
+                              onHover={setHoveredBlockId}
+                              onClick={() => handleRowClick(blockId)}
+                              scrollContainerRef={tableScrollRef}
+                            />
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -3566,7 +3859,7 @@ function ShellPreview({
               </div>
             )}
             </div>
-          </div>
+          </ZoomContainer>
         </div>
         );
       })()
@@ -3585,7 +3878,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
-              <MetadataPanel onClose={onMetadataClose} docType={docType} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} onReviewItemsChange={onReviewItemsChange} />
+              <MetadataPanel onClose={onMetadataClose} docType={docType} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} />
             </div>
           )}
         </div>
@@ -3724,6 +4017,72 @@ function GroupCodeViewer({ lines }: { lines: string[] }) {
 
 // ── Block Items Data for Blocks Tab Two-Column Layout ──
 const METADATA_BLOCK_ITEMS_DATA = [
+  {
+    id: 'height',
+    name: 'Height (cm)',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADVS', value: 'ADVS'}] },
+      { id: 'variable', label: 'Variable', value: 'HEIGHTBL', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'HEIGHTBL', value: 'HEIGHTBL'}, {label: 'WEIGHTBL', value: 'WEIGHTBL'}, {label: 'BMIBL', value: 'BMIBL'}] },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_DESC', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_DESC', value: 'BLK_DESC'}, {label: 'BLK_CUM', value: 'BLK_CUM'}, {label: 'BLK_FREQ', value: 'BLK_FREQ'}] },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
+      { id: 'formatName', label: 'Format Name', value: '8.1', type: 'text' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: '8.1', value: '8.1'}, {label: '8.2', value: '8.2'}] },
+    ],
+  },
+  {
+    id: 'weight',
+    name: 'Weight (kg)',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADVS', value: 'ADVS'}] },
+      { id: 'variable', label: 'Variable', value: 'WEIGHTBL', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'WEIGHTBL', value: 'WEIGHTBL'}, {label: 'WGTBLU', value: 'WGTBLU'}] },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_DESC', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_DESC', value: 'BLK_DESC'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
+      { id: 'formatName', label: 'Format Name', value: '8.1', type: 'text' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: '8.1', value: '8.1'}, {label: '8.2', value: '8.2'}] },
+    ],
+  },
+  {
+    id: 'weight_group',
+    name: 'Weight group (kg)',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADVS', value: 'ADVS'}] },
+      { id: 'variable', label: 'Variable', value: 'WGTGR1', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'WGTGR1', value: 'WGTGR1'}, {label: 'WEIGHTBL', value: 'WEIGHTBL'}] },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_FREQ', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_FREQ', value: 'BLK_FREQ'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
+      { id: 'formatName', label: 'Format Name', value: 'wgtgr1_cat', type: 'text' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'wgtgr1_cat', value: 'wgtgr1_cat'}, {label: 'bmigr1_cat', value: 'bmigr1_cat'}] },
+    ],
+  },
+  {
+    id: 'bmi',
+    name: 'BMI (kg/m2)',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADVS', value: 'ADVS'}] },
+      { id: 'variable', label: 'Variable', value: 'BMIBL', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'BMIBL', value: 'BMIBL'}, {label: 'HEIGHTBL', value: 'HEIGHTBL'}, {label: 'WEIGHTBL', value: 'WEIGHTBL'}] },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_DESC', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_DESC', value: 'BLK_DESC'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
+      { id: 'formatName', label: 'Format Name', value: '8.1', type: 'text' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: '8.1', value: '8.1'}, {label: '8.2', value: '8.2'}] },
+    ],
+  },
+  {
+    id: 'bmi_group',
+    name: 'BMI Group (kg/m2)',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADVS', value: 'ADVS'}] },
+      { id: 'variable', label: 'Variable', value: 'BMIGR1', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'BMIGR1', value: 'BMIGR1'}, {label: 'BMIBL', value: 'BMIBL'}] },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_FREQ', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_FREQ', value: 'BLK_FREQ'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
+      { id: 'formatName', label: 'Format Name', value: 'bmigr1_cat', type: 'text' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'bmigr1_cat', value: 'bmigr1_cat'}, {label: 'wgtgr1_cat', value: 'wgtgr1_cat'}] },
+    ],
+  },
+  {
+    id: 'ecog',
+    name: 'ECOG performance status',
+    fields: [
+      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRS', value: 'ADRS'}] },
+      { id: 'variable', label: 'Variable', value: 'ECOGBL', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'ECOGBL', value: 'ECOGBL'}, {label: 'ECOGBLN', value: 'ECOGBLN'}] },
+      { id: 'blockType', label: 'Block Type', value: 'BLK_FREQ', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_FREQ', value: 'BLK_FREQ'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
+      { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
+      { id: 'formatName', label: 'Format Name', value: 'ecogbl_cat', type: 'text' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'ecogbl_cat', value: 'ecogbl_cat'}, {label: 'nicstt_cat', value: 'nicstt_cat'}] },
+    ],
+  },
   {
     id: 'nicotine',
     name: 'Nicotine use',
@@ -4002,6 +4361,7 @@ function MoreOptionsMenu({ anchorRect, isDeprecated, onClose, onDeprecate, onDel
 
 function BlocksTabContent({
   blocks,
+  targetBlockId,
   confirmedBlocks,
   onToggleBlockConfirm,
   isLocked,
@@ -4014,6 +4374,7 @@ function BlocksTabContent({
   fieldRefs
 }: {
   blocks: any;
+  targetBlockId?: string | null;
   confirmedBlocks: Record<string, boolean>;
   onToggleBlockConfirm: (blockId: string) => void;
   isLocked?: boolean;
@@ -4043,6 +4404,14 @@ function BlocksTabContent({
       scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [blocks, selectedBlockId]);
+
+  // Select the block requested by a Shell Preview click.
+  useEffect(() => {
+    if (!targetBlockId) return;
+    if (!blocks.find((b: any) => b.id === targetBlockId)) return;
+    setSelectedBlockId(targetBlockId);
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [targetBlockId, blocks]);
 
   const handleSidebarClick = (blockId: string) => {
     setSelectedBlockId(blockId);
@@ -4326,6 +4695,9 @@ interface MetadataPanelProps {
   metaUpdateProcessing?: boolean;
   submittedDiffItems?: MetaDiffItem[];
   targetFieldId?: string;
+  /** Shell-preview block name to deep-link to: opens the Blocks tab with that block selected. */
+  targetBlockName?: string | null;
+  targetBlockTrigger?: number;
   onReviewItemsChange?: (items: ReviewItem[]) => void;
   associatedTLStatus?: string;
   onJumpToTL?: (name: string) => void;
@@ -4337,9 +4709,10 @@ function MetadataPanel({
   repeatColumnBaseline = null, onRepeatColumnBaselineChange,
   pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
   idpageBaseline = null, idlistBaseline = null, onIdpageBaselineChange, onIdlistBaselineChange,
-  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, baselineAdvanceTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], targetFieldId, onReviewItemsChange, associatedTLStatus = 'pending', onJumpToTL,
+  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, baselineAdvanceTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], targetFieldId, targetBlockName, targetBlockTrigger, onReviewItemsChange, associatedTLStatus = 'pending', onJumpToTL,
 }: MetadataPanelProps) {
   const [activeTab, setActiveTab] = useState<"basic" | "blocks">("basic");
+  const [targetBlockId, setTargetBlockId] = useState<string | null>(null);
   const loadFromSession = <T,>(key: string, fallback: T): T => { try { const raw = sessionStorage.getItem(key); return raw ? (JSON.parse(raw) as T) : fallback; } catch { return fallback; } };
 
   const migrateFields = (stored: any[]): any[] => {
@@ -4470,7 +4843,7 @@ function MetadataPanel({
     {
       id: 'figBasic',
       fields: [
-        { id: 'associatedTL', label: 'Associated Table/Listing', value: 'Table 14.1.1', status: 'default' as FieldStatus, confirmed: false, dependencyState: 'S1' },
+        { id: 'associatedTL', label: 'Associated Table/Listing', value: 'Table 14.1.6.1', status: 'default' as FieldStatus, confirmed: false, dependencyState: 'S1' },
         { id: 'figureType', label: 'Figure Type', value: 'KM', status: 'default' as FieldStatus, confirmed: false },
         { id: 'inputDataset', label: 'Input Dataset(s)', value: 'ADTTTE', status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.' },
         { id: 'pageBy', label: 'Page by', value: 'TRTA', status: 'default' as FieldStatus, confirmed: false },
@@ -4834,6 +5207,16 @@ function MetadataPanel({
       }, 200);
     }
   }, [targetFieldId, figureComponents]);
+
+  // Deep-link from a Shell Preview block click: open the Blocks tab with that block selected.
+  // Keyed off a trigger so clicking the same block twice still re-selects it.
+  useEffect(() => {
+    if (!targetBlockName) return;
+    const match = METADATA_BLOCK_ITEMS_DATA.find(b => b.name === targetBlockName);
+    if (!match) return;
+    setActiveTab("blocks");
+    setTargetBlockId(match.id);
+  }, [targetBlockName, targetBlockTrigger]);
 
   // ── Stats ──
   const isBasicTab = activeTab === 'basic';
@@ -5230,8 +5613,8 @@ function MetadataPanel({
                                 <Dropdown
                                   value={isS0 ? null : field.value}
                                   options={[
-                                    { label: 'Table 14.1.1', value: 'Table 14.1.1' },
-                                    { label: 'Table 14.1.1', value: 'Table 14.1.1' },
+                                    { label: 'Table 14.1.6.1', value: 'Table 14.1.6.1' },
+                                    { label: 'Table 14.1.6.1', value: 'Table 14.1.6.1' },
                                     { label: 'Listing 16.2.1', value: 'Listing 16.2.1' },
                                   ]}
                                   onChange={(val) => {
@@ -5482,6 +5865,7 @@ function MetadataPanel({
           ) : (
             <BlocksTabContent
               blocks={METADATA_BLOCK_ITEMS_DATA}
+              targetBlockId={targetBlockId}
               confirmedBlocks={blockItemConfirmed}
               onToggleBlockConfirm={(blockId) => {
                 const block = METADATA_BLOCK_ITEMS_DATA.find(b => b.id === blockId);
@@ -6093,7 +6477,6 @@ function WorkspaceContent({
       status: 'pending',
       isExpanded: true,
       tables: [
-        { id: 't4', name: 'Table 14.1.1', status: 'error', errorMessage: 'Failed to parse table structure' },
         { id: 't2', name: 'Table 14.1.6.1', status: 'pending' },
         { id: 'l1', name: 'Listing 16.2.1', status: 'pending', docType: 'listing' },
         { id: 'f1', name: 'Figure 15.1.1', status: 'pending', docType: 'figure' },
@@ -6488,7 +6871,7 @@ function WorkspaceContent({
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-1 bg-bg-panel">
+    <div className="flex h-full min-w-0 flex-1 overflow-hidden bg-bg-panel">
       <div ref={workspaceContainerRef} className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         <div
           className="shrink-0 overflow-hidden"
@@ -6499,7 +6882,7 @@ function WorkspaceContent({
           }}
         >
           <div className="flex h-full w-full flex-col bg-bg-panel">
-            <div className="flex h-[48px] shrink-0 items-center gap-[8px] px-[10px]">
+            <div className="flex h-[52px] shrink-0 items-center gap-[8px] px-[10px]">
               <TooltipText label="Back to Home">
                 <button
                   onClick={onNavigateHome}
@@ -6567,14 +6950,13 @@ function WorkspaceContent({
           />
         )}
 
-        <div className={`flex min-w-0 flex-1 flex-col ${!treeListOpen ? "ml-[4px]" : ""}`}>
-          <div className="shrink-0 w-full overflow-hidden mt-[4px] mr-[4px]">
+        <div className={`flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden ${!treeListOpen ? "ml-[4px]" : ""}`}>
+          <div className="shrink-0 w-full overflow-hidden mt-[4px] px-[6px]">
             <ViewToggleBar
               treeListOpen={treeListOpen}
               onToggleTreeList={() => setTreeListOpen(true)}
               onNavigateHome={onNavigateHome}
               currentEvent={currentEvent}
-
               panelView={panelView}
               onPanelViewChange={handlePanelViewChange}
               panelLayout={panelLayout}
@@ -6585,24 +6967,20 @@ function WorkspaceContent({
             />
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-elevation-panel mb-[4px] mr-[4px]">
-            <div ref={contentAreaRef} className="relative flex min-h-0 flex-1 overflow-hidden">
+          <div className="flex min-w-0 min-h-0 flex-1 flex-col p-[6px]">
+            <div ref={contentAreaRef} className="relative flex min-h-0 min-w-0 flex-1 gap-[6px]">
             {docType === 'listing' ? (
               // Listing layout with configurable panel direction (vertical = top/bottom, horizontal = left/right)
-              <div className="flex min-w-0 flex-1 overflow-hidden">
+              <div className="flex min-w-0 min-h-0 flex-1 gap-[6px]">
                 {/* Shell + Code area — direction depends on panelLayout */}
-                <div className="flex min-w-0 flex-1 overflow-hidden" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}>
+                <div className="flex min-w-0 min-h-0 flex-1" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row', gap: '6px' }}>
                   {panelView !== 'code' && (
                     <div
                       style={panelLayout === 'vertical'
                         ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
                         : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
                       }
-                      className={`h-full flex flex-col overflow-hidden flex flex-col ${panelView === 'both' ? 'shrink-0' : ''} ${
-                        panelLayout === 'vertical'
-                          ? (panelView === 'both' ? 'border-b border-graphite-10' : '')
-                          : (panelView === 'both' ? 'border-r border-graphite-10' : '')
-                      }`}
+                      className={`h-full flex flex-col overflow-hidden rounded-[12px] border border-platinum-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] ${panelView === 'both' ? 'shrink-0' : 'flex-1'}`}
                     >
                       <ListingShellPreview
                         selectedItemName={getSelectedItemName()}
@@ -6651,7 +7029,7 @@ function WorkspaceContent({
                   )}
 
                   {panelView !== 'shell' && (
-                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
+                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col rounded-[12px] border border-platinum-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
                       <CodePanel
                         selectedItem={getSelectedItemName()}
                         docType="listing"
@@ -6672,7 +7050,7 @@ function WorkspaceContent({
                 )}
 
                 <div
-                  className={`shrink-0 overflow-hidden ${aiCopilotOpen ? 'border-l border-graphite-10' : ''}`}
+                  className="shrink-0 overflow-hidden bg-transparent"
                   style={{
                     width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
                     opacity: aiCopilotOpen ? 1 : 0,
@@ -6719,17 +7097,13 @@ function WorkspaceContent({
               </div>
             ) : (
               // Table Layout — supports both horizontal (default) and vertical panel layout
-              <div className="flex h-full flex-1 min-w-0" style={{ minWidth: panelLayout === 'vertical' ? undefined : `${tableTotalMinWidth}px` }}>
+              <div className="flex h-full flex-1 min-w-0 gap-[6px]" style={{ minWidth: panelLayout === 'vertical' ? undefined : `${tableTotalMinWidth}px` }}>
                 {/* Shell + Code area — direction depends on panelLayout */}
-                <div className="flex min-w-0 flex-1 overflow-hidden" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}>
+                <div className="flex min-w-0 min-h-0 flex-1" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row', gap: '6px' }}>
                   {/* Shell Preview with subordinate Metadata card */}
                   {shellPreviewOpen && (
                     <div
-                      className={`h-full flex flex-col min-w-0 overflow-hidden ${panelView === 'shell' ? 'flex-1' : 'shrink-0'} ${
-                        panelLayout === 'vertical'
-                          ? (codeOpen ? 'border-b border-graphite-10' : '')
-                          : (codeOpen ? 'border-r border-graphite-10' : '')
-                      }`}
+                      className={`h-full flex flex-col min-w-0 overflow-hidden rounded-[12px] border border-platinum-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] ${panelView === 'shell' ? 'flex-1' : 'shrink-0'}`}
                       style={panelLayout === 'vertical'
                         ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
                         : { width: panelView === 'shell' ? undefined : `${shellPreviewWidth}px` }
@@ -6800,7 +7174,7 @@ function WorkspaceContent({
                   )}
 
                   {codeOpen && (
-                    <div className="min-w-0 flex-1 overflow-hidden" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
+                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col rounded-[12px] border border-platinum-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
                       <CodePanel
                         selectedItem={getSelectedItemName()}
                         docType={docType}
@@ -6835,7 +7209,7 @@ function WorkspaceContent({
                 )}
 
                 <div
-                  className={`shrink-0 overflow-hidden ${aiCopilotOpen ? 'border-l border-graphite-10' : ''}`}
+                  className="shrink-0 overflow-hidden bg-transparent"
                   style={{
                     width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
                     opacity: aiCopilotOpen ? 1 : 0,

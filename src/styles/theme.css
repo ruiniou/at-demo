@@ -211,6 +211,11 @@
   --color-form-border: #EBECEC; /* AZ palette Graphite/10 */
   --color-form-error: #E03B3B;
 
+  /* Tooltip tokens — Figma 271:8834 Tooltip */
+  --color-tooltip-bg: #3C4242;
+  --color-tooltip-text: #F8F7F7;
+  --color-tooltip-label: #B2B4B4;
+
   /* Multi-dimensional status tokens */
   --color-status-success-bg: #F6CCE2;
   --color-status-success-border: #EC99C5;

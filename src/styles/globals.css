@@ -122,6 +122,12 @@
   font-weight: var(--font-weight-medium, 500);
   line-height: 14px;
 }
+.t-footnote {
+  font-family: var(--font-body);
+  font-size: var(--text-2xs, 10px);
+  font-weight: var(--font-weight-normal, 400);
+  line-height: 14px;
+}
 .t-code-editor {
   font-family: var(--font-mono, 'Menlo', 'Courier New', Courier, monospace);
   font-size: var(--text-md, 14px);
