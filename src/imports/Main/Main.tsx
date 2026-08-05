@@ -1497,7 +1497,7 @@ function WorkspaceDivider({
 
   return (
     <div
-      className={`relative z-10 w-0 shrink-0 cursor-col-resize bg-transparent -mx-[3px] ${className}`}
+      className={`relative z-30 w-0 shrink-0 cursor-col-resize bg-transparent -mx-[3px] ${className}`}
       onMouseDown={(event) => {
         event.preventDefault();
         setIsDragging(true);
@@ -1973,9 +1973,9 @@ function ListingShellPreview({
   const [metadataPending, setMetadataPending] = useState(false);
   const [zoomLevel, setZoomLevel] = useState('100');
   const zoomOptions = [
-    { label: '50%', value: '50' },
     { label: '75%', value: '75' },
     { label: '100%', value: '100' },
+    { label: '150%', value: '150' },
     { label: '200%', value: '200' },
   ];
   const zoomScale = Number(zoomLevel) / 100;
@@ -2624,8 +2624,8 @@ function ListingShellPreview({
                       <div style={{ transform: `scale(${pageScale / 100})`, transformOrigin: 'top left' }} className="relative">
                         <div className="absolute right-[32px] top-[28px] rounded-[4px] bg-az-secondary px-[6px] py-0 font-['PingFang_SC',sans-serif] text-[12px] leading-[20px] text-brand-1">{pageIndex + 1}/{printPages.length}</div>
                         <div className="p-[48px] pt-[64px]">
-                          <div className="border-b-2 border-text-primary pb-[14px] mb-[10px] text-center">
-                            <h1 className="font-['Inter',sans-serif] text-[13px] leading-[18px] font-bold tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
+                          <div className="border-b-2 border-text-primary pb-[12px] mb-[12px] text-center">
+                            <h1 className="font-['Inter',sans-serif] text-[13px] leading-[16px] font-medium text-text-primary tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
                             <p className="mt-[4px] font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676]">
                               Rows {page.rowPageIndex * PRINT_ROWS_PER_PAGE + 1}-{page.rowPageIndex * PRINT_ROWS_PER_PAGE + page.pageRows.length} · Columns {page.pageScrollColumns[0] ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[0].key) + 1 : 1}-{page.pageScrollColumns.length ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[page.pageScrollColumns.length - 1].key) + 1 : frozenPrintColumns.length}{frozenPrintColumns.length > 0 ? ` · frozen 1-${frozenPrintColumns.length} repeated` : ''}
                             </p>
@@ -2641,7 +2641,7 @@ function ListingShellPreview({
                                 {page.pageColumns.map((column) => {
                                   const meta = LISTING_COLUMN_METADATA[column.key];
                                   return (
-                                    <th key={column.key} style={{ fontWeight: 700 }} className="border-r border-border-default px-[4px] py-[6px] text-left align-top t-table font-bold whitespace-normal break-words last:border-r-0">
+                                    <th key={column.key} style={{ fontWeight: 500 }} className="border-r border-border-default px-[8px] py-[3px] text-left align-top t-small-medium font-medium whitespace-normal break-words last:border-r-0">
                                       <div className="flex flex-col items-start gap-[2px]">
                                         <span>{column.label}</span>
                                         {/* Experimental inline metadata (Line 2/3). Fixed heights keep header rows aligned. */}
@@ -2666,9 +2666,9 @@ function ListingShellPreview({
                             </thead>
                             <tbody>
                               {page.pageRows.map((row) => (
-                                <tr key={row.subject} className="border-b border-border-default last:border-b-2 last:border-text-primary">
+                                <tr key={row.subject} className="border-b-0 last:border-b-2 last:border-text-primary last:relative last:z-10">
                                   {page.pageColumns.map((column) => (
-                                    <td key={`${row.subject}-${column.key}`} className="border-r border-border-default px-[4px] py-[6px] align-middle text-[10px] leading-[15px] font-normal whitespace-normal break-words last:border-r-0">{(row as Record<string, string>)[column.key]}</td>
+                                    <td key={`${row.subject}-${column.key}`} className="border-r border-border-default px-[6px] py-[1px] align-middle text-[10px] leading-[14px] font-normal whitespace-normal break-words last:border-r-0">{(row as Record<string, string>)[column.key]}</td>
                                   ))}
                                 </tr>
                               ))}
@@ -2705,7 +2705,7 @@ function ListingShellPreview({
 
                 {/* Title header */}
                 <div className="min-w-max flex flex-col items-center justify-center pb-[12px] gap-[4px]">
-                  <h1 className="t-body-medium text-center tracking-[-0.01em]">
+                  <h1 className="text-[13px] font-medium leading-[16px] text-text-primary text-center tracking-[-0.01em]">
                     Appendix 16.2.12
                   </h1>
                   <h2 className="t-small text-text-secondary text-center font-normal">
@@ -2745,7 +2745,7 @@ function ListingShellPreview({
                               key={column.key}
                               ref={(node) => { thRefs.current[columnIndex] = node; }}
                               style={cellStyle}
-                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-text-primary border-r-border-default last:border-r-0 px-[8px] py-[6px] text-left align-top t-table font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
+                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-text-primary border-r-border-default last:border-r-0 px-[8px] py-[3px] text-left align-top t-small-medium font-medium whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] relative z-10 ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
                               onMouseEnter={() => {
                                 if (draggingBreak === null && draggingFreeze === null && columnIndex < firstPageBreakIndex) {
                                   setHoveredFreezeColumn(columnIndex);
@@ -2767,7 +2767,7 @@ function ListingShellPreview({
                               )}
                               {/* Button area */}
                               <div className="flex w-full items-center justify-between gap-[4px] rounded-[3px]">
-                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} style={{ fontWeight: 700, fontSize: '13px', lineHeight: '16px' }} className="flex-1 min-w-0 whitespace-pre-wrap break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
+                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} style={{ fontWeight: 500, fontSize: '12px', lineHeight: '20px' }} className="flex-1 min-w-0 whitespace-pre-wrap break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
                               </div>
 
                               {/* Experimental inline metadata (Line 2/3). Fixed heights keep header rows aligned. */}
@@ -2842,7 +2842,7 @@ function ListingShellPreview({
                   </thead>
                   <tbody>
                     {listingData.map((row, rowIndex) => (
-                      <tr key={rowIndex} className="group hover:bg-az-secondary cursor-pointer">
+                      <tr key={rowIndex} className="group hover:bg-az-secondary cursor-pointer h-[18px]" style={{ height: '18px' }}>
                         {listingColumns.map((column, columnIndex) => {
                           const frozen = isColumnFrozen(columnIndex);
                           const frozenBoundary = frozenUntilIndex === columnIndex;
@@ -2852,7 +2852,7 @@ function ListingShellPreview({
                           if (frozen) { cellStyle.left = `${getFrozenLeft(columnIndex)}px`; cellStyle.zIndex = 20; cellStyle.backgroundColor = 'white'; }
                           if (shadows.length) cellStyle.boxShadow = shadows.join(', ');
                           return (
-                            <td key={`${rowIndex}-${column.key}`} style={cellStyle} className={`border-r border-b border-b-border-default group-last:border-b-2 group-last:border-b-text-primary border-border-default last:border-r-0 px-[8px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-pre-wrap break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
+                            <td key={`${rowIndex}-${column.key}`} style={cellStyle} className={`border-r border-b-0 group-last:border-b-2 group-last:border-b-text-primary group-last:relative group-last:z-10 border-border-default last:border-r-0 px-[6px] py-[1px] align-middle t-footnote text-[10px] leading-[14px] font-normal whitespace-pre-wrap break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
                               <div className="w-full overflow-hidden">
                                 {(row as Record<string, string>)[column.key]}
                               </div>
@@ -3517,9 +3517,9 @@ function ShellTableRowView({
   const valueType = 't-footnote';
   const cellPadY = isSubgroup ? 'py-[1px]' : 'py-[6px]';
   const rowHeight = isSubgroup ? 18 : 24;
-  // Subgroup rows carry no visible divider; the last row keeps the 2px table frame.
-  const divider = isSubgroup ? 'border-b-0' : 'border-b border-border-default';
-  const cellBase = `${cellBg} text-left align-middle ${cellPadY} px-[6px] whitespace-pre-wrap break-words border-r border-r-border-default ${divider} group-last:border-b-2 group-last:border-b-text-primary transition-colors duration-[180ms]`;
+  // Group divider starts at top of Parent row (except first parent row), subgroup rows have no horizontal lines.
+  const divider = isSubgroup ? 'border-t-0 border-b-0' : 'border-t border-t-border-default border-b-0 group-first:border-t-0';
+  const cellBase = `relative ${cellBg} text-left align-middle ${cellPadY} px-[6px] whitespace-pre-wrap break-words border-r border-r-border-default ${divider} group-last:border-b-2 group-last:border-b-text-primary group-last:z-10 transition-colors duration-[180ms]`;
 
   return (
     <tr
@@ -3636,19 +3636,24 @@ function ShellPreview({
     return map;
   }, [tableBlocks]);
 
-  // A row click targets the block it belongs to, so the panel can select that block.
+  // A block or row click targets the block/component it belongs to, so the panel can select that block.
+  const handleBlockClick = (blockName?: string) => {
+    if (blockName) {
+      setTargetBlockName(blockName);
+      setTargetBlockTrigger(t => t + 1);
+    }
+    onBlockClick(blockName);
+  };
   const handleRowClick = (blockId: string | null) => {
     const name = blockId ? parentLabelByBlockId[blockId] : undefined;
-    setTargetBlockName(name || null);
-    setTargetBlockTrigger(t => t + 1);
-    onBlockClick(name || undefined);
+    handleBlockClick(name);
   };
   const metadataMinWidth = 280;
   const [zoomLevel, setZoomLevel] = useState('100');
   const zoomOptions = [
-    { label: '50%', value: '50' },
     { label: '75%', value: '75' },
     { label: '100%', value: '100' },
+    { label: '150%', value: '150' },
     { label: '200%', value: '200' },
   ];
   const zoomScale = Number(zoomLevel) / 100;
@@ -3725,7 +3730,7 @@ function ShellPreview({
                   showMedianLines={true}
                   showRiskTable={true}
                   figureNumber={selectedItemName}
-                  onBlockClick={onBlockClick}
+                  onBlockClick={handleBlockClick}
                 />
 
                 {/* Footnotes */}
@@ -3751,7 +3756,7 @@ function ShellPreview({
                       showMedianLines={true}
                       showRiskTable={true}
                       figureNumber={selectedItemName}
-                      onBlockClick={onBlockClick}
+                      onBlockClick={handleBlockClick}
                     />
                   </div>
                 </div>
@@ -3829,7 +3834,7 @@ function ShellPreview({
 
                   {/* Title header */}
                   <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-text-primary gap-[4px]">
-                    <h1 className="t-table text-center tracking-[-0.01em]">
+                    <h1 className="text-[13px] font-medium leading-[16px] text-text-primary text-center tracking-[-0.01em]">
                       {shellData.tableNumber}
                     </h1>
                     {shellData.tableTitle && (
@@ -3859,14 +3864,14 @@ function ShellPreview({
                       <thead>
                         {/* Column group header — the two header rows total 52px. */}
                         <tr className="group" style={{ height: '26px' }}>
-                          <th className={`bg-white text-left align-middle t-small-medium py-[3px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-text-primary'} border-r-border-default`}>
+                          <th className={`bg-white text-left align-top t-small-medium py-[3px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-text-primary'} border-r-border-default`}>
                             Table/Listing Field
                           </th>
                           {shellData.columnGroups.map((cg, cgi) => (
                             <th
                               key={cgi}
                               colSpan={cg.span}
-                              className={`bg-white text-left align-middle t-small-medium text-text-primary py-[3px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-text-primary'} border-r-border-default last:border-r-0`}
+                              className={`bg-white text-left align-top t-small-medium text-text-primary py-[3px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-text-primary'} border-r-border-default last:border-r-0`}
                             >
                               {cg.name.split('\n').map((line, idx) => (
                                 <div key={idx}>{line}</div>
@@ -3877,13 +3882,13 @@ function ShellPreview({
                         {/* Standard columns header */}
                         {hasSubHeader && (
                           <tr style={{ height: '26px' }}>
-                            <th className="bg-white text-left align-middle t-small-medium text-text-primary py-[3px] px-[8px] border-r border-b-2 border-text-primary border-r-border-default">
+                            <th className="bg-white text-left align-top t-small-medium text-text-primary py-[3px] px-[8px] border-r border-b-2 border-text-primary border-r-border-default relative z-10">
                               {/* Empty cell under Table/Listing Field */}
                             </th>
                             {shellData.columns.map((col, ci) => (
                               <th
                                 key={ci}
-                                className="bg-white text-left align-middle t-small-medium text-text-primary py-[3px] px-[8px] border-r border-b-2 border-text-primary border-r-border-default last:border-r-0"
+                                className="bg-white text-left align-top t-small-medium text-text-primary py-[3px] px-[8px] border-r border-b-2 border-text-primary border-r-border-default last:border-r-0 relative z-10"
                               >
                                 {col}
                               </th>
@@ -5275,11 +5280,32 @@ function MetadataPanel({
   // Keyed off a trigger so clicking the same block twice still re-selects it.
   useEffect(() => {
     if (!targetBlockName) return;
-    const match = METADATA_BLOCK_ITEMS_DATA.find(b => b.name === targetBlockName);
-    if (!match) return;
     setActiveTab("blocks");
-    setTargetBlockId(match.id);
-  }, [targetBlockName, targetBlockTrigger]);
+
+    let targetId: string | null = null;
+    if (docType === 'figure') {
+      const match = figureComponents.find((c: any) => 
+        c.name === targetBlockName || 
+        c.id === targetBlockName ||
+        (targetBlockName === 'KM Plot Chart' && (c.id === 'kmCurve' || c.name === 'KM Plot Chart')) ||
+        (targetBlockName === 'Number at Risk Table' && (c.id === 'riskTable' || c.name === 'Number at Risk Table'))
+      );
+      if (match) {
+        targetId = match.id;
+      }
+    } else if (docType === 'listing') {
+      setActiveTab("blocks");
+    } else {
+      const match = METADATA_BLOCK_ITEMS_DATA.find(b => b.name === targetBlockName || b.id === targetBlockName);
+      if (match) {
+        targetId = match.id;
+      }
+    }
+
+    if (targetId) {
+      setTargetBlockId(targetId);
+    }
+  }, [targetBlockName, targetBlockTrigger, docType, figureComponents]);
 
   // ── Stats ──
   const isBasicTab = activeTab === 'basic';
@@ -5904,6 +5930,7 @@ function MetadataPanel({
             <BlocksTabContent
               // @ts-ignore
               blocks={figureComponents}
+              targetBlockId={targetBlockId}
               confirmedBlocks={blockItemConfirmed}
               onToggleBlockConfirm={(blockId) => {
                 const block = figureComponents.find((b: any) => b.id === blockId);
@@ -7047,7 +7074,13 @@ function WorkspaceContent({
                     >
                       <ListingShellPreview
                         selectedItemName={getSelectedItemName()}
-                        onBlockClick={() => setMetadataOpen(true)}
+                        onBlockClick={(blockName) => {
+                          setMetadataOpen(true);
+                          if (blockName) {
+                            setTargetBlockName(blockName);
+                            setTargetBlockTrigger(prev => prev + 1);
+                          }
+                        }}
                         onMetadataClick={() => setMetadataOpen((open) => !open)}
                         metadataOpen={metadataOpen}
                         onCloseMetadata={() => setMetadataOpen(false)}
@@ -7174,7 +7207,13 @@ function WorkspaceContent({
                     >
                       <ShellPreview
                         docType={docType}
-                        onBlockClick={() => setMetadataOpen(true)}
+                        onBlockClick={(blockName) => {
+                          setMetadataOpen(true);
+                          if (blockName) {
+                            setTargetBlockName(blockName);
+                            setTargetBlockTrigger(prev => prev + 1);
+                          }
+                        }}
                         onMetadataClick={() => setMetadataOpen((open) => !open)}
                         metadataOpen={metadataOpen}
                         onMetadataClose={() => setMetadataOpen(false)}

@@ -246,229 +246,239 @@ export function KMPlot({
   }
 
   return (
-    <div 
-      className="flex flex-col select-none font-sans w-full text-text-primary cursor-pointer hover:bg-black/5 p-[8px] rounded-[4px] transition-colors"
-      onClick={onBlockClick}
-    >
-
-
-      {/* SVG Plot */}
-      <div className="flex justify-center p-[12px]">
-        <svg width={width} height={height} className="overflow-visible">
-          {/* Grid Lines */}
-          {gridYValues.map((val) => (
-            <line
-              key={val}
-              x1={getX(0)}
-              y1={getY(val)}
-              x2={getX(maxTime)}
-              y2={getY(val)}
-              stroke="#E8EAEB"
-              strokeWidth="0.6"
-              strokeDasharray="3,3"
-            />
-          ))}
-
-          {/* X Axis Ticks */}
-          {ticksX.map((val) => (
-            <g key={val}>
+    <div className="flex flex-col select-none font-sans w-full text-text-primary gap-[8px]">
+      {/* Chart Block Container */}
+      <div 
+        className="flex flex-col w-full cursor-pointer hover:bg-black/5 p-[8px] rounded-[4px] transition-colors"
+        onClick={(e) => {
+          e.stopPropagation();
+          onBlockClick?.('KM Plot Chart');
+        }}
+      >
+        {/* SVG Plot */}
+        <div className="flex justify-center p-[12px]">
+          <svg width={width} height={height} className="overflow-visible">
+            {/* Grid Lines */}
+            {gridYValues.map((val) => (
               <line
-                x1={getX(val)}
-                y1={getY(0)}
-                x2={getX(val)}
-                y2={getY(0) + 4}
-                stroke="#888E8E"
-                strokeWidth="1"
-              />
-              <text
-                x={getX(val)}
-                y={getY(0) + 16}
-                textAnchor="middle"
-                className="text-[9px] fill-[#656969] font-mono"
-              >
-                {val}
-              </text>
-            </g>
-          ))}
-
-          {/* Y Axis Ticks */}
-          {[0.0, 0.2, 0.4, 0.6, 0.8, 1.0].map((val) => (
-            <g key={val}>
-              <line
-                x1={getX(0) - 4}
-                y1={getY(val)}
-                x2={getX(0)}
-                y2={getY(val)}
-                stroke="#888E8E"
-                strokeWidth="1"
-              />
-              <text
-                x={getX(0) - 8}
-                y={getY(val) + 3}
-                textAnchor="end"
-                className="text-[9px] fill-[#656969] font-mono"
-              >
-                {mode === 'runtime' ? `${Math.round(val * 100)}%` : val.toFixed(1)}
-              </text>
-            </g>
-          ))}
-
-          {/* Axes Lines */}
-          <line
-            x1={getX(0)}
-            y1={getY(0)}
-            x2={getX(maxTime)}
-            y2={getY(0)}
-            stroke="#888E8E"
-            strokeWidth="1"
-          />
-          <line
-            x1={getX(0)}
-            y1={getY(0)}
-            x2={getX(0)}
-            y2={getY(1.0)}
-            stroke="#888E8E"
-            strokeWidth="1"
-          />
-
-          {/* Axis Titles */}
-          <text
-            x={getX(maxTime / 2)}
-            y={getY(0) + 32}
-            textAnchor="middle"
-            className="text-[10px] fill-text-primary font-medium"
-          >
-            Time ({timeUnit})
-          </text>
-          
-          <text
-            x={getX(0) - 36}
-            y={getY(0.5)}
-            textAnchor="middle"
-            transform={`rotate(-90, ${getX(0) - 36}, ${getY(0.5)})`}
-            className="text-[10px] fill-text-primary font-medium"
-          >
-            Survival Probability
-          </text>
-
-          {/* Median Reference Lines */}
-          {showMedianLines && (
-            <>
-              <line
+                key={val}
                 x1={getX(0)}
-                y1={getY(0.5)}
-                x2={getX(group2.medianTime)}
-                y2={getY(0.5)}
-                stroke={group2.color}
-                strokeWidth="1"
-                strokeDasharray="2,2"
-                opacity="0.6"
+                y1={getY(val)}
+                x2={getX(maxTime)}
+                y2={getY(val)}
+                stroke="#E8EAEB"
+                strokeWidth="0.6"
+                strokeDasharray="3,3"
               />
-              <line
-                x1={getX(group2.medianTime)}
-                y1={getY(0.5)}
-                x2={getX(group2.medianTime)}
-                y2={getY(0)}
-                stroke={group2.color}
-                strokeWidth="1"
-                strokeDasharray="2,2"
-                opacity="0.6"
-              />
-              <circle
-                cx={getX(group2.medianTime)}
-                cy={getY(0.5)}
-                r="3"
-                fill={group2.color}
-              />
-            </>
-          )}
+            ))}
 
-          {/* CI Bands */}
-          {showCI && (
-            <>
-              <path
-                d={buildCIBandPath(group1.ciUpper, group1.ciLower)}
-                fill={group1.color}
-                fillOpacity="0.12"
-                stroke="none"
-              />
-              <path
-                d={buildCIBandPath(group2.ciUpper, group2.ciLower)}
-                fill={group2.color}
-                fillOpacity="0.12"
-                stroke="none"
-              />
-            </>
-          )}
+            {/* X Axis Ticks */}
+            {ticksX.map((val) => (
+              <g key={val}>
+                <line
+                  x1={getX(val)}
+                  y1={getY(0)}
+                  x2={getX(val)}
+                  y2={getY(0) + 4}
+                  stroke="#888E8E"
+                  strokeWidth="1"
+                />
+                <text
+                  x={getX(val)}
+                  y={getY(0) + 16}
+                  textAnchor="middle"
+                  className="text-[9px] fill-[#656969] font-mono"
+                >
+                  {val}
+                </text>
+              </g>
+            ))}
 
-          {/* KM Curves */}
-          <path
-            d={buildStepPath(group1.points)}
-            fill="none"
-            stroke={group1.color}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-          <path
-            d={buildStepPath(group2.points)}
-            fill="none"
-            stroke={group2.color}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeDasharray="5,4"
-          />
+            {/* Y Axis Ticks */}
+            {[0.0, 0.2, 0.4, 0.6, 0.8, 1.0].map((val) => (
+              <g key={val}>
+                <line
+                  x1={getX(0) - 4}
+                  y1={getY(val)}
+                  x2={getX(0)}
+                  y2={getY(val)}
+                  stroke="#888E8E"
+                  strokeWidth="1"
+                />
+                <text
+                  x={getX(0) - 8}
+                  y={getY(val) + 3}
+                  textAnchor="end"
+                  className="text-[9px] fill-[#656969] font-mono"
+                >
+                  {mode === 'runtime' ? `${Math.round(val * 100)}%` : val.toFixed(1)}
+                </text>
+              </g>
+            ))}
 
-          {/* Censor Marks */}
-          {showCensorMarks && (
-            <>
-              {group1.censors.map((t) => {
-                const s = getYOnCurve(group1.points, t);
-                return (
-                  <line
-                    key={t}
-                    x1={getX(t)}
-                    y1={getY(s) - 4}
-                    x2={getX(t)}
-                    y2={getY(s) + 4}
-                    stroke={group1.color}
-                    strokeWidth="1.2"
-                  />
-                );
-              })}
-              {group2.censors.map((t) => {
-                const s = getYOnCurve(group2.points, t);
-                return (
-                  <line
-                    key={t}
-                    x1={getX(t)}
-                    y1={getY(s) - 4}
-                    x2={getX(t)}
-                    y2={getY(s) + 4}
-                    stroke={group2.color}
-                    strokeWidth="1.2"
-                  />
-                );
-              })}
-            </>
-          )}
+            {/* Axes Lines */}
+            <line
+              x1={getX(0)}
+              y1={getY(0)}
+              x2={getX(maxTime)}
+              y2={getY(0)}
+              stroke="#888E8E"
+              strokeWidth="1"
+            />
+            <line
+              x1={getX(0)}
+              y1={getY(0)}
+              x2={getX(0)}
+              y2={getY(1.0)}
+              stroke="#888E8E"
+              strokeWidth="1"
+            />
 
-          {/* Legend */}
-          <g transform={`translate(${width - 150}, ${paddingTop + 10})`}>
-            <g transform="translate(0, 0)">
-              <line x1="0" y1="6" x2="20" y2="6" stroke={group1.color} strokeWidth="2" />
-              <text x="26" y="10" className="text-[10px] fill-text-primary">{group1.label}</text>
+            {/* Axis Titles */}
+            <text
+              x={getX(maxTime / 2)}
+              y={getY(0) + 32}
+              textAnchor="middle"
+              className="text-[10px] fill-text-primary font-medium"
+            >
+              Time ({timeUnit})
+            </text>
+            
+            <text
+              x={getX(0) - 36}
+              y={getY(0.5)}
+              textAnchor="middle"
+              transform={`rotate(-90, ${getX(0) - 36}, ${getY(0.5)})`}
+              className="text-[10px] fill-text-primary font-medium"
+            >
+              Survival Probability
+            </text>
+
+            {/* Median Reference Lines */}
+            {showMedianLines && (
+              <>
+                <line
+                  x1={getX(0)}
+                  y1={getY(0.5)}
+                  x2={getX(group2.medianTime)}
+                  y2={getY(0.5)}
+                  stroke={group2.color}
+                  strokeWidth="1"
+                  strokeDasharray="2,2"
+                  opacity="0.6"
+                />
+                <line
+                  x1={getX(group2.medianTime)}
+                  y1={getY(0.5)}
+                  x2={getX(group2.medianTime)}
+                  y2={getY(0)}
+                  stroke={group2.color}
+                  strokeWidth="1"
+                  strokeDasharray="2,2"
+                  opacity="0.6"
+                />
+                <circle
+                  cx={getX(group2.medianTime)}
+                  cy={getY(0.5)}
+                  r="3"
+                  fill={group2.color}
+                />
+              </>
+            )}
+
+            {/* CI Bands */}
+            {showCI && (
+              <>
+                <path
+                  d={buildCIBandPath(group1.ciUpper, group1.ciLower)}
+                  fill={group1.color}
+                  fillOpacity="0.12"
+                  stroke="none"
+                />
+                <path
+                  d={buildCIBandPath(group2.ciUpper, group2.ciLower)}
+                  fill={group2.color}
+                  fillOpacity="0.12"
+                  stroke="none"
+                />
+              </>
+            )}
+
+            {/* KM Curves */}
+            <path
+              d={buildStepPath(group1.points)}
+              fill="none"
+              stroke={group1.color}
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+            <path
+              d={buildStepPath(group2.points)}
+              fill="none"
+              stroke={group2.color}
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeDasharray="5,4"
+            />
+
+            {/* Censor Marks */}
+            {showCensorMarks && (
+              <>
+                {group1.censors.map((t) => {
+                  const s = getYOnCurve(group1.points, t);
+                  return (
+                    <line
+                      key={t}
+                      x1={getX(t)}
+                      y1={getY(s) - 4}
+                      x2={getX(t)}
+                      y2={getY(s) + 4}
+                      stroke={group1.color}
+                      strokeWidth="1.2"
+                    />
+                  );
+                })}
+                {group2.censors.map((t) => {
+                  const s = getYOnCurve(group2.points, t);
+                  return (
+                    <line
+                      key={t}
+                      x1={getX(t)}
+                      y1={getY(s) - 4}
+                      x2={getX(t)}
+                      y2={getY(s) + 4}
+                      stroke={group2.color}
+                      strokeWidth="1.2"
+                    />
+                  );
+                })}
+              </>
+            )}
+
+            {/* Legend */}
+            <g transform={`translate(${width - 150}, ${paddingTop + 10})`}>
+              <g transform="translate(0, 0)">
+                <line x1="0" y1="6" x2="20" y2="6" stroke={group1.color} strokeWidth="2" />
+                <text x="26" y="10" className="text-[10px] fill-text-primary">{group1.label}</text>
+              </g>
+              <g transform="translate(0, 18)">
+                <line x1="0" y1="6" x2="20" y2="6" stroke={group2.color} strokeWidth="2" strokeDasharray="4,3" />
+                <text x="26" y="10" className="text-[10px] fill-text-primary">{group2.label}</text>
+              </g>
             </g>
-            <g transform="translate(0, 18)">
-              <line x1="0" y1="6" x2="20" y2="6" stroke={group2.color} strokeWidth="2" strokeDasharray="4,3" />
-              <text x="26" y="10" className="text-[10px] fill-text-primary">{group2.label}</text>
-            </g>
-          </g>
-        </svg>
+          </svg>
+        </div>
       </div>
 
-      {/* Risk Table */}
+      {/* Risk Table Block Container */}
       {showRiskTable && (
-        <div className="mt-[12px] w-full overflow-x-auto">
+        <div 
+          className="w-full overflow-x-auto cursor-pointer hover:bg-black/5 p-[8px] rounded-[4px] transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onBlockClick?.('Number at Risk Table');
+          }}
+        >
           <table className="w-full text-[10px] border-collapse font-sans">
             <thead>
               <tr className="border-b border-border-default">

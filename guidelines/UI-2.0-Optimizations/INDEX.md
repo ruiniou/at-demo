@@ -12,12 +12,13 @@
    - 规则文件：[Scrollbar-Rules.md](./Scrollbar-Rules.md)
    - 重点：沉淀了 Panel 级与组件级的滚动条颜色、尺寸、悬浮加粗逻辑，全量应用了 `color-mix` 保持和全局 Design Token 的动态一致。
 
-3. **Shell Preview 样式与排版统一**
-   - 规则文件：[Shell-Preview-Styling-Rules.md](./Shell-Preview-Styling-Rules.md) & [Shell-Typography-Unified-2.0.md](./Shell-Typography-Unified-2.0.md)
+3. **Shell Preview 权威规范 (Master Spec 2.0)**
+   - 权威文档：[Shell-Preview-Design-Spec-2.0.md](./Shell-Preview-Design-Spec-2.0.md)
    - 重点：
-     - Table/Figure/Listing 的 Title 统一使用 `t-body-medium`，外围信息统一使用 `t-small`。
-     - 彻底摒弃 `table-auto`，采用绝对像素的 `table-fixed`。
-     - 动态计算包裹器宽度，完美模拟 A4 排版，消除了长注脚撑爆容器引起的超大留白。
+     - **全局排版**：Title 统一 `13px Medium` (`Small Text/Table`)，表头 `12px Medium`，Subgroup / Listing 行 `10px Regular`。
+     - **表格规范**：Table Parent 行 24px fixed（顶端 1px 灰色线），Listing 18px fixed（无内部横灰色线，完全对标 Subgroup 行）；横向 2px 黑色粗线图层压顶 (`relative z-10`)。
+     - **Hover & Listing 交互**：Table 块级 Hover，Listing 3 行内联表头与分割线列冻结，Figure 按 Component 拆分 Hover 块。
+     - **全局点击跳转 Metadata**：点击 Table / Listing / Figure 任意区块自动展开并直达 Metadata 面板对应的 Block / Column / Component 卡片（非仅针对 Figure）。
 
 4. **Tooltip 规则**
    - 规则文件：[Tooltip-Rules.md](./Tooltip-Rules.md)
