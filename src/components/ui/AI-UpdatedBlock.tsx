@@ -118,7 +118,7 @@ export function AIUpdatedBlock({
     <div
       className={[
         "flex flex-col",
-        "bg-white border border-graphite-10 rounded-[6px]",
+        "bg-white border-[0.6px] border-graphite-20 rounded-[8px]",
         "overflow-hidden",
         className,
       ].join(" ")}

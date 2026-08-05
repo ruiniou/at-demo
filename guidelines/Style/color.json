@@ -10,6 +10,10 @@
         "$type": "color",
         "$value": "#ECECEC"
       },
+      "15": {
+        "$type": "color",
+        "$value": "#E6E8E8"
+      },
       "20": {
         "$type": "color",
         "$value": "#D9DADA"

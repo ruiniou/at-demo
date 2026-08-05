@@ -261,7 +261,7 @@ function ToBeReviewedBlock({ items, onJumpToMetadata }: { items: ReviewItem[], o
   const [headerHovered, setHeaderHovered] = useState(false);
 
   return (
-    <div className="border-[0.6px] border-graphite-20 rounded-[8px] w-full overflow-hidden bg-white mb-[8px]">
+    <div className="border-[0.6px] border-graphite-20 rounded-[8px] w-full overflow-hidden bg-white">
       <div
         onMouseEnter={() => setHeaderHovered(true)}
         onMouseLeave={() => setHeaderHovered(false)}
@@ -537,16 +537,16 @@ function ChatConversation({
                         <Blockquote>
                           "The integration of survival data confirms the hypothesis proposed in the preliminary report."
                         </Blockquote>
-                        <Divider className="mb-[12px]" />
+                        <Divider />
                       </div>
                       
                       <div className="relative w-full">
                         <ToolCallCard toolName="read_file" />
                       </div>
-                      <div className="relative w-full mt-[12px]">
+                      <div className="relative w-full">
                         <AICodeDiff />
                       </div>
-                      <div className="relative w-full mt-[12px]">
+                      <div className="relative w-full">
                         <ErrorMessageWithRetry />
                       </div>
                     </>
@@ -563,7 +563,7 @@ function ChatConversation({
                       I have updated the metadata and code based on your changes. Please review the differences below.
                     </p>
                   </div>
-                  <div className="relative w-full mt-[4px]">
+                  <div className="relative w-full">
                     <AICodeDiff />
                   </div>
                 </div>
@@ -1723,14 +1723,26 @@ const listingData = [
 ];
 
 const listingColumns = [
-  { key: "studyDay", label: "Study\nday [b]", width: 80, widthPx: 80 },
-  { key: "lesionNum", label: "Lesion\nnumber", width: 80, widthPx: 80 },
+  { key: "studyDay", label: "Study\nday [b]", width: 160, widthPx: 160 },
+  { key: "lesionNum", label: "Lesion\nnumber", width: 120, widthPx: 120 },
   { key: "lesionLoc", label: "Lesion location", width: 200, widthPx: 200 },
   { key: "locSpec", label: "Location within site\nspecification", width: 220, widthPx: 220 },
   { key: "method", label: "Method of assessment", width: 160, widthPx: 160 },
-  { key: "diameter", label: "Diameter\n(mm) [c]", width: 90, widthPx: 90 },
-  { key: "sum", label: "Sum of\ndiameters\n(mm) [d]", width: 100, widthPx: 100 },
+  { key: "diameter", label: "Diameter\n(mm) [c]", width: 170, widthPx: 170 },
+  { key: "sum", label: "Sum of\ndiameters\n(mm) [d]", width: 180, widthPx: 180 },
 ] as const;
+
+// Experimental: inline metadata under Listing column headers.
+// Kept separate from listingColumns so this can be removed wholesale.
+const LISTING_COLUMN_METADATA: Record<string, { dataset: string; variable: string; rule?: string }> = {
+  studyDay: { dataset: 'ADTR', variable: 'ADY', rule: 'Study day relative to randomisation date; negative values indicate pre-randomisation assessments' },
+  lesionNum: { dataset: 'ADTR', variable: 'TRLNKID' },
+  lesionLoc: { dataset: 'ADTR', variable: 'TRLOC', rule: 'Mapped from TR.TRLOC' },
+  locSpec: { dataset: 'ADTR', variable: 'TRLOCSP' },
+  method: { dataset: 'ADTR', variable: 'TRMETHOD', rule: 'RECIST 1.1 assessment method' },
+  diameter: { dataset: 'ADTR', variable: 'AVAL', rule: 'Non-nodal longest diameter or nodal short axis, in mm' },
+  sum: { dataset: 'ADTR', variable: 'AVAL', rule: 'Sum of non-nodal longest diameters and nodal short axis diameters where PARAMCD=SUMDIAM' },
+};
 
 const listingFootnotes = [
   '* Reviewer who completed baseline first in the absence of an adjudicator, or the reviewer the adjudicator agreed with.',
@@ -2589,7 +2601,7 @@ function ListingShellPreview({
       </div>
 
       {/* Content row: shell table + metadata overlay */}
-      <div className="flex flex-1 overflow-hidden relative bg-graphite-15">
+      <div className="flex flex-1 overflow-hidden relative bg-[#F5F5F5]">
         <div
           ref={listingScrollContainerRef}
           onScroll={(e) => setIsScrolled(e.currentTarget.scrollLeft > 0)}
@@ -2612,28 +2624,49 @@ function ListingShellPreview({
                       <div style={{ transform: `scale(${pageScale / 100})`, transformOrigin: 'top left' }} className="relative">
                         <div className="absolute right-[32px] top-[28px] rounded-[4px] bg-az-secondary px-[6px] py-0 font-['PingFang_SC',sans-serif] text-[12px] leading-[20px] text-brand-1">{pageIndex + 1}/{printPages.length}</div>
                         <div className="p-[48px] pt-[64px]">
-                          <div className="border-b-2 border-black pb-[14px] mb-[10px] text-center">
+                          <div className="border-b-2 border-text-primary pb-[14px] mb-[10px] text-center">
                             <h1 className="font-['Inter',sans-serif] text-[13px] leading-[18px] font-bold tracking-[-0.01em]">Appendix 16.2.4 Demographic and baseline characteristics (ITT analysis set)</h1>
                             <p className="mt-[4px] font-['Inter',sans-serif] text-[10px] leading-[14px] text-[#6f7676]">
                               Rows {page.rowPageIndex * PRINT_ROWS_PER_PAGE + 1}-{page.rowPageIndex * PRINT_ROWS_PER_PAGE + page.pageRows.length} · Columns {page.pageScrollColumns[0] ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[0].key) + 1 : 1}-{page.pageScrollColumns.length ? listingColumns.findIndex(c => c.key === page.pageScrollColumns[page.pageScrollColumns.length - 1].key) + 1 : frozenPrintColumns.length}{frozenPrintColumns.length > 0 ? ` · frozen 1-${frozenPrintColumns.length} repeated` : ''}
                             </p>
                           </div>
-                          <table className="w-full table-fixed border-collapse font-['Inter',sans-serif] text-black">
+                          <table className="w-full table-fixed border-collapse font-['Inter',sans-serif] text-text-primary">
                             <colgroup>
                               {page.pageColumns.map((column) => (
                                 <col key={column.key} style={{ width: `${(column.widthPx / page.pageColumns.reduce((sum, item) => sum + item.widthPx, 0)) * 100}%` }} />
                               ))}
                             </colgroup>
                             <thead>
-                              <tr className="border-b-2 border-black">
-                                {page.pageColumns.map((column) => (
-                                  <th key={column.key} className="border-r border-border-default px-[4px] py-[6px] text-left align-middle text-[10px] leading-[14px] font-bold whitespace-normal break-words last:border-r-0">{column.label}</th>
-                                ))}
+                              <tr className="border-b-2 border-text-primary">
+                                {page.pageColumns.map((column) => {
+                                  const meta = LISTING_COLUMN_METADATA[column.key];
+                                  return (
+                                    <th key={column.key} style={{ fontWeight: 700 }} className="border-r border-border-default px-[4px] py-[6px] text-left align-top t-table font-bold whitespace-normal break-words last:border-r-0">
+                                      <div className="flex flex-col items-start gap-[2px]">
+                                        <span>{column.label}</span>
+                                        {/* Experimental inline metadata (Line 2/3). Fixed heights keep header rows aligned. */}
+                                        <div className="t-footnote text-text-secondary text-left font-normal mt-[2px] w-full">
+                                          {/* Line 2: dataset.variable — always exactly 1 line, ellipsis when too long. */}
+                                          <div className="h-[14px] overflow-hidden whitespace-nowrap text-ellipsis">
+                                            {meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}
+                                          </div>
+                                          {/* Line 3: rule — wraps to at most 2 lines, then ellipsis. */}
+                                          <div
+                                            className="h-[28px] overflow-hidden whitespace-normal break-words"
+                                            style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
+                                          >
+                                            {meta?.rule ? `rule: ${meta.rule}` : '\u00A0'}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </th>
+                                  );
+                                })}
                               </tr>
                             </thead>
                             <tbody>
                               {page.pageRows.map((row) => (
-                                <tr key={row.subject} className="border-b border-border-default last:border-b-2 last:border-black">
+                                <tr key={row.subject} className="border-b border-border-default last:border-b-2 last:border-text-primary">
                                   {page.pageColumns.map((column) => (
                                     <td key={`${row.subject}-${column.key}`} className="border-r border-border-default px-[4px] py-[6px] align-middle text-[10px] leading-[15px] font-normal whitespace-normal break-words last:border-r-0">{(row as Record<string, string>)[column.key]}</td>
                                   ))}
@@ -2662,7 +2695,7 @@ function ListingShellPreview({
 
           {/* Normal (non-preview) table view */}
           <ZoomContainer scale={zoomScale} className={`min-w-max p-[16px] ${pageSepActive ? 'hidden' : ''}`}>
-            <div className={`w-max bg-white text-black rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`}>
+            <div className={`w-max bg-white text-text-primary rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`}>
               <div className="relative">
                 {/* Study Info & Page Info */}
                 <div className="flex justify-between items-end w-full mb-[16px]">
@@ -2690,7 +2723,7 @@ function ListingShellPreview({
                   <p>Planned treatment group: &lt;&lt;AZD1 (low dose)&gt;&gt;, Duration of actual exposure (months) [a]: &lt;&lt;xx&gt;&gt;, Death study day [b]: &lt;&lt;xx&gt;&gt;</p>
                 </div>
                 <div ref={tableContainerRef} className="relative inline-block min-w-max">
-                  <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-black border-t-2 border-black" style={{ width: `${totalListingWidth}px` }}>
+                  <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-text-primary border-t-2 border-text-primary" style={{ width: `${totalListingWidth}px` }}>
                     <colgroup>
                       {listingColumns.map((col) => (
                         <col key={col.key} style={{ width: `${col.widthPx}px`, minWidth: `${col.widthPx}px` }} />
@@ -2706,12 +2739,13 @@ function ListingShellPreview({
                           const cellStyle: React.CSSProperties = {};
                           if (frozen) { cellStyle.left = `${getFrozenLeft(columnIndex)}px`; cellStyle.zIndex = 22; cellStyle.backgroundColor = 'white'; }
                           if (shadows.length) cellStyle.boxShadow = shadows.join(', ');
+                          const meta = LISTING_COLUMN_METADATA[column.key];
                           return (
                             <th
                               key={column.key}
                               ref={(node) => { thRefs.current[columnIndex] = node; }}
                               style={cellStyle}
-                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-black border-r-border-default last:border-r-0 px-[8px] py-[6px] text-left align-middle text-[14px] leading-[20px] font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
+                              className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-text-primary border-r-border-default last:border-r-0 px-[8px] py-[6px] text-left align-top t-table font-bold whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
                               onMouseEnter={() => {
                                 if (draggingBreak === null && draggingFreeze === null && columnIndex < firstPageBreakIndex) {
                                   setHoveredFreezeColumn(columnIndex);
@@ -2733,7 +2767,25 @@ function ListingShellPreview({
                               )}
                               {/* Button area */}
                               <div className="flex w-full items-center justify-between gap-[4px] rounded-[3px]">
-                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} className="flex-1 min-w-0 whitespace-pre-wrap break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
+                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} style={{ fontWeight: 700, fontSize: '13px', lineHeight: '16px' }} className="flex-1 min-w-0 whitespace-pre-wrap break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
+                              </div>
+
+                              {/* Experimental inline metadata (Line 2/3). Fixed heights keep header rows aligned. */}
+                              <div 
+                                className="t-footnote text-text-secondary text-left font-normal mt-[4px] cursor-pointer hover:bg-black/[0.03] rounded-[2px] p-[2px] -mx-[2px]"
+                                onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }}
+                              >
+                                {/* Line 2: dataset.variable — always exactly 1 line, ellipsis when too long. */}
+                                <div className="h-[14px] overflow-hidden whitespace-nowrap text-ellipsis">
+                                  {meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}
+                                </div>
+                                {/* Line 3: rule — wraps to at most 2 lines, then ellipsis. */}
+                                <div
+                                  className="h-[28px] overflow-hidden whitespace-normal break-words"
+                                  style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
+                                >
+                                  {meta?.rule ? `rule: ${meta.rule}` : '\u00A0'}
+                                </div>
                               </div>
                               
                               {frozenBoundary && (
@@ -2800,7 +2852,7 @@ function ListingShellPreview({
                           if (frozen) { cellStyle.left = `${getFrozenLeft(columnIndex)}px`; cellStyle.zIndex = 20; cellStyle.backgroundColor = 'white'; }
                           if (shadows.length) cellStyle.boxShadow = shadows.join(', ');
                           return (
-                            <td key={`${rowIndex}-${column.key}`} style={cellStyle} className={`border-r border-b border-b-border-default group-last:border-b-2 group-last:border-b-black border-border-default last:border-r-0 px-[8px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-pre-wrap break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
+                            <td key={`${rowIndex}-${column.key}`} style={cellStyle} className={`border-r border-b border-b-border-default group-last:border-b-2 group-last:border-b-text-primary border-border-default last:border-r-0 px-[8px] py-[6px] align-middle text-[12px] leading-[18px] font-normal whitespace-pre-wrap break-words transition-[border-color,box-shadow,background-color] duration-[180ms] ${frozen ? 'sticky' : ''} ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}>
                               <div className="w-full overflow-hidden">
                                 {(row as Record<string, string>)[column.key]}
                               </div>
@@ -3457,18 +3509,29 @@ function ShellTableRowView({
   const isBlockStart = !row.indent;
   const sections = active && isBlockStart ? buildBlockTooltipSections(TABLE_BLOCK_METADATA[row.category]) : [];
   const cellBg = active ? 'bg-az-secondary' : 'bg-white';
-  const weight = row.isHeader ? 'font-bold text-text-primary' : 'font-normal text-text-primary';
+  const isSubgroup = !!row.indent;
+  // Parent rows: 10px Medium, 24px tall, 6px padding, visible divider.
+  // Subgroup rows: 10px Regular, 18px tall, 1px vertical padding, divider hidden.
+  const labelType = isSubgroup ? 't-footnote' : 't-micro';
+  const labelColor = isSubgroup ? 'text-text-secondary' : 'text-text-primary';
+  const valueType = 't-footnote';
+  const cellPadY = isSubgroup ? 'py-[1px]' : 'py-[6px]';
+  const rowHeight = isSubgroup ? 18 : 24;
+  // Subgroup rows carry no visible divider; the last row keeps the 2px table frame.
+  const divider = isSubgroup ? 'border-b-0' : 'border-b border-border-default';
+  const cellBase = `${cellBg} text-left align-middle ${cellPadY} px-[6px] whitespace-pre-wrap break-words border-r border-r-border-default ${divider} group-last:border-b-2 group-last:border-b-text-primary transition-colors duration-[180ms]`;
 
   return (
     <tr
       data-block-id={blockId ?? undefined}
       className="group cursor-pointer"
+      style={{ height: `${rowHeight}px` }}
       onMouseEnter={() => onHover(blockId)}
       onClick={onClick}
     >
       <td
-        className={`${weight} ${cellBg} text-left align-middle text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-pre-wrap break-words border-r border-b border-border-default group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
-        style={{ paddingLeft: row.indent ? `${8 + row.indent * 16}px` : '8px' }}
+        className={`${labelType} ${labelColor} ${cellBase}`}
+        style={{ paddingLeft: row.indent ? `${6 + row.indent * 16}px` : '6px' }}
       >
         {/* Anchor on the text itself, not the padded cell, so the hover sits 2px off the label. */}
         <span ref={labelTextRef} className="inline-block">{row.category}</span>
@@ -3479,7 +3542,7 @@ function ShellTableRowView({
       {row.values.map((val, vi) => (
         <td
           key={vi}
-          className={`${weight} ${cellBg} text-left align-middle text-[12px] leading-[18px] py-[6px] px-[8px] whitespace-pre-wrap break-words border-r border-b border-border-default last:border-r-0 group-last:border-b-2 group-last:border-b-black transition-colors duration-[180ms]`}
+          className={`${valueType} text-text-primary ${cellBase} last:border-r-0`}
         >
           {val}
         </td>
@@ -3623,32 +3686,32 @@ function ShellPreview({
           </div>
         }
       />
-      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-graphite-15">
+      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-[#F5F5F5]">
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full flex">
             <div className="flex-1 min-w-0 h-full overflow-auto">
               <ZoomContainer scale={zoomScale} className="min-w-max p-[16px]">
-              <div className={`w-max bg-white text-black rounded-[4px] p-[16px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
-                <div className="flex flex-col gap-[16px] w-full">
+              <div className={`w-max bg-white text-text-primary rounded-[4px] p-[20px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
+                <div className="flex flex-col gap-[12px] w-full">
                   {/* Study Info & Page Info */}
                   {(shellData.studyInfo || shellData.pageInfo) && (
                     <div className="flex justify-between items-end w-full">
-                      <div className="t-small text-text-secondary whitespace-pre-wrap">{shellData.studyInfo}</div>
-                      <div className="t-small text-text-secondary text-right">{shellData.pageInfo}</div>
+                      <div className="t-footnote text-text-secondary whitespace-pre-wrap">{shellData.studyInfo}</div>
+                      <div className="t-footnote text-text-secondary text-right">{shellData.pageInfo}</div>
                     </div>
                   )}
                   {/* Title header */}
-                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black gap-[4px]">
-                    <h1 className="t-body-medium text-center tracking-[-0.01em]">
+                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-text-primary gap-[4px]">
+                    <h1 className="t-table text-center tracking-[-0.01em]">
                       {shellData.tableNumber}
                     </h1>
                     {shellData.tableTitle && (
-                      <h2 className="t-small text-text-secondary text-center font-normal">
+                      <h2 className="t-footnote text-text-secondary text-center font-normal">
                         {shellData.tableTitle}
                       </h2>
                     )}
                     {shellData.population && (
-                      <h2 className="t-small text-text-secondary text-center font-normal">
+                      <h2 className="t-footnote text-text-secondary text-center font-normal">
                         {shellData.population}
                       </h2>
                     )}
@@ -3669,7 +3732,7 @@ function ShellPreview({
                 {shellData.footnotes && shellData.footnotes.length > 0 && (
                   <div className="flex flex-col gap-[4px] w-full text-left mt-[16px]">
                     {shellData.footnotes.map((fn, idx) => (
-                      <p key={idx} className="t-small text-text-secondary whitespace-pre-wrap m-0">
+                      <p key={idx} className="t-footnote text-text-secondary whitespace-pre-wrap m-0">
                         {fn}
                       </p>
                     ))}
@@ -3755,27 +3818,27 @@ function ShellPreview({
             return (
               <div ref={tableScrollRef} className="min-h-0 min-w-0 flex-1 overflow-auto">
                 <ZoomContainer scale={zoomScale} className="min-w-max p-[16px]">
-                  <div className={`bg-white text-black rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`} style={{ width: `${totalTableWidth + 32}px` }}>
+                  <div className={`bg-white text-text-primary rounded-[4px] p-[20px] ${!metadataOpen ? 'mx-auto' : ''}`} style={{ width: `${totalTableWidth + 40}px` }}>
                     {/* Study Info & Page Info */}
                   {(shellData.studyInfo || shellData.pageInfo) && (
-                    <div className="flex justify-between items-end w-full mb-[16px]">
-                      <div className="t-small text-text-secondary whitespace-pre-wrap">{shellData.studyInfo}</div>
-                      <div className="t-small text-text-secondary text-right">{shellData.pageInfo}</div>
+                    <div className="flex justify-between items-end w-full mb-[12px]">
+                      <div className="t-footnote text-text-secondary whitespace-pre-wrap">{shellData.studyInfo}</div>
+                      <div className="t-footnote text-text-secondary text-right">{shellData.pageInfo}</div>
                     </div>
                   )}
 
                   {/* Title header */}
-                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-black gap-[4px]">
-                    <h1 className="t-body-medium text-center tracking-[-0.01em]">
+                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-text-primary gap-[4px]">
+                    <h1 className="t-table text-center tracking-[-0.01em]">
                       {shellData.tableNumber}
                     </h1>
                     {shellData.tableTitle && (
-                      <h2 className="t-small text-text-secondary text-center font-normal">
+                      <h2 className="t-footnote text-text-secondary text-center font-normal">
                         {shellData.tableTitle}
                       </h2>
                     )}
                     {shellData.population && (
-                      <h2 className="t-small text-text-secondary text-center font-normal">
+                      <h2 className="t-footnote text-text-secondary text-center font-normal">
                         {shellData.population}
                       </h2>
                     )}
@@ -3786,7 +3849,7 @@ function ShellPreview({
 
                     return (
                       <div className="relative inline-block min-w-max">
-                        <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-text-primary border-t-2 border-black" style={{ width: `${totalTableWidth}px` }}>
+                        <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-text-primary border-t-2 border-text-primary" style={{ width: `${totalTableWidth}px` }}>
                           <colgroup>
                             <col style={{ width: `${firstColWidth}px`, minWidth: `${firstColWidth}px` }} />
                             {Array.from({ length: actualDataCols }).map((_, i) => (
@@ -3794,16 +3857,16 @@ function ShellPreview({
                             ))}
                           </colgroup>
                       <thead>
-                        {/* Column group header */}
-                        <tr className="group">
-                          <th className={`bg-white text-left align-middle text-[14px] leading-[20px] font-bold py-[6px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-black'} border-r-border-default`}>
+                        {/* Column group header — the two header rows total 52px. */}
+                        <tr className="group" style={{ height: '26px' }}>
+                          <th className={`bg-white text-left align-middle t-small-medium py-[3px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-text-primary'} border-r-border-default`}>
                             Table/Listing Field
                           </th>
                           {shellData.columnGroups.map((cg, cgi) => (
                             <th
                               key={cgi}
                               colSpan={cg.span}
-                              className={`bg-white text-left align-middle text-[14px] leading-[20px] font-bold text-text-primary py-[6px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-black'} border-r-border-default last:border-r-0`}
+                              className={`bg-white text-left align-middle t-small-medium text-text-primary py-[3px] px-[8px] whitespace-normal break-words border-r ${hasSubHeader ? 'border-b border-border-default' : 'border-b-2 border-text-primary'} border-r-border-default last:border-r-0`}
                             >
                               {cg.name.split('\n').map((line, idx) => (
                                 <div key={idx}>{line}</div>
@@ -3813,14 +3876,14 @@ function ShellPreview({
                         </tr>
                         {/* Standard columns header */}
                         {hasSubHeader && (
-                          <tr>
-                            <th className="bg-white text-left align-middle text-[14px] leading-[20px] font-bold text-text-primary py-[6px] px-[8px] border-r border-b-2 border-black border-r-border-default">
+                          <tr style={{ height: '26px' }}>
+                            <th className="bg-white text-left align-middle t-small-medium text-text-primary py-[3px] px-[8px] border-r border-b-2 border-text-primary border-r-border-default">
                               {/* Empty cell under Table/Listing Field */}
                             </th>
                             {shellData.columns.map((col, ci) => (
                               <th
                                 key={ci}
-                                className="bg-white text-left align-middle text-[14px] leading-[20px] font-bold text-text-primary py-[6px] px-[8px] border-r border-b-2 border-black border-r-border-default last:border-r-0"
+                                className="bg-white text-left align-middle t-small-medium text-text-primary py-[3px] px-[8px] border-r border-b-2 border-text-primary border-r-border-default last:border-r-0"
                               >
                                 {col}
                               </th>
@@ -3852,7 +3915,7 @@ function ShellPreview({
             {shellData.footnotes && shellData.footnotes.length > 0 && (
               <div className="mt-[16px] flex flex-col gap-[4px] w-full text-left">
                 {shellData.footnotes.map((fn, idx) => (
-                  <p key={idx} className="t-small text-text-secondary whitespace-pre-wrap">
+                  <p key={idx} className="t-footnote text-text-secondary whitespace-pre-wrap">
                     {fn}
                   </p>
                 ))}
@@ -6951,7 +7014,7 @@ function WorkspaceContent({
         )}
 
         <div className={`flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden ${!treeListOpen ? "ml-[4px]" : ""}`}>
-          <div className="shrink-0 w-full overflow-hidden mt-[4px] px-[6px]">
+          <div className="shrink-0 w-full overflow-hidden mt-[4px] px-[4px]">
             <ViewToggleBar
               treeListOpen={treeListOpen}
               onToggleTreeList={() => setTreeListOpen(true)}
@@ -6967,7 +7030,7 @@ function WorkspaceContent({
             />
           </div>
 
-          <div className="flex min-w-0 min-h-0 flex-1 flex-col p-[6px]">
+          <div className="flex min-w-0 min-h-0 flex-1 flex-col p-[4px]">
             <div ref={contentAreaRef} className="relative flex min-h-0 min-w-0 flex-1 gap-[6px]">
             {docType === 'listing' ? (
               // Listing layout with configurable panel direction (vertical = top/bottom, horizontal = left/right)
@@ -6980,7 +7043,7 @@ function WorkspaceContent({
                         ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
                         : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
                       }
-                      className={`h-full flex flex-col overflow-hidden rounded-[12px] border border-platinum-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] ${panelView === 'both' ? 'shrink-0' : 'flex-1'}`}
+                      className={`h-full flex flex-col overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)] ${panelView === 'both' ? 'shrink-0' : 'flex-1'}`}
                     >
                       <ListingShellPreview
                         selectedItemName={getSelectedItemName()}
@@ -7029,7 +7092,7 @@ function WorkspaceContent({
                   )}
 
                   {panelView !== 'shell' && (
-                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col rounded-[12px] border border-platinum-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
+                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
                       <CodePanel
                         selectedItem={getSelectedItemName()}
                         docType="listing"
@@ -7103,7 +7166,7 @@ function WorkspaceContent({
                   {/* Shell Preview with subordinate Metadata card */}
                   {shellPreviewOpen && (
                     <div
-                      className={`h-full flex flex-col min-w-0 overflow-hidden rounded-[12px] border border-platinum-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] ${panelView === 'shell' ? 'flex-1' : 'shrink-0'}`}
+                      className={`h-full flex flex-col min-w-0 overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)] ${panelView === 'shell' ? 'flex-1' : 'shrink-0'}`}
                       style={panelLayout === 'vertical'
                         ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
                         : { width: panelView === 'shell' ? undefined : `${shellPreviewWidth}px` }
@@ -7174,7 +7237,7 @@ function WorkspaceContent({
                   )}
 
                   {codeOpen && (
-                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col rounded-[12px] border border-platinum-10 bg-white shadow-[0_2px_12px_rgba(0,0,0,0.08)]" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
+                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
                       <CodePanel
                         selectedItem={getSelectedItemName()}
                         docType={docType}

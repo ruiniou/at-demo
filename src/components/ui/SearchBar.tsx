@@ -32,7 +32,7 @@ export function SearchBar({
   const hasValue = value.length > 0;
 
   // Outer wrapper styles by state
-  let outerClasses = "flex h-[36px] items-stretch rounded-[6px] p-[2px] gap-[6px] border-[0.6px]";
+  let outerClasses = "flex h-[36px] items-stretch rounded-[8px] p-[2px] gap-[6px] border-[0.6px]";
   if (isFocused) {
     // Focused: bg #E6CCDC, border 0.6px #830051
     outerClasses += " bg-az-secondary-hover border-brand-1";
@@ -45,7 +45,7 @@ export function SearchBar({
   const innerBg = background === "dark" ? "bg-graphite-10" : "bg-white";
   // Typed state has asymmetric padding: 4px 4px 4px 6px
   const innerPadding = hasValue ? "p-[4px_4px_4px_6px]" : "p-[4px_6px]";
-  const innerClasses = `flex flex-1 items-center gap-[6px] rounded-[4px] ${innerBg} ${innerPadding}`;
+  const innerClasses = `flex flex-1 items-center gap-[6px] rounded-[6px] ${innerBg} ${innerPadding}`;
 
   const handleClear = () => {
     if (onChange) onChange("");

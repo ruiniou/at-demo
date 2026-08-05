@@ -17,7 +17,7 @@ export function AIUserPrompt({
   return (
     <div
       className={[
-        "bg-bg-panel rounded-[8px] px-[10px] py-[8px]",
+        "bg-white border-[0.6px] border-graphite-20 rounded-[8px] px-[10px] py-[8px]",
         "flex flex-col gap-[4px] justify-end",
         className,
       ].join(" ")}

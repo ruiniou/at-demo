@@ -53,7 +53,7 @@ export function AICodeDiff({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={[
-        "border-[0.6px] border-graphite-10 rounded-[4px]",
+        "bg-white border-[0.6px] border-graphite-20 rounded-[8px]",
         "flex flex-col",
         className,
       ].join(" ")}

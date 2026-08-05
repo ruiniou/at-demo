@@ -63,7 +63,7 @@
 .t-table {
   font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 400;
+  font-weight: var(--font-weight-medium, 500);
   line-height: 16px;
 }
 .t-input {

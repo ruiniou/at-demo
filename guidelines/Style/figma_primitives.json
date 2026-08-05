@@ -13,6 +13,19 @@
         "hex": "#ECECEC"
       }
     },
+    "15": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [
+          0.9019607843137255,
+          0.9098039215686274,
+          0.9098039215686274
+        ],
+        "alpha": 1,
+        "hex": "#E6E8E8"
+      }
+    },
     "20": {
       "$type": "color",
       "$value": {
