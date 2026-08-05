@@ -34,7 +34,7 @@ function CTAPrimaryButton({ children, disabled = false, onClick }: { children: R
       className={`px-[8px] py-[4px] rounded-[4px] flex items-center gap-[4px] transition-colors h-[28px] ${
         disabled
           ? 'bg-[#E6CCDC] text-white cursor-not-allowed'
-          : 'bg-[#830051] hover:bg-[#6a0042] text-white'
+          : 'bg-[#830051] hover:bg-az-warning text-white'
       }`}
     >
       <span className="t-small text-white">{children}</span>
@@ -46,7 +46,7 @@ function CTASecondaryButton({ children, onClick }: { children: React.ReactNode; 
   return (
     <button
       onClick={onClick}
-      className="bg-white hover:bg-bg-panel border-[0.6px] border-border-default text-text-primary px-[8px] py-[4px] rounded-[4px] flex items-center gap-[4px] transition-colors h-[28px]"
+      className="bg-graphite-20 hover:bg-graphite-40 text-text-primary px-[8px] py-[4px] rounded-[4px] flex items-center gap-[4px] transition-colors h-[28px]"
     >
       <span className="t-small text-text-primary">{children}</span>
     </button>

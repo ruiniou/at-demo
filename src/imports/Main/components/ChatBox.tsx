@@ -282,7 +282,7 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
               {/* Send Button */}
               <button 
                 onClick={handleSend}
-                className="bg-brand-1 hover:opacity-90 transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95 animate-none"
+                className="bg-brand-1 hover:bg-az-warning transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95 animate-none"
               >
                 <img
                   src={aiSubmitIconUrl}

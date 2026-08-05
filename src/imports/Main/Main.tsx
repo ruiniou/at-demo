@@ -379,11 +379,14 @@ function Divider({ className }: { className?: string }) {
 // ==================== Chat Conversation & Main Panel ====================
 
 type Message = {
-  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete' | 'ai_update_complete';
+  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete' | 'ai_update_complete' | 'meta_update_card';
   content?: string;
   hasTag?: boolean;
+  toBeUpdatedCount?: number;
   answers?: { q: string; a: string }[];
   isSkipped?: boolean;
+  metaDiffItems?: MetaDiffItem[];
+  isProcessing?: boolean;
 };
 
 function ChatConversation({ 
@@ -406,17 +409,58 @@ function ChatConversation({
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
 
-  return (
-    <div className="flex flex-col w-full px-[8px] py-[10px] gap-[12px] relative">
+  const rounds: Message[][] = [];
+  let currentRound: Message[] = [];
 
-      {messages.map((msg, i) => (
-        <React.Fragment key={i}>
-          <div className={`flex flex-col w-full gap-[12px] relative ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
-            {msg.type === 'user' && (
+  messages.forEach(msg => {
+    if (msg.type === 'user' || msg.type === 'meta_update_card') {
+      if (currentRound.length > 0) {
+        rounds.push(currentRound);
+      }
+      currentRound = [msg];
+    } else {
+      currentRound.push(msg);
+    }
+  });
+  if (currentRound.length > 0) {
+    rounds.push(currentRound);
+  }
+
+  return (
+    <div className="flex flex-col w-full px-[8px] gap-[12px] relative">
+      {rounds.map((round, rIndex) => (
+        <div key={rIndex} className="flex flex-col w-full py-[10px] gap-[12px] relative">
+          {round.map((msg, i) => (
+            <React.Fragment key={i}>
+              <div className={`flex flex-col w-full gap-[12px] relative ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
+                {msg.type === 'user' && (
               <AIUserPrompt
                 content={msg.content || ""}
                 tag={msg.hasTag ? "Table.14.1.1 (Lines 290-321)" : undefined}
+                toBeUpdatedCount={msg.toBeUpdatedCount}
               />
+            )}
+
+            {msg.type === 'meta_update_card' && msg.metaDiffItems && (
+              <div className="w-full relative mt-[8px]">
+                <AIUpdatedBlock
+                  title="To be Updated"
+                  count={msg.metaDiffItems.length}
+                  expanded={msg.isProcessing ? "scrollable" : "brief"}
+                  scrollHeight={210}
+                  toggleable={!msg.isProcessing}
+                  status={msg.isProcessing ? "processing" : "completed"}
+                  items={msg.metaDiffItems.map(d => {
+                    const oldVal = d.oldValue && d.oldValue.trim() !== '' ? d.oldValue : 'Empty';
+                    const newVal = d.newValue && d.newValue.trim() !== '' ? d.newValue : 'Empty';
+                    return {
+                      label: d.label,
+                      text: `~~${oldVal}~~ → ${newVal}`,
+                      onClick: () => onJumpToMetadata?.('', d.fieldId)
+                    };
+                  })}
+                />
+              </div>
             )}
 
             {msg.type === 'ai_thinking' && (
@@ -569,8 +613,10 @@ function ChatConversation({
                 </div>
               </div>
             )}
-          </div>
-        </React.Fragment>
+            </div>
+          </React.Fragment>
+          ))}
+        </div>
       ))}
     </div>
   );
@@ -590,6 +636,7 @@ function AICopilotPanel({
   metaDiffItems,
   reviewItems,
   metaUpdateActive,
+  metaUpdateProcessing,
   onMetaCancel,
   onMetaProceed,
 }: {
@@ -606,6 +653,7 @@ function AICopilotPanel({
   metaDiffItems?: MetaDiffItem[];
   reviewItems?: ReviewItem[];
   metaUpdateActive?: boolean;
+  metaUpdateProcessing?: boolean;
   onMetaCancel?: () => void;
   onMetaProceed?: () => void;
 }) {
@@ -665,7 +713,14 @@ function AICopilotPanel({
   const handleSubmit = (text: string) => {
     if (!text.trim()) return;
     (document.activeElement as HTMLElement)?.blur();
-    setMessages(prev => [...prev, { type: 'user', content: text }]);
+
+    const isUpdate = metaUpdateActive && metaDiffItems && metaDiffItems.length > 0;
+
+    setMessages(prev => [...prev, { 
+      type: 'user', 
+      content: text,
+      toBeUpdatedCount: isUpdate ? metaDiffItems.length : undefined
+    }]);
     setCurrentVal("");
     setIsPending(true);
 
@@ -731,6 +786,7 @@ function AICopilotPanel({
               expanded="scrollable"
               scrollHeight={210}
               toggleable={true}
+              isProcessing={metaUpdateProcessing}
               items={metaDiffItems.map(d => {
                 const oldVal = d.oldValue && d.oldValue.trim() !== '' ? d.oldValue : 'Empty';
                 const newVal = d.newValue && d.newValue.trim() !== '' ? d.newValue : 'Empty';
@@ -744,11 +800,19 @@ function AICopilotPanel({
               onProceed={() => {
                 onMetaProceed?.();
                 setIsPending(true);
-                setMessages(prev => [...prev, { type: 'ai_thinking' as const }]);
+                setMessages(prev => [
+                  ...prev, 
+                  { type: 'meta_update_card', metaDiffItems: metaDiffItems, isProcessing: true },
+                  { type: 'ai_thinking' as const }
+                ]);
                 setTimeout(() => {
-                  setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_update_complete' as const } : m));
+                  setMessages(prev => prev.map(m => {
+                    if (m.type === 'meta_update_card') return { ...m, isProcessing: false };
+                    if (m.type === 'ai_thinking') return { type: 'ai_update_complete' as const };
+                    return m;
+                  }));
                   setIsPending(false);
-                }, 2000);
+                }, 2500);
               }}
             />
           </div>
@@ -1562,7 +1626,7 @@ function PanelHeader({
   noBorder?: boolean;
 }) {
   return (
-    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between bg-white pl-[12px] pr-[16px] py-0 ${noBorder ? '' : 'border-b border-graphite-10'}`}>
+    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between bg-white px-[12px] py-0 ${noBorder ? '' : 'border-b border-graphite-10'}`}>
       <div className="truncate flex items-center">{title}</div>
       {actions && <div className="flex items-center gap-[4px]">{actions}</div>}
     </div>
@@ -6294,6 +6358,18 @@ ods graphics off;`;
   };
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (moreDropdownRef.current && !moreDropdownRef.current.contains(event.target as Node)) {
+        setIsMoreOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   const isCodeUnsaved = userCode !== savedCode;
 
   const handleSave = () => {
@@ -6317,7 +6393,7 @@ ods graphics off;`;
           {isSaving ? (
             <div className="w-[14px] h-[14px] rounded-full border-[2px] border-transparent border-t-[#B2B4B4] border-l-[#B2B4B4] animate-spin" />
           ) : (
-            <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color={!isCodeUnsaved ? "#B2B4B4" : "#830051"} />
+            <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color={!isCodeUnsaved ? "#B2B4B4" : "var(--color-text-primary)"} />
           )}
           <span>{isSaving ? "Saving" : isCodeUnsaved ? "Save" : "Saved"}</span>
         </div>
@@ -6335,16 +6411,36 @@ ods graphics off;`;
           </div>
         </Button>
       </TooltipText>
-      {[
-        { label: "Copy Code", icon: copyIconUrl },
-        { label: "Version History", icon: historyIconUrl },
-      ].map(({ label, icon }) => (
-        <TooltipText key={label} label={label}>
-          <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label={label}>
-            <LocalIcon src={icon} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+      <TooltipText label="Copy Code">
+        <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Copy Code">
+          <LocalIcon src={copyIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+        </button>
+      </TooltipText>
+
+      <div className="relative flex items-center" ref={moreDropdownRef}>
+        <TooltipText label="More">
+          <button 
+            className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] ${isMoreOpen ? 'bg-black/5' : ''}`}
+            onClick={() => setIsMoreOpen(!isMoreOpen)}
+            aria-label="More"
+          >
+            <LocalIcon src={moreIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
           </button>
         </TooltipText>
-      ))}
+        
+        {isMoreOpen && (
+          <div className="absolute right-0 top-[100%] z-[100] mt-[4px] flex w-[160px] flex-col gap-[2px] rounded-[4px] border border-form-border bg-white p-[4px] shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
+            <button className="flex items-center gap-[8px] w-full rounded-[2px] px-[8px] py-[6px] hover:bg-black/5 text-left t-small text-text-primary" onClick={() => setIsMoreOpen(false)}>
+              <LocalIcon src={historyIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+              Version History
+            </button>
+            <button className="flex items-center gap-[8px] w-full rounded-[2px] px-[8px] py-[6px] hover:bg-black/5 text-left t-small text-text-primary" onClick={() => setIsMoreOpen(false)}>
+              <LocalIcon src={downloadIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+              Download
+            </button>
+          </div>
+        )}
+      </div>
     </>
   );
 

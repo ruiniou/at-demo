@@ -20,7 +20,7 @@ interface ButtonProps {
 // ==================== Primary Button ====================
 // Figma: 221-516, Button/Primary
 // Default bg: #830051 (brand-1), text: #FFFFFF
-// Hovered bg: #9A3374 (brand-1-hover)
+// Hovered bg: #F0AB00 (az-warning)
 // Disabled bg: #E6CCDC (brand-1-disabled), text: #FFFFFF
 
 export function PrimaryButton({
@@ -37,7 +37,7 @@ export function PrimaryButton({
   const iconSize = size === "sm" ? 14 : 16;
   const bgClass = disabled
     ? "bg-brand-1-disabled"
-    : "bg-brand-1 hover:bg-brand-1-hover";
+    : "bg-brand-1 hover:bg-az-warning";
   const hitAreaClass = size === "sm"
     ? "relative after:content-[''] after:absolute after:-inset-y-[6px] after:inset-x-0"
     : "relative after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0";
@@ -58,6 +58,7 @@ export function PrimaryButton({
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
+            color: "#FFFFFF",
           }}
         >
           {icon}
@@ -81,9 +82,9 @@ export function PrimaryButton({
 
 // ==================== Secondary Button ====================
 // Figma: 221-554, Button/Secondary
-// Default bg: #F4E8EE (az-secondary), text: #830051 (brand-1)
-// Hovered bg: #E6CCDC (az-secondary-hover)
-// Disabled bg: #FFFFFF, text: #B2B4B4 (graphite-40)
+// Default bg: #D9DADA (graphite-20), text & icon: #3F4444 (text-primary)
+// Hovered bg: #B2B4B4 (graphite-40), text & icon: #3F4444 (text-primary)
+// Disabled bg: #FFFFFF, text & icon: #B2B4B4 (graphite-40)
 
 export function SecondaryButton({
   children,
@@ -99,8 +100,8 @@ export function SecondaryButton({
   const iconSize = 16;
   const bgClass = disabled
     ? "bg-white"
-    : "bg-az-secondary hover:bg-az-secondary-hover";
-  const textColor = disabled ? "#B2B4B4" : "#830051";
+    : "bg-graphite-20 hover:bg-graphite-40";
+  const textColor = disabled ? "#B2B4B4" : "#3F4444";
   const hitAreaClass = size === "sm"
     ? "relative after:content-[''] after:absolute after:-inset-y-[6px] after:inset-x-0"
     : "relative after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0";
@@ -121,6 +122,7 @@ export function SecondaryButton({
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
+            color: textColor,
           }}
         >
           {icon}

@@ -542,14 +542,14 @@ export default function CreateEventModal({
         {/* Footer */}
         {currentStep === 1 ? (
           <div className="flex shrink-0 items-center justify-end gap-[8px] border-t border-graphite-10 px-[20px] py-[14px]">
-            <button onClick={() => setCurrentStep(2)} className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-panel active:scale-[0.96]">Next</button>
+            <SecondaryButton onClick={() => setCurrentStep(2)}>Next</SecondaryButton>
             <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
           </div>
         ) : (
           <div className="flex shrink-0 items-center justify-between border-t border-graphite-10 px-[20px] py-[14px]">
-            <button onClick={() => setCurrentStep(1)} className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-panel active:scale-[0.96]">Back</button>
+            <SecondaryButton onClick={() => setCurrentStep(1)}>Back</SecondaryButton>
             <div className="flex items-center gap-[8px]">
-              <button className="flex h-[36px] items-center rounded-[4px] bg-white px-[12px] t-body-secondary text-text-primary hover:bg-bg-panel active:scale-[0.96]">Assign Later</button>
+              <SecondaryButton onClick={onClose}>Assign Later</SecondaryButton>
               <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
             </div>
           </div>

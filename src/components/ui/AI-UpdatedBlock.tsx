@@ -31,6 +31,7 @@ export interface AIUpdatedBlockProps {
   children?: React.ReactNode;
   /** Height (px) of the scrollable list wrapper in the `scrollable` state. */
   scrollHeight?: number;
+  status?: 'default' | 'processing' | 'completed';
   onCancel?: () => void;
   onProceed?: () => void;
   className?: string;
@@ -89,6 +90,7 @@ export function AIUpdatedBlock({
   items = [],
   children,
   scrollHeight = 232,
+  status = 'default',
   onCancel,
   onProceed,
   className = "",
@@ -100,6 +102,11 @@ export function AIUpdatedBlock({
 
   const showList = isExpanded === "brief" || isExpanded === "scrollable";
   const showFooter = showList;
+
+  const isDefault = status === 'default';
+  const isProcessing = status === 'processing';
+  const isCompleted = status === 'completed';
+  const isDisabled = isProcessing || isCompleted;
 
   const handleToggle = () => {
     if (!toggleable) return;
@@ -222,21 +229,24 @@ export function AIUpdatedBlock({
           ].join(" ")}
           style={{ borderTopWidth: "0.6px" }}
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            className="h-[28px]"
-          >
-            Cancel
-          </Button>
+          {isDefault && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCancel}
+              className="h-[28px]"
+            >
+              Cancel
+            </Button>
+          )}
           <Button
             variant="primary"
             size="sm"
-            onClick={onProceed}
+            onClick={isDisabled ? undefined : onProceed}
             className="h-[28px]"
+            disabled={isDisabled}
           >
-            Proceed
+            {isDisabled ? "Proceeded" : "Proceed"}
           </Button>
         </div>
       )}
