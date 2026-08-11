@@ -24,6 +24,15 @@
 * **支持缩放比例**：提供 `75%`、`100%`（默认）、`150%`、`200%` 四档预设比例。
 * **实现原理**：选中的比例缩放因子传递给 `ZoomContainer`，通过 CSS `transform: scale(scale)` 针对画布内容区进行平滑无损放缩，且不撑破/遮挡外部 Flex 布局。
 
+### 1.5 Metadata 面板拉伸与 Components/Blocks 双栏自适应规范
+* **外层尺寸约束**：
+  * **Shell-Only 视图**：默认 `380px`，最小 `320px`，最大 `640px`。
+  * **Code & Shell 视图**：默认 `380px`，最小 `280px`，最大 `520px`。
+* **Components / Blocks Tab View 内部双栏规则**：
+  * **左侧列表导航栏**：默认 `176px` (`w-[176px]`)，具备 `min-w-[90px]` 动态压缩弹性能力，文字过长时自动 `truncate`。
+  * **右侧字段详情区**：`flex-1 min-w-0` 占据剩余空间。
+  * **拉伸/压缩顺序**：面板拓宽时由右侧 `flex-1` 吸收；面板压缩至极限时，左侧导航栏由 176px 配合收缩至 90px。详见 [`Responsive-Design-2.0.md`](file:///Users/ruini.ou/Downloads/AI%20Copilot/guidelines/Global%20Features/Responsive-Design-2.0.md)。
+
 ---
 
 ## 二、排版与字体层级 (Unified Typography Hierarchy)

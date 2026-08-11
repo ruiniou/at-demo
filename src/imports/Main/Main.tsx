@@ -1787,13 +1787,13 @@ const listingData = [
 ];
 
 const listingColumns = [
-  { key: "studyDay", label: "Study\nday [b]", width: 160, widthPx: 160 },
-  { key: "lesionNum", label: "Lesion\nnumber", width: 120, widthPx: 120 },
+  { key: "studyDay", label: "Study day [b]", width: 160, widthPx: 160 },
+  { key: "lesionNum", label: "Lesion number", width: 120, widthPx: 120 },
   { key: "lesionLoc", label: "Lesion location", width: 200, widthPx: 200 },
-  { key: "locSpec", label: "Location within site\nspecification", width: 220, widthPx: 220 },
+  { key: "locSpec", label: "Location within site specification", width: 220, widthPx: 220 },
   { key: "method", label: "Method of assessment", width: 160, widthPx: 160 },
-  { key: "diameter", label: "Diameter\n(mm) [c]", width: 170, widthPx: 170 },
-  { key: "sum", label: "Sum of\ndiameters\n(mm) [d]", width: 180, widthPx: 180 },
+  { key: "diameter", label: "Diameter (mm) [c]", width: 170, widthPx: 170 },
+  { key: "sum", label: "Sum of diameters (mm) [d]", width: 180, widthPx: 180 },
 ] as const;
 
 // Experimental: inline metadata under Listing column headers.
@@ -3098,7 +3098,11 @@ const shellTableData: Record<string, ShellTableData> = {
       '[a] ITT Population: All randomized subjects. Subjects are summarised in the arm to which they were randomised.',
       '[b] Kaplan-Meier estimates are used for survival curves. Median survival time and 95% CI are calculated.',
       '[c] Cross marks indicate censored observations (e.g., lost to follow-up or administrative censoring).',
-      'Source: eTMF Data snapshot <<Data cut-off ddmmmyyyy>>.'
+      'Source: eTMF Data snapshot <<Data cut-off ddmmmyyyy>>.',
+      'Program: /study/D9802C00001/csr/prod/figures/f_kmplot.sas',
+      'Output: /study/D9802C00001/csr/prod/output/f_15_1_1.rtf',
+      'Generated on: <<ddmmmyyyy hh:mm>>',
+      'This figure was produced in compliance with AZ Global Standard for Statistical Programming v3.2. SAS® version 9.4 was used.'
     ],
     columnGroups: [],
     columns: [],
@@ -4690,7 +4694,20 @@ function BlocksTabContent({
       </div>
 
       {/* Right content — scrollable block sections */}
-      <div ref={scrollContainerRef} className="flex-1 min-w-[180px] overflow-y-scroll overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-w-[180px] min-h-0">
+        {selectedBlockId !== 'all' && blocks.find((b: any) => b.id === selectedBlockId)?.deprecated && (
+          <div className="bg-bg-panel border-y border-graphite-10 p-[12px] flex items-center gap-[8px] shrink-0">
+            <div className="w-[20px] h-[20px] shrink-0 rounded-[4px] bg-black/5 flex items-center justify-center">
+              <svg className="w-[14px] h-[14px]" fill="none" viewBox="0 0 13.333 13.333">
+                <path d="M6.66699 0C10.3487 0.000175812 13.333 2.9852 13.333 6.66699C13.3328 10.3486 10.3486 13.3328 6.66699 13.333C2.9852 13.333 0.000175816 10.3487 0 6.66699C0 2.98509 2.98509 0 6.66699 0ZM6.66699 1.33301C3.72147 1.33301 1.33301 3.72147 1.33301 6.66699C1.33318 9.61238 3.72158 12 6.66699 12C9.61227 11.9998 11.9998 9.61227 12 6.66699C12 3.72158 9.61238 1.33318 6.66699 1.33301ZM9.92773 8.98438C9.80013 9.16338 9.65578 9.33452 9.49512 9.49512C9.33452 9.65578 9.16338 9.80013 8.98438 9.92773L3.40625 4.34863C3.5338 4.16969 3.67735 3.99844 3.83789 3.83789C3.99844 3.67735 4.16969 3.5338 4.34863 3.40625L9.92773 8.98438Z" fill="#888E8E" />
+              </svg>
+            </div>
+            <p className="t-small text-text-secondary">
+              It will be skipped in code update.
+            </p>
+          </div>
+        )}
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-scroll overflow-x-hidden">
         {blocks.length === 0 ? (
           <div className="flex w-full h-full items-center justify-center">
             <p className="t-small text-text-secondary">No Components</p>
@@ -4717,7 +4734,9 @@ function BlocksTabContent({
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-[12px]">
-                    <p className="text-[14px] font-bold text-text-primary break-words m-0">{blockName}</p>
+                    <p className={`text-[14px] font-bold text-text-primary break-words m-0 ${block.deprecated ? 'opacity-40 pointer-events-none' : ''}`}>
+                      {blockName}
+                    </p>
                     <button
                       onClick={fieldIsDisabled ? undefined : () => onToggleBlockConfirm(block.id)}
                       disabled={fieldIsDisabled}
@@ -4728,19 +4747,7 @@ function BlocksTabContent({
                       </SvgIcon>
                     </button>
                   </div>
-                  {block.deprecated && (
-                    <div className="mb-[12px] bg-bg-panel border border-border-default rounded-[4px] p-[8px] flex items-center gap-[8px]">
-                      <div className="w-[20px] h-[20px] shrink-0 rounded-[4px] bg-black/5 flex items-center justify-center">
-                        <svg className="w-[14px] h-[14px]" fill="none" viewBox="0 0 13.333 13.333">
-                          <path d="M6.66699 0C10.3487 0.000175812 13.333 2.9852 13.333 6.66699C13.3328 10.3486 10.3486 13.3328 6.66699 13.333C2.9852 13.333 0.000175816 10.3487 0 6.66699C0 2.98509 2.98509 0 6.66699 0ZM6.66699 1.33301C3.72147 1.33301 1.33301 3.72147 1.33301 6.66699C1.33318 9.61238 3.72158 12 6.66699 12C9.61227 11.9998 11.9998 9.61227 12 6.66699C12 3.72158 9.61238 1.33318 6.66699 1.33301ZM9.92773 8.98438C9.80013 9.16338 9.65578 9.33452 9.49512 9.49512C9.33452 9.65578 9.16338 9.80013 8.98438 9.92773L3.40625 4.34863C3.5338 4.16969 3.67735 3.99844 3.83789 3.83789C3.99844 3.67735 4.16969 3.5338 4.34863 3.40625L9.92773 8.98438Z" fill="#888E8E" />
-                        </svg>
-                      </div>
-                      <p className="t-small text-text-secondary">
-                        AI will skip deprecated components in code updates.
-                      </p>
-                    </div>
-                  )}
-                  <div className={`flex flex-col gap-[12px] ${block.deprecated ? 'opacity-40 pointer-events-none' : ''}`}>
+                  <div className="flex flex-col gap-[12px]">
                     {block.fields.map((field: any) => {
                       const badgeNode = field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined;
                       
@@ -4797,6 +4804,7 @@ function BlocksTabContent({
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );
@@ -6934,10 +6942,16 @@ function WorkspaceContent({
   const selectedTable = getSelectedTable();
   const docType = selectedTable?.docType || 'table';
 
+  const figureOpenedRef = React.useRef(false);
+
   useEffect(() => {
     if (docType === 'figure') {
       setRtfOpen(false);
       setPanelView('both');
+      if (!figureOpenedRef.current) {
+        figureOpenedRef.current = true;
+        setAiCopilotOpen(true);
+      }
     } else {
       setRtfOpen(true);
     }
@@ -6963,11 +6977,11 @@ function WorkspaceContent({
     setIsLayoutUserOverridden(true);
   };
 
-  // Set default panel layout based on doc type (listing/figure = vertical, table = horizontal)
+  // Set default panel layout based on doc type (listing = vertical, table/figure = horizontal)
   // Only applies if user hasn't explicitly overridden the layout preference
   useEffect(() => {
     if (!isLayoutUserOverridden) {
-      setPanelLayout(docType === 'table' ? 'horizontal' : 'vertical');
+      setPanelLayout(docType === 'listing' ? 'vertical' : 'horizontal');
     }
   }, [docType, isLayoutUserOverridden]);
 
@@ -7136,7 +7150,7 @@ function WorkspaceContent({
           />
         )}
 
-        <div className={`flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden ${!treeListOpen ? "ml-[4px]" : ""}`}>
+        <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
           <div className="shrink-0 w-full overflow-hidden mt-[4px] px-[4px]">
             <ViewToggleBar
               treeListOpen={treeListOpen}
