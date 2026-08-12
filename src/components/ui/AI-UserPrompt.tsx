@@ -55,7 +55,8 @@ export function AIUserPrompt({
   className = "",
 }: AIUserPromptProps) {
   const paragraphs = content.split("\n");
-  const [metaTagExpanded, setMetaTagExpanded] = useState<boolean>(false);
+  const isSingleTotal = (toBeUpdatedCount === 1) || (metaDiffItems?.length === 1);
+  const [metaTagExpanded, setMetaTagExpanded] = useState<boolean>(() => isSingleTotal);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   const toggleGroup = (blockId: string) => {
@@ -214,8 +215,7 @@ export function AIUserPrompt({
                           return (
                             <div 
                               key={dIdx}
-                              onClick={() => onJumpToMetadata?.(diff.fieldId)}
-                              className="flex flex-col gap-[1px] py-[2px] px-[4px] rounded-[4px] hover:bg-black/5 cursor-pointer select-none"
+                              className="flex flex-col gap-[1px] py-[2px] px-[4px] rounded-[4px] cursor-default select-none"
                             >
                               <span className="text-[11px] font-medium text-text-secondary leading-[14px]">
                                 {diff.label}

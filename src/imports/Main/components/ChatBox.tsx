@@ -173,6 +173,32 @@ export default function ChatBox({
     return Array.from(groupsMap.values());
   }, [metaDiffItems]);
 
+  // Track previous block IDs to auto-expand newly appended component groups
+  const prevBlockIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const currentBlockIds = new Set(groupedChanges.map(g => g.blockId));
+    const newBlockIds: string[] = [];
+
+    currentBlockIds.forEach(id => {
+      if (!prevBlockIdsRef.current.has(id)) {
+        newBlockIds.push(id);
+      }
+    });
+
+    if (newBlockIds.length > 0 && prevBlockIdsRef.current.size > 0) {
+      setExpandedGroups(prev => {
+        const next = { ...prev };
+        newBlockIds.forEach(id => {
+          next[id] = true;
+        });
+        return next;
+      });
+    }
+
+    prevBlockIdsRef.current = currentBlockIds;
+  }, [groupedChanges]);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
