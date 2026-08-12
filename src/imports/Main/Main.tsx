@@ -4765,7 +4765,8 @@ function BlocksTabContent({
   onFieldEdit,
   getEffectiveStatus,
   getFieldStyles,
-  fieldRefs
+  fieldRefs,
+  focusedFieldId
 }: {
   blocks: any;
   targetBlockId?: string | null;
@@ -4779,6 +4780,7 @@ function BlocksTabContent({
   getEffectiveStatus?: (fieldId: string | null, status: FieldStatus, currentValue: string | null) => FieldStatus;
   getFieldStyles?: (status: FieldStatus, isReadOnlyField?: boolean) => { containerBg: string; containerBorder: string; inputBorder: string };
   fieldRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  focusedFieldId?: string | null;
 }) {
   const FieldCheckboxIcon = (confirmed: boolean) => {
     if (!confirmed) return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 0 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
@@ -4961,7 +4963,15 @@ function BlocksTabContent({
                       const effectiveInputType = field.inputType || (field.type === 'tag' ? 'multiselect' : 'input');
 
                       return (
-                        <div key={field.id} ref={el => { if (el && fieldRefs) fieldRefs.current[field.id] = el; }} className="bg-white rounded-[4px] border border-transparent p-[4px]">
+                        <div 
+                          key={field.id} 
+                          ref={el => { if (el && fieldRefs) fieldRefs.current[field.id] = el; }} 
+                          className={`rounded-[4px] border p-[4px] transition-all duration-300 ${
+                            focusedFieldId === field.id 
+                              ? 'bg-az-secondary/40 border-brand-1 ring-2 ring-brand-1/30 shadow-sm' 
+                              : 'bg-white border-transparent'
+                          }`}
+                        >
                           {effectiveInputType === 'multiselect' ? (
                             <MultiSelectDropdown
                               label={labelWithLink as any}
@@ -5538,6 +5548,7 @@ function MetadataPanel({
 
   // Refs and Auto-scrolling to the first affected field on mount
   const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [focusedFieldId, setFocusedFieldId] = useState<string | null>(null);
 
   useEffect(() => {
     if (docType === 'listing') {
@@ -5553,7 +5564,11 @@ function MetadataPanel({
 
   useEffect(() => {
     if (targetFieldId) {
-      const cleanId = targetFieldId.replace('deprecate_', '').replace('delete_', '').replace('add_', '');
+      if (targetFieldId.startsWith('delete_')) return; // Ignore deletion items for focus interaction
+
+      const cleanId = targetFieldId.replace('deprecate_', '').replace('add_', '');
+      setFocusedFieldId(cleanId);
+
       const isCompField = figureComponents.some(c => c.id === cleanId || c.fields.some(f => f.id === cleanId));
       if (isCompField) {
         setActiveTab("blocks");
@@ -5565,8 +5580,17 @@ function MetadataPanel({
         const el = fieldRefs.current[cleanId] || fieldRefs.current[targetFieldId];
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const focusable = el.querySelector('input, select, textarea, [tabindex="0"]') as HTMLElement;
+          if (focusable) {
+            focusable.focus();
+          }
         }
       }, 200);
+
+      const timer = setTimeout(() => {
+        setFocusedFieldId(null);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
   }, [targetFieldId, figureComponents]);
 
@@ -5898,7 +5922,15 @@ function MetadataPanel({
                     }
 
                     return (
-                      <div key={field.id} ref={el => { fieldRefs.current[field.id] = el; }} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
+                      <div 
+                        key={field.id} 
+                        ref={el => { fieldRefs.current[field.id] = el; }} 
+                        className={`rounded-[4px] border transition-all duration-300 ${
+                          focusedFieldId === field.id 
+                            ? 'bg-az-secondary/40 border-brand-1 ring-2 ring-brand-1/30 shadow-sm' 
+                            : `${styles.containerBg} ${styles.containerBorder}`
+                        }`}
+                      >
                         <div className="p-[8px]">
                           <FormItem
                             label={field.label}
@@ -6245,6 +6277,7 @@ function MetadataPanel({
               onDeleteComponent={(id) => setDeleteConfirmBlockId(id)}
               onFieldEdit={handleFieldEditComponent}
               fieldRefs={fieldRefs}
+              focusedFieldId={focusedFieldId}
             />
           ) : (
             <BlocksTabContent
