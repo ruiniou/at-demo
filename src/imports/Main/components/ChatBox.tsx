@@ -308,11 +308,7 @@ export default function ChatBox({
             )}
           </div>
         ) : metadataChangesCount > 0 ? (
-          <div 
-            className={`content-stretch flex flex-col gap-[6px] items-start relative shrink-0 w-full transition-all duration-300 ${
-              metadataExpanded ? "h-[140px]" : "h-auto"
-            }`}
-          >
+          <div className="content-stretch flex flex-col gap-[6px] items-start relative shrink-0 w-full">
             <div className="content-stretch flex gap-[6px] items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full select-none">
               <div 
                 onClick={() => setMetadataExpanded(!metadataExpanded)}
@@ -355,7 +351,7 @@ export default function ChatBox({
 
             {/* Expanded To be Updated Component-based List */}
             {metadataExpanded && groupedChanges.length > 0 && (
-              <div className="content-stretch flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative w-full overflow-y-auto scrollbar-colored flex-1 min-h-0">
+              <div className="content-stretch flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative w-full overflow-y-auto scrollbar-colored max-h-[160px]">
                 {groupedChanges.map((group) => {
                   if (group.changeType === 'added') {
                     return (
@@ -429,9 +425,9 @@ export default function ChatBox({
                                   {diff.label}
                                 </span>
                                 {/* Line 2: Diff Values (Stacked, line-wrap allowed, no truncation) */}
-                                <div className="text-[13px] leading-[18px] break-words whitespace-pre-wrap flex flex-wrap items-center gap-[4px]">
-                                  <span className="text-text-secondary line-through">{oldVal}</span>
-                                  <span className="text-text-secondary shrink-0">→</span>
+                                <div className="text-[13px] leading-[18px] break-words whitespace-pre-wrap text-text-primary">
+                                  <span className="text-text-secondary line-through mr-[4px]">{oldVal}</span>
+                                  <span className="text-text-secondary mr-[4px]">→</span>
                                   <span className="font-medium text-brand-1">{newVal}</span>
                                 </div>
                               </div>
