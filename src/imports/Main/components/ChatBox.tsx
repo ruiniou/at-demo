@@ -159,7 +159,7 @@ export default function ChatBox({
           pending 
             ? "bg-az-secondary gap-[4px] pb-[2px] pt-[8px]" 
             : metadataChangesCount > 0
-            ? "border border-graphite-10 gap-[4px] pb-[2px] pt-[8px]"
+            ? "bg-az-secondary border border-graphite-10 gap-[4px] pb-[2px] pt-[8px]"
             : ""
         }`}
         style={{
