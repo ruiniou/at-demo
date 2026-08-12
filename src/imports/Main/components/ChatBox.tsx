@@ -351,7 +351,7 @@ export default function ChatBox({
 
             {/* Expanded To be Updated Component-based List */}
             {metadataExpanded && groupedChanges.length > 0 && (
-              <div className="content-stretch flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative shrink-0 w-full overflow-y-auto max-h-[160px]">
+              <div className="content-stretch flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative shrink-0 w-full overflow-y-auto max-h-[109px] scrollbar-colored">
                 {groupedChanges.map((group) => {
                   if (group.changeType === 'added') {
                     return (
@@ -384,11 +384,18 @@ export default function ChatBox({
 
                   return (
                     <div key={group.blockId} className="flex flex-col w-full rounded-[4px] bg-black/[0.02] overflow-hidden">
-                      {/* Group Header Row */}
+                      {/* Group Header Row (Chevron Arrow on the Left) */}
                       <div 
                         onClick={() => toggleGroup(group.blockId)}
-                        className="flex items-center justify-between gap-[6px] w-full py-[4px] px-[6px] hover:bg-black/5 cursor-pointer text-[13px] select-none"
+                        className="flex items-center gap-[6px] w-full py-[4px] px-[6px] hover:bg-black/5 cursor-pointer text-[13px] select-none"
                       >
+                        <div className="w-[14px] h-[14px] flex items-center justify-center shrink-0">
+                          {isExpanded ? (
+                            <ChevronDownIcon className="size-[12px]" color="var(--color-text-secondary)" />
+                          ) : (
+                            <ChevronRightIcon className="size-[12px]" color="var(--color-text-secondary)" />
+                          )}
+                        </div>
                         <div className="flex items-center gap-[6px] min-w-0 flex-1">
                           <span className="font-medium text-text-primary truncate">{group.blockName}</span>
                           {diffCount > 1 && (
@@ -397,13 +404,6 @@ export default function ChatBox({
                                 {diffCount} {diffCount === 1 ? 'change' : 'changes'}
                               </span>
                             </div>
-                          )}
-                        </div>
-                        <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
-                          {isExpanded ? (
-                            <ChevronDownIcon className="size-[12px]" color="var(--color-text-secondary)" />
-                          ) : (
-                            <ChevronRightIcon className="size-[12px]" color="var(--color-text-secondary)" />
                           )}
                         </div>
                       </div>

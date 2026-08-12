@@ -5322,7 +5322,7 @@ function MetadataPanel({
       }
     });
 
-    // 4. Component Deletion
+    // 4. Component Deletion (deletion requires update code workflow)
     figureComponentListBaseline.forEach(baseComp => {
       const exists = figureComponents.some(c => c.id === baseComp.id);
       if (!exists) {
@@ -5335,25 +5335,6 @@ function MetadataPanel({
           blockName: baseComp.name,
           changeType: 'removed'
         });
-      }
-    });
-
-    // 5. Component Addition (state === 'ready')
-    figureComponents.forEach(c => {
-      if (c.state === 'ready') {
-        const inBaseline = figureComponentListBaseline.some(cb => cb.id === c.id);
-        if (!inBaseline) {
-          const blockName = c.name || 'New Component';
-          items.push({
-            fieldId: `add_${c.id}`,
-            label: blockName,
-            oldValue: '(None)',
-            newValue: blockName,
-            blockId: c.id,
-            blockName: blockName,
-            changeType: 'added'
-          });
-        }
       }
     });
 
