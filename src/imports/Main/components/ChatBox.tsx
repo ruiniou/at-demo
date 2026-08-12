@@ -354,9 +354,11 @@ export default function ChatBox({
                     return (
                       <div 
                         key={group.blockId} 
-                        className="flex items-center gap-[6px] w-full py-[4px] px-[6px] rounded-[4px] bg-black/[0.02] text-[13px] select-none"
+                        className="flex items-center gap-[8px] w-full py-[4px] pl-0 pr-[6px] rounded-[4px] bg-black/[0.02] text-[13px] select-none"
                       >
-                        <span className="font-semibold text-[#2E7D32] shrink-0">＋</span>
+                        <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
+                          <span className="font-semibold text-[#2E7D32]">＋</span>
+                        </div>
                         <span className="font-medium text-text-primary truncate">{group.blockName}</span>
                       </div>
                     );
@@ -366,9 +368,11 @@ export default function ChatBox({
                     return (
                       <div 
                         key={group.blockId} 
-                        className="flex items-center gap-[6px] w-full py-[4px] px-[6px] rounded-[4px] bg-black/[0.02] text-[13px] select-none"
+                        className="flex items-center gap-[8px] w-full py-[4px] pl-0 pr-[6px] rounded-[4px] bg-black/[0.02] text-[13px] select-none"
                       >
-                        <span className="font-semibold text-[#E53935] shrink-0">－</span>
+                        <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
+                          <span className="font-semibold text-[#E53935]">－</span>
+                        </div>
                         <span className="font-medium text-text-primary truncate">{group.blockName}</span>
                       </div>
                     );
@@ -379,16 +383,16 @@ export default function ChatBox({
 
                   return (
                     <div key={group.blockId} className="flex flex-col w-full rounded-[4px] bg-black/[0.02] overflow-hidden">
-                      {/* Group Header Row (Chevron Arrow on the Left) */}
+                      {/* Group Header Row (Chevron Arrow Left-Aligned with Top-Level Chevron) */}
                       <div 
                         onClick={() => toggleGroup(group.blockId)}
-                        className="flex items-center gap-[6px] w-full py-[4px] px-[6px] hover:bg-black/5 cursor-pointer text-[13px] select-none"
+                        className="flex items-center gap-[8px] w-full py-[4px] pl-0 pr-[6px] hover:bg-black/5 cursor-pointer text-[13px] select-none"
                       >
-                        <div className="w-[14px] h-[14px] flex items-center justify-center shrink-0">
+                        <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                           {isExpanded ? (
-                            <ChevronDownIcon className="size-[12px]" color="var(--color-text-secondary)" />
+                            <ChevronDownIcon className="size-[14px]" color="var(--color-text-secondary)" />
                           ) : (
-                            <ChevronRightIcon className="size-[12px]" color="var(--color-text-secondary)" />
+                            <ChevronRightIcon className="size-[14px]" color="var(--color-text-secondary)" />
                           )}
                         </div>
                         <div className="flex items-center gap-[6px] min-w-0 flex-1">
@@ -396,9 +400,9 @@ export default function ChatBox({
                         </div>
                       </div>
 
-                      {/* Field Level Diffs inside Group (Stacked 2-line structure without truncation) */}
+                      {/* Field Level Diffs inside Group (Indented cleanly under component name) */}
                       {isExpanded && (
-                        <div className="flex flex-col gap-[6px] px-[8px] pb-[6px] pt-[2px]">
+                        <div className="flex flex-col gap-[6px] pl-[24px] pr-[8px] pb-[6px] pt-[2px]">
                           {group.diffs.map((diff, dIdx) => {
                             const oldVal = diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty';
                             const newVal = diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty';
