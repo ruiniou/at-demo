@@ -1029,7 +1029,7 @@ function AICopilotPanel({
       </div>
 
       {/* Chat Area */}
-      <div ref={chatAreaRef} className="flex-1 overflow-y-auto scroll-smooth">
+      <div ref={chatAreaRef} className="flex-1 overflow-y-auto scroll-smooth pb-[120px]">
         {messages.length === 0 ? (
           <div className="absolute top-[40px] inset-x-0 flex flex-col items-center pt-[180px] gap-[12px]">
             <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
@@ -1051,36 +1051,38 @@ function AICopilotPanel({
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="relative p-[8px] flex flex-col gap-[4px]">
-        {showAskUser && (
-          <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50 rounded" />}>
-            <AskUserComponent 
-              onSubmit={handleAskUserSubmit} 
-              onSkip={handleAskUserSkip}
-              panelWidth={panelWidth}
+      {/* Input Area (Floating Overlay above Chat Area) */}
+      <div className="absolute bottom-0 inset-x-0 p-[8px] flex flex-col gap-[4px] z-20 pointer-events-none bg-gradient-to-t from-white via-white/95 to-transparent pt-[16px]">
+        <div className="pointer-events-auto w-full flex flex-col gap-[4px]">
+          {showAskUser && (
+            <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50 rounded" />}>
+              <AskUserComponent 
+                onSubmit={handleAskUserSubmit} 
+                onSkip={handleAskUserSkip}
+                panelWidth={panelWidth}
+              />
+            </Suspense>
+          )}
+          {metaUpdateActive && metaDiffItems && metaDiffItems.length > 0 ? (
+            <ChatBox 
+              onSubmit={handleSubmit} 
+              metadataChangesCount={metaDiffItems.length}
+              metaDiffItems={metaDiffItems}
+              onCloseMetadataChanges={() => onMetaCancel?.()}
+              onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
             />
-          </Suspense>
-        )}
-        {metaUpdateActive && metaDiffItems && metaDiffItems.length > 0 ? (
-          <ChatBox 
-            onSubmit={handleSubmit} 
-            metadataChangesCount={metaDiffItems.length}
-            metaDiffItems={metaDiffItems}
-            onCloseMetadataChanges={() => onMetaCancel?.()}
-            onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
-          />
-        ) : hasCodeDiff ? (
-          <ChatBox 
-            onSubmit={handleSubmit} 
-            pending={true} 
-            onAcceptPending={handleAcceptPending}
-            onRejectPending={handleRejectPending}
-          />
-        ) : (
-          <AIInputBox disabled={isPending} onSubmit={handleSubmit} value={currentVal} onValueChange={setCurrentVal} focusTrigger={focusTrigger} />
-        )}
-        {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
+          ) : hasCodeDiff ? (
+            <ChatBox 
+              onSubmit={handleSubmit} 
+              pending={true} 
+              onAcceptPending={handleAcceptPending}
+              onRejectPending={handleRejectPending}
+            />
+          ) : (
+            <AIInputBox disabled={isPending} onSubmit={handleSubmit} value={currentVal} onValueChange={setCurrentVal} focusTrigger={focusTrigger} />
+          )}
+          {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
+        </div>
       </div>
     </div>
   );
