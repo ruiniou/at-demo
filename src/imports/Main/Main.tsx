@@ -251,7 +251,7 @@ function ImageRenderToolCallCard({
     : 'border border-[#EBECEC]';
 
   return (
-    <div className={`rounded-[4px] overflow-hidden w-full ${borderClass} bg-white`}>
+    <div className={`rounded-[8px] overflow-hidden w-full ${borderClass} bg-white`}>
       {/* Header row */}
       <div className="flex items-center px-[12px] py-[8px] gap-[6px]">
         <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">

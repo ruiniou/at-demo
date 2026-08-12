@@ -111,12 +111,12 @@ export function AIInputBox({
             disabled={disabled}
             rows={1}
             className={[
-              "t-input",
+              "t-body",
               "flex-1 w-full bg-transparent border-none outline-none resize-none",
               "text-text-primary",
               disabled
                 ? "placeholder:text-graphite-20"
-                : "placeholder:text-graphite-40",
+                : "placeholder:text-text-secondary",
               isMaxHeight
                 ? "max-h-[140px] overflow-y-auto"
                 : "",

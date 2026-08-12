@@ -322,7 +322,7 @@ export default function ChatBox({
                       }}
                       onKeyDown={handleKeyDown}
                       placeholder={placeholderText}
-                      className="w-full t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none resize-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] max-h-[140px] pr-[12px] overflow-y-auto"
+                      className="w-full t-body text-text-primary placeholder:text-text-secondary bg-transparent border-none outline-none resize-none text-[14px] leading-[24px] max-h-[140px] pr-[12px] overflow-y-auto"
                       rows={4}
                     />
                   </div>
@@ -338,7 +338,7 @@ export default function ChatBox({
                         }}
                         className="flex-1 flex items-center gap-[4px] cursor-text select-text h-[24px]"
                       >
-                        <span className="text-text-primary font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] whitespace-nowrap shrink-0">
+                        <span className="t-body text-text-primary text-[14px] leading-[24px] whitespace-nowrap shrink-0">
                           {inputText}
                         </span>
                         <Tag />
@@ -364,7 +364,7 @@ export default function ChatBox({
                           }
                         }}
                         placeholder={placeholderText}
-                        className="flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px]"
+                        className="flex-1 t-body text-text-primary placeholder:text-text-secondary bg-transparent border-none outline-none text-[14px] leading-[24px]"
                       />
                     )}
                     
