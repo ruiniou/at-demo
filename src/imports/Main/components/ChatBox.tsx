@@ -107,10 +107,10 @@ export default function ChatBox({
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [pendingExpanded, setPendingExpanded] = useState<boolean>(false);
   const [metadataExpanded, setMetadataExpanded] = useState<boolean>(() => metadataChangesCount > 0 && metadataChangesCount <= 3);
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   const toggleGroup = (blockId: string) => {
-    setCollapsedGroups(prev => ({
+    setExpandedGroups(prev => ({
       ...prev,
       [blockId]: !prev[blockId]
     }));
@@ -353,7 +353,7 @@ export default function ChatBox({
             {metadataExpanded && groupedChanges.length > 0 && (
               <div 
                 className="flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative w-full overflow-y-auto scrollbar-colored"
-                style={{ maxHeight: '140px' }}
+                style={{ maxHeight: '560px' }}
               >
                 {groupedChanges.map((group) => {
                   if (group.changeType === 'added') {
@@ -381,8 +381,8 @@ export default function ChatBox({
                     );
                   }
 
-                  // Modified Component Group
-                  const isExpanded = !collapsedGroups[group.blockId];
+                  // Modified Component Group (Collapsed by default)
+                  const isExpanded = !!expandedGroups[group.blockId];
                   const diffCount = group.diffs.length;
 
                   return (
