@@ -370,14 +370,12 @@ export default function ChatBox({
                       >
                         <span className="font-semibold text-[#E53935] shrink-0">－</span>
                         <span className="font-medium text-text-primary truncate">{group.blockName}</span>
-                        <span className="text-[12px] text-text-secondary italic">(Removed)</span>
                       </div>
                     );
                   }
 
                   // Modified Component Group (Collapsed by default)
                   const isExpanded = !!expandedGroups[group.blockId];
-                  const diffCount = group.diffs.length;
 
                   return (
                     <div key={group.blockId} className="flex flex-col w-full rounded-[4px] bg-black/[0.02] overflow-hidden">
@@ -395,13 +393,6 @@ export default function ChatBox({
                         </div>
                         <div className="flex items-center gap-[6px] min-w-0 flex-1">
                           <span className="font-medium text-text-primary truncate">{group.blockName}</span>
-                          {diffCount > 1 && (
-                            <div className="bg-graphite-10 flex items-center justify-center px-[6px] py-px rounded-[12px] shrink-0 min-w-[16px] h-[16px]">
-                              <span className="text-[11px] font-medium text-text-secondary leading-[14px]">
-                                {diffCount} {diffCount === 1 ? 'change' : 'changes'}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
 

@@ -589,7 +589,7 @@ function Divider({ className }: { className?: string }) {
 // ==================== Chat Conversation & Main Panel ====================
 
 type Message = {
-  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete' | 'ai_update_complete' | 'meta_update_card';
+  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete' | 'ai_update_complete' | 'ai_update_accepted' | 'meta_update_card';
   content?: string;
   hasTag?: boolean;
   toBeUpdatedCount?: number;
@@ -832,7 +832,7 @@ function ChatConversation({
                 </div>
               </div>
             )}
-            {msg.type === 'ai_update_complete' && (
+            {(msg.type === 'ai_update_complete' || msg.type === 'ai_update_accepted') && (
               <div className="flex flex-col gap-[12px] w-full relative">
                 <AIThinkingStatus status="completed" />
                 <div className="flex flex-col w-full relative gap-[8px]">
@@ -953,7 +953,7 @@ function AICopilotPanel({
   }, [hasCodeDiff, onCodeDiffChange]);
 
   const handleAcceptPending = () => {
-    setMessages(prev => prev.map(m => m.type === 'ai_update_complete' ? { ...m, type: 'ai_complete' as const } : m));
+    setMessages(prev => prev.map(m => m.type === 'ai_update_complete' ? { ...m, type: 'ai_update_accepted' as const } : m));
   };
 
   const handleRejectPending = () => {
@@ -5335,6 +5335,25 @@ function MetadataPanel({
           blockName: baseComp.name,
           changeType: 'removed'
         });
+      }
+    });
+
+    // 5. Component Addition (state === 'ready')
+    figureComponents.forEach(c => {
+      if (c.state === 'ready') {
+        const inBaseline = figureComponentListBaseline.some(cb => cb.id === c.id);
+        if (!inBaseline) {
+          const blockName = c.name || 'New Component';
+          items.push({
+            fieldId: `add_${c.id}`,
+            label: blockName,
+            oldValue: '(None)',
+            newValue: blockName,
+            blockId: c.id,
+            blockName: blockName,
+            changeType: 'added'
+          });
+        }
       }
     });
 
