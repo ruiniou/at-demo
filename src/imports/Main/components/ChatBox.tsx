@@ -308,7 +308,11 @@ export default function ChatBox({
             )}
           </div>
         ) : metadataChangesCount > 0 ? (
-          <div className="content-stretch flex flex-col gap-[6px] items-start overflow-clip relative shrink-0 w-full">
+          <div 
+            className={`content-stretch flex flex-col gap-[6px] items-start relative shrink-0 w-full transition-all duration-300 ${
+              metadataExpanded ? "h-[140px]" : "h-auto"
+            }`}
+          >
             <div className="content-stretch flex gap-[6px] items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full select-none">
               <div 
                 onClick={() => setMetadataExpanded(!metadataExpanded)}
@@ -351,7 +355,7 @@ export default function ChatBox({
 
             {/* Expanded To be Updated Component-based List */}
             {metadataExpanded && groupedChanges.length > 0 && (
-              <div className="content-stretch flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative shrink-0 w-full overflow-y-auto max-h-[109px] scrollbar-colored">
+              <div className="content-stretch flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative w-full overflow-y-auto scrollbar-colored flex-1 min-h-0">
                 {groupedChanges.map((group) => {
                   if (group.changeType === 'added') {
                     return (
