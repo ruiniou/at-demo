@@ -378,31 +378,34 @@ export default function ChatBox({
                     );
                   }
 
-                  // Modified Component Group (Collapsed by default)
-                  const isExpanded = !!expandedGroups[group.blockId];
+                  // Modified Component Group (Auto-expanded if only 1 change in total)
+                  const isSingleChange = (metaDiffItems?.length === 1) || (metadataChangesCount === 1);
+                  const isExpanded = isSingleChange ? true : !!expandedGroups[group.blockId];
 
                   return (
                     <div key={group.blockId} className="flex flex-col w-full rounded-[4px] bg-black/[0.02] overflow-hidden">
-                      {/* Group Header Row (Chevron Arrow Left-Aligned with Top-Level Chevron) */}
+                      {/* Group Header Row (Chevron Arrow Left-Aligned with Top-Level Chevron, Hidden if Single Change) */}
                       <div 
-                        onClick={() => toggleGroup(group.blockId)}
-                        className="flex items-center gap-[8px] w-full py-[4px] pl-0 pr-[6px] hover:bg-black/5 cursor-pointer text-[13px] select-none"
+                        onClick={isSingleChange ? undefined : () => toggleGroup(group.blockId)}
+                        className={`flex items-center gap-[8px] w-full py-[4px] pr-[6px] ${isSingleChange ? 'pl-[6px] cursor-default' : 'pl-0 hover:bg-black/5 cursor-pointer'} text-[13px] select-none`}
                       >
-                        <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
-                          {isExpanded ? (
-                            <ChevronDownIcon className="size-[14px]" color="var(--color-text-secondary)" />
-                          ) : (
-                            <ChevronRightIcon className="size-[14px]" color="var(--color-text-secondary)" />
-                          )}
-                        </div>
+                        {!isSingleChange && (
+                          <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
+                            {isExpanded ? (
+                              <ChevronDownIcon className="size-[14px]" color="var(--color-text-secondary)" />
+                            ) : (
+                              <ChevronRightIcon className="size-[14px]" color="var(--color-text-secondary)" />
+                            )}
+                          </div>
+                        )}
                         <div className="flex items-center gap-[6px] min-w-0 flex-1">
                           <span className="font-medium text-text-primary truncate">{group.blockName}</span>
                         </div>
                       </div>
 
-                      {/* Field Level Diffs inside Group (Indented cleanly under component name) */}
+                      {/* Field Level Diffs inside Group */}
                       {isExpanded && (
-                        <div className="flex flex-col gap-[6px] pl-[24px] pr-[8px] pb-[6px] pt-[2px]">
+                        <div className={`flex flex-col gap-[6px] ${isSingleChange ? 'pl-[12px]' : 'pl-[24px]'} pr-[8px] pb-[6px] pt-[2px]`}>
                           {group.diffs.map((diff, dIdx) => {
                             const oldVal = diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty';
                             const newVal = diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty';
