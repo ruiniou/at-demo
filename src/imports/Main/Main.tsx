@@ -396,10 +396,10 @@ function MetadataEntryBlock({
   const formattedCount = formatCount(count);
 
   return (
-    <>
-      <p className="t-body text-text-primary leading-relaxed mb-[8px]">{description}</p>
+    <div className="flex flex-col w-full">
+      <p className="t-body text-text-primary leading-relaxed px-[10px] mb-[8px]">{description}</p>
       <div
-        className={`flex items-center justify-between gap-[8px] px-[12px] py-[8px] mb-[12px] bg-bg-panel border border-graphite-10 rounded-[8px] min-w-0 ${
+        className={`flex items-center justify-between gap-[8px] px-[12px] py-[8px] bg-bg-panel border border-graphite-10 rounded-[8px] w-full min-w-0 ${
           isOutdated ? 'cursor-default' : 'hover:bg-[#F5F5F5] transition-colors cursor-pointer'
         }`}
         onClick={isOutdated ? undefined : onOpen}
@@ -438,7 +438,7 @@ function MetadataEntryBlock({
           {isOutdated ? 'Outdated' : 'Review'}
         </Button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -768,14 +768,14 @@ function ChatConversation({
                             </li>
                           </ul>
                         </div>
-
-                        <MetadataEntryBlock
-                          variant="conflict"
-                          count={DEFAULT_FIGURE_REVIEW_ITEMS.length}
-                          onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
-                          isOutdated={isMetadataOutdated}
-                        />
                       </div>
+
+                      <MetadataEntryBlock
+                        variant="conflict"
+                        count={DEFAULT_FIGURE_REVIEW_ITEMS.length}
+                        onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
+                        isOutdated={isMetadataOutdated}
+                      />
 
                       {/* Image Render Tool Call Card — Complete state by default */}
                       <ImageRenderToolCallCard
@@ -844,14 +844,12 @@ function ChatConversation({
                   <div className="relative w-full">
                     <AICodeDiff />
                   </div>
-                  <div className="px-[10px]">
-                    <MetadataEntryBlock
-                      variant="updated"
-                      count={3}
-                      onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
-                      isOutdated={isMetadataOutdated}
-                    />
-                  </div>
+                  <MetadataEntryBlock
+                    variant="updated"
+                    count={3}
+                    onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
+                    isOutdated={isMetadataOutdated}
+                  />
                 </div>
               </div>
             )}
