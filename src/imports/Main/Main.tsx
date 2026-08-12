@@ -5590,13 +5590,7 @@ function MetadataPanel({
           const inputEl = el.querySelector('input, select, textarea') as HTMLElement | null;
           if (inputEl) {
             inputEl.focus();
-          } else {
-            el.focus();
           }
-          el.classList.add('ring-2', 'ring-brand-1', 'rounded-[4px]', 'transition-all');
-          setTimeout(() => {
-            el.classList.remove('ring-2', 'ring-brand-1');
-          }, 2000);
         }
       }, 200);
     }
