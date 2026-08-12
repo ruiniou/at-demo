@@ -377,12 +377,14 @@ function MetadataEntryBlock({
   conflictsCount = 2,
   inferredCount = 4,
   onOpen,
+  isOutdated = false,
 }: {
   variant: 'conflict' | 'updated';
   count?: number;
   conflictsCount?: number;
   inferredCount?: number;
   onOpen?: () => void;
+  isOutdated?: boolean;
 }) {
   const description =
     variant === 'conflict'
@@ -397,8 +399,10 @@ function MetadataEntryBlock({
     <>
       <p className="t-body text-text-primary leading-relaxed mb-[8px]">{description}</p>
       <div
-        className="flex items-center justify-between gap-[8px] px-[12px] py-[8px] mb-[12px] bg-bg-panel border border-graphite-10 rounded-[8px] hover:bg-[#F5F5F5] transition-colors cursor-pointer min-w-0"
-        onClick={onOpen}
+        className={`flex items-center justify-between gap-[8px] px-[12px] py-[8px] mb-[12px] bg-bg-panel border border-graphite-10 rounded-[8px] min-w-0 ${
+          isOutdated ? 'cursor-default' : 'hover:bg-[#F5F5F5] transition-colors cursor-pointer'
+        }`}
+        onClick={isOutdated ? undefined : onOpen}
       >
         <div className="flex items-center gap-[8px] min-w-0 flex-1 overflow-hidden">
           <LocalIcon src={fileInfoIconUrl} className="w-[16px] h-[16px] shrink-0" color="#888E8E" />
@@ -428,9 +432,10 @@ function MetadataEntryBlock({
         <Button
           variant="secondary"
           size="sm"
+          disabled={isOutdated}
           className="!h-[26px] !px-[8px] font-medium rounded-[4px] pointer-events-none shrink-0"
         >
-          Review
+          {isOutdated ? 'Outdated' : 'Review'}
         </Button>
       </div>
     </>
@@ -637,12 +642,24 @@ function ChatConversation({
     rounds.push(currentRound);
   }
 
+  // Compute the index of the last ai_complete/ai_update_complete message in the flat list
+  const lastAiCompleteIdx = messages.reduce<number>((acc, m, idx) =>
+    (m.type === 'ai_complete' || m.type === 'ai_update_complete') ? idx : acc, -1
+  );
+
+  // Flatten messages with their original index for outdated detection
+  let flatMsgIdx = 0;
+
   return (
     <div className="flex flex-col w-full px-[8px] gap-[12px] relative">
       {rounds.map((round, rIndex) => (
         <div key={rIndex} className="flex flex-col w-full py-[10px] gap-[12px] relative">
-          {round.map((msg, i) => (
-            <React.Fragment key={i}>
+          {round.map((msg, i) => {
+            const currentFlatIdx = flatMsgIdx++;
+            const isMetadataOutdated =
+              (msg.type === 'ai_complete' || msg.type === 'ai_update_complete') &&
+              currentFlatIdx < lastAiCompleteIdx;
+            return <React.Fragment key={i}>
               <div className={`flex flex-col w-full gap-[12px] relative ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                 {msg.type === 'user' && (
               <AIUserPrompt
@@ -756,6 +773,7 @@ function ChatConversation({
                           variant="conflict"
                           count={DEFAULT_FIGURE_REVIEW_ITEMS.length}
                           onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
+                          isOutdated={isMetadataOutdated}
                         />
                       </div>
 
@@ -831,14 +849,15 @@ function ChatConversation({
                       variant="updated"
                       count={3}
                       onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
+                      isOutdated={isMetadataOutdated}
                     />
                   </div>
                 </div>
               </div>
             )}
             </div>
-          </React.Fragment>
-          ))}
+          </React.Fragment>;
+          })}
         </div>
       ))}
     </div>
@@ -3884,6 +3903,7 @@ function ShellPreview({
   hasUnreadMetadataUpdate,
   figureComponents,
   setFigureComponents,
+  isLocked,
 }: {
   onBlockClick: (blockName?: string) => void;
   onMetadataClick: () => void;
@@ -3899,6 +3919,7 @@ function ShellPreview({
   hasUnreadMetadataUpdate?: boolean;
   figureComponents?: MetadataBlock[];
   setFigureComponents?: React.Dispatch<React.SetStateAction<MetadataBlock[]>>;
+  isLocked?: boolean;
   metadataOpen: boolean;
   onMetadataClose: () => void;
   metadataWidth: number;
@@ -4251,7 +4272,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
-              <MetadataPanel onClose={onMetadataClose} docType={docType} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} />
+              <MetadataPanel onClose={onMetadataClose} docType={docType} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} />
             </div>
           )}
         </div>
