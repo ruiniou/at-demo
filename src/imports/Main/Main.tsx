@@ -662,34 +662,36 @@ function ChatConversation({
             return <React.Fragment key={i}>
               <div className={`flex flex-col w-full gap-[12px] relative ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
                 {msg.type === 'user' && (
-              <AIUserPrompt
-                content={msg.content || ""}
-                tag={msg.hasTag ? "Table.14.1.1 (Lines 290-321)" : undefined}
-                toBeUpdatedCount={msg.toBeUpdatedCount}
-              />
-            )}
+                  <AIUserPrompt
+                    content={msg.content || ""}
+                    tag={msg.hasTag ? "Table.14.1.1 (Lines 290-321)" : undefined}
+                    toBeUpdatedCount={msg.toBeUpdatedCount}
+                    metaDiffItems={msg.metaDiffItems}
+                    onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
+                  />
+                )}
 
-            {msg.type === 'meta_update_card' && msg.metaDiffItems && (
-              <div className="w-full relative mt-[8px]">
-                <AIUpdatedBlock
-                  title="To be Updated"
-                  count={msg.metaDiffItems.length}
-                  expanded={msg.isProcessing ? "scrollable" : "brief"}
-                  scrollHeight={210}
-                  toggleable={!msg.isProcessing}
-                  status={msg.isProcessing ? "processing" : "completed"}
-                  items={msg.metaDiffItems.map(d => {
-                    const oldVal = d.oldValue && d.oldValue.trim() !== '' ? d.oldValue : 'Empty';
-                    const newVal = d.newValue && d.newValue.trim() !== '' ? d.newValue : 'Empty';
-                    return {
-                      label: d.label,
-                      text: `~~${oldVal}~~ → ${newVal}`,
-                      onClick: () => onJumpToMetadata?.('', d.fieldId)
-                    };
-                  })}
-                />
-              </div>
-            )}
+                {msg.type === 'meta_update_card' && msg.metaDiffItems && (
+                  <div className="w-full relative mt-[8px]">
+                    <AIUpdatedBlock
+                      title="Metadata changes"
+                      count={msg.metaDiffItems.length}
+                      expanded={msg.isProcessing ? "scrollable" : "brief"}
+                      scrollHeight={210}
+                      toggleable={!msg.isProcessing}
+                      status={msg.isProcessing ? "processing" : "completed"}
+                      items={msg.metaDiffItems.map(d => {
+                        const oldVal = d.oldValue && d.oldValue.trim() !== '' ? d.oldValue : 'Empty';
+                        const newVal = d.newValue && d.newValue.trim() !== '' ? d.newValue : 'Empty';
+                        return {
+                          label: d.label,
+                          text: `~~${oldVal}~~ → ${newVal}`,
+                          onClick: () => onJumpToMetadata?.('', d.fieldId)
+                        };
+                      })}
+                    />
+                  </div>
+                )}
 
             {msg.type === 'ai_thinking' && (
               <AIThinkingStatus status={showAskUser ? "waiting" : "loading"} />
@@ -984,7 +986,8 @@ function AICopilotPanel({
     setMessages(prev => [...prev, { 
       type: 'user', 
       content: userContent,
-      toBeUpdatedCount: isUpdate ? metaDiffItems.length : undefined
+      toBeUpdatedCount: isUpdate ? metaDiffItems.length : undefined,
+      metaDiffItems: isUpdate ? [...metaDiffItems] : undefined
     }]);
     setCurrentVal("");
     setIsPending(true);

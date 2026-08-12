@@ -82,7 +82,7 @@ function renderInlineStrike(text: string) {
  *                         list and an overlay 4px scrollbar.
  */
 export function AIUpdatedBlock({
-  title = "To be Updated",
+  title = "Metadata changes",
   count = 3,
   expanded,
   toggleable = true,
