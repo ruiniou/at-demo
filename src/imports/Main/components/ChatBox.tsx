@@ -232,7 +232,7 @@ export default function ChatBox({
 
       {/* ==================== FIGMA COMPONENT ==================== */}
       <div 
-        className={`content-stretch flex flex-col items-center justify-end px-[2px] relative rounded-[10px] w-full transition-all duration-200 ${
+        className={`flex flex-col items-stretch justify-start px-[2px] relative rounded-[10px] w-full transition-all duration-200 ${
           pending 
             ? "bg-az-secondary gap-[4px] pb-[2px] pt-[8px]" 
             : metadataChangesCount > 0
@@ -247,14 +247,14 @@ export default function ChatBox({
         {/* --- Pending Wrap (Shown if pending = true) --- */}
         {pending ? (
           <div 
-            className={`content-stretch flex flex-col gap-[6px] items-start overflow-clip relative shrink-0 w-full transition-all duration-300 ${
+            className={`flex flex-col gap-[6px] items-start relative shrink-0 w-full transition-all duration-300 ${
               pendingExpanded ? "h-[109px]" : "h-auto"
             }`}
           >
             {/* Header - Aligned precisely with debug CTA buttons on right */}
             <div 
               onClick={() => setPendingExpanded(!pendingExpanded)}
-              className="content-stretch flex gap-[8px] items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full cursor-pointer select-none"
+              className="flex gap-[8px] items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full cursor-pointer select-none"
             >
               <div className="flex gap-[8px] items-center">
                 <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
@@ -288,14 +288,14 @@ export default function ChatBox({
 
             {/* Expanded List - Aligned precisely with the header icons and texts. No hover offsets. */}
             {pendingExpanded && (
-              <div className="content-stretch flex flex-col gap-[4px] items-start px-[8px] pb-[6px] relative shrink-0 w-full overflow-y-auto scrollbar-colored flex-1">
+              <div className="flex flex-col gap-[4px] items-start px-[8px] pb-[6px] relative w-full overflow-y-auto scrollbar-colored flex-1" style={{ maxHeight: '140px' }}>
                 {[
                   "Lines 10-11",
                   "Lines 10-11",
                   "Lines 10-11",
                   "Lines 10-11"
                 ].map((item, idx) => (
-                  <div key={idx} className="content-stretch flex gap-[8px] items-center relative shrink-0 w-full py-[2px] select-none">
+                  <div key={idx} className="flex gap-[8px] items-center relative shrink-0 w-full py-[2px] select-none">
                     <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                       <CodeIcon className="size-[12px]" color="var(--color-brand-1)" />
                     </div>
@@ -308,11 +308,11 @@ export default function ChatBox({
             )}
           </div>
         ) : metadataChangesCount > 0 ? (
-          <div className="content-stretch flex flex-col gap-[6px] items-start relative shrink-0 w-full">
-            <div className="content-stretch flex gap-[6px] items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full select-none">
+          <div className="flex flex-col gap-[4px] items-start relative shrink-0 w-full">
+            <div className="flex gap-[6px] items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full select-none">
               <div 
                 onClick={() => setMetadataExpanded(!metadataExpanded)}
-                className="content-stretch flex flex-[1_0_0] gap-[8px] items-center min-w-px relative cursor-pointer"
+                className="flex flex-[1_0_0] gap-[8px] items-center min-w-px relative cursor-pointer"
               >
                 <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                   {metadataExpanded ? (
@@ -327,7 +327,7 @@ export default function ChatBox({
                 <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-text-primary text-center whitespace-nowrap">
                   <p className="leading-[24px]">Metadata Changes</p>
                 </div>
-                <div className="bg-graphite-10 content-stretch flex items-center justify-center px-[4px] py-px relative rounded-[16px] shrink-0 min-w-[16px] h-[16px]">
+                <div className="bg-graphite-10 flex items-center justify-center px-[4px] py-px relative rounded-[16px] shrink-0 min-w-[16px] h-[16px]">
                   <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-text-secondary whitespace-nowrap">
                     <p className="leading-[14px]">{metadataChangesCount}</p>
                   </div>
@@ -351,7 +351,10 @@ export default function ChatBox({
 
             {/* Expanded To be Updated Component-based List */}
             {metadataExpanded && groupedChanges.length > 0 && (
-              <div className="content-stretch flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative w-full overflow-y-auto scrollbar-colored max-h-[160px]">
+              <div 
+                className="flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative w-full overflow-y-auto scrollbar-colored"
+                style={{ maxHeight: '140px' }}
+              >
                 {groupedChanges.map((group) => {
                   if (group.changeType === 'added') {
                     return (
