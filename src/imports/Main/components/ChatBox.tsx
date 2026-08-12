@@ -60,11 +60,23 @@ function Tag({ className = "", text = "Table.1(290-321)" }: TagProps) {
 
 export type ChatBoxStatus = "Default" | "Focused" | "Typed" | "Max height";
 
+export type MetaChangeType = 'modified' | 'added' | 'removed';
+
 export interface MetaDiffItem {
   fieldId: string;
   label: string;
   oldValue: string;
   newValue: string;
+  blockId?: string;
+  blockName?: string;
+  changeType?: MetaChangeType;
+}
+
+export interface MetaGroupChange {
+  blockId: string;
+  blockName: string;
+  changeType: MetaChangeType;
+  diffs: MetaDiffItem[];
 }
 
 export interface ChatBoxProps {
@@ -95,6 +107,71 @@ export default function ChatBox({
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [pendingExpanded, setPendingExpanded] = useState<boolean>(false);
   const [metadataExpanded, setMetadataExpanded] = useState<boolean>(() => metadataChangesCount > 0 && metadataChangesCount <= 3);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = (blockId: string) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [blockId]: !prev[blockId]
+    }));
+  };
+
+  const groupedChanges = React.useMemo<MetaGroupChange[]>(() => {
+    if (!metaDiffItems || metaDiffItems.length === 0) return [];
+
+    const groupsMap = new Map<string, MetaGroupChange>();
+
+    metaDiffItems.forEach(item => {
+      let blockId = item.blockId;
+      let blockName = item.blockName;
+      let changeType: MetaChangeType = item.changeType || 'modified';
+
+      if (item.fieldId.startsWith('add_')) {
+        changeType = 'added';
+        if (!blockId) blockId = item.fieldId;
+        if (!blockName) blockName = item.newValue || item.label || 'New Component';
+      } else if (item.fieldId.startsWith('delete_')) {
+        changeType = 'removed';
+        if (!blockId) blockId = item.fieldId;
+        if (!blockName) blockName = item.label.replace(/^Component:\s*/, '') || 'Component';
+      } else {
+        if (!blockId) blockId = 'basic_info';
+        if (!blockName) {
+          if (item.label.includes(' > ')) {
+            blockName = item.label.split(' > ')[0];
+          } else {
+            blockName = 'Basic Info';
+          }
+        }
+      }
+
+      let cleanLabel = item.label;
+      if (cleanLabel.includes(' > ')) {
+        cleanLabel = cleanLabel.split(' > ')[1];
+      }
+
+      const key = `${blockId}_${changeType}`;
+
+      if (!groupsMap.has(key)) {
+        groupsMap.set(key, {
+          blockId: blockId || key,
+          blockName: blockName || 'Component',
+          changeType: changeType,
+          diffs: []
+        });
+      }
+
+      const group = groupsMap.get(key)!;
+      if (changeType === 'modified') {
+        group.diffs.push({
+          ...item,
+          label: cleanLabel
+        });
+      }
+    });
+
+    return Array.from(groupsMap.values());
+  }, [metaDiffItems]);
 
   useEffect(() => {
     if (metadataChangesCount > 0) {
@@ -272,22 +349,92 @@ export default function ChatBox({
               )}
             </div>
 
-            {/* Expanded To be Updated List */}
-            {metadataExpanded && metaDiffItems && metaDiffItems.length > 0 && (
-              <div className="content-stretch flex flex-col gap-[4px] items-start px-[8px] pb-[6px] relative shrink-0 w-full overflow-y-auto max-h-[109px]">
-                {metaDiffItems.map((item, idx) => {
-                  const oldVal = item.oldValue && item.oldValue.trim() !== '' ? item.oldValue : 'Empty';
-                  const newVal = item.newValue && item.newValue.trim() !== '' ? item.newValue : 'Empty';
+            {/* Expanded To be Updated Component-based List */}
+            {metadataExpanded && groupedChanges.length > 0 && (
+              <div className="content-stretch flex flex-col gap-[6px] items-start px-[8px] pb-[6px] relative shrink-0 w-full overflow-y-auto max-h-[160px]">
+                {groupedChanges.map((group) => {
+                  if (group.changeType === 'added') {
+                    return (
+                      <div 
+                        key={group.blockId} 
+                        className="flex items-center gap-[6px] w-full py-[4px] px-[6px] rounded-[4px] bg-black/[0.02] text-[13px] select-none"
+                      >
+                        <span className="font-semibold text-[#2E7D32] shrink-0">＋</span>
+                        <span className="font-medium text-text-primary truncate">{group.blockName}</span>
+                      </div>
+                    );
+                  }
+
+                  if (group.changeType === 'removed') {
+                    return (
+                      <div 
+                        key={group.blockId} 
+                        className="flex items-center gap-[6px] w-full py-[4px] px-[6px] rounded-[4px] bg-black/[0.02] text-[13px] select-none"
+                      >
+                        <span className="font-semibold text-[#E53935] shrink-0">－</span>
+                        <span className="font-medium text-text-primary truncate">{group.blockName}</span>
+                        <span className="text-[12px] text-text-secondary italic">(Removed)</span>
+                      </div>
+                    );
+                  }
+
+                  // Modified Component Group
+                  const isExpanded = !collapsedGroups[group.blockId];
+                  const diffCount = group.diffs.length;
+
                   return (
-                    <div 
-                      key={idx} 
-                      onClick={() => onJumpToMetadata?.(item.fieldId)}
-                      className="content-stretch flex gap-[6px] items-center relative shrink-0 w-full py-[3px] px-[6px] rounded-[4px] hover:bg-black/5 cursor-pointer text-[13px] select-none"
-                    >
-                      <span className="font-medium text-text-primary shrink-0">{item.label}:</span>
-                      <span className="text-text-secondary line-through truncate max-w-[100px]">{oldVal}</span>
-                      <span className="text-text-secondary shrink-0">→</span>
-                      <span className="font-medium text-brand-1 truncate max-w-[120px]">{newVal}</span>
+                    <div key={group.blockId} className="flex flex-col w-full rounded-[4px] bg-black/[0.02] overflow-hidden">
+                      {/* Group Header Row */}
+                      <div 
+                        onClick={() => toggleGroup(group.blockId)}
+                        className="flex items-center justify-between gap-[6px] w-full py-[4px] px-[6px] hover:bg-black/5 cursor-pointer text-[13px] select-none"
+                      >
+                        <div className="flex items-center gap-[6px] min-w-0 flex-1">
+                          <span className="font-medium text-text-primary truncate">{group.blockName}</span>
+                          {diffCount > 1 && (
+                            <div className="bg-graphite-10 flex items-center justify-center px-[6px] py-px rounded-[12px] shrink-0 min-w-[16px] h-[16px]">
+                              <span className="text-[11px] font-medium text-text-secondary leading-[14px]">
+                                {diffCount} {diffCount === 1 ? 'change' : 'changes'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
+                          {isExpanded ? (
+                            <ChevronDownIcon className="size-[12px]" color="var(--color-text-secondary)" />
+                          ) : (
+                            <ChevronRightIcon className="size-[12px]" color="var(--color-text-secondary)" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Field Level Diffs inside Group (Stacked 2-line structure without truncation) */}
+                      {isExpanded && (
+                        <div className="flex flex-col gap-[6px] px-[8px] pb-[6px] pt-[2px]">
+                          {group.diffs.map((diff, dIdx) => {
+                            const oldVal = diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty';
+                            const newVal = diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty';
+                            return (
+                              <div 
+                                key={dIdx}
+                                onClick={() => onJumpToMetadata?.(diff.fieldId)}
+                                className="flex flex-col gap-[2px] py-[3px] px-[6px] rounded-[4px] hover:bg-black/5 cursor-pointer select-none"
+                              >
+                                {/* Line 1: Field Name */}
+                                <span className="text-[12px] font-medium text-text-secondary leading-[16px]">
+                                  {diff.label}
+                                </span>
+                                {/* Line 2: Diff Values (Stacked, line-wrap allowed, no truncation) */}
+                                <div className="text-[13px] leading-[18px] break-words whitespace-pre-wrap flex flex-wrap items-center gap-[4px]">
+                                  <span className="text-text-secondary line-through">{oldVal}</span>
+                                  <span className="text-text-secondary shrink-0">→</span>
+                                  <span className="font-medium text-brand-1">{newVal}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

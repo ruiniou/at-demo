@@ -5269,7 +5269,15 @@ function MetadataPanel({
       if (f.type === 'tag') return;
       const baseVal = figureFieldBaseline[f.id];
       if (baseVal !== undefined && baseVal !== f.value) {
-        items.push({ fieldId: f.id, label: f.label, oldValue: baseVal, newValue: f.value });
+        items.push({ 
+          fieldId: f.id, 
+          label: f.label, 
+          oldValue: baseVal, 
+          newValue: f.value,
+          blockId: b.id,
+          blockName: b.name || 'Basic Info',
+          changeType: 'modified'
+        });
       }
     }));
 
@@ -5283,7 +5291,15 @@ function MetadataPanel({
         const baseVal = figureFieldBaseline[f.id];
         if (baseVal !== undefined && baseVal !== f.value) {
           const blockName = b.name || 'Component';
-          items.push({ fieldId: f.id, label: `${blockName} > ${f.label}`, oldValue: baseVal, newValue: f.value });
+          items.push({ 
+            fieldId: f.id, 
+            label: f.label, 
+            oldValue: baseVal, 
+            newValue: f.value,
+            blockId: b.id,
+            blockName: blockName,
+            changeType: 'modified'
+          });
         }
       });
     });
@@ -5296,9 +5312,12 @@ function MetadataPanel({
         const blockName = c.name || 'Component';
         items.push({
           fieldId: `deprecate_${c.id}`,
-          label: `${blockName} Status`,
+          label: 'Status',
           oldValue: baseDep ? 'Deprecated' : 'Active',
-          newValue: c.deprecated ? 'Deprecated' : 'Active'
+          newValue: c.deprecated ? 'Deprecated' : 'Active',
+          blockId: c.id,
+          blockName: blockName,
+          changeType: 'modified'
         });
       }
     });
@@ -5309,9 +5328,12 @@ function MetadataPanel({
       if (!exists) {
         items.push({
           fieldId: `delete_${baseComp.id}`,
-          label: `Component: ${baseComp.name}`,
+          label: baseComp.name,
           oldValue: 'Existing Component',
-          newValue: 'Deleted'
+          newValue: 'Removed',
+          blockId: baseComp.id,
+          blockName: baseComp.name,
+          changeType: 'removed'
         });
       }
     });
@@ -5324,9 +5346,12 @@ function MetadataPanel({
           const blockName = c.name || 'New Component';
           items.push({
             fieldId: `add_${c.id}`,
-            label: 'Add Component',
+            label: blockName,
             oldValue: '(None)',
-            newValue: blockName
+            newValue: blockName,
+            blockId: c.id,
+            blockName: blockName,
+            changeType: 'added'
           });
         }
       }
