@@ -28,6 +28,7 @@ import toolCallIconUrl from "../../icons/pencil-ai-line.svg";
 import unlockIconUrl from "../../icons/Unlock.svg";
 import saveIconUrl from "../../icons/save-line.svg";
 import fileInfoIconUrl from "../../icons/file-info-line.svg";
+import arrowRightIconUrl from "../../icons/arrow-right-s-line.svg";
 import batchMicroIconUrl from "../../icons/batch-micro.svg";
 import aiProcessingIconUrl from "../../icons/Status label/Status=AI Processing.svg";
 import wipStatusIconUrl from "../../icons/Status label/Status=WIP.svg";
@@ -52,7 +53,9 @@ import deleteBinIconUrl from "../../icons/delete-bin-line.svg";
 import linkUnlinkIconUrl from "../../icons/link-unlink-m.svg";
 import focusIconUrl from "../../icons/focus-3-line.svg";
 import barChartBoxAiIconUrl from "../../icons/bar-chart-box-ai-line.svg";
+import imageAiLineIconUrl from "../../icons/image-ai-line.svg";
 import CreateEventModal from "./components/CreateEventModal";
+import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal";
 import { KMPlot } from "./components/KMPlot";
 import { Button } from "../../components/ui/Button";
 import { Tooltip } from "../../components/ui/Tooltip";
@@ -199,6 +202,131 @@ function ToolCallCard({ toolName, children }: { toolName: string; children?: Rea
   );
 }
 
+const KM_PLOT_THUMBNAIL_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="460" viewBox="0 0 600 460" fill="%23ffffff"><rect width="600" height="460" fill="%23ffffff"/><text x="20" y="22" font-family="sans-serif" font-size="9" fill="%23888E8E">AstraZeneca  |  Study D9802C00001 Clarity Gastric 01</text><text x="580" y="22" font-family="sans-serif" font-size="9" fill="%23888E8E" text-anchor="end">Page 1 of 1</text><text x="300" y="44" font-family="sans-serif" font-size="12" font-weight="600" fill="%233C4242" text-anchor="middle">Figure 15.1.1</text><text x="300" y="58" font-family="sans-serif" font-size="10" font-weight="400" fill="%23666C6C" text-anchor="middle">Kaplan-Meier plot of progression-free survival by treatment group</text><text x="300" y="70" font-family="sans-serif" font-size="9" font-weight="400" fill="%23888E8E" text-anchor="middle">(Safety analysis set)</text><line x1="20" y1="78" x2="580" y2="78" stroke="%23EBECEC" stroke-width="1"/><g transform="translate(20, 85)"><g stroke="%23F0F1F1" stroke-width="1" stroke-dasharray="2,2"><line x1="45" y1="20" x2="550" y2="20"/><line x1="45" y1="60" x2="550" y2="60"/><line x1="45" y1="100" x2="550" y2="100"/><line x1="45" y1="140" x2="550" y2="140"/></g><text x="40" y="23" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">1.0</text><text x="40" y="63" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">0.75</text><text x="40" y="103" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">0.50</text><text x="40" y="143" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">0.25</text><text x="40" y="183" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">0.0</text><line x1="45" y1="20" x2="45" y2="180" stroke="%23888E8E" stroke-width="1"/><line x1="45" y1="180" x2="550" y2="180" stroke="%23888E8E" stroke-width="1"/><line x1="45" y1="100" x2="310" y2="100" stroke="%23830051" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/><line x1="310" y1="100" x2="310" y2="180" stroke="%23830051" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/><path d="M45 20 L115 25 L185 45 L255 75 L325 110 L395 135 L465 155 L535 168 L535 178 L465 175 L395 160 L325 140 L255 110 L185 70 L115 45 L45 20 Z" fill="%23830051" opacity="0.08"/><path d="M45 20 L115 20 L115 35 L185 35 L185 55 L255 55 L255 90 L325 90 L325 125 L395 125 L395 150 L465 150 L465 165 L535 165" fill="none" stroke="%23830051" stroke-width="2"/><path d="M45 20 L115 30 L115 50 L185 50 L185 80 L255 80 L255 120 L325 120 L325 148 L395 148 L395 165 L465 165 L465 175 L535 175" fill="none" stroke="%232E7D32" stroke-width="2"/><circle cx="185" cy="35" r="2" fill="%23830051"/><circle cx="325" cy="90" r="2" fill="%23830051"/><circle cx="255" cy="120" r="2" fill="%232E7D32"/><text x="45" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">0</text><text x="115" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">3</text><text x="185" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">6</text><text x="255" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">9</text><text x="325" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">12</text><text x="395" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">15</text><text x="465" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">18</text><text x="535" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">24</text><text x="290" y="206" font-family="sans-serif" font-size="9" fill="%233C4242" text-anchor="middle">Time (Months)</text><rect x="420" y="25" width="120" height="38" rx="3" fill="%23ffffff" stroke="%23EBECEC" stroke-width="1"/><line x1="428" y1="36" x2="446" y2="36" stroke="%23830051" stroke-width="2"/><text x="452" y="39" font-family="sans-serif" font-size="8" fill="%233C4242">AZD999 1 mg/kg</text><line x1="428" y1="52" x2="446" y2="52" stroke="%232E7D32" stroke-width="2"/><text x="452" y="55" font-family="sans-serif" font-size="8" fill="%233C4242">Placebo</text></g><g transform="translate(20, 305)"><text x="0" y="10" font-family="sans-serif" font-size="9" font-weight="600" fill="%233C4242">Number at Risk Table</text><line x1="0" y1="16" x2="560" y2="16" stroke="%233C4242" stroke-width="1"/><text x="10" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242">Treatment Group</text><text x="115" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">0</text><text x="185" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">3</text><text x="255" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">6</text><text x="325" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">9</text><text x="395" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">12</text><text x="465" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">18</text><text x="535" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">24</text><line x1="0" y1="33" x2="560" y2="33" stroke="%23EBECEC" stroke-width="1"/><text x="10" y="46" font-family="sans-serif" font-size="8" fill="%233C4242">AZD999 1 mg/kg (N=120)</text><text x="115" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">120</text><text x="185" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">102</text><text x="255" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">88</text><text x="325" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">65</text><text x="395" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">42</text><text x="465" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">14</text><text x="535" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">0</text><text x="10" y="60" font-family="sans-serif" font-size="8" fill="%233C4242">Placebo (N=118)</text><text x="115" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">118</text><text x="185" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">110</text><text x="255" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">96</text><text x="325" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">80</text><text x="395" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">62</text><text x="465" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">26</text><text x="535" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">5</text><line x1="0" y1="67" x2="560" y2="67" stroke="%233C4242" stroke-width="1"/></g><g transform="translate(20, 395)"><text x="0" y="10" font-family="sans-serif" font-size="7.5" fill="%23888E8E">[a] ITT Population: All randomized subjects.</text><text x="0" y="21" font-family="sans-serif" font-size="7.5" fill="%23888E8E">[b] Kaplan-Meier estimates are used for survival curves. Median survival time and 95% CI calculated.</text><text x="0" y="32" font-family="sans-serif" font-size="7.5" fill="%23888E8E">Program: /study/D9802C00001/csr/prod/figures/f_kmplot.sas  |  Output: f_15_1_1.rtf</text></g></svg>`;
+
+const INITIAL_FIGURE_RENDER_VERSIONS: RenderVersion[] = [
+  {
+    versionLabel: 'V1.0',
+    imageUrl: KM_PLOT_THUMBNAIL_SVG,
+    createdAt: new Date(Date.now() - 3 * 60 * 1000),
+  }
+];
+
+type RenderVersion = {
+  versionLabel: string; // e.g. 'V1.3'
+  imageUrl: string;
+  createdAt: Date;
+};
+
+type ImageRenderState = 'generating' | 'complete' | 'failed';
+
+function ImageRenderToolCallCard({
+  state = 'generating',
+  versions = [],
+  focused = false,
+  onThumbnailClick,
+  onRetry,
+}: {
+  state?: ImageRenderState;
+  versions?: RenderVersion[];
+  focused?: boolean;
+  onThumbnailClick?: (version: RenderVersion) => void;
+  onRetry?: () => void;
+}) {
+  const latestVersion = versions[versions.length - 1] ?? null;
+
+  const getBadgeLabel = (version: RenderVersion) => {
+    const isLatest = version === latestVersion;
+    if (isLatest) return 'Latest';
+    const diffMs = Date.now() - version.createdAt.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins} min ago`;
+    const hrs = Math.floor(mins / 60);
+    return `${hrs}h ago`;
+  };
+
+  const borderClass = focused
+    ? 'border-[1.5px] border-[#830051]'
+    : 'border border-[#EBECEC]';
+
+  return (
+    <div className={`rounded-[4px] overflow-hidden w-full ${borderClass} bg-white`}>
+      {/* Header row */}
+      <div className="flex items-center px-[12px] py-[8px] gap-[6px]">
+        <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
+          <LocalIcon src={imageAiLineIconUrl} className="w-[16px] h-[16px]" color="#888E8E" />
+        </div>
+
+        <div className="flex-1 min-w-0 flex items-center gap-[6px] overflow-hidden">
+          {state === 'generating' && (
+            <>
+              <span className="text-[14px] font-medium leading-[24px] text-text-primary whitespace-nowrap" style={{ fontFamily: 'Inter, sans-serif' }}>
+                Generating Preview...
+              </span>
+            </>
+          )}
+          {state === 'complete' && latestVersion && (
+            <>
+              <span className="text-[14px] font-medium leading-[24px] text-text-primary whitespace-nowrap" style={{ fontFamily: 'Inter, sans-serif' }}>
+                {latestVersion.versionLabel}
+              </span>
+              <div className="border border-[#EBECEC] rounded-[4px] h-[20px] px-[4px] flex items-center justify-center shrink-0">
+                <span className="text-[13px] leading-[20px] text-text-secondary whitespace-nowrap" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  {getBadgeLabel(latestVersion)}
+                </span>
+              </div>
+            </>
+          )}
+          {state === 'failed' && (
+            <span className="text-[14px] font-medium leading-[24px] text-[#E53935] whitespace-nowrap" style={{ fontFamily: 'Inter, sans-serif' }}>
+              Preview generation failed
+            </span>
+          )}
+        </div>
+
+        {/* Right side */}
+        {state === 'generating' && (
+          <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
+            <svg className="animate-spin" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 8a6 6 0 1 1-6-6" stroke="#888E8E" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+            </svg>
+          </div>
+        )}
+        {state === 'failed' && onRetry && (
+          <button
+            onClick={onRetry}
+            className="text-[13px] leading-[20px] text-brand-1 hover:underline whitespace-nowrap shrink-0"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Retry
+          </button>
+        )}
+      </div>
+
+      {/* Image area — only for complete */}
+      {state === 'complete' && latestVersion && (
+        <div
+          className="relative w-full aspect-[312/198] border-t border-[#EBECEC] cursor-pointer group overflow-hidden"
+          onClick={() => onThumbnailClick?.(latestVersion)}
+        >
+          <img
+            src={latestVersion.imageUrl}
+            alt={latestVersion.versionLabel}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+          />
+          {/* Hover Overlay with Eye Icon at bottom-right (8px offset, rounded-4px, core/overlay bg, white icon) */}
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-[8px] right-[8px] w-[28px] h-[28px] rounded-[4px] bg-black/60 flex items-center justify-center backdrop-blur-xs">
+              <LocalIcon src={eyeLineIconUrl} className="w-[16px] h-[16px]" color="white" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SpatialViewCard({ onClick }: { onClick?: () => void }) {
   const [hovered, setHovered] = useState(false);
 
@@ -233,6 +361,83 @@ export const DEFAULT_FIGURE_REVIEW_ITEMS: ReviewItem[] = [
   { type: 'ai-infer', fieldName: 'Source Dataset(s) (Number at Risk Table)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'riskTable', fieldId: 'sourceDataset2' },
   { type: 'conflict', fieldName: 'Source Variable(s) (Number at Risk Table)', tooltip: 'Conflicting variable: TRTA used instead of TRT01P.', blockId: 'riskTable', fieldId: 'sourceVariable2' }
 ];
+
+// ── Reusable Metadata entry bar ──────────────────────────────────────────────
+// variant="conflict"  → SAP-inferred fields may conflict (higher priority)
+// variant="updated"   → Metadata fields were auto-populated after adding Component
+// Priority rule: when both triggers coexist, render variant="conflict" only.
+function formatCount(num: number) {
+  if (num > 99) return '99+';
+  return num.toString();
+}
+
+function MetadataEntryBlock({
+  variant,
+  count = 3,
+  conflictsCount = 2,
+  inferredCount = 4,
+  onOpen,
+}: {
+  variant: 'conflict' | 'updated';
+  count?: number;
+  conflictsCount?: number;
+  inferredCount?: number;
+  onOpen?: () => void;
+}) {
+  const description =
+    variant === 'conflict'
+      ? 'Some inferred metadata fields may not align with SAP specifications. Verify before proceeding.'
+      : 'Metadata has been updated with new fields for the added Component.';
+
+  const formattedConflicts = formatCount(conflictsCount);
+  const formattedInferred = formatCount(inferredCount);
+  const formattedCount = formatCount(count);
+
+  return (
+    <>
+      <p className="t-body text-text-primary leading-relaxed mb-[8px]">{description}</p>
+      <div
+        className="flex items-center justify-between gap-[8px] px-[12px] py-[8px] mb-[12px] bg-bg-panel border border-graphite-10 rounded-[8px] hover:bg-[#F5F5F5] transition-colors cursor-pointer min-w-0"
+        onClick={onOpen}
+      >
+        <div className="flex items-center gap-[8px] min-w-0 flex-1 overflow-hidden">
+          <LocalIcon src={fileInfoIconUrl} className="w-[16px] h-[16px] shrink-0" color="#888E8E" />
+          <span className="text-[14px] leading-[24px] font-medium text-text-primary shrink-0" style={{ fontFamily: 'var(--font-body)' }}>
+            Metadata
+          </span>
+
+          {variant === 'conflict' ? (
+            <div className="flex items-center gap-[8px] text-[12px] leading-[18px] whitespace-nowrap min-w-0 overflow-hidden truncate">
+              {inferredCount > 0 && (
+                <span className="text-text-secondary font-normal shrink-0">
+                  {formattedInferred} Inferred
+                </span>
+              )}
+              {conflictsCount > 0 && (
+                <span className="text-status-error font-medium shrink-0">
+                  {formattedConflicts} {conflictsCount === 1 ? 'Conflict' : 'Conflicts'}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[16px] min-w-[16px] px-[4px] py-px rounded-[16px] bg-graphite-10 shrink-0">
+              <span className="text-[10px] leading-[14px] font-medium text-text-secondary">{formattedCount}</span>
+            </div>
+          )}
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="!h-[26px] !px-[8px] font-medium rounded-[4px] pointer-events-none shrink-0"
+        >
+          Review
+        </Button>
+      </div>
+    </>
+  );
+}
+
+
 
 function ReviewItemRow({ item, onJumpToMetadata }: { item: ReviewItem, onJumpToMetadata?: (blockId: string, fieldId: string) => void }) {
   const [hovered, setHovered] = useState(false);
@@ -396,7 +601,10 @@ function ChatConversation({
   onOpenSpatialView,
   onJumpToMetadata,
   docType,
-  reviewItems
+  reviewItems,
+  renderPreviewOpen,
+  activeRenderVersionLabel,
+  onRenderThumbnailClick,
 }: { 
   messages: Message[]; 
   isPending: boolean; 
@@ -405,6 +613,9 @@ function ChatConversation({
   onJumpToMetadata?: (blockId: string, fieldId: string) => void;
   docType?: DocumentType;
   reviewItems?: ReviewItem[];
+  renderPreviewOpen?: boolean;
+  activeRenderVersionLabel?: string;
+  onRenderThumbnailClick?: (version: RenderVersion) => void;
 }) {
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
@@ -541,14 +752,19 @@ function ChatConversation({
                           </ul>
                         </div>
 
-                        <p className="t-body text-text-primary leading-relaxed mb-[12px]">
-                          SAS Code has been generated. <Hyperlink onClick={onOpenCodePanel}>View in Code Panel</Hyperlink>.
-                        </p>
+                        <MetadataEntryBlock
+                          variant="conflict"
+                          count={DEFAULT_FIGURE_REVIEW_ITEMS.length}
+                          onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
+                        />
                       </div>
 
-                      <ToBeReviewedBlock 
-                        items={reviewItems && reviewItems.length > 0 ? reviewItems : DEFAULT_FIGURE_REVIEW_ITEMS}
-                        onJumpToMetadata={onJumpToMetadata}
+                      {/* Image Render Tool Call Card — Complete state by default */}
+                      <ImageRenderToolCallCard
+                        state="complete"
+                        versions={INITIAL_FIGURE_RENDER_VERSIONS}
+                        focused={!!renderPreviewOpen && activeRenderVersionLabel === 'V1.0'}
+                        onThumbnailClick={onRenderThumbnailClick}
                       />
                     </>
                   ) : (
@@ -601,14 +817,21 @@ function ChatConversation({
             {msg.type === 'ai_update_complete' && (
               <div className="flex flex-col gap-[12px] w-full relative">
                 <AIThinkingStatus status="completed" />
-                <div className="flex flex-col w-full relative gap-[12px]">
-                  <div className="flex flex-col gap-[8px] mb-[8px] px-[10px]">
+                <div className="flex flex-col w-full relative gap-[8px]">
+                  <div className="flex flex-col gap-[4px] px-[10px]">
                     <p className="t-body text-text-primary leading-relaxed">
-                      I have updated the metadata and code based on your changes. Please review the differences below.
+                      Component added. SAS code has been generated.
                     </p>
                   </div>
                   <div className="relative w-full">
                     <AICodeDiff />
+                  </div>
+                  <div className="px-[10px]">
+                    <MetadataEntryBlock
+                      variant="updated"
+                      count={3}
+                      onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
+                    />
                   </div>
                 </div>
               </div>
@@ -640,6 +863,10 @@ function AICopilotPanel({
   onMetaCancel,
   onMetaProceed,
   onCodeDiffChange,
+  onAddComponentPrompt,
+  renderPreviewOpen,
+  activeRenderVersionLabel,
+  onRenderThumbnailClick,
 }: {
   panelWidth: number;
   onClose: () => void;
@@ -658,6 +885,10 @@ function AICopilotPanel({
   onMetaCancel?: () => void;
   onMetaProceed?: () => void;
   onCodeDiffChange?: (hasDiff: boolean) => void;
+  onAddComponentPrompt?: (name: string, type: string, inst: string) => void;
+  renderPreviewOpen?: boolean;
+  activeRenderVersionLabel?: string;
+  onRenderThumbnailClick?: (version: RenderVersion) => void;
 }) {
   const [messages, setMessages] = useState<Message[]>(() => {
     if (docType === 'figure') return [{ type: 'ai_complete' }];
@@ -743,6 +974,11 @@ function AICopilotPanel({
       onMetaProceed?.();
     }
 
+    const isAddReq = /add|component|新增|添加|create|make|insert|new/i.test(text);
+    if (isAddReq && onAddComponentPrompt) {
+      onAddComponentPrompt(text, 'Chart', text);
+    }
+
     setMessages(prev => [...prev, { type: 'ai_thinking' }]);
     setTimeout(() => {
       if (docType === 'figure') {
@@ -791,6 +1027,9 @@ function AICopilotPanel({
             onJumpToMetadata={onJumpToMetadata}
             docType={docType}
             reviewItems={reviewItems}
+            renderPreviewOpen={renderPreviewOpen}
+            activeRenderVersionLabel={activeRenderVersionLabel}
+            onRenderThumbnailClick={onRenderThumbnailClick}
           />
         )}
       </div>
@@ -3636,22 +3875,30 @@ function ShellPreview({
   onMetaDiffChange,
   onRequestUpdateCode,
   baselineAdvanceTrigger,
+  addComponentTrigger,
   metaUpdateActive,
   metaUpdateProcessing,
   submittedDiffItems,
   targetFieldId,
   onReviewItemsChange,
+  hasUnreadMetadataUpdate,
+  figureComponents,
+  setFigureComponents,
 }: {
   onBlockClick: (blockName?: string) => void;
   onMetadataClick: () => void;
   onMetaDiffChange?: (diffItems: MetaDiffItem[]) => void;
   onRequestUpdateCode?: () => void;
   baselineAdvanceTrigger?: number;
+  addComponentTrigger?: { name: string; type: string; instructions: string } | null;
   metaUpdateActive?: boolean;
   metaUpdateProcessing?: boolean;
   submittedDiffItems?: MetaDiffItem[];
   targetFieldId?: string;
   onReviewItemsChange?: (items: ReviewItem[]) => void;
+  hasUnreadMetadataUpdate?: boolean;
+  figureComponents?: MetadataBlock[];
+  setFigureComponents?: React.Dispatch<React.SetStateAction<MetadataBlock[]>>;
   metadataOpen: boolean;
   onMetadataClose: () => void;
   metadataWidth: number;
@@ -3735,12 +3982,15 @@ function ShellPreview({
             <TooltipText label="Open Metadata">
               <button
                 onClick={onMetadataClick}
-                className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
+                className={`relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
                   metadataOpen ? "bg-az-secondary" : "hover:bg-black/5"
                 }`}
                 aria-label="Toggle metadata"
               >
                 <LocalIcon src={fileInfoIconUrl} className="h-[16px] w-[16px]" color={metadataOpen ? "#830051" : "#888E8E"} />
+                {!metadataOpen && hasUnreadMetadataUpdate && (
+                  <span className="absolute top-[2px] right-[2px] w-[6px] h-[6px] rounded-full bg-[#E53935] ring-2 ring-white" />
+                )}
               </button>
             </TooltipText>
           </div>
@@ -4001,7 +4251,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
-              <MetadataPanel onClose={onMetadataClose} docType={docType} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} />
+              <MetadataPanel onClose={onMetadataClose} docType={docType} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} />
             </div>
           )}
         </div>
@@ -4488,8 +4738,6 @@ function BlocksTabContent({
   confirmedBlocks,
   onToggleBlockConfirm,
   isLocked,
-  onGenerateComponent,
-  onDeprecateComponent,
   onDeleteComponent,
   onFieldEdit,
   getEffectiveStatus,
@@ -4510,35 +4758,37 @@ function BlocksTabContent({
   fieldRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
 }) {
   const FieldCheckboxIcon = (confirmed: boolean) => {
-    if (!confirmed) return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 20 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
+    if (!confirmed) return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 0 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
     return <><rect width="20" height="20" rx="1" fill="var(--color-brand-1)" /><path d="M15.6567 7.58563L9.99951 13.2419L10.0005 13.2429L8.58545 14.6569L7.17139 13.2429V13.2419L4.34326 10.4138L5.75732 8.99969L8.58545 11.8278L14.2427 6.17157L15.6567 7.58563Z" fill="white" /></>;
   };
-  const [selectedBlockId, setSelectedBlockId] = useState('all');
+  const [selectedBlockId, setSelectedBlockId] = useState<string>(() => blocks[0]?.id || '');
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
-  const [addMenuAnchor, setAddMenuAnchor] = useState<DOMRect | null>(null);
-  const [moreMenuAnchor, setMoreMenuAnchor] = useState<{ rect: DOMRect; blockId: string; isDeprecated: boolean } | null>(null);
 
-  // Fallback to 'all' if the currently selected block is deleted
+  // Fallback to first block if selected block is deleted or empty
   useEffect(() => {
-    if (selectedBlockId !== 'all' && !blocks.find((b: any) => b.id === selectedBlockId)) {
-      setSelectedBlockId('all');
-      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    if (blocks.length > 0 && (!selectedBlockId || !blocks.find((b: any) => b.id === selectedBlockId))) {
+      setSelectedBlockId(blocks[0].id);
     }
   }, [blocks, selectedBlockId]);
 
-  // Select the block requested by a Shell Preview click.
+  // Scroll to block requested by Shell Preview click
   useEffect(() => {
     if (!targetBlockId) return;
     if (!blocks.find((b: any) => b.id === targetBlockId)) return;
     setSelectedBlockId(targetBlockId);
-    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    const el = sectionRefs.current[targetBlockId];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, [targetBlockId, blocks]);
 
   const handleSidebarClick = (blockId: string) => {
     setSelectedBlockId(blockId);
-    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    const el = sectionRefs.current[blockId];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const LinkIcon = () => (
@@ -4547,88 +4797,45 @@ function BlocksTabContent({
     </SvgIcon>
   );
 
-  const [lastFormSubmission, setLastFormSubmission] = useState<{ name: string; type: string; instructions: string } | null>(null);
-  const isGenerating = blocks.some((b: any) => b.state === 'loading');
   const prevLoadingIdRef = useRef<string | null>(null);
+  const activeGeneratedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const loadingBlock = blocks.find((b: any) => b.state === 'loading');
-    if (loadingBlock && loadingBlock.id !== prevLoadingIdRef.current) {
-      prevLoadingIdRef.current = loadingBlock.id;
-      setSelectedBlockId(loadingBlock.id);
-      scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    if (loadingBlock) {
+      if (loadingBlock.id !== prevLoadingIdRef.current) {
+        prevLoadingIdRef.current = loadingBlock.id;
+        activeGeneratedIdRef.current = loadingBlock.id;
+        setSelectedBlockId(loadingBlock.id);
+        setTimeout(() => {
+          const el = sectionRefs.current[loadingBlock.id];
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
+      }
+    } else if (activeGeneratedIdRef.current) {
+      const completedId = activeGeneratedIdRef.current;
+      activeGeneratedIdRef.current = null;
+      setSelectedBlockId(completedId);
+      setTimeout(() => {
+        const el = sectionRefs.current[completedId];
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
     }
   }, [blocks]);
 
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
-      {addMenuAnchor && onGenerateComponent && (
-        <AddComponentMenu
-          anchorRect={addMenuAnchor}
-          onClose={() => setAddMenuAnchor(null)}
-          onGenerate={(n, t, i) => {
-            setLastFormSubmission({ name: n, type: t, instructions: i });
-            onGenerateComponent(n, t, i);
-          }}
-          lastSubmission={lastFormSubmission}
-          isGenerating={isGenerating}
-        />
-      )}
-      {moreMenuAnchor && onDeprecateComponent && onDeleteComponent && (
-        <MoreOptionsMenu
-          anchorRect={moreMenuAnchor.rect}
-          isDeprecated={moreMenuAnchor.isDeprecated}
-          onClose={() => setMoreMenuAnchor(null)}
-          onDeprecate={() => onDeprecateComponent(moreMenuAnchor.blockId)}
-          onDelete={() => onDeleteComponent(moreMenuAnchor.blockId)}
-        />
-      )}
       {/* Left sidebar — block navigation */}
       <div className="w-[176px] shrink min-w-[90px] border-r border-[#E5E8E8] overflow-y-auto bg-white flex flex-col gap-[2px] pt-[4px] pl-[4px] pb-[8px] pr-[4px]">
-        <div className="relative group" data-menu-open={!!addMenuAnchor}>
-          <button
-            onClick={() => handleSidebarClick('all')}
-            className={`group flex items-center w-full h-[32px] pl-[8px] pr-[4px] py-[6px] rounded-[4px] transition-colors text-left shrink-0 gap-[4px] ${
-              selectedBlockId === 'all'
-                ? 'bg-az-secondary'
-                : 'bg-transparent hover:bg-bg-panel'
-            }`}
-            title="All"
-          >
-            <p className={`flex-1 min-w-0 truncate text-[12px] font-medium leading-[18px] ${
-              selectedBlockId === 'all' ? 'text-brand-1' : 'text-text-primary'
-            }`}>
-              All
-            </p>
-            {onGenerateComponent && (
-              <div className="hidden group-hover:flex group-data-[menu-open=true]:flex items-center shrink-0">
-                <TooltipText label="Add Component" align="center" disabled={!!addMenuAnchor}>
-                  <div
-                    role="button"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setAddMenuAnchor(prev => prev ? null : rect);
-                    }}
-                    className={`flex items-center justify-center shrink-0 w-[24px] h-[24px] rounded-[4px] ${
-                      !!addMenuAnchor
-                        ? 'bg-black/5'
-                        : 'bg-transparent hover:bg-black/5'
-                    }`}
-                  >
-                     <img src={addLineIconUrl} className="w-[16px] h-[16px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="add" />
-                  </div>
-                </TooltipText>
-              </div>
-            )}
-          </button>
-        </div>
         {blocks.map((block: any) => {
           const isSelected = selectedBlockId === block.id;
           const blockName = block.name || block.fields?.find((f: any) => f.id.includes('Label') || f.id.includes('Title') || f.label === 'Component Label' || f.label === 'Block Title')?.value || block.id;
           return (
-            <div key={block.id} className="relative group" data-menu-open={moreMenuAnchor?.blockId === block.id}>
+            <div key={block.id} className="relative group">
               <button
                 onClick={() => handleSidebarClick(block.id)}
                 className={`group flex items-center w-full h-[32px] pl-[8px] pr-[4px] py-[6px] rounded-[4px] transition-colors text-left shrink-0 gap-[4px] ${
@@ -4639,7 +4846,7 @@ function BlocksTabContent({
                 title={blockName}
               >
                 <p className={`flex-1 min-w-0 truncate text-[12px] font-medium leading-[18px] ${
-                  block.deprecated ? 'line-through text-[#888e8e]' : isSelected ? 'text-brand-1' : 'text-text-primary'
+                  isSelected ? 'text-brand-1' : 'text-text-primary'
                 }`}>
                   {blockName}
                 </p>
@@ -4647,24 +4854,19 @@ function BlocksTabContent({
                   <div className="flex items-center shrink-0">
                     <img src={aiProcessingIconUrl} className="size-[16px]" alt="loading" />
                   </div>
-                ) : onDeprecateComponent && onDeleteComponent ? (
-                  <div className="hidden group-hover:flex group-data-[menu-open=true]:flex items-center shrink-0">
-                    <TooltipText label="More" align="center" disabled={moreMenuAnchor?.blockId === block.id}>
+                ) : onDeleteComponent ? (
+                  <div className="hidden group-hover:flex items-center shrink-0">
+                    <TooltipText label="Delete" align="center">
                       <div
                         role="button"
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.stopPropagation();
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setMoreMenuAnchor(prev => (prev?.blockId === block.id ? null : { rect, blockId: block.id, isDeprecated: !!block.deprecated }));
+                          onDeleteComponent(block.id);
                         }}
-                        className={`flex items-center justify-center shrink-0 w-[24px] h-[24px] rounded-[4px] ${
-                          moreMenuAnchor?.blockId === block.id
-                            ? 'bg-black/5'
-                            : 'bg-transparent hover:bg-black/5'
-                        }`}
+                        className="flex items-center justify-center shrink-0 w-[24px] h-[24px] rounded-[4px] bg-transparent hover:bg-black/5"
                       >
-                         <img src={moreIconUrl} className="w-[16px] h-[16px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="more" />
+                        <img src={deleteBinIconUrl} className="w-[16px] h-[16px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="delete" />
                       </div>
                     </TooltipText>
                   </div>
@@ -4682,25 +4884,13 @@ function BlocksTabContent({
 
       {/* Right content — scrollable block sections */}
       <div className="flex-1 flex flex-col min-w-[180px] min-h-0">
-        {selectedBlockId !== 'all' && blocks.find((b: any) => b.id === selectedBlockId)?.deprecated && (
-          <div className="bg-bg-panel border-y border-graphite-10 p-[12px] flex items-center gap-[8px] shrink-0">
-            <div className="w-[20px] h-[20px] shrink-0 rounded-[4px] bg-black/5 flex items-center justify-center">
-              <svg className="w-[14px] h-[14px]" fill="none" viewBox="0 0 13.333 13.333">
-                <path d="M6.66699 0C10.3487 0.000175812 13.333 2.9852 13.333 6.66699C13.3328 10.3486 10.3486 13.3328 6.66699 13.333C2.9852 13.333 0.000175816 10.3487 0 6.66699C0 2.98509 2.98509 0 6.66699 0ZM6.66699 1.33301C3.72147 1.33301 1.33301 3.72147 1.33301 6.66699C1.33318 9.61238 3.72158 12 6.66699 12C9.61227 11.9998 11.9998 9.61227 12 6.66699C12 3.72158 9.61238 1.33318 6.66699 1.33301ZM9.92773 8.98438C9.80013 9.16338 9.65578 9.33452 9.49512 9.49512C9.33452 9.65578 9.16338 9.80013 8.98438 9.92773L3.40625 4.34863C3.5338 4.16969 3.67735 3.99844 3.83789 3.83789C3.99844 3.67735 4.16969 3.5338 4.34863 3.40625L9.92773 8.98438Z" fill="#888E8E" />
-              </svg>
-            </div>
-            <p className="t-small text-text-secondary">
-              It will be skipped in code update.
-            </p>
-          </div>
-        )}
         <div ref={scrollContainerRef} className="flex-1 overflow-y-scroll overflow-x-hidden">
         {blocks.length === 0 ? (
           <div className="flex w-full h-full items-center justify-center">
             <p className="t-small text-text-secondary">No Components</p>
           </div>
-        ) : (selectedBlockId === 'all' ? blocks : blocks.filter((b: any) => b.id === selectedBlockId)).map((block: any, blockIndex: number, arr: any[]) => {
-          const fieldIsDisabled = isLocked || block.deprecated;
+        ) : blocks.map((block: any, blockIndex: number, arr: any[]) => {
+          const fieldIsDisabled = isLocked;
           const blockName = block.name || block.fields?.find((f: any) => f.id.includes('Label') || f.id.includes('Title') || f.label === 'Component Label' || f.label === 'Block Title')?.value || block.id;
           return (
             <div
@@ -4721,7 +4911,7 @@ function BlocksTabContent({
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-[12px]">
-                    <p className={`text-[14px] font-bold text-text-primary break-words m-0 ${block.deprecated ? 'opacity-40 pointer-events-none' : ''}`}>
+                    <p className="text-[14px] font-bold text-text-primary break-words m-0">
                       {blockName}
                     </p>
                     <button
@@ -4818,6 +5008,7 @@ interface MetadataPanelProps {
   onMetaDiffChange?: (diffItems: MetaDiffItem[]) => void;
   onRequestUpdateCode?: () => void;
   baselineAdvanceTrigger?: number;
+  addComponentTrigger?: { name: string; type: string; instructions: string } | null;
   metaUpdateActive?: boolean;
   metaUpdateProcessing?: boolean;
   submittedDiffItems?: MetaDiffItem[];
@@ -4827,8 +5018,37 @@ interface MetadataPanelProps {
   targetBlockTrigger?: number;
   onReviewItemsChange?: (items: ReviewItem[]) => void;
   associatedTLStatus?: string;
+  figureComponents?: MetadataBlock[];
+  setFigureComponents?: React.Dispatch<React.SetStateAction<MetadataBlock[]>>;
   onJumpToTL?: (name: string) => void;
 }
+
+const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
+  {
+    id: 'kmCurve',
+    name: 'KM Plot Chart',
+    state: 'ready' as const,
+    deprecated: false,
+    fields: [
+      { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+      { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
+      { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+      { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on typical KM Plot requirements.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}] },
+    ]
+  },
+  {
+    id: 'riskTable',
+    name: 'Number at Risk Table',
+    state: 'ready' as const,
+    deprecated: false,
+    fields: [
+      { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+      { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
+      { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+      { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting variable: TRTA used instead of TRT01P.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}] },
+    ]
+  }
+];
 
 function MetadataPanel({
   onClose, docType = 'table', isLocked, frozenUntilIndex, pageSepActive, pageColumnCounts = {},
@@ -4836,10 +5056,26 @@ function MetadataPanel({
   repeatColumnBaseline = null, onRepeatColumnBaselineChange,
   pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
   idpageBaseline = null, idlistBaseline = null, onIdpageBaselineChange, onIdlistBaselineChange,
-  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, baselineAdvanceTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], targetFieldId, targetBlockName, targetBlockTrigger, onReviewItemsChange, associatedTLStatus = 'pending', onJumpToTL,
+  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, baselineAdvanceTrigger, addComponentTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], targetFieldId, targetBlockName, targetBlockTrigger, onReviewItemsChange, associatedTLStatus = 'pending',
+  figureComponents: propsFigureComponents,
+  setFigureComponents: propsSetFigureComponents,
+  onJumpToTL,
 }: MetadataPanelProps) {
   const [activeTab, setActiveTab] = useState<"basic" | "blocks">("basic");
   const [targetBlockId, setTargetBlockId] = useState<string | null>(null);
+
+  const prevAddComponentTriggerRef = useRef<any>(null);
+  useEffect(() => {
+    if (addComponentTrigger && addComponentTrigger !== prevAddComponentTriggerRef.current) {
+      prevAddComponentTriggerRef.current = addComponentTrigger;
+      handleGenerateComponent(addComponentTrigger.name, addComponentTrigger.type, addComponentTrigger.instructions);
+    }
+  }, [addComponentTrigger]);
+
+  const [internalFigureComponents, setInternalFigureComponents] = useState<MetadataBlock[]>(INITIAL_FIGURE_COMPONENTS);
+  const figureComponents = propsFigureComponents || internalFigureComponents;
+  const setFigureComponents = propsSetFigureComponents || setInternalFigureComponents;
+
   const loadFromSession = <T,>(key: string, fallback: T): T => { try { const raw = sessionStorage.getItem(key); return raw ? (JSON.parse(raw) as T) : fallback; } catch { return fallback; } };
 
   const migrateFields = (stored: any[]): any[] => {
@@ -4981,36 +5217,6 @@ function MetadataPanel({
       ]
     }
   ]);
-  useEffect(() => { sessionStorage.removeItem('metadataBlocks_figure'); }, []);
-
-  const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
-    {
-      id: 'kmCurve',
-      name: 'KM Plot Chart',
-      state: 'ready' as const,
-      deprecated: false,
-      fields: [
-        { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
-        { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-        { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-        { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on typical KM Plot requirements.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}] },
-      ]
-    },
-    {
-      id: 'riskTable',
-      name: 'Number at Risk Table',
-      state: 'ready' as const,
-      deprecated: false,
-      fields: [
-        { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
-        { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-        { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-        { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting variable: TRTA used instead of TRT01P.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}] },
-      ]
-    }
-  ];
-
-  const [figureComponents, setFigureComponents] = useState<MetadataBlock[]>(INITIAL_FIGURE_COMPONENTS);
   useEffect(() => { sessionStorage.removeItem('metadataComponents_figure'); }, []);
 
   const [hasMetadataComponentEdits, setHasMetadataComponentEdits] = useState(false);
@@ -6649,6 +6855,12 @@ function WorkspaceContent({
   const [metaUpdateProcessing, setMetaUpdateProcessing] = useState(false);
   const [submittedDiffItems, setSubmittedDiffItems] = useState<MetaDiffItem[]>([]);
   const [baselineAdvanceTrigger, setBaselineAdvanceTrigger] = useState(0);
+  const [addComponentTrigger, setAddComponentTrigger] = useState<{ name: string; type: string; instructions: string } | null>(null);
+  const [figureComponents, setFigureComponents] = useState<MetadataBlock[]>(INITIAL_FIGURE_COMPONENTS);
+  const [hasUnreadMetadataUpdate, setHasUnreadMetadataUpdate] = useState(false);
+  const [renderPreviewOpen, setRenderPreviewOpen] = useState(false);
+  const [activeRenderVersionLabel, setActiveRenderVersionLabel] = useState('V1.0');
+  const [renderVersions, setRenderVersions] = useState<RenderVersion[]>(INITIAL_FIGURE_RENDER_VERSIONS);
   const [targetMetadataFieldId, setTargetMetadataFieldId] = useState<string | null>(null);
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>(DEFAULT_FIGURE_REVIEW_ITEMS);
   const [hasPendingCodeChanges, setHasPendingCodeChanges] = useState(false);
@@ -6727,6 +6939,42 @@ function WorkspaceContent({
   const [idlistBaseline, setIdlistBaseline] = useState<{ frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> } | null>(null);
   const [aiInputValue, setAiInputValue] = useState("");
   const [aiInputFocusTrigger, setAiInputFocusTrigger] = useState(0);
+
+  const metadataOpenRef = useRef(metadataOpen);
+  metadataOpenRef.current = metadataOpen;
+
+  const handleGenerateComponentInWorkspace = (name: string, type: string, instructions: string) => {
+    const newId = `generated-${Date.now()}`;
+    const raw = name.trim();
+    const label = raw.length <= 3 ? 'New Component' : raw;
+
+    const loadingBlock: MetadataBlock = {
+      id: newId,
+      name: label,
+      state: 'loading',
+      deprecated: false,
+      fields: []
+    };
+
+    setFigureComponents(prev => [...prev, loadingBlock]);
+
+    if (!metadataOpenRef.current) {
+      setHasUnreadMetadataUpdate(true);
+    }
+
+    setTimeout(() => {
+      setFigureComponents(prev => prev.map(b => b.id === newId ? {
+        ...b,
+        state: 'ready',
+        fields: [
+          { id: `${newId}_l`, label: 'Component Label', value: label, type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+          { id: `${newId}_t`, label: 'Component Type', value: type, type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
+          { id: `${newId}_d`, label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+          { id: `${newId}_v`, label: 'Source Variable(s)', value: 'AVAL, PARAM', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}] }
+        ]
+      } : b));
+    }, 6000);
+  };
 
   const constraints = {
     treeList: { min: 180, max: 320 },
@@ -7284,6 +7532,13 @@ function WorkspaceContent({
                           }, 50);
                         }, 2500);
                       }}
+                      onAddComponentPrompt={(name, type, inst) => handleGenerateComponentInWorkspace(name, type, inst)}
+                      renderPreviewOpen={renderPreviewOpen}
+                      activeRenderVersionLabel={activeRenderVersionLabel}
+                      onRenderThumbnailClick={(v) => {
+                        setActiveRenderVersionLabel(v.versionLabel);
+                        setRenderPreviewOpen(true);
+                      }}
                     />
                   )}
                 </div>
@@ -7314,7 +7569,15 @@ function WorkspaceContent({
                             setTargetBlockTrigger(prev => prev + 1);
                           }
                         }}
-                        onMetadataClick={() => setMetadataOpen((open) => !open)}
+                        onMetadataClick={() => setMetadataOpen((open) => {
+                          if (!open) {
+                            setHasUnreadMetadataUpdate(false);
+                          }
+                          return !open;
+                        })}
+                        hasUnreadMetadataUpdate={hasUnreadMetadataUpdate}
+                        figureComponents={figureComponents}
+                        setFigureComponents={setFigureComponents}
                         metadataOpen={metadataOpen}
                         onMetadataClose={() => setMetadataOpen(false)}
                         metadataWidth={metadataWidth}
@@ -7344,6 +7607,7 @@ function WorkspaceContent({
                           setAiCopilotOpen(true);
                         }}
                         baselineAdvanceTrigger={baselineAdvanceTrigger}
+                        addComponentTrigger={addComponentTrigger}
                         metaUpdateActive={metaUpdateActive}
                         metaUpdateProcessing={metaUpdateProcessing}
                         submittedDiffItems={submittedDiffItems}
@@ -7451,6 +7715,13 @@ function WorkspaceContent({
                           }, 50);
                         }, 2500);
                       }}
+                      onAddComponentPrompt={(name, type, inst) => handleGenerateComponentInWorkspace(name, type, inst)}
+                      renderPreviewOpen={renderPreviewOpen}
+                      activeRenderVersionLabel={activeRenderVersionLabel}
+                      onRenderThumbnailClick={(v) => {
+                        setActiveRenderVersionLabel(v.versionLabel);
+                        setRenderPreviewOpen(true);
+                      }}
                     />
                   )}
                 </div>
@@ -7476,6 +7747,17 @@ function WorkspaceContent({
           if (program) handleToggleLock(program.id);
           setModalState({ type: null });
         }}
+      />
+
+      <FigureRenderPreviewModal
+        isOpen={renderPreviewOpen}
+        onClose={() => setRenderPreviewOpen(false)}
+        versions={renderVersions}
+        activeVersionLabel={activeRenderVersionLabel}
+        onSelectVersion={(v) => setActiveRenderVersionLabel(v.versionLabel)}
+        panelLayout={panelLayout}
+        panelView={panelView}
+        copilotOpen={aiCopilotOpen}
       />
     </div>
   );
