@@ -639,6 +639,7 @@ function AICopilotPanel({
   metaUpdateProcessing,
   onMetaCancel,
   onMetaProceed,
+  onCodeDiffChange,
 }: {
   panelWidth: number;
   onClose: () => void;
@@ -656,6 +657,7 @@ function AICopilotPanel({
   metaUpdateProcessing?: boolean;
   onMetaCancel?: () => void;
   onMetaProceed?: () => void;
+  onCodeDiffChange?: (hasDiff: boolean) => void;
 }) {
   const [messages, setMessages] = useState<Message[]>(() => {
     if (docType === 'figure') return [{ type: 'ai_complete' }];
@@ -696,6 +698,18 @@ function AICopilotPanel({
   const showAskUser = lastMessage?.type === 'ai_ask_user';
   const hasCodeDiff = messages.some(m => m.type === 'ai_update_complete' || (docType === 'listing' && m.type === 'ai_complete'));
 
+  useEffect(() => {
+    onCodeDiffChange?.(hasCodeDiff);
+  }, [hasCodeDiff, onCodeDiffChange]);
+
+  const handleAcceptPending = () => {
+    setMessages(prev => prev.map(m => m.type === 'ai_update_complete' ? { ...m, type: 'ai_complete' as const } : m));
+  };
+
+  const handleRejectPending = () => {
+    setMessages(prev => prev.filter(m => m.type !== 'ai_update_complete'));
+  };
+
   const handleAskUserSubmit = (answers: { q: string; a: string }[]) => {
     setMessages(prev => prev.filter(m => m.type !== 'ai_ask_user').concat([{ type: 'ask_user_result', answers }]));
     setTimeout(() => {
@@ -711,14 +725,15 @@ function AICopilotPanel({
   };
 
   const handleSubmit = (text: string) => {
-    if (!text.trim()) return;
+    const isUpdate = metaUpdateActive && metaDiffItems && metaDiffItems.length > 0;
+    if (!text.trim() && !isUpdate) return;
     (document.activeElement as HTMLElement)?.blur();
 
-    const isUpdate = metaUpdateActive && metaDiffItems && metaDiffItems.length > 0;
+    const userContent = text.trim() ? text : `Update code for ${metaDiffItems?.length ?? 0} metadata changes`;
 
     setMessages(prev => [...prev, { 
       type: 'user', 
-      content: text,
+      content: userContent,
       toBeUpdatedCount: isUpdate ? metaDiffItems.length : undefined
     }]);
     setCurrentVal("");
@@ -778,45 +793,6 @@ function AICopilotPanel({
             reviewItems={reviewItems}
           />
         )}
-        {metaUpdateActive && metaDiffItems && metaDiffItems.length > 0 && (
-          <div className="px-[8px] pb-[10px]">
-            <AIUpdatedBlock
-              title="To be Updated"
-              count={metaDiffItems.length}
-              expanded="scrollable"
-              scrollHeight={210}
-              toggleable={true}
-              isProcessing={metaUpdateProcessing}
-              items={metaDiffItems.map(d => {
-                const oldVal = d.oldValue && d.oldValue.trim() !== '' ? d.oldValue : 'Empty';
-                const newVal = d.newValue && d.newValue.trim() !== '' ? d.newValue : 'Empty';
-                return {
-                  label: d.label,
-                  text: `~~${oldVal}~~ → ${newVal}`,
-                  onClick: () => onJumpToMetadata?.('', d.fieldId)
-                };
-              })}
-              onCancel={() => onMetaCancel?.()}
-              onProceed={() => {
-                onMetaProceed?.();
-                setIsPending(true);
-                setMessages(prev => [
-                  ...prev, 
-                  { type: 'meta_update_card', metaDiffItems: metaDiffItems, isProcessing: true },
-                  { type: 'ai_thinking' as const }
-                ]);
-                setTimeout(() => {
-                  setMessages(prev => prev.map(m => {
-                    if (m.type === 'meta_update_card') return { ...m, isProcessing: false };
-                    if (m.type === 'ai_thinking') return { type: 'ai_update_complete' as const };
-                    return m;
-                  }));
-                  setIsPending(false);
-                }, 2500);
-              }}
-            />
-          </div>
-        )}
       </div>
 
       {/* Input Area */}
@@ -831,9 +807,20 @@ function AICopilotPanel({
           </Suspense>
         )}
         {metaUpdateActive && metaDiffItems && metaDiffItems.length > 0 ? (
-          <ChatBox onSubmit={handleSubmit} metadataChangesCount={metaDiffItems.length} />
+          <ChatBox 
+            onSubmit={handleSubmit} 
+            metadataChangesCount={metaDiffItems.length}
+            metaDiffItems={metaDiffItems}
+            onCloseMetadataChanges={() => onMetaCancel?.()}
+            onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
+          />
         ) : hasCodeDiff ? (
-          <ChatBox onSubmit={handleSubmit} pending={true} />
+          <ChatBox 
+            onSubmit={handleSubmit} 
+            pending={true} 
+            onAcceptPending={handleAcceptPending}
+            onRejectPending={handleRejectPending}
+          />
         ) : (
           <AIInputBox disabled={isPending} onSubmit={handleSubmit} value={currentVal} onValueChange={setCurrentVal} focusTrigger={focusTrigger} />
         )}
@@ -6664,6 +6651,7 @@ function WorkspaceContent({
   const [baselineAdvanceTrigger, setBaselineAdvanceTrigger] = useState(0);
   const [targetMetadataFieldId, setTargetMetadataFieldId] = useState<string | null>(null);
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>(DEFAULT_FIGURE_REVIEW_ITEMS);
+  const [hasPendingCodeChanges, setHasPendingCodeChanges] = useState(false);
   const [programs, setPrograms] = useState<ProgramItem[]>([
     {
       id: 'p1',
@@ -7283,6 +7271,7 @@ function WorkspaceContent({
                       metaDiffItems={metaDiffItems}
                       metaUpdateActive={metaUpdateActive}
                       onMetaCancel={() => setMetaUpdateActive(false)}
+                      onCodeDiffChange={setHasPendingCodeChanges}
                       onMetaProceed={() => {
                         setMetaUpdateActive(false);
                         setMetaUpdateProcessing(true);
@@ -7317,6 +7306,7 @@ function WorkspaceContent({
                     >
                       <ShellPreview
                         docType={docType}
+                        isLocked={hasPendingCodeChanges}
                         onBlockClick={(blockName) => {
                           setMetadataOpen(true);
                           if (blockName) {
@@ -7448,6 +7438,7 @@ function WorkspaceContent({
                       metaDiffItems={metaDiffItems}
                       metaUpdateActive={metaUpdateActive}
                       onMetaCancel={() => setMetaUpdateActive(false)}
+                      onCodeDiffChange={setHasPendingCodeChanges}
                       onMetaProceed={() => {
                         setMetaUpdateActive(false);
                         setMetaUpdateProcessing(true);

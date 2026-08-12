@@ -28,10 +28,10 @@ function CodeIcon({ className = "size-[16px]", color = "var(--color-brand-1)" })
   );
 }
 
-function SendIcon({ className = "size-[12px]", color = "white" }) {
+function CloseIcon({ className = "size-[14px]", color = "var(--color-text-secondary)" }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M1.94607 9.31488C1.57948 9.12877 1.57341 8.60908 1.93701 8.41466L21.464 1.13966C21.808 1.00206 22.188 1.25827 22.155 1.62767L20.407 21.0547C20.377 21.3917 19.986 21.5717 19.704 21.3737L12.28 16.1437L8.91 19.5137C8.598 19.8257 8.077 19.6057 8.077 19.1647V15.0117L19.006 4.08166C19.104 3.98466 18.96 3.82166 18.847 3.89666L5.626 12.7107L1.94607 9.31488Z" fill={color} />
+      <path d="M12 10.586L16.95 5.636L18.364 7.05L13.414 12L18.364 16.95L16.95 18.364L12 13.414L7.05 18.364L5.636 16.95L10.586 12L5.636 7.05L7.05 5.636L12 10.586Z" fill={color} />
     </svg>
   );
 }
@@ -60,18 +60,47 @@ function Tag({ className = "", text = "Table.1(290-321)" }: TagProps) {
 
 export type ChatBoxStatus = "Default" | "Focused" | "Typed" | "Max height";
 
+export interface MetaDiffItem {
+  fieldId: string;
+  label: string;
+  oldValue: string;
+  newValue: string;
+}
+
 export interface ChatBoxProps {
   onSubmit: (text: string) => void;
   pending?: boolean;
   metadataChangesCount?: number;
+  metaDiffItems?: MetaDiffItem[];
+  onCloseMetadataChanges?: () => void;
+  onJumpToMetadata?: (fieldId: string) => void;
+  onAcceptPending?: () => void;
+  onRejectPending?: () => void;
   className?: string;
 }
 
-export default function ChatBox({ onSubmit, pending = false, metadataChangesCount = 0, className = "" }: ChatBoxProps) {
+export default function ChatBox({ 
+  onSubmit, 
+  pending = false, 
+  metadataChangesCount = 0, 
+  metaDiffItems,
+  onCloseMetadataChanges,
+  onJumpToMetadata,
+  onAcceptPending,
+  onRejectPending,
+  className = "" 
+}: ChatBoxProps) {
   // --- Core Functional States ---
   const [inputText, setInputText] = useState<string>("");
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [pendingExpanded, setPendingExpanded] = useState<boolean>(false);
+  const [metadataExpanded, setMetadataExpanded] = useState<boolean>(() => metadataChangesCount > 0 && metadataChangesCount <= 3);
+
+  useEffect(() => {
+    if (metadataChangesCount > 0) {
+      setMetadataExpanded(metadataChangesCount <= 3);
+    }
+  }, [metadataChangesCount]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -96,7 +125,7 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
   }, [inputText, resolvedStatus]);
 
   const handleSend = () => {
-    if (inputText.trim()) {
+    if (inputText.trim() || metadataChangesCount > 0) {
       onSubmit(inputText);
       setInputText("");
       setIsFocused(false);
@@ -116,6 +145,7 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
   const isMaxHeightAndNotPending = resolvedStatus === "Max height" && !pending;
   const isNotPendingAndIsDefaultOrFocusedOrTypedOrMaxHeight = !pending && ["Default", "Focused", "Typed", "Max height"].includes(resolvedStatus);
   const isTypedAndNotPending = resolvedStatus === "Typed" && !pending;
+  const placeholderText = metadataChangesCount > 0 ? "Add instructions or submit directly..." : "Ask Me Anything...";
 
   return (
     <div className={`flex flex-col w-full relative ${className}`}>
@@ -144,20 +174,38 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
               pendingExpanded ? "h-[109px]" : "h-auto"
             }`}
           >
-            {/* Header - Aligned precisely to the left */}
+            {/* Header - Aligned precisely with debug CTA buttons on right */}
             <div 
               onClick={() => setPendingExpanded(!pendingExpanded)}
-              className="content-stretch flex gap-[8px] items-center justify-start px-[8px] py-[4px] relative shrink-0 w-full cursor-pointer select-none"
+              className="content-stretch flex gap-[8px] items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full cursor-pointer select-none"
             >
-              <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
-                {pendingExpanded ? (
-                  <ChevronDownIcon className="size-[14px]" color="var(--color-brand-1)" />
-                ) : (
-                  <ChevronRightIcon className="size-[14px]" color="var(--color-brand-1)" />
-                )}
+              <div className="flex gap-[8px] items-center">
+                <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
+                  {pendingExpanded ? (
+                    <ChevronDownIcon className="size-[14px]" color="var(--color-brand-1)" />
+                  ) : (
+                    <ChevronRightIcon className="size-[14px]" color="var(--color-brand-1)" />
+                  )}
+                </div>
+                <div className="flex flex-col font-['PingFang_SC',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-brand-1 text-center whitespace-nowrap">
+                  <p className="leading-[24px] font-medium">3 Pending Changes</p>
+                </div>
               </div>
-              <div className="flex flex-col font-['PingFang_SC',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-brand-1 text-center whitespace-nowrap">
-                <p className="leading-[24px] font-medium">3 Pending Changes</p>
+
+              {/* Debug CTA Buttons */}
+              <div className="flex items-center gap-[6px] pr-[4px]" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => onRejectPending?.()}
+                  className="px-[8px] py-[2px] rounded-[4px] text-[12px] font-medium text-text-secondary bg-white hover:bg-black/5 border border-graphite-10 transition-colors cursor-pointer select-none active:scale-95"
+                >
+                  Reject
+                </button>
+                <button
+                  onClick={() => onAcceptPending?.()}
+                  className="px-[8px] py-[2px] rounded-[4px] text-[12px] font-medium text-white bg-brand-1 hover:bg-[#6D0043] transition-colors cursor-pointer select-none active:scale-95"
+                >
+                  Accept
+                </button>
               </div>
             </div>
 
@@ -184,8 +232,18 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
           </div>
         ) : metadataChangesCount > 0 ? (
           <div className="content-stretch flex flex-col gap-[6px] items-start overflow-clip relative shrink-0 w-full">
-            <div className="content-stretch flex gap-[6px] items-center justify-center px-[8px] relative shrink-0 w-full">
-              <div className="content-stretch flex flex-[1_0_0] gap-[8px] items-center min-w-px relative">
+            <div className="content-stretch flex gap-[6px] items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full select-none">
+              <div 
+                onClick={() => setMetadataExpanded(!metadataExpanded)}
+                className="content-stretch flex flex-[1_0_0] gap-[8px] items-center min-w-px relative cursor-pointer"
+              >
+                <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
+                  {metadataExpanded ? (
+                    <ChevronDownIcon className="size-[14px]" color="var(--color-text-secondary)" />
+                  ) : (
+                    <ChevronRightIcon className="size-[14px]" color="var(--color-text-secondary)" />
+                  )}
+                </div>
                 <div className="overflow-clip relative shrink-0 size-[16px] flex items-center justify-center">
                   <img src={fileInfoLineUrl} alt="Metadata changes" className="size-[16px]" style={{ filter: 'invert(37%) sepia(5%) saturate(543%) hue-rotate(137deg) brightness(98%) contrast(85%)' }} />
                 </div>
@@ -198,7 +256,43 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
                   </div>
                 </div>
               </div>
+              
+              {onCloseMetadataChanges && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCloseMetadataChanges();
+                  }}
+                  className="w-[20px] h-[20px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+                  title="Cancel metadata changes"
+                  aria-label="Close metadata changes"
+                >
+                  <CloseIcon className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
+                </button>
+              )}
             </div>
+
+            {/* Expanded To be Updated List */}
+            {metadataExpanded && metaDiffItems && metaDiffItems.length > 0 && (
+              <div className="content-stretch flex flex-col gap-[4px] items-start px-[8px] pb-[6px] relative shrink-0 w-full overflow-y-auto max-h-[109px]">
+                {metaDiffItems.map((item, idx) => {
+                  const oldVal = item.oldValue && item.oldValue.trim() !== '' ? item.oldValue : 'Empty';
+                  const newVal = item.newValue && item.newValue.trim() !== '' ? item.newValue : 'Empty';
+                  return (
+                    <div 
+                      key={idx} 
+                      onClick={() => onJumpToMetadata?.(item.fieldId)}
+                      className="content-stretch flex gap-[6px] items-center relative shrink-0 w-full py-[3px] px-[6px] rounded-[4px] hover:bg-black/5 cursor-pointer text-[13px] select-none"
+                    >
+                      <span className="font-medium text-text-primary shrink-0">{item.label}:</span>
+                      <span className="text-text-secondary line-through truncate max-w-[100px]">{oldVal}</span>
+                      <span className="text-text-secondary shrink-0">→</span>
+                      <span className="font-medium text-brand-1 truncate max-w-[120px]">{newVal}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : null}
 
@@ -227,7 +321,7 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
                         setInputText(e.target.value);
                       }}
                       onKeyDown={handleKeyDown}
-                      placeholder="Ask Me Anything..."
+                      placeholder={placeholderText}
                       className="w-full t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none resize-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] max-h-[140px] pr-[12px] overflow-y-auto"
                       rows={4}
                     />
@@ -269,7 +363,7 @@ export default function ChatBox({ onSubmit, pending = false, metadataChangesCoun
                             handleSend();
                           }
                         }}
-                        placeholder="Ask Me Anything..."
+                        placeholder={placeholderText}
                         className="flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px]"
                       />
                     )}
