@@ -106,7 +106,7 @@ export default function ChatBox({
   const [inputText, setInputText] = useState<string>("");
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [pendingExpanded, setPendingExpanded] = useState<boolean>(false);
-  const [metadataExpanded, setMetadataExpanded] = useState<boolean>(() => metadataChangesCount > 0 && metadataChangesCount <= 3);
+  const [metadataExpanded, setMetadataExpanded] = useState<boolean>(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   const toggleGroup = (blockId: string) => {
@@ -172,12 +172,6 @@ export default function ChatBox({
 
     return Array.from(groupsMap.values());
   }, [metaDiffItems]);
-
-  useEffect(() => {
-    if (metadataChangesCount > 0) {
-      setMetadataExpanded(metadataChangesCount <= 3);
-    }
-  }, [metadataChangesCount]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
