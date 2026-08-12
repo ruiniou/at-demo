@@ -380,7 +380,7 @@ export default function ChatBox({
                     return (
                       <div 
                         key={group.blockId} 
-                        className="flex items-center gap-[8px] w-full py-[4px] pl-0 pr-[6px] rounded-[4px] bg-black/[0.02] text-[13px] select-none"
+                        className="flex items-center gap-[8px] w-full py-[4px] pl-0 pr-[6px] rounded-[4px] bg-graphite-10/50 text-[13px] select-none"
                       >
                         <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                           <span className="font-semibold text-[#2E7D32]">＋</span>
@@ -394,7 +394,7 @@ export default function ChatBox({
                     return (
                       <div 
                         key={group.blockId} 
-                        className="flex items-center gap-[8px] w-full py-[4px] pl-0 pr-[6px] rounded-[4px] bg-black/[0.02] text-[13px] select-none"
+                        className="flex items-center gap-[8px] w-full py-[4px] pl-0 pr-[6px] rounded-[4px] bg-graphite-10/50 text-[13px] select-none"
                       >
                         <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                           <span className="font-semibold text-[#E53935]">－</span>
@@ -409,11 +409,11 @@ export default function ChatBox({
                   const isExpanded = isSingleChange ? true : !!expandedGroups[group.blockId];
 
                   return (
-                    <div key={group.blockId} className="flex flex-col w-full rounded-[4px] bg-black/[0.02] overflow-hidden">
+                    <div key={group.blockId} className="flex flex-col w-full rounded-[4px] bg-graphite-10/50 overflow-hidden">
                       {/* Group Header Row (Chevron Arrow Left-Aligned with Top-Level Chevron, Hidden if Single Change) */}
                       <div 
                         onClick={isSingleChange ? undefined : () => toggleGroup(group.blockId)}
-                        className={`flex items-center gap-[8px] w-full py-[4px] pr-[6px] ${isSingleChange ? 'pl-[6px] cursor-default' : 'pl-0 hover:bg-black/5 cursor-pointer'} text-[13px] select-none`}
+                        className={`flex items-center gap-[8px] w-full py-[4px] pr-[6px] ${isSingleChange ? 'pl-[6px] cursor-default' : 'pl-0 hover:bg-graphite-10 cursor-pointer'} text-[13px] select-none`}
                       >
                         {!isSingleChange && (
                           <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
@@ -439,7 +439,7 @@ export default function ChatBox({
                               <div 
                                 key={dIdx}
                                 onClick={() => onJumpToMetadata?.(diff.fieldId)}
-                                className="flex flex-col gap-[2px] py-[3px] px-[6px] rounded-[4px] hover:bg-black/5 cursor-pointer select-none"
+                                className="flex flex-col gap-[2px] py-[3px] px-[6px] rounded-[4px] hover:bg-graphite-10 cursor-pointer select-none"
                               >
                                 {/* Line 1: Field Name */}
                                 <span className="text-[12px] font-medium text-text-secondary leading-[16px]">

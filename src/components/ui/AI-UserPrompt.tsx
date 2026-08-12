@@ -162,7 +162,7 @@ export function AIUserPrompt({
                   return (
                     <div 
                       key={group.blockId} 
-                      className="flex items-center gap-[8px] w-full py-[3px] pl-0 pr-[6px] rounded-[4px] bg-black/[0.02] text-[12px] select-none"
+                      className="flex items-center gap-[8px] w-full py-[3px] pl-0 pr-[6px] rounded-[4px] bg-graphite-10/50 text-[12px] select-none"
                     >
                       <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                         <span className="font-semibold text-[#2E7D32]">＋</span>
@@ -176,7 +176,7 @@ export function AIUserPrompt({
                   return (
                     <div 
                       key={group.blockId} 
-                      className="flex items-center gap-[8px] w-full py-[3px] pl-0 pr-[6px] rounded-[4px] bg-black/[0.02] text-[12px] select-none"
+                      className="flex items-center gap-[8px] w-full py-[3px] pl-0 pr-[6px] rounded-[4px] bg-graphite-10/50 text-[12px] select-none"
                     >
                       <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                         <span className="font-semibold text-[#E53935]">－</span>
@@ -190,10 +190,10 @@ export function AIUserPrompt({
                 const isExpanded = isSingleChange ? true : !!expandedGroups[group.blockId];
 
                 return (
-                  <div key={group.blockId} className="flex flex-col w-full rounded-[4px] bg-black/[0.02] overflow-hidden">
+                  <div key={group.blockId} className="flex flex-col w-full rounded-[4px] bg-graphite-10/50 overflow-hidden">
                     <div 
                       onClick={isSingleChange ? undefined : () => toggleGroup(group.blockId)}
-                      className={`flex items-center gap-[8px] w-full py-[3px] pr-[6px] ${isSingleChange ? 'pl-[6px] cursor-default' : 'pl-0 hover:bg-black/5 cursor-pointer'} text-[12px] select-none`}
+                      className={`flex items-center gap-[8px] w-full py-[3px] pr-[6px] ${isSingleChange ? 'pl-[6px] cursor-default' : 'pl-0 hover:bg-graphite-10 cursor-pointer'} text-[12px] select-none`}
                     >
                       {!isSingleChange && (
                         <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
