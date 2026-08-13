@@ -3936,7 +3936,9 @@ function ShellPreview({
   setFigureComponents,
   isLocked,
   onQuoteField,
+  onMetaCancel,
 }: {
+  onMetaCancel?: () => void;
   onQuoteField?: (fieldId: string, label: string, blockName: string) => void;
   onBlockClick: (blockName?: string) => void;
   onMetadataClick: () => void;
@@ -5985,7 +5987,7 @@ function MetadataPanel({
           {metaUpdateActive && (
             <button
               onClick={() => onMetaCancel?.()}
-              className="flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] border border-border-default bg-white px-[8px] t-small font-medium text-text-primary hover:bg-bg-panel hover:border-graphite-40 active:scale-[0.98] transition-all cursor-pointer select-none shrink-0"
+              className="flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] bg-graphite-20 hover:bg-graphite-40 px-[8px] t-small font-medium text-text-primary active:scale-[0.96] transition-all cursor-pointer select-none shrink-0"
               title="Cancel updated view and return to normal editing mode"
             >
               <span>Cancel update</span>
