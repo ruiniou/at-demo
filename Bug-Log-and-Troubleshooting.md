@@ -116,3 +116,17 @@
   1. **自定义滚动条的代价**：一旦在 Web 项目中自定义了 `::-webkit-scrollbar` 宽度，就会破坏 Mac 系统自带的原生 zero-width overlay 浮动特性。
   2. **警惕“全局防抖”的副作用**：**绝对不要**试图在 `globals.css` 中用 `* { overflow-y: scroll !important; }` 去做全局防抖！这会导致页面中原本完美贴合的静态 Flex 容器和网格布局莫名其妙被吃掉 10px 宽度，从而引发全站大面积的排版破坏。
   3. **防抖动（Layout Shift）最佳实践**：针对长短高度会发生剧烈变化的**具体业务列表区**，最优解是在**局部组件**上直接使用 `overflow-y-scroll`（或 `scrollbar-gutter: stable`）常驻预留空间，配合透明的 Track 背景色即可兼顾美观与极度稳定的排版体验。
+
+---
+
+### [2026-08-13] Props 接口新增属性未在组件参数中解构引发的 `ReferenceError` 白屏
+
+* **现象 (Symptom)**：
+  控制台报错 `Uncaught ReferenceError: submitDisabled is not defined at ChatBox (ChatBox.tsx:482)`，导致包含 ChatBox 的界面组件崩溃。
+* **根本原因 (Root Cause)**：
+  在扩展 `ChatBoxProps` 接口添加 `submitDisabled?: boolean` 属性后，`ChatBox.tsx` 函数参数解构处漏写了 `submitDisabled`。因此，在 JSX 内部引用 `submitDisabled` 变量时，试图访问一个未解构且未声明的标识符，触发运行时 `ReferenceError`。
+* **解决方案 (Solution)**：
+  在 `ChatBox({ ... })` 函数参数解构中补全 `submitDisabled = false`。
+* **经验教训 (Takeaways)**：
+  1. TypeScript 接口类型添加新字段时，必须同步核对组件函数形参列表，确保所有在函数体或 JSX 中使用的 Prop 均已明确解构。
+  2. 构建阶段 `npm run build` 通过只能保证语法（Syntax）无误，运行前需检查形参作用域绑定。

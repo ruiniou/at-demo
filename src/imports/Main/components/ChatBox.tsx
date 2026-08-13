@@ -180,6 +180,7 @@ export interface ChatBoxProps {
 export default function ChatBox({
   onSubmit,
   pending = false,
+  submitDisabled = false,
   metadataChangesCount = 0,
   metaDiffItems,
   onCloseMetadataChanges,
