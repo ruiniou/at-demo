@@ -6051,7 +6051,7 @@ function MetadataPanel({
             ) : docType === 'figure' ? (
               // Figure Basic Tab
               metaUpdateActive ? (
-                // ── To be Updated mode: only show fields with diffs ──
+                // ── To be Updated mode: only show fields with diffs using original FormItem card styling ──
                 <div className="flex flex-col gap-[4px]">
                   {(() => {
                     const basicDiffs = metaDiffItems.filter(d =>
@@ -6066,19 +6066,18 @@ function MetadataPanel({
                       const block = figureBlocks.find(b => b.fields.some(f => f.id === diff.fieldId));
                       const field = block?.fields.find(f => f.id === diff.fieldId);
                       if (!field || !block) return null;
+                      const styles = getFieldStyles('edited', false);
                       return (
                         <div
                           key={field.id}
                           ref={el => { fieldRefs.current[field.id] = el; }}
-                          className="group relative flex items-stretch rounded-[4px] border border-border-default overflow-hidden"
+                          className={`group relative rounded-[4px] border ${styles.containerBorder} ${styles.containerBg}`}
                         >
-                          {/* Left brand color bar */}
-                          <div className="w-[2px] bg-brand-1 shrink-0 self-stretch" />
-                          <div className="flex-1 p-[8px]">
+                          <div className="p-[8px]">
                             <FormItem
                               label={field.label}
                               required={field.required}
-                              disabled={isLocked}
+                              disabled={true}
                               badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
                               actionButton={
                                 <div className="flex items-center gap-[4px]">
@@ -6095,10 +6094,9 @@ function MetadataPanel({
                                   )}
                                   {/* Checkbox */}
                                   <button
-                                    onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)}
-                                    disabled={isLocked}
-                                    className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                                    aria-label={field.confirmed ? "Unconfirm" : "Confirm"}
+                                    disabled={true}
+                                    className="flex h-[16px] w-[16px] items-center justify-center cursor-not-allowed opacity-40"
+                                    aria-label={field.confirmed ? "Confirmed" : "Unconfirmed"}
                                   >
                                     <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
                                   </button>
@@ -6106,21 +6104,13 @@ function MetadataPanel({
                               }
                               error={field.status === 'error' ? field.errorMessage : undefined}
                             >
-                              {/* Editable input */}
-                              <BaseInput
-                                value={field.value}
-                                readOnly={isLocked}
-                                disabled={isLocked}
-                                hasError={field.status === 'error'}
-                                onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
-                              />
-                              {/* Track Changes annotation */}
-                              <div className="mt-[4px] flex items-center gap-[4px] flex-wrap">
-                                <span className="t-caption text-text-secondary line-through">
+                              {/* Non-editable diff display pill */}
+                              <div className="w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border border-border-default bg-bg-panel flex items-center gap-[6px] t-small flex-wrap">
+                                <span className="text-text-secondary line-through">
                                   {diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty'}
                                 </span>
-                                <span className="t-caption text-text-secondary">→</span>
-                                <span className="t-caption text-brand-1 font-medium underline">
+                                <span className="text-text-secondary">→</span>
+                                <span className="text-brand-1 font-medium underline">
                                   {diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty'}
                                 </span>
                               </div>
@@ -6422,13 +6412,13 @@ function MetadataPanel({
             </div>
           ) : docType === 'figure' ? (
             metaUpdateActive ? (
-              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-[8px] gap-[8px]">
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-[12px] gap-[16px]">
                 {/* 1. Added Components */}
                 {metaDiffItems.filter(d => d.changeType === 'added').map(addDiff => {
                   const comp = figureComponents.find(c => c.id === addDiff.blockId || addDiff.fieldId === `add_${c.id}`);
                   const compName = addDiff.blockName || comp?.name || 'New Component';
                   return (
-                    <div key={addDiff.fieldId} className="flex flex-col gap-[6px] p-[8px] rounded-[4px] border border-border-default bg-white">
+                    <div key={addDiff.fieldId} className="flex flex-col gap-[12px] p-[12px] rounded-[6px] border border-border-default bg-white shadow-sm">
                       <div className="group relative flex items-center justify-between">
                         <div className="flex items-center gap-[6px]">
                           <span className="font-semibold text-code-success text-[14px]">＋</span>
@@ -6444,13 +6434,34 @@ function MetadataPanel({
                           </button>
                         )}
                       </div>
-                      {/* Component fields */}
-                      {comp?.fields.map(f => (
-                        <div key={f.id} className="pl-[12px] flex items-center justify-between text-[12px]">
-                          <span className="text-text-secondary">{f.label}:</span>
-                          <span className="text-text-primary font-medium">{f.value || 'Empty'}</span>
-                        </div>
-                      ))}
+                      {/* Component fields inside FormItem cards */}
+                      <div className="flex flex-col gap-[8px]">
+                        {comp?.fields.map(f => (
+                          <div key={f.id} className="group relative bg-white rounded-[4px] border border-border-default p-[8px]">
+                            <FormItem
+                              label={f.label}
+                              required={f.required}
+                              disabled={true}
+                              badge={f.badge ? <MetadataBadge type={f.badge} tooltip={f.badgeTooltip} /> : undefined}
+                              actionButton={
+                                onQuoteField ? (
+                                  <button
+                                    onClick={() => onQuoteField(f.id, f.label, compName)}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
+                                    title="Quote this field"
+                                  >
+                                    <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                                  </button>
+                                ) : undefined
+                              }
+                            >
+                              <div className="w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border border-border-default bg-bg-panel flex items-center t-small text-text-primary">
+                                {f.value || 'Empty'}
+                              </div>
+                            </FormItem>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   );
                 })}
@@ -6459,7 +6470,7 @@ function MetadataPanel({
                 {metaDiffItems.filter(d => d.changeType === 'removed').map(remDiff => {
                   const compName = remDiff.blockName || remDiff.label || 'Removed Component';
                   return (
-                    <div key={remDiff.fieldId} className="group relative flex items-center justify-between p-[8px] rounded-[4px] border border-border-default bg-white">
+                    <div key={remDiff.fieldId} className="group relative flex items-center justify-between p-[12px] rounded-[6px] border border-border-default bg-white shadow-sm">
                       <div className="flex items-center gap-[6px]">
                         <span className="font-semibold text-az-danger text-[14px]">－</span>
                         <span className="font-bold text-text-primary text-[14px]">{compName}</span>
@@ -6477,44 +6488,86 @@ function MetadataPanel({
                   );
                 })}
 
-                {/* 3. Modified fields in components (excluding removed components) */}
-                {metaDiffItems.filter(d => d.changeType === 'modified' && !figureBasicBlockIds.has(d.blockId || '') && !removedCompBlockIds.has(d.blockId || '')).map(diff => {
-                  const comp = figureComponents.find(c => c.id === diff.blockId || c.fields.some(f => f.id === diff.fieldId));
-                  const field = comp?.fields.find(f => f.id === diff.fieldId);
-                  const blockName = diff.blockName || comp?.name || 'Component';
-                  const fieldLabel = diff.label || field?.label || diff.fieldId;
-                  return (
-                    <div key={diff.fieldId} className="group relative flex items-stretch rounded-[4px] border border-border-default overflow-hidden bg-white">
-                      <div className="w-[2px] bg-brand-1 shrink-0 self-stretch" />
-                      <div className="flex-1 p-[8px] flex flex-col gap-[4px]">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-medium text-text-secondary">{blockName} &gt; {fieldLabel}</span>
+                {/* 3. Modified Component Section Cards */}
+                {(() => {
+                  const modifiedComps = figureComponents.filter(comp =>
+                    !removedCompBlockIds.has(comp.id) &&
+                    !addedCompBlockIds.has(comp.id) &&
+                    comp.fields.some(f => fieldDiffMap[f.id] && fieldDiffMap[f.id].changeType === 'modified')
+                  );
+
+                  return modifiedComps.map(comp => {
+                    const compName = comp.name || comp.id;
+                    const compDiffs = comp.fields
+                      .map(f => ({ field: f, diff: fieldDiffMap[f.id] }))
+                      .filter(item => item.diff && item.diff.changeType === 'modified');
+
+                    return (
+                      <div key={comp.id} className="flex flex-col gap-[12px] p-[12px] rounded-[6px] border border-border-default bg-white shadow-sm">
+                        {/* Section Header */}
+                        <div className="group relative flex items-center justify-between">
+                          <span className="font-bold text-text-primary text-[14px]">{compName}</span>
                           {onQuoteField && (
                             <button
-                              onClick={() => onQuoteField(diff.fieldId, fieldLabel, blockName)}
+                              onClick={() => onQuoteField(comp.id, compName, compName)}
                               className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                              title="Quote this field"
+                              title="Quote this component"
                             >
                               <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
                             </button>
                           )}
                         </div>
-                        {field ? (
-                          <BaseInput
-                            value={field.value}
-                            readOnly={isLocked}
-                            onChange={isLocked ? undefined : (e) => handleFieldEditComponent(comp!.id, field.id, e.target.value)}
-                          />
-                        ) : null}
-                        <div className="flex items-center gap-[4px] flex-wrap">
-                          <span className="t-caption text-text-secondary line-through">{diff.oldValue || 'Empty'}</span>
-                          <span className="t-caption text-text-secondary">→</span>
-                          <span className="t-caption text-brand-1 font-medium underline">{diff.newValue || 'Empty'}</span>
+
+                        {/* Modified Field Cards using FormItem */}
+                        <div className="flex flex-col gap-[8px]">
+                          {compDiffs.map(({ field, diff }) => {
+                            const styles = getFieldStyles('edited', false);
+                            return (
+                              <div key={field.id} className={`group relative rounded-[4px] border ${styles.containerBorder} ${styles.containerBg}`}>
+                                <div className="p-[8px]">
+                                  <FormItem
+                                    label={field.label}
+                                    required={field.required}
+                                    disabled={true}
+                                    badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
+                                    actionButton={
+                                      <div className="flex items-center gap-[4px]">
+                                        {onQuoteField && (
+                                          <button
+                                            onClick={() => onQuoteField(field.id, field.label, compName)}
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
+                                            title="Quote this field"
+                                            aria-label="Quote this field"
+                                          >
+                                            <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                                          </button>
+                                        )}
+                                        <button disabled className="flex h-[16px] w-[16px] items-center justify-center opacity-40 cursor-not-allowed" aria-label="Confirmed">
+                                          <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                                        </button>
+                                      </div>
+                                    }
+                                  >
+                                    {/* Non-editable diff display pill */}
+                                    <div className="w-full min-h-[32px] px-[8px] py-[4px] rounded-[2px] border border-border-default bg-bg-panel flex items-center gap-[6px] t-small flex-wrap">
+                                      <span className="text-text-secondary line-through">
+                                        {diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty'}
+                                      </span>
+                                      <span className="text-text-secondary">→</span>
+                                      <span className="text-brand-1 font-medium underline">
+                                        {diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty'}
+                                      </span>
+                                    </div>
+                                  </FormItem>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
 
                 {/* Empty state if no diffs in components tab */}
                 {componentsTabDiffCount === 0 && (
