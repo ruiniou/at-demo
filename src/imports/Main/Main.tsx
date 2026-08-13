@@ -5979,7 +5979,64 @@ function MetadataPanel({
             );
           })}
         </div>
-        <div className="flex items-center pr-[12px] gap-[4px]">
+        <div className="flex items-center pr-[12px] gap-[8px]">
+          {/* Update Code button moved to Tab bar right side, left of Batch Edit Macro */}
+          {docType === 'figure' ? (
+            ((metaUpdateProcessing && newDiffItems.length > 0) || (!metaUpdateProcessing && metaDiffItems.length > 0 && !metaUpdateActive)) && (() => {
+              const isUpdateDisabled = metaUpdateProcessing || (isLocked && metaDiffItems.length > 0);
+              return (
+                <button
+                  onClick={isUpdateDisabled ? undefined : () => {
+                    onRequestUpdateCode?.();
+                  }}
+                  disabled={isUpdateDisabled}
+                  className={`flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] px-[8px] text-[12px] font-medium transition-all ${
+                    isUpdateDisabled
+                      ? 'bg-border-default text-text-secondary cursor-not-allowed'
+                      : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'
+                  }`}
+                >
+                  <LocalIcon src={addMetadiffIconUrl} className="h-[14px] w-[14px]" color={isUpdateDisabled ? '#888E8E' : 'white'} />
+                  <span>Update Code</span>
+                  {!metaUpdateProcessing && (
+                    <div className="flex items-center justify-center h-[14px] min-w-[14px] px-[3px] py-px rounded-[10px] bg-white/20 shrink-0">
+                      <span className="text-[10px] leading-[12px] font-medium text-white">{metaDiffItems.length}</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })()
+          ) : (
+            hasAnyEdits && (() => {
+              const isUpdateDisabled = isLocked;
+              return (
+                <button
+                  onClick={isUpdateDisabled ? undefined : () => {
+                    if (docType === 'listing') {
+                      const allValid = listingBlocks.every(b => b.fields.every(f => f.status !== 'error'));
+                      if (!allValid) return;
+                      setListingBlocks(prev => prev.map(b => ({
+                        ...b,
+                        fields: b.fields.map(f => f.status === 'edited' ? { ...f, status: 'confirmed' as const, confirmed: true } : f)
+                      })));
+                      setListingColumnFields(prev => prev.map(f => f.status === 'edited' ? { ...f, status: 'confirmed' as const, confirmed: true } : f));
+                    }
+                    onRequestUpdateCode?.();
+                  }}
+                  disabled={isUpdateDisabled}
+                  className={`flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] px-[8px] text-[12px] font-medium transition-all ${
+                    isUpdateDisabled
+                      ? 'bg-border-default text-text-secondary cursor-not-allowed'
+                      : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'
+                  }`}
+                >
+                  <LocalIcon src={addMetadiffIconUrl} className="h-[14px] w-[14px]" color={isUpdateDisabled ? '#888E8E' : 'white'} />
+                  <span>Update Code</span>
+                </button>
+              );
+            })()
+          )}
+
           <TooltipText label="Batch Edit Macro">
             <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Batch edit">
               <LocalIcon src={batchMicroIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
@@ -6638,79 +6695,7 @@ function MetadataPanel({
         )}
       </div>
 
-      {/* Add Changes to Chat Button */}
-      {docType === 'figure' ? (
-        ((metaUpdateProcessing && newDiffItems.length > 0) || (!metaUpdateProcessing && metaDiffItems.length > 0 && !metaUpdateActive)) && (
-          <div className="border-t border-border-default p-[12px] flex justify-start">
-            {(() => {
-              const isUpdateDisabled = metaUpdateProcessing || (isLocked && metaDiffItems.length > 0);
-              return (
-                <button
-                  onClick={isUpdateDisabled ? undefined : () => {
-                    onRequestUpdateCode?.();
-                  }}
-                  disabled={isUpdateDisabled}
-                  className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isUpdateDisabled ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
-                >
-                  <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={isUpdateDisabled ? '#888E8E' : 'white'} />
-                  Update Code
-                  {!metaUpdateProcessing && (
-                    <div className="flex items-center justify-center h-[16px] min-w-[16px] px-[4px] py-px rounded-[16px] bg-white/20 shrink-0">
-                      <span className="text-[10px] leading-[14px] font-medium text-white">{metaDiffItems.length}</span>
-                    </div>
-                  )}
-                </button>
-              );
-            })()}
-          </div>
-        )
-      ) : (
-        hasAnyEdits && (
-          <div className="border-t border-border-default p-[12px] flex justify-start">
-            <button
-              onClick={isLocked ? undefined : () => {
-                if (docType === 'listing') {
-                  const changes: string[] = [];
-                  listingBlocks.forEach(b => {
-                    b.fields.forEach(f => {
-                      if (f.id === 'idlist' && isRepeatColumnEdited) {
-                        const displayValue = Array.from({ length: columnCount }, (_, i) => frozenUntilIndex !== null && i <= frozenUntilIndex ? 'Y' : 'N').join('#');
-                        changes.push(`- ${f.label}: ${displayValue}`);
-                      } else if (f.id === 'idpage' && isPageBreakColumnEdited) {
-                        const displayValue = Array.from({ length: columnCount }, (_, i) => pageBreakColumns.includes(i - 1) ? 'Y' : 'N').join('#');
-                        changes.push(`- ${f.label}: ${displayValue}`);
-                      } else if (f.status === 'edited' && f.id !== 'idlist' && f.id !== 'idpage') {
-                        changes.push(`- ${f.label}: ${f.value}`);
-                      }
-                    });
-                  });
-                  const columnChanges: string[] = [];
-                  listingColumnFields.forEach(f => {
-                    if (f.status === 'edited') {
-                      columnChanges.push(`- ${f.label}: ${f.value}`);
-                    }
-                  });
 
-                  let text = `You are given metadata changes for this listing. Apply these changes to update the code accordingly.`;
-                  if (changes.length > 0) {
-                    text += `\n\n====================\nLISTING LEVEL CHANGES\n` + changes.join('\n');
-                  }
-                  if (columnChanges.length > 0) {
-                    text += `\n\n====================\nCOLUMN LEVEL CHANGES\n` + columnChanges.join('\n');
-                  }
-                  onAddChangesToChat?.(text);
-                }
-                handleUpdateCode();
-              }}
-              disabled={isLocked}
-              className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isLocked ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
-            >
-              <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={isLocked ? '#888E8E' : 'white'} />
-              Add Changes to Chat
-            </button>
-          </div>
-        )
-      )}
 
       {/* Figure Dependency Update Modal */}
       <WorkspaceModal
