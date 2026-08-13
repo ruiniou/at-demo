@@ -6249,7 +6249,7 @@ function MetadataPanel({
                       }
 
                       return (
-                        <div key={field.id} className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
+                        <div key={field.id} className={`group relative ${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
                           <div className="p-[8px]">
                             <FormItem
                               label={field.label}
@@ -6257,11 +6257,23 @@ function MetadataPanel({
                               disabled={isLocked}
                               badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
                               actionButton={
-                                <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
-                                  className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                                  aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
-                                  <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                                </button>
+                                <div className="flex items-center gap-[4px]">
+                                  {onQuoteField && (
+                                    <button
+                                      onClick={() => onQuoteField(field.id, field.label, 'Basic Info')}
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
+                                      title="Quote this field"
+                                      aria-label="Quote this field"
+                                    >
+                                      <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                                    </button>
+                                  )}
+                                  <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                                    className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                    aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                                    <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                                  </button>
+                                </div>
                               }
                             >
                             
@@ -6348,7 +6360,7 @@ function MetadataPanel({
 
                     return (
                       <div key={field.id}
-                        className={`${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}
+                        className={`group relative ${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}
                       >
                         <div className="p-[8px]">
                           <FormItem
@@ -6357,11 +6369,23 @@ function MetadataPanel({
                             disabled={isLocked}
                             badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
                             actionButton={
-                              <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
-                                className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                                aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
-                                <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                              </button>
+                              <div className="flex items-center gap-[4px]">
+                                {onQuoteField && (
+                                  <button
+                                    onClick={() => onQuoteField(field.id, field.label, 'Basic Info')}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
+                                    title="Quote this field"
+                                    aria-label="Quote this field"
+                                  >
+                                    <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                                  </button>
+                                )}
+                                <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                                  className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                  aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                                  <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                                </button>
+                              </div>
                             }
                             error={field.status === 'error' ? field.errorMessage : undefined}
                           >
