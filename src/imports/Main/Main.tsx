@@ -4305,7 +4305,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
-              <MetadataPanel onClose={onMetadataClose} docType={docType} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
+              <MetadataPanel onClose={onMetadataClose} docType={docType} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} onMetaCancel={() => setMetaUpdateActive(false)} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
             </div>
           )}
         </div>
@@ -5085,6 +5085,7 @@ interface MetadataPanelProps {
   onAddChangesToChat?: (text: string) => void;
   onMetaDiffChange?: (diffItems: MetaDiffItem[]) => void;
   onRequestUpdateCode?: () => void;
+  onMetaCancel?: () => void;
   baselineAdvanceTrigger?: number;
   addComponentTrigger?: { name: string; type: string; instructions: string } | null;
   metaUpdateActive?: boolean;
@@ -5136,7 +5137,7 @@ function MetadataPanel({
   repeatColumnBaseline = null, onRepeatColumnBaselineChange,
   pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
   idpageBaseline = null, idlistBaseline = null, onIdpageBaselineChange, onIdlistBaselineChange,
-  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, baselineAdvanceTrigger, addComponentTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], targetFieldId, targetBlockName, targetBlockTrigger, onReviewItemsChange, associatedTLStatus = 'pending',
+  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, onMetaCancel, baselineAdvanceTrigger, addComponentTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], targetFieldId, targetBlockName, targetBlockTrigger, onReviewItemsChange, associatedTLStatus = 'pending',
   figureComponents: propsFigureComponents,
   setFigureComponents: propsSetFigureComponents,
   onJumpToTL,
@@ -5980,11 +5981,11 @@ function MetadataPanel({
           })}
         </div>
         <div className="flex items-center pr-[12px] gap-[8px]">
-          {/* Secondary text button when in Updated / To be updated mode */}
+          {/* Secondary Button when in Updated / To be updated mode */}
           {metaUpdateActive && (
             <button
               onClick={() => onMetaCancel?.()}
-              className="flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] px-[8px] t-small font-medium text-text-secondary hover:text-text-primary hover:bg-graphite-10 active:scale-[0.98] transition-colors cursor-pointer select-none"
+              className="flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] border border-border-default bg-white px-[8px] t-small font-medium text-text-primary hover:bg-bg-panel hover:border-graphite-40 active:scale-[0.98] transition-all cursor-pointer select-none shrink-0"
               title="Cancel updated view and return to normal editing mode"
             >
               <span>Cancel update</span>
@@ -8022,6 +8023,7 @@ function WorkspaceContent({
                         submittedDiffItems={submittedDiffItems}
                         targetFieldId={targetMetadataFieldId || undefined}
                         onReviewItemsChange={setReviewItems}
+                        onMetaCancel={() => setMetaUpdateActive(false)}
                       />
                     </div>
                   )}
