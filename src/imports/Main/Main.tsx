@@ -5980,14 +5980,14 @@ function MetadataPanel({
           })}
         </div>
         <div className="flex items-center pr-[12px] gap-[8px]">
-          {/* Secondary back text button when in Updated / To be updated mode */}
+          {/* Secondary text button when in Updated / To be updated mode */}
           {metaUpdateActive && (
             <button
               onClick={() => onMetaCancel?.()}
-              className="flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] px-[8px] text-[12px] font-medium text-text-secondary hover:text-text-primary hover:bg-graphite-10 active:scale-[0.98] transition-all cursor-pointer select-none"
-              title="Return to normal metadata view"
+              className="flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] px-[8px] t-small font-medium text-text-secondary hover:text-text-primary hover:bg-graphite-10 active:scale-[0.98] transition-colors cursor-pointer select-none"
+              title="Cancel updated view and return to normal editing mode"
             >
-              <span>Back</span>
+              <span>Cancel update</span>
             </button>
           )}
 
