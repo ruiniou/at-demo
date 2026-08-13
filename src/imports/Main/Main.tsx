@@ -76,6 +76,7 @@ import { FormInputField as Input } from "../../components/ui/FormInputField";
 import { Input as BaseInput } from "../../components/ui/Input";
 import { FormItem } from "../../components/ui/FormItem";
 import shiningFillIconUrl from "../../icons/shining-fill.svg";
+import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -888,7 +889,9 @@ function AICopilotPanel({
   renderPreviewOpen,
   activeRenderVersionLabel,
   onRenderThumbnailClick,
+  quoteInsertRef,
 }: {
+  quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
   panelWidth: number;
   onClose: () => void;
   inputValue?: string;
@@ -1075,6 +1078,7 @@ function AICopilotPanel({
               metaDiffItems={metaDiffItems}
               onCloseMetadataChanges={() => onMetaCancel?.()}
               onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
+              quoteInsertRef={quoteInsertRef}
             />
           ) : hasCodeDiff ? (
             <ChatBox 
@@ -1082,9 +1086,13 @@ function AICopilotPanel({
               pending={true} 
               onAcceptPending={handleAcceptPending}
               onRejectPending={handleRejectPending}
+              quoteInsertRef={quoteInsertRef}
             />
           ) : (
-            <AIInputBox disabled={isPending} onSubmit={handleSubmit} value={currentVal} onValueChange={setCurrentVal} focusTrigger={focusTrigger} />
+            <ChatBox
+              onSubmit={handleSubmit}
+              quoteInsertRef={quoteInsertRef}
+            />
           )}
           {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
         </div>
@@ -3909,7 +3917,9 @@ function ShellPreview({
   figureComponents,
   setFigureComponents,
   isLocked,
+  onQuoteField,
 }: {
+  onQuoteField?: (fieldId: string, label: string, blockName: string) => void;
   onBlockClick: (blockName?: string) => void;
   onMetadataClick: () => void;
   onMetaDiffChange?: (diffItems: MetaDiffItem[]) => void;
@@ -4277,7 +4287,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
-              <MetadataPanel onClose={onMetadataClose} docType={docType} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} />
+              <MetadataPanel onClose={onMetadataClose} docType={docType} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
             </div>
           )}
         </div>
@@ -4764,11 +4774,14 @@ function BlocksTabContent({
   confirmedBlocks,
   onToggleBlockConfirm,
   isLocked,
+  onGenerateComponent,
+  onDeprecateComponent,
   onDeleteComponent,
   onFieldEdit,
   getEffectiveStatus,
   getFieldStyles,
-  fieldRefs
+  fieldRefs,
+  onQuoteField
 }: {
   blocks: any;
   targetBlockId?: string | null;
@@ -4782,6 +4795,7 @@ function BlocksTabContent({
   getEffectiveStatus?: (fieldId: string | null, status: FieldStatus, currentValue: string | null) => FieldStatus;
   getFieldStyles?: (status: FieldStatus, isReadOnlyField?: boolean) => { containerBg: string; containerBorder: string; inputBorder: string };
   fieldRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
+  onQuoteField?: (fieldId: string, label: string, blockName: string) => void;
 }) {
   const FieldCheckboxIcon = (confirmed: boolean) => {
     if (!confirmed) return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 0 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
@@ -4936,10 +4950,21 @@ function BlocksTabContent({
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between mb-[12px]">
-                    <p className="text-[14px] font-bold text-text-primary break-words m-0">
-                      {blockName}
-                    </p>
+                  <div className="group relative flex items-center justify-between mb-[12px]">
+                    <div className="flex items-center gap-[6px]">
+                      <p className="text-[14px] font-bold text-text-primary break-words m-0">
+                        {blockName}
+                      </p>
+                      {onQuoteField && (
+                        <button
+                          onClick={() => onQuoteField(block.id, blockName, blockName)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
+                          title="Quote this component"
+                        >
+                          <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                        </button>
+                      )}
+                    </div>
                     <button
                       onClick={fieldIsDisabled ? undefined : () => onToggleBlockConfirm(block.id)}
                       disabled={fieldIsDisabled}
@@ -4964,7 +4989,16 @@ function BlocksTabContent({
                       const effectiveInputType = field.inputType || (field.type === 'tag' ? 'multiselect' : 'input');
 
                       return (
-                        <div key={field.id} ref={el => { if (el && fieldRefs) fieldRefs.current[field.id] = el; }} className="bg-white rounded-[4px] border border-transparent p-[4px]">
+                        <div key={field.id} ref={el => { if (el && fieldRefs) fieldRefs.current[field.id] = el; }} className="group relative bg-white rounded-[4px] border border-transparent p-[4px]">
+                          {onQuoteField && (
+                            <button
+                              onClick={() => onQuoteField(field.id, field.label, blockName)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-[6px] top-[6px] z-10 flex h-[18px] w-[18px] items-center justify-center rounded-[2px] hover:bg-graphite-10 bg-white/80"
+                              title="Quote this field"
+                            >
+                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                            </button>
+                          )}
                           {effectiveInputType === 'multiselect' ? (
                             <MultiSelectDropdown
                               label={labelWithLink as any}
@@ -5047,6 +5081,8 @@ interface MetadataPanelProps {
   figureComponents?: MetadataBlock[];
   setFigureComponents?: React.Dispatch<React.SetStateAction<MetadataBlock[]>>;
   onJumpToTL?: (name: string) => void;
+  /** Called when user clicks the Quote icon on a field/component row */
+  onQuoteField?: (fieldId: string, label: string, blockName: string) => void;
 }
 
 const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
@@ -5086,6 +5122,7 @@ function MetadataPanel({
   figureComponents: propsFigureComponents,
   setFigureComponents: propsSetFigureComponents,
   onJumpToTL,
+  onQuoteField,
 }: MetadataPanelProps) {
   const [activeTab, setActiveTab] = useState<"basic" | "blocks">("basic");
   const [targetBlockId, setTargetBlockId] = useState<string | null>(null);
@@ -5369,6 +5406,43 @@ function MetadataPanel({
       !submittedDiffItems.some(sub => sub.fieldId === diff.fieldId && sub.newValue === diff.newValue)
     );
   }, [metaDiffItems, metaUpdateProcessing, submittedDiffItems]);
+
+  // ── To be Updated mode computed helpers ──
+  /** Map from fieldId → MetaDiffItem for quick lookup in rendering */
+  const fieldDiffMap = useMemo<Record<string, MetaDiffItem>>(() => {
+    const map: Record<string, MetaDiffItem> = {};
+    metaDiffItems.forEach(d => { map[d.fieldId] = d; });
+    return map;
+  }, [metaDiffItems]);
+
+  const figureBasicBlockIds = useMemo(() => new Set(figureBlocks.map(b => b.id)), [figureBlocks]);
+  const figureComponentBlockIds = useMemo(() => new Set(figureComponents.map(c => c.id)), [figureComponents]);
+
+  /** Count of diff items in the Basic Info tab (for tab badge) */
+  const basicTabDiffCount = useMemo(() =>
+    metaDiffItems.filter(d => figureBasicBlockIds.has(d.blockId || '')).length,
+    [metaDiffItems, figureBasicBlockIds]
+  );
+
+  /** Count of diff items in the Components tab (for tab badge) */
+  const componentsTabDiffCount = useMemo(() =>
+    metaDiffItems.filter(d =>
+      d.changeType === 'added' || d.changeType === 'removed' || figureComponentBlockIds.has(d.blockId || '')
+    ).length,
+    [metaDiffItems, figureComponentBlockIds]
+  );
+
+  /** Removed block IDs — used to suppress modified-field rows for deleted components */
+  const removedCompBlockIds = useMemo(() =>
+    new Set(metaDiffItems.filter(d => d.changeType === 'removed').map(d => d.blockId || '')),
+    [metaDiffItems]
+  );
+
+  /** Added block IDs — used to show all fields of a new component */
+  const addedCompBlockIds = useMemo(() =>
+    new Set(metaDiffItems.filter(d => d.changeType === 'added').map(d => d.blockId || '')),
+    [metaDiffItems]
+  );
 
   const [lastBaselineTrigger, setLastBaselineTrigger] = useState(0);
   useEffect(() => {
@@ -5863,12 +5937,28 @@ function MetadataPanel({
               <p className={`t-small font-medium ${activeTab === tab ? "text-brand-1" : "text-text-primary"}`}>
                 {tab === "basic" ? (docType === 'listing' ? "Basic info" : docType === 'figure' ? "Basic" : "Basic Information") : (docType === 'listing' ? "Column" : docType === 'figure' ? "Components" : "Blocks")}
               </p>
-              {/* Red dot on the upper right corner of the tab text */}
+              {/* Listing: red dot for unconfirmed edits */}
               {docType === 'listing' && (
                 tab === 'basic' ? (
                   hasListingBasicEdits && <span className="absolute right-[6px] top-[8px] w-[4px] h-[4px] rounded-full bg-[#D0006F] z-10" />
                 ) : (
                   hasListingColumnEdits && <span className="absolute right-[6px] top-[8px] w-[4px] h-[4px] rounded-full bg-[#D0006F] z-10" />
+                )
+              )}
+              {/* Figure To be Updated: count badge */}
+              {docType === 'figure' && metaUpdateActive && (
+                tab === 'basic' ? (
+                  basicTabDiffCount > 0 && (
+                    <span className="absolute right-[2px] top-[7px] min-w-[14px] h-[14px] px-[3px] rounded-full bg-az-danger flex items-center justify-center z-10">
+                      <span className="text-[9px] font-semibold text-white leading-none">{basicTabDiffCount}</span>
+                    </span>
+                  )
+                ) : (
+                  componentsTabDiffCount > 0 && (
+                    <span className="absolute right-[2px] top-[7px] min-w-[14px] h-[14px] px-[3px] rounded-full bg-az-danger flex items-center justify-center z-10">
+                      <span className="text-[9px] font-semibold text-white leading-none">{componentsTabDiffCount}</span>
+                    </span>
+                  )
                 )
               )}
             </button>
@@ -5960,6 +6050,89 @@ function MetadataPanel({
               ))
             ) : docType === 'figure' ? (
               // Figure Basic Tab
+              metaUpdateActive ? (
+                // ── To be Updated mode: only show fields with diffs ──
+                <div className="flex flex-col gap-[4px]">
+                  {(() => {
+                    const basicDiffs = metaDiffItems.filter(d =>
+                      d.changeType === 'modified' && figureBasicBlockIds.has(d.blockId || '')
+                    );
+                    if (basicDiffs.length === 0) {
+                      return (
+                        <p className="text-center text-text-secondary t-small py-[20px]">No changes in Basic Info</p>
+                      );
+                    }
+                    return basicDiffs.map(diff => {
+                      const block = figureBlocks.find(b => b.fields.some(f => f.id === diff.fieldId));
+                      const field = block?.fields.find(f => f.id === diff.fieldId);
+                      if (!field || !block) return null;
+                      return (
+                        <div
+                          key={field.id}
+                          ref={el => { fieldRefs.current[field.id] = el; }}
+                          className="group relative flex items-stretch rounded-[4px] border border-border-default overflow-hidden"
+                        >
+                          {/* Left brand color bar */}
+                          <div className="w-[2px] bg-brand-1 shrink-0 self-stretch" />
+                          <div className="flex-1 p-[8px]">
+                            <FormItem
+                              label={field.label}
+                              required={field.required}
+                              disabled={isLocked}
+                              badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
+                              actionButton={
+                                <div className="flex items-center gap-[4px]">
+                                  {/* Quote icon — revealed on hover */}
+                                  {onQuoteField && (
+                                    <button
+                                      onClick={() => onQuoteField(field.id, field.label, 'Basic Info')}
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
+                                      title="Quote this field"
+                                      aria-label="Quote this field"
+                                    >
+                                      <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                                    </button>
+                                  )}
+                                  {/* Checkbox */}
+                                  <button
+                                    onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)}
+                                    disabled={isLocked}
+                                    className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                    aria-label={field.confirmed ? "Unconfirm" : "Confirm"}
+                                  >
+                                    <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                                  </button>
+                                </div>
+                              }
+                              error={field.status === 'error' ? field.errorMessage : undefined}
+                            >
+                              {/* Editable input */}
+                              <BaseInput
+                                value={field.value}
+                                readOnly={isLocked}
+                                disabled={isLocked}
+                                hasError={field.status === 'error'}
+                                onChange={isLocked ? undefined : (e) => handleFieldEdit(block.id, field.id, e.target.value)}
+                              />
+                              {/* Track Changes annotation */}
+                              <div className="mt-[4px] flex items-center gap-[4px] flex-wrap">
+                                <span className="t-caption text-text-secondary line-through">
+                                  {diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty'}
+                                </span>
+                                <span className="t-caption text-text-secondary">→</span>
+                                <span className="t-caption text-brand-1 font-medium underline">
+                                  {diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty'}
+                                </span>
+                              </div>
+                            </FormItem>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              ) : (
+              // ── Normal mode ──
               <>
                 {figureBlocks.map((block) =>
                   block.fields.map((field) => {
@@ -6131,6 +6304,7 @@ function MetadataPanel({
                   })
                 )}
               </>
+              )
             ) : (
               // Table Basic Tab (Original)
               <>
@@ -6247,31 +6421,134 @@ function MetadataPanel({
               })}
             </div>
           ) : docType === 'figure' ? (
-            <BlocksTabContent
-              // @ts-ignore
-              blocks={figureComponents}
-              targetBlockId={targetBlockId}
-              confirmedBlocks={blockItemConfirmed}
-              onToggleBlockConfirm={(blockId) => {
-                const block = figureComponents.find((b: any) => b.id === blockId);
-                if (!block) return;
-                const allConfirmed = block.fields.length > 0 && block.fields.every((f: any) => blockItemConfirmed[`${blockId}_${f.id}`]);
-                const nextState = !allConfirmed;
-                setBlockItemConfirmed(prev => {
-                  const next = { ...prev };
-                  block.fields.forEach((f: any) => {
-                    next[`${blockId}_${f.id}`] = nextState;
+            metaUpdateActive ? (
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-[8px] gap-[8px]">
+                {/* 1. Added Components */}
+                {metaDiffItems.filter(d => d.changeType === 'added').map(addDiff => {
+                  const comp = figureComponents.find(c => c.id === addDiff.blockId || addDiff.fieldId === `add_${c.id}`);
+                  const compName = addDiff.blockName || comp?.name || 'New Component';
+                  return (
+                    <div key={addDiff.fieldId} className="flex flex-col gap-[6px] p-[8px] rounded-[4px] border border-border-default bg-white">
+                      <div className="group relative flex items-center justify-between">
+                        <div className="flex items-center gap-[6px]">
+                          <span className="font-semibold text-code-success text-[14px]">＋</span>
+                          <span className="font-bold text-text-primary text-[14px]">{compName}</span>
+                        </div>
+                        {onQuoteField && (
+                          <button
+                            onClick={() => onQuoteField(addDiff.fieldId, compName, compName)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
+                            title="Quote this component"
+                          >
+                            <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                          </button>
+                        )}
+                      </div>
+                      {/* Component fields */}
+                      {comp?.fields.map(f => (
+                        <div key={f.id} className="pl-[12px] flex items-center justify-between text-[12px]">
+                          <span className="text-text-secondary">{f.label}:</span>
+                          <span className="text-text-primary font-medium">{f.value || 'Empty'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+
+                {/* 2. Removed Components */}
+                {metaDiffItems.filter(d => d.changeType === 'removed').map(remDiff => {
+                  const compName = remDiff.blockName || remDiff.label || 'Removed Component';
+                  return (
+                    <div key={remDiff.fieldId} className="group relative flex items-center justify-between p-[8px] rounded-[4px] border border-border-default bg-white">
+                      <div className="flex items-center gap-[6px]">
+                        <span className="font-semibold text-az-danger text-[14px]">－</span>
+                        <span className="font-bold text-text-primary text-[14px]">{compName}</span>
+                      </div>
+                      {onQuoteField && (
+                        <button
+                          onClick={() => onQuoteField(remDiff.fieldId, compName, compName)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
+                          title="Quote this component"
+                        >
+                          <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* 3. Modified fields in components (excluding removed components) */}
+                {metaDiffItems.filter(d => d.changeType === 'modified' && !figureBasicBlockIds.has(d.blockId || '') && !removedCompBlockIds.has(d.blockId || '')).map(diff => {
+                  const comp = figureComponents.find(c => c.id === diff.blockId || c.fields.some(f => f.id === diff.fieldId));
+                  const field = comp?.fields.find(f => f.id === diff.fieldId);
+                  const blockName = diff.blockName || comp?.name || 'Component';
+                  const fieldLabel = diff.label || field?.label || diff.fieldId;
+                  return (
+                    <div key={diff.fieldId} className="group relative flex items-stretch rounded-[4px] border border-border-default overflow-hidden bg-white">
+                      <div className="w-[2px] bg-brand-1 shrink-0 self-stretch" />
+                      <div className="flex-1 p-[8px] flex flex-col gap-[4px]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-medium text-text-secondary">{blockName} &gt; {fieldLabel}</span>
+                          {onQuoteField && (
+                            <button
+                              onClick={() => onQuoteField(diff.fieldId, fieldLabel, blockName)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
+                              title="Quote this field"
+                            >
+                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                            </button>
+                          )}
+                        </div>
+                        {field ? (
+                          <BaseInput
+                            value={field.value}
+                            readOnly={isLocked}
+                            onChange={isLocked ? undefined : (e) => handleFieldEditComponent(comp!.id, field.id, e.target.value)}
+                          />
+                        ) : null}
+                        <div className="flex items-center gap-[4px] flex-wrap">
+                          <span className="t-caption text-text-secondary line-through">{diff.oldValue || 'Empty'}</span>
+                          <span className="t-caption text-text-secondary">→</span>
+                          <span className="t-caption text-brand-1 font-medium underline">{diff.newValue || 'Empty'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Empty state if no diffs in components tab */}
+                {componentsTabDiffCount === 0 && (
+                  <p className="text-center text-text-secondary t-small py-[20px]">No changes in Components</p>
+                )}
+              </div>
+            ) : (
+              <BlocksTabContent
+                // @ts-ignore
+                blocks={figureComponents}
+                targetBlockId={targetBlockId}
+                confirmedBlocks={blockItemConfirmed}
+                onToggleBlockConfirm={(blockId) => {
+                  const block = figureComponents.find((b: any) => b.id === blockId);
+                  if (!block) return;
+                  const allConfirmed = block.fields.length > 0 && block.fields.every((f: any) => blockItemConfirmed[`${blockId}_${f.id}`]);
+                  const nextState = !allConfirmed;
+                  setBlockItemConfirmed(prev => {
+                    const next = { ...prev };
+                    block.fields.forEach((f: any) => {
+                      next[`${blockId}_${f.id}`] = nextState;
+                    });
+                    return next;
                   });
-                  return next;
-                });
-              }}
-              isLocked={isLocked}
-              onGenerateComponent={handleGenerateComponent}
-              onDeprecateComponent={handleDeprecateComponent}
-              onDeleteComponent={(id) => setDeleteConfirmBlockId(id)}
-              onFieldEdit={handleFieldEditComponent}
-              fieldRefs={fieldRefs}
-            />
+                }}
+                isLocked={isLocked}
+                onGenerateComponent={handleGenerateComponent}
+                onDeprecateComponent={handleDeprecateComponent}
+                onDeleteComponent={(id) => setDeleteConfirmBlockId(id)}
+                onFieldEdit={handleFieldEditComponent}
+                fieldRefs={fieldRefs}
+                onQuoteField={onQuoteField}
+              />
+            )
           ) : (
             <BlocksTabContent
               blocks={METADATA_BLOCK_ITEMS_DATA}
@@ -6917,6 +7194,15 @@ function WorkspaceContent({
   const [activeRenderVersionLabel, setActiveRenderVersionLabel] = useState('V1.0');
   const [renderVersions, setRenderVersions] = useState<RenderVersion[]>(INITIAL_FIGURE_RENDER_VERSIONS);
   const [targetMetadataFieldId, setTargetMetadataFieldId] = useState<string | null>(null);
+  const quoteInsertRef = useRef<((fieldId: string, label: string) => void) | null>(null);
+
+  const handleQuoteField = useCallback((fieldId: string, label: string, blockName: string) => {
+    setAiCopilotOpen(true);
+    setTimeout(() => {
+      quoteInsertRef.current?.(fieldId, label);
+    }, 100);
+  }, []);
+
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>(DEFAULT_FIGURE_REVIEW_ITEMS);
   const [hasPendingCodeChanges, setHasPendingCodeChanges] = useState(false);
   const [programs, setPrograms] = useState<ProgramItem[]>([
@@ -7557,6 +7843,7 @@ function WorkspaceContent({
                   {aiCopilotOpen && (
                     <AICopilotPanel 
                       key={docType}
+                      quoteInsertRef={quoteInsertRef}
                       panelWidth={aiCopilotWidth} 
                       onClose={handleCloseAICopilot} 
                       inputValue={aiInputValue}
@@ -7740,6 +8027,7 @@ function WorkspaceContent({
                   {aiCopilotOpen && (
                     <AICopilotPanel
                       key={docType}
+                      quoteInsertRef={quoteInsertRef}
                       panelWidth={aiCopilotWidth}
                       onClose={handleCloseAICopilot}
                       inputValue={aiInputValue}

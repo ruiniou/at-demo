@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { AITagMini } from "./AI-TagMini";
+import { Tag } from "./Tag";
 import fileInfoLineUrl from "../../icons/file-info-line.svg";
+import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 
 export type MetaChangeType = 'modified' | 'added' | 'removed';
 
@@ -123,6 +125,35 @@ export function AIUserPrompt({
     return Array.from(groupsMap.values());
   }, [metaDiffItems]);
 
+  const renderTextWithQuoteTags = (text: string) => {
+    // Matches @[fieldId:label]
+    const regex = /@\[([^:]+):([^\]]+)\]/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.slice(lastIndex, match.index));
+      }
+      const label = match[2];
+      const key = `${match.index}-${label}`;
+      parts.push(
+        <span key={key} className="inline-flex items-center gap-[3px] rounded-[4px] bg-graphite-10 px-[5px] py-[1px] text-[12px] leading-[20px] text-text-primary align-baseline my-[1px] mx-[2px] shrink-0 select-none">
+          <img src={doubleQuotesLUrl} className="w-[12px] h-[12px] opacity-60 shrink-0" alt="" />
+          <span className="truncate max-w-[140px] font-normal">{label}</span>
+        </span>
+      );
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex));
+    }
+
+    return parts;
+  };
+
   return (
     <div
       className={[
@@ -244,7 +275,9 @@ export function AIUserPrompt({
       )}
       <div className="flex flex-col gap-[4px] t-body text-text-secondary break-words whitespace-pre-wrap w-full">
         {paragraphs.map((para, idx) => (
-          <p key={idx} className="break-words whitespace-pre-wrap">{para}</p>
+          <p key={idx} className="break-words whitespace-pre-wrap flex flex-wrap items-center gap-[2px]">
+            {renderTextWithQuoteTags(para)}
+          </p>
         ))}
       </div>
     </div>
