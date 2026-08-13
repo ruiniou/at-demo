@@ -4978,7 +4978,7 @@ function BlocksTabContent({
                       {onQuoteField && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onQuoteField(block.id, blockName, blockName); }}
-                          className="absolute right-[24px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                          className="absolute right-[24px] top-1/2 -translate-y-1/2 z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                           title={`Quote "${blockName}"`}
                           aria-label={`Quote "${blockName}"`}
                         >
@@ -5014,7 +5014,7 @@ function BlocksTabContent({
                           {onQuoteField && (
                             <button
                               onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, blockName); }}
-                              className="absolute right-[8px] top-[6px] z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                              className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                               title={`Quote "${field.label}"`}
                               aria-label={`Quote "${field.label}"`}
                             >
@@ -6165,7 +6165,7 @@ function MetadataPanel({
                           {onQuoteField && (
                             <button
                               onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, 'Basic Info'); }}
-                              className="absolute right-[8px] top-[6px] z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                              className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                               title={`Quote "${field.label}"`}
                               aria-label={`Quote "${field.label}"`}
                             >
@@ -6251,7 +6251,7 @@ function MetadataPanel({
                           {onQuoteField && (
                             <button
                               onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, 'Basic Info'); }}
-                              className="absolute right-[8px] top-[8px] z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                              className="absolute right-[8px] top-[8px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                               title={`Quote "${field.label}"`}
                               aria-label={`Quote "${field.label}"`}
                             >
@@ -6359,7 +6359,7 @@ function MetadataPanel({
                         {onQuoteField && (
                           <button
                             onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, 'Basic Info'); }}
-                            className="absolute right-[8px] top-[8px] z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                            className="absolute right-[8px] top-[8px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                             title={`Quote "${field.label}"`}
                             aria-label={`Quote "${field.label}"`}
                           >
@@ -6529,7 +6529,7 @@ function MetadataPanel({
                         {onQuoteField && (
                           <button
                             onClick={(e) => { e.stopPropagation(); onQuoteField(addDiff.fieldId, compName, compName); }}
-                            className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                            className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                             title={`Quote "${compName}"`}
                             aria-label={`Quote "${compName}"`}
                           >
@@ -6544,7 +6544,7 @@ function MetadataPanel({
                             {onQuoteField && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); onQuoteField(f.id, f.label, compName); }}
-                                className="absolute right-[8px] top-[6px] z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                                className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                                 title={`Quote "${f.label}"`}
                                 aria-label={`Quote "${f.label}"`}
                               >
@@ -6580,7 +6580,7 @@ function MetadataPanel({
                       {onQuoteField && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onQuoteField(remDiff.fieldId, compName, compName); }}
-                          className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                          className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                           title={`Quote "${compName}"`}
                           aria-label={`Quote "${compName}"`}
                         >
@@ -6613,7 +6613,7 @@ function MetadataPanel({
                           {onQuoteField && (
                             <button
                               onClick={(e) => { e.stopPropagation(); onQuoteField(comp.id, compName, compName); }}
-                              className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                              className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                               title={`Quote "${compName}"`}
                               aria-label={`Quote "${compName}"`}
                             >
@@ -6630,7 +6630,7 @@ function MetadataPanel({
                                 {onQuoteField && (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, compName); }}
-                                    className="absolute right-[8px] top-[6px] z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                                    className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                                     title={`Quote "${field.label}"`}
                                     aria-label={`Quote "${field.label}"`}
                                   >
