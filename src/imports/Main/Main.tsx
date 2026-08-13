@@ -5947,6 +5947,32 @@ function MetadataPanel({
   const groupStyles = getFieldStyles(groupStatus, false);
   const [deleteConfirmBlockId, setDeleteConfirmBlockId] = useState<string | null>(null);
 
+  const handleCancelUpdate = () => {
+    setFigureBlocks(prev => prev.map(b => ({
+      ...b,
+      fields: b.fields.map(f => {
+        const baseVal = figureFieldBaseline[f.id];
+        return baseVal !== undefined ? { ...f, value: baseVal, status: 'default' as FieldStatus } : f;
+      })
+    })));
+
+    setFigureComponents(prev => {
+      const validIds = new Set(figureComponentListBaseline.map(c => c.id));
+      return prev
+        .filter(c => validIds.has(c.id))
+        .map(c => ({
+          ...c,
+          deprecated: figureComponentDeprecatedBaseline[c.id] ?? false,
+          fields: c.fields.map(f => {
+            const baseVal = figureFieldBaseline[f.id];
+            return baseVal !== undefined ? { ...f, value: baseVal, status: 'default' as FieldStatus } : f;
+          })
+        }));
+    });
+
+    onMetaCancel?.();
+  };
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       {/* Top Bar */}
@@ -5986,7 +6012,7 @@ function MetadataPanel({
           {/* Secondary Button when in Updated / To be updated mode */}
           {metaUpdateActive && (
             <button
-              onClick={() => onMetaCancel?.()}
+              onClick={handleCancelUpdate}
               className="flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] bg-graphite-20 hover:bg-graphite-40 px-[8px] t-small font-medium text-text-primary active:scale-[0.96] transition-all cursor-pointer select-none shrink-0"
               title="Cancel updated view and return to normal editing mode"
             >

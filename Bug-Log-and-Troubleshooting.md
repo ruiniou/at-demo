@@ -130,3 +130,20 @@
 * **经验教训 (Takeaways)**：
   1. TypeScript 接口类型添加新字段时，必须同步核对组件函数形参列表，确保所有在函数体或 JSX 中使用的 Prop 均已明确解构。
   2. 构建阶段 `npm run build` 通过只能保证语法（Syntax）无误，运行前需检查形参作用域绑定。
+
+---
+
+### [2026-08-13] `Cancel update` 按钮未重置草稿数据导致无法回归默认初始态
+
+* **现象 (Symptom)**：
+  在 Metadata 面板进入 `To be updated` 待更新视图后，点击 `Cancel update` 按钮毫无响应，面板无法恢复到包含默认字段且无差分的初始状态。
+* **根本原因 (Root Cause)**：
+  1. **数据与视图解耦缺失**：最初 `onMetaCancel` 仅将控制视图模式的布尔标识 `metaUpdateActive` 设为 `false`，但没有撤销/重置 `figureBlocks` 与 `figureComponents` 中已被修改的字段草稿值 (`f.value`)。
+  2. **组件解构断链**：中间容器组件 `WorkspaceContent` 漏写了 `onMetaCancel` 的参数解构，导致传递给 `<MetadataPanel>` 的回调实际上是 `undefined`。
+  因此，即使关闭了 `metaUpdateActive`，底层差分比较逻辑 `metaDiffItems` 依然包含改动项（`length > 0`），导致 Header 浮框、Update Code 按钮与编辑态文本依然常驻，未能真正回到无改动的初始态。
+* **解决方案 (Solution)**：
+  1. 在 `WorkspaceContent` 参数解构中补齐 `onMetaCancel`，修复事件透传链条。
+  2. 在 `MetadataPanel` 内部实现 `handleCancelUpdate` 方法，点击时遍历 `figureBlocks` 和 `figureComponents`，将所有字段的 `value` 恢复至 baseline 初始基线，并移除临时新增的 Component 节点，最后触发 `onMetaCancel?.()`。
+* **经验教训 (Takeaways)**：
+  1. **取消/回退操作必须兼顾“视图”与“状态数据”**：对于带 Track Changes / 差分对比的面板，Cancel 操作不仅是关闭对比视图，更必须将数据 model 还原至对比基线（Baseline）。
+  2. **多层组件 Props 传递防御**：深层嵌套组件中传递回调函数时，需要沿着组件树检查每一层 wrapper 的解构，确保回调不会在半路丢失。
