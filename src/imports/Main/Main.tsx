@@ -6125,7 +6125,7 @@ function MetadataPanel({
                                 {diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty'}
                               </span>
                               <span className="text-text-secondary">→</span>
-                              <span className="text-brand-1 font-medium underline">
+                              <span className="text-brand-1 font-medium">
                                 {diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty'}
                               </span>
                             </div>
@@ -6567,7 +6567,7 @@ function MetadataPanel({
                                       {diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty'}
                                     </span>
                                     <span className="text-text-secondary">→</span>
-                                    <span className="text-brand-1 font-medium underline">
+                                    <span className="text-brand-1 font-medium">
                                       {diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty'}
                                     </span>
                                   </div>
