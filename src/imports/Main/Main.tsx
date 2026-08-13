@@ -1015,8 +1015,15 @@ function AICopilotPanel({
     setMessages(prev => [...prev, { type: 'ai_thinking' }]);
     setTimeout(() => {
       if (docType === 'figure') {
-        setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_update_complete' as const } : m));
-        setIsPending(false);
+        if (isAddReq) {
+          // Adding a component updates Metadata directly, not Code.
+          // No Pending changes state, directly return to Default state.
+          setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_complete' as const } : m));
+          setIsPending(false);
+        } else {
+          setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_update_complete' as const } : m));
+          setIsPending(false);
+        }
       } else {
         setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_ask_user' as const } : m));
         // for listing, keep original behavior
@@ -5981,17 +5988,19 @@ function MetadataPanel({
         </div>
       </div>
 
-      {/* Status Bar */}
-      <div className="flex items-center justify-end bg-bg-panel px-[12px] py-[8px]">
-        <div className="flex items-center gap-[6px]">
-          <button onClick={isLocked ? undefined : handleSelectAll} disabled={isLocked}
-            className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-            aria-label="Select all">
-            <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{selectAllCheckboxIcon()}</SvgIcon>
-          </button>
-          <p className="t-small text-text-primary">{confirmedCount}/{totalFields} confirmed</p>
+      {/* Status Bar: Hide in To be updated mode */}
+      {!metaUpdateActive && (
+        <div className="flex items-center justify-end bg-bg-panel px-[12px] py-[8px]">
+          <div className="flex items-center gap-[6px]">
+            <button onClick={isLocked ? undefined : handleSelectAll} disabled={isLocked}
+              className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+              aria-label="Select all">
+              <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{selectAllCheckboxIcon()}</SvgIcon>
+            </button>
+            <p className="t-small text-text-primary">{confirmedCount}/{totalFields} confirmed</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
       <div className={`min-h-0 flex-1 ${activeTab === "blocks" && docType !== 'listing' ? 'flex flex-col' : 'overflow-auto p-[4px]'}`}>
