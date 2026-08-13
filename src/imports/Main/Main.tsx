@@ -8042,6 +8042,7 @@ function WorkspaceContent({
                         targetFieldId={targetMetadataFieldId || undefined}
                         onReviewItemsChange={setReviewItems}
                         onMetaCancel={() => setMetaUpdateActive(false)}
+                        onQuoteField={handleQuoteField}
                       />
                     </div>
                   )}

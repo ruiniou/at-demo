@@ -160,3 +160,16 @@
   将行 4310 的 `onMetaCancel={() => setMetaUpdateActive(false)}` 修正为直接传递 `onMetaCancel={onMetaCancel}`，正确消费从顶层逐层透传进来的回调函数。
 * **经验教训 (Takeaways)**：
   在 React 多层嵌套组件中，深层 Element 挂载回调时切勿凭感觉直接调用父级 State setter，必须严格透传 Props 形参 `onMetaCancel`。
+
+---
+
+### [2026-08-13] `WorkspaceShell` 中渲染 `<ShellPreview>` 遗漏 `onQuoteField` Prop 导致悬浮 Quote 按钮无法显示
+
+* **现象 (Symptom)**：
+  用户在 Metadata 面板任意字段或组件上悬浮鼠标，双引号 Quote 按钮始终不显示，无法触发引用。
+* **根本原因 (Root Cause)**：
+  顶层组件 `WorkspaceShell` 在渲染 `<ShellPreview>` 时（行 8044），只传了 `onReviewItemsChange` 和 `onMetaCancel`，遗漏了 `onQuoteField={handleQuoteField}` 的传递。导致 `ShellPreview` 内部收到的 `onQuoteField` 始终为 `undefined`，进而透传给 `MetadataPanel` 的 `onQuoteField` 也是 `undefined`。由于条件判断 `{onQuoteField && (...)}` 评估为 `false`，组件未向 DOM 渲染任何 Quote 按钮。
+* **解决方案 (Solution)**：
+  在 `WorkspaceShell` 中渲染 `<ShellPreview>` 时补全 `onQuoteField={handleQuoteField}`。
+* **经验教训 (Takeaways)**：
+  当深层组件中的条件渲染按钮 (`{fn && <button />}`) 持续不露显时，第一排查要点应当是检查最上层 state/handler 闭包是否在最外层 JSX 调用的地方被遗漏传递。
