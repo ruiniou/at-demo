@@ -4307,7 +4307,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
-              <MetadataPanel onClose={onMetadataClose} docType={docType} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} onMetaCancel={() => setMetaUpdateActive(false)} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
+              <MetadataPanel onClose={onMetadataClose} docType={docType} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} onMetaCancel={onMetaCancel} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
             </div>
           )}
         </div>

@@ -147,3 +147,16 @@
 * **经验教训 (Takeaways)**：
   1. **取消/回退操作必须兼顾“视图”与“状态数据”**：对于带 Track Changes / 差分对比的面板，Cancel 操作不仅是关闭对比视图，更必须将数据 model 还原至对比基线（Baseline）。
   2. **多层组件 Props 传递防御**：深层嵌套组件中传递回调函数时，需要沿着组件树检查每一层 wrapper 的解构，确保回调不会在半路丢失。
+
+---
+
+### [2026-08-13] 内部组件错误引用父层 `setMetaUpdateActive` 抛出 `ReferenceError` 导致按钮点击失败
+
+* **现象 (Symptom)**：
+  控制台报错 `Uncaught ReferenceError: setMetaUpdateActive is not defined at onMetaCancel (Main.tsx:4310)`，点击 `Cancel update` 按钮报错崩溃。
+* **根本原因 (Root Cause)**：
+  在 `WorkspaceContent` 组件内部（行 4310），向 `<MetadataPanel>` 传递 `onMetaCancel` 时，误写成了 `onMetaCancel={() => setMetaUpdateActive(false)}`。由于 `setMetaUpdateActive` 状态定义在顶层 `WorkspaceShell` / `Main` 中，`WorkspaceContent` 局部作用域并没有 `setMetaUpdateActive` 标识符，导致调用时抛出 `ReferenceError`。
+* **解决方案 (Solution)**：
+  将行 4310 的 `onMetaCancel={() => setMetaUpdateActive(false)}` 修正为直接传递 `onMetaCancel={onMetaCancel}`，正确消费从顶层逐层透传进来的回调函数。
+* **经验教训 (Takeaways)**：
+  在 React 多层嵌套组件中，深层 Element 挂载回调时切勿凭感觉直接调用父级 State setter，必须严格透传 Props 形参 `onMetaCancel`。
