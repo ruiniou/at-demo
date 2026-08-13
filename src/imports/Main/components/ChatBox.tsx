@@ -163,6 +163,7 @@ export interface MetaDiffItem {
 export interface ChatBoxProps {
   onSubmit: (text: string) => void;
   pending?: boolean;
+  submitDisabled?: boolean;
   metadataChangesCount?: number;
   metaDiffItems?: MetaDiffItem[];
   onCloseMetadataChanges?: () => void;
@@ -478,8 +479,13 @@ export default function ChatBox({
 
               {/* Send Button */}
               <button
-                onClick={handleSend}
-                className="bg-brand-1 hover:bg-az-warning transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95 animate-none"
+                onClick={submitDisabled ? undefined : handleSend}
+                disabled={submitDisabled}
+                className={`${
+                  submitDisabled
+                    ? "bg-graphite-20 cursor-not-allowed opacity-50"
+                    : "bg-brand-1 hover:bg-az-warning cursor-pointer active:scale-95"
+                } relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center transition-colors select-none`}
               >
                 <img
                   src={aiSubmitIconUrl}

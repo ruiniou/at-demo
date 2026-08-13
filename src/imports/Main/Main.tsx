@@ -882,6 +882,7 @@ function AICopilotPanel({
   reviewItems,
   metaUpdateActive,
   metaUpdateProcessing,
+  hasPendingCodeChanges,
   onMetaCancel,
   onMetaProceed,
   onCodeDiffChange,
@@ -906,6 +907,7 @@ function AICopilotPanel({
   reviewItems?: ReviewItem[];
   metaUpdateActive?: boolean;
   metaUpdateProcessing?: boolean;
+  hasPendingCodeChanges?: boolean;
   onMetaCancel?: () => void;
   onMetaProceed?: () => void;
   onCodeDiffChange?: (hasDiff: boolean) => void;
@@ -917,11 +919,13 @@ function AICopilotPanel({
   const [messages, setMessages] = useState<Message[]>(() => {
     if (docType === 'figure') return [{ type: 'ai_complete' }];
     return [
-      { type: 'user', content: 'Generate Kaplan-Meier survival plot report for OS.' },
+      { type: 'user', content: 'Generate Kaplan-Meier survival plot for OS.' },
       { type: 'ai_complete' }
     ];
   });
   const [isPending, setIsPending] = useState(false);
+
+  const isSubmitDisabled = isPending || metaUpdateProcessing || (hasPendingCodeChanges && ((metaDiffItems?.length ?? 0) > 0));
 
   const [localInput, setLocalInput] = useState("");
   const isControlled = inputValue !== undefined && onChangeInputValue !== undefined;
@@ -986,11 +990,15 @@ function AICopilotPanel({
 
     const userContent = text.trim() ? text : `Update code for ${metaDiffItems?.length ?? 0} metadata changes`;
 
+    // Only show metadata review card if the submission includes an 'add component' change
+    const hasAddComponent = metaDiffItems?.some(d => d.changeType === 'added' || d.fieldId.startsWith('add_')) || /add|component|新增|添加|create|make|insert|new/i.test(text);
+    const showMetadataReviewCard = isUpdate && hasAddComponent;
+
     setMessages(prev => [...prev, { 
       type: 'user', 
       content: userContent,
-      toBeUpdatedCount: isUpdate ? metaDiffItems.length : undefined,
-      metaDiffItems: isUpdate ? [...metaDiffItems] : undefined
+      toBeUpdatedCount: showMetadataReviewCard ? metaDiffItems.length : undefined,
+      metaDiffItems: showMetadataReviewCard ? [...metaDiffItems] : undefined
     }]);
     setCurrentVal("");
     setIsPending(true);
@@ -1074,6 +1082,7 @@ function AICopilotPanel({
           {metaUpdateActive && metaDiffItems && metaDiffItems.length > 0 ? (
             <ChatBox 
               onSubmit={handleSubmit} 
+              submitDisabled={isSubmitDisabled}
               metadataChangesCount={metaDiffItems.length}
               metaDiffItems={metaDiffItems}
               onCloseMetadataChanges={() => onMetaCancel?.()}
@@ -1083,6 +1092,7 @@ function AICopilotPanel({
           ) : hasCodeDiff ? (
             <ChatBox 
               onSubmit={handleSubmit} 
+              submitDisabled={isSubmitDisabled}
               pending={true} 
               onAcceptPending={handleAcceptPending}
               onRejectPending={handleRejectPending}
@@ -1091,6 +1101,7 @@ function AICopilotPanel({
           ) : (
             <ChatBox
               onSubmit={handleSubmit}
+              submitDisabled={isSubmitDisabled}
               quoteInsertRef={quoteInsertRef}
             />
           )}
@@ -5931,38 +5942,35 @@ function MetadataPanel({
       {/* Top Bar */}
       <div className="flex h-[40px] shrink-0 items-center justify-between border-b border-graphite-10 bg-white">
         <div className="flex h-full items-center">
-          {(["basic", "blocks"] as const).map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className={`relative flex h-full items-center justify-center border-b-2 px-[16px] active:scale-[0.96] ${activeTab === tab ? "border-brand-1" : "border-transparent"}`}>
-              <p className={`t-small font-medium ${activeTab === tab ? "text-brand-1" : "text-text-primary"}`}>
-                {tab === "basic" ? (docType === 'listing' ? "Basic info" : docType === 'figure' ? "Basic" : "Basic Information") : (docType === 'listing' ? "Column" : docType === 'figure' ? "Components" : "Blocks")}
-              </p>
-              {/* Listing: red dot for unconfirmed edits */}
-              {docType === 'listing' && (
-                tab === 'basic' ? (
-                  hasListingBasicEdits && <span className="absolute right-[6px] top-[8px] w-[4px] h-[4px] rounded-full bg-[#D0006F] z-10" />
-                ) : (
-                  hasListingColumnEdits && <span className="absolute right-[6px] top-[8px] w-[4px] h-[4px] rounded-full bg-[#D0006F] z-10" />
-                )
-              )}
-              {/* Figure To be Updated: count badge */}
-              {docType === 'figure' && metaUpdateActive && (
-                tab === 'basic' ? (
-                  basicTabDiffCount > 0 && (
-                    <span className="absolute right-[2px] top-[7px] min-w-[14px] h-[14px] px-[3px] rounded-full bg-az-danger flex items-center justify-center z-10">
-                      <span className="text-[9px] font-semibold text-white leading-none">{basicTabDiffCount}</span>
-                    </span>
+          {(["basic", "blocks"] as const).map((tab) => {
+            const tabCount = tab === 'basic' ? basicTabDiffCount : componentsTabDiffCount;
+            return (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className={`relative flex h-full items-center justify-center border-b-2 px-[16px] active:scale-[0.96] ${activeTab === tab ? "border-brand-1" : "border-transparent"}`}>
+                <div className="flex items-center gap-[6px]">
+                  <p className={`t-small font-medium ${activeTab === tab ? "text-brand-1" : "text-text-primary"}`}>
+                    {tab === "basic" ? (docType === 'listing' ? "Basic info" : docType === 'figure' ? "Basic" : "Basic Information") : (docType === 'listing' ? "Column" : docType === 'figure' ? "Components" : "Blocks")}
+                  </p>
+                  {/* Figure To be Updated: Header-style count badge attached right next to title */}
+                  {docType === 'figure' && metaUpdateActive && tabCount > 0 && (
+                    <div className="bg-graphite-10 flex items-center justify-center px-[4px] py-px rounded-[16px] shrink-0 min-w-[16px] h-[16px]">
+                      <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-text-secondary whitespace-nowrap">
+                        <p className="leading-[14px]">{tabCount}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* Listing: red dot for unconfirmed edits */}
+                {docType === 'listing' && (
+                  tab === 'basic' ? (
+                    hasListingBasicEdits && <span className="absolute right-[6px] top-[8px] w-[4px] h-[4px] rounded-full bg-[#D0006F] z-10" />
+                  ) : (
+                    hasListingColumnEdits && <span className="absolute right-[6px] top-[8px] w-[4px] h-[4px] rounded-full bg-[#D0006F] z-10" />
                   )
-                ) : (
-                  componentsTabDiffCount > 0 && (
-                    <span className="absolute right-[2px] top-[7px] min-w-[14px] h-[14px] px-[3px] rounded-full bg-az-danger flex items-center justify-center z-10">
-                      <span className="text-[9px] font-semibold text-white leading-none">{componentsTabDiffCount}</span>
-                    </span>
-                  )
-                )
-              )}
-            </button>
-          ))}
+                )}
+              </button>
+            );
+          })}
         </div>
         <div className="flex items-center pr-[12px] gap-[4px]">
           <TooltipText label="Batch Edit Macro">
@@ -6588,7 +6596,7 @@ function MetadataPanel({
                     return next;
                   });
                 }}
-                isLocked={isLocked}
+                isLocked={false}
                 onGenerateComponent={handleGenerateComponent}
                 onDeprecateComponent={handleDeprecateComponent}
                 onDeleteComponent={(id) => setDeleteConfirmBlockId(id)}
@@ -6615,7 +6623,7 @@ function MetadataPanel({
                   return next;
                 });
               }}
-              isLocked={isLocked}
+              isLocked={false}
             />
           )
         )}
@@ -6625,21 +6633,26 @@ function MetadataPanel({
       {docType === 'figure' ? (
         ((metaUpdateProcessing && newDiffItems.length > 0) || (!metaUpdateProcessing && metaDiffItems.length > 0 && !metaUpdateActive)) && (
           <div className="border-t border-border-default p-[12px] flex justify-start">
-            <button
-              onClick={isLocked || metaUpdateProcessing ? undefined : () => {
-                onRequestUpdateCode?.();
-              }}
-              disabled={isLocked || metaUpdateProcessing}
-              className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${(isLocked || metaUpdateProcessing) ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
-            >
-              <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={(isLocked || metaUpdateProcessing) ? '#888E8E' : 'white'} />
-              Update Code
-              {!metaUpdateProcessing && (
-                <div className="flex items-center justify-center h-[16px] min-w-[16px] px-[4px] py-px rounded-[16px] bg-white/20 shrink-0">
-                  <span className="text-[10px] leading-[14px] font-medium text-white">{metaDiffItems.length}</span>
-                </div>
-              )}
-            </button>
+            {(() => {
+              const isUpdateDisabled = metaUpdateProcessing || (isLocked && metaDiffItems.length > 0);
+              return (
+                <button
+                  onClick={isUpdateDisabled ? undefined : () => {
+                    onRequestUpdateCode?.();
+                  }}
+                  disabled={isUpdateDisabled}
+                  className={`flex h-[32px] w-auto items-center justify-center gap-[6px] rounded-[4px] px-[12px] t-small font-medium ${isUpdateDisabled ? 'bg-border-default text-text-secondary cursor-not-allowed' : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'}`}
+                >
+                  <LocalIcon src={addMetadiffIconUrl} className="h-[16px] w-[16px]" color={isUpdateDisabled ? '#888E8E' : 'white'} />
+                  Update Code
+                  {!metaUpdateProcessing && (
+                    <div className="flex items-center justify-center h-[16px] min-w-[16px] px-[4px] py-px rounded-[16px] bg-white/20 shrink-0">
+                      <span className="text-[10px] leading-[14px] font-medium text-white">{metaDiffItems.length}</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })()}
           </div>
         )
       ) : (
@@ -7908,6 +7921,7 @@ function WorkspaceContent({
                       docType={docType}
                       metaDiffItems={metaDiffItems}
                       metaUpdateActive={metaUpdateActive}
+                      hasPendingCodeChanges={hasPendingCodeChanges}
                       onMetaCancel={() => setMetaUpdateActive(false)}
                       onCodeDiffChange={setHasPendingCodeChanges}
                       onMetaProceed={() => {
@@ -8092,6 +8106,7 @@ function WorkspaceContent({
                       docType={docType}
                       metaDiffItems={metaDiffItems}
                       metaUpdateActive={metaUpdateActive}
+                      hasPendingCodeChanges={hasPendingCodeChanges}
                       onMetaCancel={() => setMetaUpdateActive(false)}
                       onCodeDiffChange={setHasPendingCodeChanges}
                       onMetaProceed={() => {
