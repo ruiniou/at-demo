@@ -4977,11 +4977,12 @@ function BlocksTabContent({
                       </p>
                       {onQuoteField && (
                         <button
-                          onClick={() => onQuoteField(block.id, blockName, blockName)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                          title="Quote this component"
+                          onClick={(e) => { e.stopPropagation(); onQuoteField(block.id, blockName, blockName); }}
+                          className="absolute right-[24px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                          title={`Quote "${blockName}"`}
+                          aria-label={`Quote "${blockName}"`}
                         >
-                          <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                          <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
                         </button>
                       )}
                     </div>
@@ -5012,11 +5013,12 @@ function BlocksTabContent({
                         <div key={field.id} ref={el => { if (el && fieldRefs) fieldRefs.current[field.id] = el; }} className="group relative bg-white rounded-[4px] border border-transparent p-[4px]">
                           {onQuoteField && (
                             <button
-                              onClick={() => onQuoteField(field.id, field.label, blockName)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-[6px] top-[6px] z-10 flex h-[18px] w-[18px] items-center justify-center rounded-[2px] hover:bg-graphite-10 bg-white/80"
-                              title="Quote this field"
+                              onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, blockName); }}
+                              className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                              title={`Quote "${field.label}"`}
+                              aria-label={`Quote "${field.label}"`}
                             >
-                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
                             </button>
                           )}
                           {effectiveInputType === 'multiselect' ? (
@@ -6160,33 +6162,29 @@ function MetadataPanel({
                           ref={el => { fieldRefs.current[field.id] = el; }}
                           className="group relative"
                         >
+                          {onQuoteField && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, 'Basic Info'); }}
+                              className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                              title={`Quote "${field.label}"`}
+                              aria-label={`Quote "${field.label}"`}
+                            >
+                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                            </button>
+                          )}
                           <FormItem
                             label={field.label}
                             required={field.required}
                             disabled={true}
                             badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
                             actionButton={
-                              <div className="flex items-center gap-[4px]">
-                                {/* Quote icon — revealed on hover */}
-                                {onQuoteField && (
-                                  <button
-                                    onClick={() => onQuoteField(field.id, field.label, 'Basic Info')}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                                    title="Quote this field"
-                                    aria-label="Quote this field"
-                                  >
-                                    <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
-                                  </button>
-                                )}
-                                {/* Checkbox */}
-                                <button
-                                  disabled={true}
-                                  className="flex h-[16px] w-[16px] items-center justify-center cursor-not-allowed opacity-40"
-                                  aria-label={field.confirmed ? "Confirmed" : "Unconfirmed"}
-                                >
-                                  <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                                </button>
-                              </div>
+                              <button
+                                disabled={true}
+                                className="flex h-[16px] w-[16px] items-center justify-center cursor-not-allowed opacity-40"
+                                aria-label={field.confirmed ? "Confirmed" : "Unconfirmed"}
+                              >
+                                <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                              </button>
                             }
                             error={field.status === 'error' ? field.errorMessage : undefined}
                           >
@@ -6250,33 +6248,30 @@ function MetadataPanel({
 
                       return (
                         <div key={field.id} className={`group relative ${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}>
-                          <div className="p-[8px]">
-                            <FormItem
-                              label={field.label}
-                              required={field.required}
-                              disabled={isLocked}
-                              badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
-                              actionButton={
-                                <div className="flex items-center gap-[4px]">
-                                  {onQuoteField && (
-                                    <button
-                                      onClick={() => onQuoteField(field.id, field.label, 'Basic Info')}
-                                      className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                                      title="Quote this field"
-                                      aria-label="Quote this field"
-                                    >
-                                      <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
-                                    </button>
-                                  )}
-                                  <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
-                                    className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                                    aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
-                                    <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                                  </button>
-                                </div>
-                              }
+                          {onQuoteField && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, 'Basic Info'); }}
+                              className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                              title={`Quote "${field.label}"`}
+                              aria-label={`Quote "${field.label}"`}
                             >
-                            
+                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                            </button>
+                          )}
+                          <FormItem
+                            label={field.label}
+                            required={field.required}
+                            disabled={isLocked}
+                            badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
+                            actionButton={
+                              <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                                className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                                <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                              </button>
+                            }
+                            error={field.status === 'error' ? field.errorMessage : undefined}
+                          >
                             <div className="relative w-full flex items-center gap-[16px]">
                               <div className="flex-1 min-w-0">
                                 <Dropdown
@@ -6354,7 +6349,6 @@ function MetadataPanel({
                             </div>
                           </FormItem>
                         </div>
-                      </div>
                       );
                     }
 
@@ -6362,6 +6356,16 @@ function MetadataPanel({
                       <div key={field.id}
                         className={`group relative ${styles.containerBg} rounded-[4px] border ${styles.containerBorder}`}
                       >
+                        {onQuoteField && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, 'Basic Info'); }}
+                            className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                            title={`Quote "${field.label}"`}
+                            aria-label={`Quote "${field.label}"`}
+                          >
+                            <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                          </button>
+                        )}
                         <div className="p-[8px]">
                           <FormItem
                             label={field.label}
@@ -6369,23 +6373,11 @@ function MetadataPanel({
                             disabled={isLocked}
                             badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
                             actionButton={
-                              <div className="flex items-center gap-[4px]">
-                                {onQuoteField && (
-                                  <button
-                                    onClick={() => onQuoteField(field.id, field.label, 'Basic Info')}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                                    title="Quote this field"
-                                    aria-label="Quote this field"
-                                  >
-                                    <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
-                                  </button>
-                                )}
-                                <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
-                                  className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
-                                  aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
-                                  <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                                </button>
-                              </div>
+                              <button onClick={isLocked ? undefined : () => handleConfirm(block.id, field.id)} disabled={isLocked}
+                                className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+                                aria-label={field.confirmed ? "Unconfirm" : "Confirm"}>
+                                <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                              </button>
                             }
                             error={field.status === 'error' ? field.errorMessage : undefined}
                           >
@@ -6536,11 +6528,12 @@ function MetadataPanel({
                         </div>
                         {onQuoteField && (
                           <button
-                            onClick={() => onQuoteField(addDiff.fieldId, compName, compName)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                            title="Quote this component"
+                            onClick={(e) => { e.stopPropagation(); onQuoteField(addDiff.fieldId, compName, compName); }}
+                            className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                            title={`Quote "${compName}"`}
+                            aria-label={`Quote "${compName}"`}
                           >
-                            <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                            <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
                           </button>
                         )}
                       </div>
@@ -6548,22 +6541,21 @@ function MetadataPanel({
                       <div className="flex flex-col gap-[8px] pl-[12px]">
                         {comp?.fields.map(f => (
                           <div key={f.id} className="group relative">
+                            {onQuoteField && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onQuoteField(f.id, f.label, compName); }}
+                                className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                                title={`Quote "${f.label}"`}
+                                aria-label={`Quote "${f.label}"`}
+                              >
+                                <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                              </button>
+                            )}
                             <FormItem
                               label={f.label}
                               required={f.required}
                               disabled={true}
                               badge={f.badge ? <MetadataBadge type={f.badge} tooltip={f.badgeTooltip} /> : undefined}
-                              actionButton={
-                                onQuoteField ? (
-                                  <button
-                                    onClick={() => onQuoteField(f.id, f.label, compName)}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                                    title="Quote this field"
-                                  >
-                                    <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
-                                  </button>
-                                ) : undefined
-                              }
                             >
                               <div className="flex items-center text-[13px] leading-[24px] py-[2px] text-text-primary">
                                 {f.value || 'Empty'}
@@ -6587,11 +6579,12 @@ function MetadataPanel({
                       </div>
                       {onQuoteField && (
                         <button
-                          onClick={() => onQuoteField(remDiff.fieldId, compName, compName)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                          title="Quote this component"
+                          onClick={(e) => { e.stopPropagation(); onQuoteField(remDiff.fieldId, compName, compName); }}
+                          className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                          title={`Quote "${compName}"`}
+                          aria-label={`Quote "${compName}"`}
                         >
-                          <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                          <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
                         </button>
                       )}
                     </div>
@@ -6619,11 +6612,12 @@ function MetadataPanel({
                           <span className="font-bold text-text-primary text-[14px]">{compName}</span>
                           {onQuoteField && (
                             <button
-                              onClick={() => onQuoteField(comp.id, compName, compName)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                              title="Quote this component"
+                              onClick={(e) => { e.stopPropagation(); onQuoteField(comp.id, compName, compName); }}
+                              className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                              title={`Quote "${compName}"`}
+                              aria-label={`Quote "${compName}"`}
                             >
-                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
+                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
                             </button>
                           )}
                         </div>
@@ -6633,27 +6627,25 @@ function MetadataPanel({
                           {compDiffs.map(({ field, diff }) => {
                             return (
                               <div key={field.id} className="group relative">
+                                {onQuoteField && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, compName); }}
+                                    className="absolute right-[8px] top-1/2 -translate-y-1/2 z-30 flex h-[24px] w-[24px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                                    title={`Quote "${field.label}"`}
+                                    aria-label={`Quote "${field.label}"`}
+                                  >
+                                    <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                                  </button>
+                                )}
                                 <FormItem
                                   label={field.label}
                                   required={field.required}
                                   disabled={true}
                                   badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
                                   actionButton={
-                                    <div className="flex items-center gap-[4px]">
-                                      {onQuoteField && (
-                                        <button
-                                          onClick={() => onQuoteField(field.id, field.label, compName)}
-                                          className="opacity-0 group-hover:opacity-100 transition-opacity flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-graphite-10"
-                                          title="Quote this field"
-                                          aria-label="Quote this field"
-                                        >
-                                          <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.45 }} alt="" />
-                                        </button>
-                                      )}
-                                      <button disabled className="flex h-[16px] w-[16px] items-center justify-center opacity-40 cursor-not-allowed" aria-label="Confirmed">
-                                        <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                                      </button>
-                                    </div>
+                                    <button disabled className="flex h-[16px] w-[16px] items-center justify-center opacity-40 cursor-not-allowed" aria-label="Confirmed">
+                                      <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
+                                    </button>
                                   }
                                 >
                                   {/* Readonly-derived diff display text line without card box */}
