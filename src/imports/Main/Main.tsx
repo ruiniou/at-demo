@@ -69,6 +69,7 @@ import { AICodeDiff } from "../../components/ui/AI-CodeDiff";
 import { AIThinkingStatus } from "../../components/ui/AI-ThinkingStatus";
 import { AIUpdatedBlock } from "../../components/ui/AI-UpdatedBlock";
 import ChatBox from "./components/ChatBox";
+import type { AttachmentItem } from "./components/ChatBox";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { OptionLabel } from "../../components/ui/OptionLabel";
@@ -77,6 +78,8 @@ import { Input as BaseInput } from "../../components/ui/Input";
 import { FormItem } from "../../components/ui/FormItem";
 import shiningFillIconUrl from "../../icons/shining-fill.svg";
 import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
+import groupIconUrl from "../../icons/group.svg";
+import { GroupCodePanel, type GroupCodeItem } from "../../components/ui/GroupCodePanel";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -91,6 +94,292 @@ export interface MetaDiffItem {
   oldValue: string;
   newValue: string;
 }
+
+export const MOCK_GROUP_CODES: Record<string, GroupCodeItem[]> = {
+  't2': [
+    {
+      id: 'grp_saf1l_1',
+      name: 'SAF1LT01bL2_5_8_456NP',
+      distinguishingParam: 'trtfmtC: gpT01bG3L2_5_8_456f',
+      formatFound: false,
+      usedIn: [
+        'Table 14.1.6.1 (t_ae_14_3_2_8_2)',
+        'Table 14.2.1 (t_ec_14_2_1)',
+      ],
+      lines: [
+        "/* Format definition not found in source */",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=SAF1LFL='Y'",
+        "    ,trtgrpn=TRT01AN",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpT01bG3L2_5_8_456f",
+        "    ,gmacro=SAF1LT01bL2_5_8_456NP",
+        "    ,BigN=Y",
+        ");",
+      ],
+    },
+    {
+      id: 'grp_saf3l_1',
+      name: 'SAF3LT01aL1_3_12_123NP',
+      distinguishingParam: 'trtfmtC: gpT01aG5L1_3_12_123f',
+      formatFound: true,
+      usedIn: [
+        'Table 14.1.6.1 (t_ae_14_3_2_8_2)',
+        'Table 14.3.7.1.6 (t_lb_14_3_7_1_6)',
+        'Listing 16.2.4.3.2 (l_cm_16_2_4_3_2)',
+        'Listing 16.2.8.2 (l_lb_16_2_8_2)',
+        'Figure 15.1.1 (f_km_01_overall)',
+      ],
+      lines: [
+        "proc format;",
+        "  value gpT01aG5L1_3_12_123f",
+        "  1 = 'AZD999(*ESC*)n1 mg/kg'",
+        "  2 = 'AZD999(*ESC*)n2 mg/kg'",
+        "  3 = 'AZD999(*ESC*)nTotal'",
+        "  4 = 'Investigator choice of therapy'",
+        "  5 = 'Total'",
+        "  ;",
+        "quit;",
+        "",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=SAF3LFL='Y'",
+        "    ,trtgrpn=TRT01AN",
+        "    ,trtlev=1|2|1 2|3|1 2 3",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpT01aG5L1_3_12_123f",
+        "    ,gmacro=SAF3LT01aL1_3_12_123NP",
+        "    ,BigN=Y",
+        "    ,nformat=%str(n (%%))",
+        ");",
+      ],
+    },
+    {
+      id: 'grp_saf3l_2',
+      name: 'SAF3LT01aL1_3_12_123NP',
+      distinguishingParam: 'trtfmtC: gpT01aG5L1_3_12_999f',
+      formatFound: true,
+      usedIn: [
+        'Table 14.1.6.1 (t_ae_14_3_2_8_2)',
+        'Table 14.1.1 (t_dm_14_1_1)',
+      ],
+      lines: [
+        "proc format;",
+        "  value gpT01aG5L1_3_12_999f",
+        "  1 = 'Dose Cohort 1'",
+        "  2 = 'Dose Cohort 2'",
+        "  3 = 'Total Evaluated'",
+        "  ;",
+        "quit;",
+        "",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=SAF3LFL='Y'",
+        "    ,trtgrpn=TRT01AN",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpT01aG5L1_3_12_999f",
+        "    ,gmacro=SAF3LT01aL1_3_12_123NP",
+        "    ,BigN=Y",
+        ");",
+      ],
+    },
+  ],
+  't4': [
+    {
+      id: 'grp_saf1l_1',
+      name: 'SAF1LT01bL2_5_8_456NP',
+      distinguishingParam: 'trtfmtC: gpT01bG3L2_5_8_456f',
+      formatFound: false,
+      usedIn: [
+        'Table 14.1.6.1 (t_ae_14_3_2_8_2)',
+        'Table 14.2.1 (t_ec_14_2_1)',
+      ],
+      lines: [
+        "/* Format definition not found in source */",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=SAF1LFL='Y'",
+        "    ,trtgrpn=TRT01AN",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpT01bG3L2_5_8_456f",
+        "    ,gmacro=SAF1LT01bL2_5_8_456NP",
+        "    ,BigN=Y",
+        ");",
+      ],
+    },
+    {
+      id: 'grp_saf3l_1',
+      name: 'SAF3LT01aL1_3_12_123NP',
+      distinguishingParam: 'trtfmtC: gpT01aG5L1_3_12_123f',
+      formatFound: true,
+      usedIn: [
+        'Table 14.1.6.1 (t_ae_14_3_2_8_2)',
+        'Table 14.3.7.1.6 (t_lb_14_3_7_1_6)',
+        'Listing 16.2.4.3.2 (l_cm_16_2_4_3_2)',
+        'Listing 16.2.8.2 (l_lb_16_2_8_2)',
+        'Figure 15.1.1 (f_km_01_overall)',
+      ],
+      lines: [
+        "proc format;",
+        "  value gpT01aG5L1_3_12_123f",
+        "  1 = 'AZD999(*ESC*)n1 mg/kg'",
+        "  2 = 'AZD999(*ESC*)n2 mg/kg'",
+        "  3 = 'AZD999(*ESC*)nTotal'",
+        "  4 = 'Investigator choice of therapy'",
+        "  5 = 'Total'",
+        "  ;",
+        "quit;",
+        "",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=SAF3LFL='Y'",
+        "    ,trtgrpn=TRT01AN",
+        "    ,trtlev=1|2|1 2|3|1 2 3",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpT01aG5L1_3_12_123f",
+        "    ,gmacro=SAF3LT01aL1_3_12_123NP",
+        "    ,BigN=Y",
+        "    ,nformat=%str(n (%%))",
+        ");",
+      ],
+    },
+    {
+      id: 'grp_saf3l_2',
+      name: 'SAF3LT01aL1_3_12_123NP',
+      distinguishingParam: 'trtfmtC: gpT01aG5L1_3_12_999f',
+      formatFound: true,
+      usedIn: [
+        'Table 14.1.6.1 (t_ae_14_3_2_8_2)',
+        'Table 14.1.1 (t_dm_14_1_1)',
+      ],
+      lines: [
+        "proc format;",
+        "  value gpT01aG5L1_3_12_999f",
+        "  1 = 'Dose Cohort 1'",
+        "  2 = 'Dose Cohort 2'",
+        "  3 = 'Total Evaluated'",
+        "  ;",
+        "quit;",
+        "",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=SAF3LFL='Y'",
+        "    ,trtgrpn=TRT01AN",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpT01aG5L1_3_12_999f",
+        "    ,gmacro=SAF3LT01aL1_3_12_123NP",
+        "    ,BigN=Y",
+        ");",
+      ],
+    },
+  ],
+  'l1': [
+    {
+      id: 'grp_itt1_err',
+      name: 'ITT2T03cL1_9_1_999NP',
+      distinguishingParam: 'trtfmtC: gpT03cG1_missing',
+      formatFound: false,
+      usedIn: [
+        'Listing 16.2.1 (l_cm_16_2_4_3_2)',
+      ],
+      lines: [
+        "/* Format definition not found in source */",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=ITT2FL='Y'",
+        "    ,trtgrpn=TRT03AN",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpT03cG1_missing",
+        "    ,gmacro=ITT2T03cL1_9_1_999NP",
+        "    ,BigN=Y",
+        ");",
+      ],
+    },
+    {
+      id: 'grp_itt1_1',
+      name: 'ITT1T02aL1_7_3_789NP',
+      distinguishingParam: 'trtfmtC: gpT02aG2L1_7_3_789f',
+      formatFound: true,
+      usedIn: [
+        'Listing 16.2.1 (l_cm_16_2_4_3_2)',
+        'Listing 16.2.8.2 (l_lb_16_2_8_2)',
+        'Table 14.1.6.1 (t_ae_14_3_2_8_2)',
+      ],
+      lines: [
+        "proc format;",
+        "  value gpT02aG2L1_7_3_789f",
+        "  1 = 'Active Treatment 100mg'",
+        "  2 = 'Placebo Control'",
+        "  3 = 'Total ITT'",
+        "  ;",
+        "quit;",
+        "",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=ITT1FL='Y'",
+        "    ,trtgrpn=TRT02AN",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpT02aG2L1_7_3_789f",
+        "    ,gmacro=ITT1T02aL1_7_3_789NP",
+        "    ,BigN=Y",
+        ");",
+      ],
+    },
+  ],
+  'f1': [
+    {
+      id: 'grp_fig_err',
+      name: 'KM_POPN_ERR_01',
+      distinguishingParam: 'trtfmtC: gpKM01_missing',
+      formatFound: false,
+      usedIn: [
+        'Figure 15.1.1 (f_km_01_overall)',
+      ],
+      lines: [
+        "/* Format definition not found in source */",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=SAFFL='Y'",
+        "    ,trtgrpn=TRT01AN",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpKM01_missing",
+        "    ,gmacro=KM_POPN_ERR_01",
+        "    ,BigN=Y",
+        ");",
+      ],
+    },
+    {
+      id: 'grp_fig_1',
+      name: 'KM_POPN_OVERALL_01',
+      distinguishingParam: 'trtfmtC: gpKM01f',
+      formatFound: true,
+      usedIn: [
+        'Figure 15.1.1 (f_km_01_overall)',
+        'Table 14.1.6.1 (t_ae_14_3_2_8_2)',
+      ],
+      lines: [
+        "proc format;",
+        "  value gpKM01f",
+        "  1 = 'Arm A (Dose 1)'",
+        "  2 = 'Arm B (Dose 2)'",
+        "  3 = 'Overall'",
+        "  ;",
+        "quit;",
+        "",
+        "%m_u_popn(",
+        "    inds=adam.adsl",
+        "    ,pop_flag=SAFFL='Y'",
+        "    ,trtgrpn=TRT01AN",
+        "    ,UniqueIDVars=usubjid",
+        "    ,trtfmtC=gpKM01f",
+        "    ,gmacro=KM_POPN_OVERALL_01",
+        "    ,BigN=Y",
+        ");",
+      ],
+    },
+  ],
+};
 
 // ==================== Icons ====================
 
@@ -598,6 +887,8 @@ type Message = {
   isSkipped?: boolean;
   metaDiffItems?: MetaDiffItem[];
   isProcessing?: boolean;
+  /** Images submitted alongside the user message */
+  attachments?: AttachmentItem[];
 };
 
 function ChatConversation({ 
@@ -668,6 +959,7 @@ function ChatConversation({
                     tag={msg.hasTag ? "Table.14.1.1 (Lines 290-321)" : undefined}
                     toBeUpdatedCount={msg.toBeUpdatedCount}
                     metaDiffItems={msg.metaDiffItems}
+                    attachments={msg.attachments}
                     onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
                   />
                 )}
@@ -983,12 +1275,12 @@ function AICopilotPanel({
     }, 1500);
   };
 
-  const handleSubmit = (text: string) => {
+  const handleSubmit = (text: string, attachments?: AttachmentItem[]) => {
     const isUpdate = metaUpdateActive && metaDiffItems && metaDiffItems.length > 0;
-    if (!text.trim() && !isUpdate) return;
+    if (!text.trim() && !isUpdate && !attachments?.length) return;
     (document.activeElement as HTMLElement)?.blur();
 
-    const userContent = text.trim() ? text : `Update code for ${metaDiffItems?.length ?? 0} metadata changes`;
+    const userContent = text.trim() ? text : 'Update code based on the metadata changes above.';
 
     // Only show metadata review card if the submission includes an 'add component' change
     const hasAddComponent = metaDiffItems?.some(d => d.changeType === 'added' || d.fieldId.startsWith('add_')) || /add|component|新增|添加|create|make|insert|new/i.test(text);
@@ -998,7 +1290,8 @@ function AICopilotPanel({
       type: 'user', 
       content: userContent,
       toBeUpdatedCount: showMetadataReviewCard ? metaDiffItems.length : undefined,
-      metaDiffItems: showMetadataReviewCard ? [...metaDiffItems] : undefined
+      metaDiffItems: showMetadataReviewCard ? [...metaDiffItems] : undefined,
+      attachments: attachments && attachments.length > 0 ? [...attachments] : undefined,
     }]);
     setCurrentVal("");
     setIsPending(true);
@@ -1089,6 +1382,7 @@ function AICopilotPanel({
           {metaUpdateActive && metaDiffItems && metaDiffItems.length > 0 ? (
             <ChatBox 
               onSubmit={handleSubmit} 
+              onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
               metadataChangesCount={metaDiffItems.length}
               metaDiffItems={metaDiffItems}
@@ -1099,6 +1393,7 @@ function AICopilotPanel({
           ) : hasCodeDiff ? (
             <ChatBox 
               onSubmit={handleSubmit} 
+              onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
               pending={true} 
               onAcceptPending={handleAcceptPending}
@@ -1108,6 +1403,7 @@ function AICopilotPanel({
           ) : (
             <ChatBox
               onSubmit={handleSubmit}
+              onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
               quoteInsertRef={quoteInsertRef}
             />
@@ -1476,6 +1772,8 @@ function ViewToggleBar({
   docType = 'table',
   rtfOpen,
   onToggleRtf,
+  groupViewOpen,
+  onToggleGroupView,
 }: {
   treeListOpen: boolean;
   onToggleTreeList: () => void;
@@ -1489,12 +1787,28 @@ function ViewToggleBar({
   docType?: DocumentType;
   rtfOpen?: boolean;
   onToggleRtf?: () => void;
+  groupViewOpen?: boolean;
+  onToggleGroupView?: () => void;
 }) {
 
 
   const rightControls = (
-    <div className="flex items-center gap-[12px]">
+    <div className="flex items-center gap-[8px]">
       <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
+      {onToggleGroupView && (
+        <TooltipText label={groupViewOpen ? "Close Group Code" : "Open Group Code"}>
+          <button
+            type="button"
+            onClick={onToggleGroupView}
+            className={`relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] border border-graphite-10 transition-colors active:scale-[0.96] ${
+              groupViewOpen ? "bg-az-secondary border-[#830051]/30" : "bg-white hover:bg-black/5"
+            }`}
+            aria-label="Toggle group code"
+          >
+            <LocalIcon src={groupIconUrl} className="h-[16px] w-[16px]" color={groupViewOpen ? "#830051" : "#888E8E"} />
+          </button>
+        </TooltipText>
+      )}
     </div>
   );
 
@@ -1530,7 +1844,7 @@ function ViewToggleBar({
     <div className="shrink-0 w-full">
       <div className="h-[48px] w-full flex items-center relative">
 
-        <div className="absolute right-[12px] top-[12px]">
+        <div className="absolute right-[12px] top-[10px]">
           {rightControls}
         </div>
       </div>
@@ -2283,6 +2597,12 @@ interface ListingShellPreviewProps {
   onIdlistBaselineChange: (b: { frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> }) => void;
   metadataWidth: number;
   onMetadataResize: (delta: number) => void;
+  groupViewOpen?: boolean;
+  onGroupViewClick?: () => void;
+  onGroupViewClose?: () => void;
+  groupCodes?: GroupCodeItem[];
+  groupViewWidth?: number;
+  onGroupViewResize?: (delta: number) => void;
 }
 
 function ListingShellPreview({
@@ -2306,6 +2626,12 @@ function ListingShellPreview({
   onIdlistBaselineChange,
   metadataWidth,
   onMetadataResize,
+  groupViewOpen = false,
+  onGroupViewClick,
+  onGroupViewClose,
+  groupCodes = [],
+  groupViewWidth = 380,
+  onGroupViewResize,
 }: ListingShellPreviewProps) {
   const [pageScale] = useState(100);
   const [selectedPrintPageIndex, setSelectedPrintPageIndex] = useState(0);
@@ -2941,7 +3267,7 @@ function ListingShellPreview({
       </div>
 
       {/* Content row: shell table + metadata overlay */}
-      <div className="flex flex-1 overflow-hidden relative bg-[#F5F5F5]">
+      <div className="flex flex-1 overflow-hidden relative bg-white">
         <div
           ref={listingScrollContainerRef}
           onScroll={(e) => setIsScrolled(e.currentTarget.scrollLeft > 0)}
@@ -3937,6 +4263,12 @@ function ShellPreview({
   isLocked,
   onQuoteField,
   onMetaCancel,
+  groupViewOpen = false,
+  onGroupViewClick,
+  onGroupViewClose,
+  groupCodes = [],
+  groupViewWidth = 380,
+  onGroupViewResize,
 }: {
   onMetaCancel?: () => void;
   onQuoteField?: (fieldId: string, label: string, blockName: string) => void;
@@ -3979,6 +4311,12 @@ function ShellPreview({
   associatedTLStatus?: string;
   rtfOpen?: boolean;
   onToggleRtf?: () => void;
+  groupViewOpen?: boolean;
+  onGroupViewClick?: () => void;
+  onGroupViewClose?: () => void;
+  groupCodes?: GroupCodeItem[];
+  groupViewWidth?: number;
+  onGroupViewResize?: (delta: number) => void;
 }) {
   const [logExpanded, setLogExpanded] = useState(false);
   const activeLogData = successStructuredLog;
@@ -4052,7 +4390,7 @@ function ShellPreview({
           </div>
         }
       />
-      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-[#F5F5F5]">
+      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-white">
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full flex">
             <div className="flex-1 min-w-0 h-full overflow-auto">
@@ -4365,12 +4703,20 @@ function MetadataBadge({ type, tooltip, className = '', interactive = true }: Me
   );
 }
 
+interface DisplayFact {
+  section: string;
+  label: string;
+  value: string;
+  details?: string[];
+}
+
 interface MetadataBlock {
   id: string;
   name?: string;
   state?: 'ready' | 'loading';
   deprecated?: boolean;
   fields: MetadataField[];
+  display_facts?: DisplayFact[];
 }
 
 const GROUP_OPTIONS = [
@@ -4424,12 +4770,12 @@ function GroupCodeViewer({ lines }: { lines: string[] }) {
             <div className="overflow-auto bg-bg-panel" style={{ maxHeight: '220px' }}>
               <div className="py-[4px]" style={{ minWidth: 'max-content' }}>
                 {lines.map((line, i) => (
-                  <div key={i} className="flex items-start h-[20px] px-[10px]">
-                    <div className="shrink-0 w-[24px] h-[20px] relative">
-                      <p className="absolute left-0 top-px whitespace-nowrap select-none text-[12px] leading-[20px] text-[#B2B4B4]" style={{ fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{i + 1}</p>
+                  <div key={i} className="flex items-start h-[18px] px-[10px]">
+                    <div className="shrink-0 w-[24px] h-[18px] relative">
+                      <p className="absolute left-0 top-px whitespace-nowrap select-none text-[12px] leading-[18px] text-[#B2B4B4]" style={{ fontFamily: "'JetBrains Mono','Fira Code',monospace" }}>{i + 1}</p>
                     </div>
                     <div className="flex-1 min-w-px h-full flex items-center">
-                      <p className="whitespace-nowrap text-[13px] leading-[1.25] text-text-secondary" style={{ fontFamily: "'Menlo','Consolas',monospace" }}>{line}</p>
+                      <p className="whitespace-nowrap text-[12px] leading-[18px] text-text-secondary" style={{ fontFamily: "'Menlo','Consolas',monospace" }}>{line}</p>
                     </div>
                   </div>
                 ))}
@@ -4798,6 +5144,8 @@ function BlocksTabContent({
   onDeprecateComponent,
   onDeleteComponent,
   onFieldEdit,
+  onDisplayFactEdit,
+  onDetailEdit,
   getEffectiveStatus,
   getFieldStyles,
   fieldRefs,
@@ -4812,6 +5160,8 @@ function BlocksTabContent({
   onDeprecateComponent?: (id: string) => void;
   onDeleteComponent?: (id: string) => void;
   onFieldEdit?: (blockId: string, fieldId: string, value: string) => void;
+  onDisplayFactEdit?: (blockId: string, factIdx: number, value: string) => void;
+  onDetailEdit?: (blockId: string, factIdx: number, detailIdx: number, value: string) => void;
   getEffectiveStatus?: (fieldId: string | null, status: FieldStatus, currentValue: string | null) => FieldStatus;
   getFieldStyles?: (status: FieldStatus, isReadOnlyField?: boolean) => { containerBg: string; containerBorder: string; inputBorder: string };
   fieldRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
@@ -4952,6 +5302,10 @@ function BlocksTabContent({
         ) : blocks.map((block: any, blockIndex: number, arr: any[]) => {
           const fieldIsDisabled = isLocked;
           const blockName = block.name || block.fields?.find((f: any) => f.id.includes('Label') || f.id.includes('Title') || f.label === 'Component Label' || f.label === 'Block Title')?.value || block.id;
+          
+          const standardFields = block.fields || [];
+          const displayFacts = block.display_facts || [];
+
           return (
             <div
               key={block.id}
@@ -4997,7 +5351,7 @@ function BlocksTabContent({
                     </button>
                   </div>
                   <div className="flex flex-col gap-[12px]">
-                    {block.fields.map((field: any) => {
+                    {standardFields.map((field: any) => {
                       const badgeNode = field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined;
                       
                       const labelWithLink = field.hasLink ? (
@@ -5057,6 +5411,115 @@ function BlocksTabContent({
                         </div>
                       );
                     })}
+
+                    {/* Display Facts Section (Grouped by section into Cards) */}
+                    {(() => {
+                      if (displayFacts.length === 0) return null;
+
+                      // Group display_facts by section
+                      const sectionGroups: { sectionName: string; facts: { fact: DisplayFact; originalIndex: number }[] }[] = [];
+                      displayFacts.forEach((fact: DisplayFact, idx: number) => {
+                        const sName = fact.section || 'General';
+                        let group = sectionGroups.find(g => g.sectionName === sName);
+                        if (!group) {
+                          group = { sectionName: sName, facts: [] };
+                          sectionGroups.push(group);
+                        }
+                        group.facts.push({ fact, originalIndex: idx });
+                      });
+
+                      return (
+                        <div className="flex flex-col gap-[10px] mt-[4px]">
+                          <div className="flex items-center gap-[6px] py-[2px]">
+                            <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+                              Display Facts
+                            </span>
+                          </div>
+
+                          <div className="flex flex-col gap-[10px]">
+                            {sectionGroups.map((group, groupIdx) => (
+                              <div
+                                key={groupIdx}
+                                className="bg-bg-panel/40 border border-graphite-15 rounded-[6px] p-[10px] flex flex-col gap-[10px]"
+                              >
+                                {/* Card Section Header (Read-only) */}
+                                <div className="flex items-center gap-[6px]">
+                                  <div className="w-[3px] h-[12px] bg-brand-1 rounded-[1px] shrink-0" />
+                                  <span className="text-[12px] font-semibold text-text-primary uppercase tracking-wide">
+                                    {group.sectionName}
+                                  </span>
+                                </div>
+
+                                {/* Facts under this section */}
+                                <div className="flex flex-col gap-[12px]">
+                                  {group.facts.map(({ fact, originalIndex }) => {
+                                    const factKey = `${block.id}_fact_${originalIndex}_value`;
+                                    return (
+                                      <div
+                                        key={originalIndex}
+                                        className="flex flex-col gap-[6px]"
+                                      >
+                                        {/* Fact Label (Read-only) & Value (Editable) */}
+                                        <div
+                                          ref={el => { if (el && fieldRefs) fieldRefs.current[factKey] = el; }}
+                                          className="group relative"
+                                        >
+                                          {onQuoteField && (
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); onQuoteField(factKey, fact.label, blockName); }}
+                                              className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                                              title={`Quote "${fact.label}"`}
+                                            >
+                                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                                            </button>
+                                          )}
+                                          <FormItem
+                                            label={fact.label}
+                                            labelClassName="text-[12px] font-medium text-text-primary"
+                                            disabled={fieldIsDisabled}
+                                          >
+                                            <BaseInput
+                                              disabled={fieldIsDisabled}
+                                              value={fact.value}
+                                              onChange={(e) => onDisplayFactEdit?.(block.id, originalIndex, e.target.value)}
+                                              className="w-full text-[13px] leading-[20px] py-[4px] px-[8px] bg-white border-border-default hover:border-graphite-20 focus:border-brand-1 rounded-[2px]"
+                                            />
+                                          </FormItem>
+                                        </div>
+
+                                        {/* Fact Details (Editable items, flattened list) */}
+                                        {fact.details && fact.details.length > 0 && (
+                                          <div className="flex flex-col gap-[4px] pl-[8px]">
+                                            {fact.details.map((detail: string, detIdx: number) => {
+                                              const detKey = `${block.id}_fact_${originalIndex}_det_${detIdx}`;
+                                              return (
+                                                <div
+                                                  key={detIdx}
+                                                  ref={el => { if (el && fieldRefs) fieldRefs.current[detKey] = el; }}
+                                                  className="group relative flex items-center gap-[6px] w-full"
+                                                >
+                                                  <span className="text-text-secondary text-[12px] select-none shrink-0">•</span>
+                                                  <BaseInput
+                                                    disabled={fieldIsDisabled}
+                                                    value={detail}
+                                                    onChange={(e) => onDetailEdit?.(block.id, originalIndex, detIdx, e.target.value)}
+                                                    className="flex-1 min-w-0 !h-[26px] text-[12px] px-[6px] py-[2px] bg-white border-border-default hover:border-graphite-20 focus:border-brand-1 rounded-[2px]"
+                                                  />
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               )}
@@ -5095,6 +5558,8 @@ interface MetadataPanelProps {
   metaUpdateActive?: boolean;
   metaUpdateProcessing?: boolean;
   submittedDiffItems?: MetaDiffItem[];
+  /** 'panel' = Track Changes in Metadata panel (Idea 2); 'header' = Sticky Header in Copilot ChatBox (Idea 1). Default is 'header'. */
+  diffDisplayMode?: 'header' | 'panel';
   targetFieldId?: string;
   /** Shell-preview block name to deep-link to: opens the Blocks tab with that block selected. */
   targetBlockName?: string | null;
@@ -5110,27 +5575,75 @@ interface MetadataPanelProps {
 
 const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
   {
-    id: 'kmCurve',
-    name: 'KM Plot Chart',
+    id: '022048b0-9ce1-4e72-8707-402317684986',
+    name: 'Confirmed objective response rate forest plot',
     state: 'ready' as const,
     deprecated: false,
     fields: [
-      { id: 'compLabel1', label: 'Component Label', value: 'KM Plot Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+      { id: 'compLabel1', label: 'Component Label', value: 'Confirmed objective response rate forest plot', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
       { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-      { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-      { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'AVAL, CNSR, PARAMCD', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on typical KM Plot requirements.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}] },
+      { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADRESP, ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+      { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'FASFL, COHORT, OCCRVRFL, OCPRVRFL, PARQUAL, PARAMCD', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on forest plot requirements.', inputType: 'multiselect' as const, options: [{label: 'FASFL', value: 'FASFL'}, {label: 'COHORT', value: 'COHORT'}, {label: 'OCCRVRFL', value: 'OCCRVRFL'}, {label: 'OCPRVRFL', value: 'OCPRVRFL'}, {label: 'PARQUAL', value: 'PARQUAL'}, {label: 'PARAMCD', value: 'PARAMCD'}] },
+      { id: 'filter1', label: 'Filter', value: "ADSL.FASFL='Y'; ADRESP.PARAMCD='TRVROV' and ADRESP.PARQUAL='INDEPENDENT ASSESSOR'.", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+    ],
+    display_facts: [
+      {
+        section: "Pages",
+        label: "Cancer type pages",
+        value: "Eight sequential pages",
+        details: [
+          "Biliary Tract Cancer",
+          "Colorectal Cancer",
+          "Cervical Cancer",
+          "Endometrial Cancer",
+          "Ovarian Cancer",
+          "Non-Small-Cell Lung Cancer",
+          "Other",
+          "Total"
+        ]
+      },
+      {
+        section: "Estimate",
+        label: "Response estimate and interval",
+        value: "Confirmed objective response rate with 95% Clopper-Pearson confidence interval",
+        details: [
+          "Fixed 0-100% x-axis",
+          "Filled diamond marker",
+          "Marker size responds directly to response-event count"
+        ]
+      },
+      {
+        section: "Reference",
+        label: "Grey band",
+        value: "All patients 95% confidence interval for the current page",
+        details: [
+          "Vertical band spans the plot area"
+        ]
+      }
     ]
   },
   {
-    id: 'riskTable',
-    name: 'Number at Risk Table',
+    id: 'dd894e2d-0855-4e36-bc8a-362ffc38306b',
+    name: 'Subgroup Statistics Table',
     state: 'ready' as const,
     deprecated: false,
     fields: [
-      { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+      { id: 'compLabel2', label: 'Component Label', value: 'Subgroup Statistics Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
       { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-      { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-      { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'AVAL, TRTA', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting variable: TRTA used instead of TRT01P.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}] },
+      { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+      { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'PRSYSG1, AGEGR2, ASEX, ECOBLG1N, PRHER2FL, PRTOPOFL, PRIMMFL', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Subgroup variables verification required.', inputType: 'multiselect' as const, options: [{label: 'PRSYSG1', value: 'PRSYSG1'}, {label: 'AGEGR2', value: 'AGEGR2'}, {label: 'ASEX', value: 'ASEX'}, {label: 'ECOBLG1N', value: 'ECOBLG1N'}, {label: 'PRHER2FL', value: 'PRHER2FL'}, {label: 'PRTOPOFL', value: 'PRTOPOFL'}, {label: 'PRIMMFL', value: 'PRIMMFL'}] },
+      { id: 'filter2', label: 'Filter', value: "Subgroup rows are expanded from FAS subjects by the fixed page and category order; Male is excluded for Cervical Cancer, Endometrial Cancer, and Ovarian Cancer pages.", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+    ],
+    display_facts: [
+      {
+        section: "Row statistics",
+        label: "Displayed statistic",
+        value: "n/N Response (%) [95% CI]",
+        details: [
+          "95% CI uses the Clopper-Pearson method",
+          "NC is shown for a displayed data row with no denominator"
+        ]
+      }
     ]
   }
 ];
@@ -5141,12 +5654,13 @@ function MetadataPanel({
   repeatColumnBaseline = null, onRepeatColumnBaselineChange,
   pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
   idpageBaseline = null, idlistBaseline = null, onIdpageBaselineChange, onIdlistBaselineChange,
-  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, onMetaCancel, baselineAdvanceTrigger, addComponentTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], targetFieldId, targetBlockName, targetBlockTrigger, onReviewItemsChange, associatedTLStatus = 'pending',
+  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, onMetaCancel, baselineAdvanceTrigger, addComponentTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], diffDisplayMode = 'header', targetFieldId, targetBlockName, targetBlockTrigger, onReviewItemsChange, associatedTLStatus = 'pending',
   figureComponents: propsFigureComponents,
   setFigureComponents: propsSetFigureComponents,
   onJumpToTL,
   onQuoteField,
 }: MetadataPanelProps) {
+  const showPanelDiff = metaUpdateActive && diffDisplayMode === 'panel';
   const [activeTab, setActiveTab] = useState<"basic" | "blocks">("basic");
   const [targetBlockId, setTargetBlockId] = useState<string | null>(null);
 
@@ -5310,7 +5824,15 @@ function MetadataPanel({
   const [figureFieldBaseline, setFigureFieldBaseline] = useState<Record<string, string>>(() => {
     const baseline: Record<string, string> = {};
     figureBlocks.forEach(b => b.fields.forEach(f => { baseline[f.id] = f.value; }));
-    figureComponents.forEach(b => b.fields.forEach(f => { baseline[f.id] = f.value; }));
+    figureComponents.forEach(b => {
+      b.fields.forEach(f => { baseline[f.id] = f.value; });
+      b.display_facts?.forEach((fact, factIdx) => {
+        baseline[`${b.id}_fact_${factIdx}_value`] = fact.value;
+        fact.details?.forEach((det, detIdx) => {
+          baseline[`${b.id}_fact_${factIdx}_det_${detIdx}`] = det;
+        });
+      });
+    });
     return baseline;
   });
 
@@ -5344,16 +5866,16 @@ function MetadataPanel({
       }
     }));
 
-    // 2. Component Field Edits (skip tag fields)
+    // 2. Component Field Edits & Display Facts Edits (skip tag fields)
     figureComponents.forEach(b => {
       const isNewComp = !figureComponentListBaseline.some(cb => cb.id === b.id);
       if (isNewComp) return;
+      const blockName = b.name || 'Component';
 
       b.fields.forEach(f => {
         if (f.type === 'tag') return;
         const baseVal = figureFieldBaseline[f.id];
         if (baseVal !== undefined && baseVal !== f.value) {
-          const blockName = b.name || 'Component';
           items.push({ 
             fieldId: f.id, 
             label: f.label, 
@@ -5364,6 +5886,39 @@ function MetadataPanel({
             changeType: 'modified'
           });
         }
+      });
+
+      // Display Facts Diffs
+      b.display_facts?.forEach((fact, factIdx) => {
+        const factKey = `${b.id}_fact_${factIdx}_value`;
+        const baseFactVal = figureFieldBaseline[factKey];
+        if (baseFactVal !== undefined && baseFactVal !== fact.value) {
+          items.push({
+            fieldId: factKey,
+            label: `${fact.section ? fact.section + ' > ' : ''}${fact.label}`,
+            oldValue: baseFactVal,
+            newValue: fact.value,
+            blockId: b.id,
+            blockName: blockName,
+            changeType: 'modified'
+          });
+        }
+
+        fact.details?.forEach((det, detIdx) => {
+          const detKey = `${b.id}_fact_${factIdx}_det_${detIdx}`;
+          const baseDetVal = figureFieldBaseline[detKey];
+          if (baseDetVal !== undefined && baseDetVal !== det) {
+            items.push({
+              fieldId: detKey,
+              label: `${fact.section ? fact.section + ' > ' : ''}${fact.label} (Detail #${detIdx + 1})`,
+              oldValue: baseDetVal,
+              newValue: det,
+              blockId: b.id,
+              blockName: blockName,
+              changeType: 'modified'
+            });
+          }
+        });
       });
     });
 
@@ -5628,6 +6183,38 @@ function MetadataPanel({
       return {
         ...b,
         fields: b.fields.map(f => f.id === fieldId ? { ...f, value, status: 'edited' as const } : f)
+      };
+    }));
+    setHasMetadataComponentEdits(true);
+  };
+
+  const handleDisplayFactEdit = (blockId: string, factIdx: number, value: string) => {
+    setFigureComponents(prev => prev.map(b => {
+      if (b.id !== blockId) return b;
+      const newFacts = [...(b.display_facts || [])];
+      if (newFacts[factIdx]) {
+        newFacts[factIdx] = { ...newFacts[factIdx], value };
+      }
+      return {
+        ...b,
+        display_facts: newFacts
+      };
+    }));
+    setHasMetadataComponentEdits(true);
+  };
+
+  const handleDetailEdit = (blockId: string, factIdx: number, detailIdx: number, value: string) => {
+    setFigureComponents(prev => prev.map(b => {
+      if (b.id !== blockId) return b;
+      const newFacts = [...(b.display_facts || [])];
+      if (newFacts[factIdx]) {
+        const newDetails = [...(newFacts[factIdx].details || [])];
+        newDetails[detailIdx] = value;
+        newFacts[factIdx] = { ...newFacts[factIdx], details: newDetails };
+      }
+      return {
+        ...b,
+        display_facts: newFacts
       };
     }));
     setHasMetadataComponentEdits(true);
@@ -5964,7 +6551,7 @@ function MetadataPanel({
                     {tab === "basic" ? (docType === 'listing' ? "Basic info" : docType === 'figure' ? "Basic" : "Basic Information") : (docType === 'listing' ? "Column" : docType === 'figure' ? "Components" : "Blocks")}
                   </p>
                   {/* Figure To be Updated: Header-style count badge attached right next to title */}
-                  {docType === 'figure' && metaUpdateActive && tabCount > 0 && (
+                  {docType === 'figure' && showPanelDiff && tabCount > 0 && (
                     <div className="bg-graphite-10 flex items-center justify-center px-[4px] py-px rounded-[16px] shrink-0 min-w-[16px] h-[16px]">
                       <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-text-secondary whitespace-nowrap">
                         <p className="leading-[14px]">{tabCount}</p>
@@ -5986,7 +6573,7 @@ function MetadataPanel({
         </div>
         <div className="flex items-center pr-[12px] gap-[8px]">
           {/* Secondary Button when in Updated / To be updated mode */}
-          {metaUpdateActive && (
+          {showPanelDiff && (
             <button
               onClick={() => onMetaCancel?.()}
               className="flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] bg-graphite-20 hover:bg-graphite-40 px-[8px] t-small font-medium text-text-primary active:scale-[0.96] transition-all cursor-pointer select-none shrink-0"
@@ -6062,7 +6649,7 @@ function MetadataPanel({
       </div>
 
       {/* Status Bar: Hide in To be updated mode */}
-      {!metaUpdateActive && (
+      {!showPanelDiff && (
         <div className="flex items-center justify-end bg-bg-panel px-[12px] py-[8px]">
           <div className="flex items-center gap-[6px]">
             <button onClick={isLocked ? undefined : handleSelectAll} disabled={isLocked}
@@ -6140,7 +6727,7 @@ function MetadataPanel({
               ))
             ) : docType === 'figure' ? (
               // Figure Basic Tab
-              metaUpdateActive ? (
+              showPanelDiff ? (
                 // ── To be Updated mode: cardless flat list derived from Readonly state ──
                 <div className="flex flex-col gap-[12px] p-[8px]">
                   {(() => {
@@ -6512,7 +7099,7 @@ function MetadataPanel({
               })}
             </div>
           ) : docType === 'figure' ? (
-            metaUpdateActive ? (
+            showPanelDiff ? (
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-[12px] gap-[16px]">
                 {/* 1. Added Components */}
                 {metaDiffItems.filter(d => d.changeType === 'added').map(addDiff => {
@@ -6596,14 +7183,13 @@ function MetadataPanel({
                   const modifiedComps = figureComponents.filter(comp =>
                     !removedCompBlockIds.has(comp.id) &&
                     !addedCompBlockIds.has(comp.id) &&
-                    comp.fields.some(f => fieldDiffMap[f.id] && fieldDiffMap[f.id].changeType === 'modified')
+                    (comp.fields.some(f => fieldDiffMap[f.id] && fieldDiffMap[f.id].changeType === 'modified') ||
+                     metaDiffItems.some(d => d.blockId === comp.id && d.changeType === 'modified'))
                   );
 
                   return modifiedComps.map(comp => {
                     const compName = comp.name || comp.id;
-                    const compDiffs = comp.fields
-                      .map(f => ({ field: f, diff: fieldDiffMap[f.id] }))
-                      .filter(item => item.diff && item.diff.changeType === 'modified');
+                    const compDiffs = metaDiffItems.filter(d => d.blockId === comp.id && d.changeType === 'modified' && !d.fieldId.startsWith('deprecate_'));
 
                     return (
                       <div key={comp.id} className="flex flex-col gap-[8px]">
@@ -6624,29 +7210,22 @@ function MetadataPanel({
 
                         {/* Modified Field List under FormItem */}
                         <div className="flex flex-col gap-[8px] pl-[12px]">
-                          {compDiffs.map(({ field, diff }) => {
+                          {compDiffs.map((diff) => {
                             return (
-                              <div key={field.id} className="group relative">
+                              <div key={diff.fieldId} className="group relative">
                                 {onQuoteField && (
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, compName); }}
+                                    onClick={(e) => { e.stopPropagation(); onQuoteField(diff.fieldId, diff.label, compName); }}
                                     className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
-                                    title={`Quote "${field.label}"`}
-                                    aria-label={`Quote "${field.label}"`}
+                                    title={`Quote "${diff.label}"`}
+                                    aria-label={`Quote "${diff.label}"`}
                                   >
                                     <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
                                   </button>
                                 )}
                                 <FormItem
-                                  label={field.label}
-                                  required={field.required}
+                                  label={diff.label}
                                   disabled={true}
-                                  badge={field.badge ? <MetadataBadge type={field.badge} tooltip={field.badgeTooltip} /> : undefined}
-                                  actionButton={
-                                    <button disabled className="flex h-[16px] w-[16px] items-center justify-center opacity-40 cursor-not-allowed" aria-label="Confirmed">
-                                      <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{fieldCheckboxIcon(field.confirmed)}</SvgIcon>
-                                    </button>
-                                  }
                                 >
                                   {/* Readonly-derived diff display text line without card box */}
                                   <div className="flex items-center gap-[6px] text-[13px] leading-[24px] py-[2px]">
@@ -6697,6 +7276,8 @@ function MetadataPanel({
                 onDeprecateComponent={handleDeprecateComponent}
                 onDeleteComponent={(id) => setDeleteConfirmBlockId(id)}
                 onFieldEdit={handleFieldEditComponent}
+                onDisplayFactEdit={handleDisplayFactEdit}
+                onDetailEdit={handleDetailEdit}
                 fieldRefs={fieldRefs}
                 onQuoteField={onQuoteField}
               />
@@ -6832,6 +7413,8 @@ function CodePanel({
   showCensorMarks = true,
   showMedianLines = true,
   showRiskTable = true,
+  groupViewOpen = false,
+  onToggleGroupView,
 }: {
   selectedItem: string;
   docType?: DocumentType;
@@ -6843,6 +7426,8 @@ function CodePanel({
   showCensorMarks?: boolean;
   showMedianLines?: boolean;
   showRiskTable?: boolean;
+  groupViewOpen?: boolean;
+  onToggleGroupView?: () => void;
 }) {
   const listingCodeContent = `/* Setup listing options */
 options nodate nonumber orientation=landscape;
@@ -6964,7 +7549,7 @@ ods graphics off;`;
         }
         codeTextAreaRef.current.focus();
         codeTextAreaRef.current.setSelectionRange(charCount, charCount + (lines[programLine - 1]?.length || 0));
-        const lineHeight = 20;
+        const lineHeight = 18;
         const parentContainer = codeTextAreaRef.current.closest('.code-panel-scroll-container');
         if (parentContainer) {
           parentContainer.scrollTop = (programLine - 1) * lineHeight;
@@ -7080,7 +7665,7 @@ ods graphics off;`;
       />
       <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container scrollbar-code">
         {docType === 'figure' ? (
-          <div className="flex flex-1 min-w-max font-mono text-[13px] leading-[20px]">
+          <div className="flex flex-1 min-w-max font-mono text-[12px] leading-[18px]">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[54px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
                 const lineNum = index + 1;
@@ -7093,9 +7678,9 @@ ods graphics off;`;
                     onMouseEnter={() => setHoveredLineNumber(lineNum)}
                     onMouseLeave={() => setHoveredLineNumber(null)}
                     onClick={() => handleLineClick(lineNum)}
-                    className="h-[20px] flex items-center justify-end pl-[8px] pr-[4px] gap-[4px] cursor-pointer select-none"
+                    className="h-[18px] flex items-center justify-end pl-[8px] pr-[4px] gap-[4px] cursor-pointer select-none"
                   >
-                    <span className={`text-[12px] font-mono text-right w-[24px] ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
+                    <span className={`text-[12px] font-mono text-right w-[24px] leading-[18px] ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
                       {lineNum}
                     </span>
                     <div className="w-[14px] h-[14px] flex items-center justify-center shrink-0">
@@ -7118,7 +7703,7 @@ ods graphics off;`;
                     <div
                       key={index}
                       onClick={() => handleLineClick(lineNum)}
-                      className={`h-[20px] px-[16px] whitespace-pre font-mono text-[13px] leading-[20px] cursor-pointer ${
+                      className={`h-[18px] px-[16px] whitespace-pre font-mono text-[12px] leading-[18px] cursor-pointer ${
                         isSelected ? 'bg-[#FBF4F7]' : ''
                       }`}
                     >
@@ -7130,16 +7715,16 @@ ods graphics off;`;
             ) : (
               <div
                 className="relative flex-1 bg-white"
-                style={{ height: `${codeLines.length * 20 + 32}px` }}
+                style={{ height: `${codeLines.length * 18 + 32}px` }}
               >
-                <pre className="absolute inset-0 pt-[16px] pb-[16px] m-0 pointer-events-none font-mono text-[13px] leading-[20px] overflow-hidden">
+                <pre className="absolute inset-0 pt-[16px] pb-[16px] m-0 pointer-events-none font-mono text-[12px] leading-[18px] overflow-hidden">
                   {codeLines.map((line, index) => {
                     const lineNum = index + 1;
                     const isSelected = selectedCodeLine === lineNum;
                     return (
                       <div
                         key={index}
-                        className={`h-[20px] px-[16px] whitespace-pre ${
+                        className={`h-[18px] px-[16px] whitespace-pre ${
                           isSelected ? 'bg-[#FBF4F7]' : ''
                         }`}
                       >
@@ -7155,14 +7740,14 @@ ods graphics off;`;
                   onSelect={handleTextareaSelectionChange}
                   onKeyUp={handleTextareaSelectionChange}
                   onMouseUp={handleTextareaSelectionChange}
-                  className="absolute inset-0 w-full h-full pt-[16px] pb-[16px] px-[16px] font-mono text-[13px] leading-[20px] text-transparent bg-transparent outline-none resize-none border-none caret-text-primary whitespace-pre overflow-hidden"
+                  className="absolute inset-0 w-full h-full pt-[16px] pb-[16px] px-[16px] font-mono text-[12px] leading-[18px] text-transparent bg-transparent outline-none resize-none border-none caret-text-primary whitespace-pre overflow-hidden"
                   style={{ caretColor: 'var(--color-text-primary)' }}
                 />
               </div>
             )}
           </div>
         ) : (
-          <div className="flex min-w-max min-h-full font-mono text-[13px] leading-[20px]">
+          <div className="flex min-w-max min-h-full font-mono text-[12px] leading-[18px]">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[54px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
                 const lineNum = index + 1;
@@ -7175,9 +7760,9 @@ ods graphics off;`;
                     onMouseEnter={() => setHoveredLineNumber(lineNum)}
                     onMouseLeave={() => setHoveredLineNumber(null)}
                     onClick={() => handleLineClick(lineNum)}
-                    className="h-[20px] flex items-center justify-end pl-[8px] pr-[4px] gap-[4px] cursor-pointer select-none"
+                    className="h-[18px] flex items-center justify-end pl-[8px] pr-[4px] gap-[4px] cursor-pointer select-none"
                   >
-                    <span className={`text-[12px] font-mono text-right w-[24px] ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
+                    <span className={`text-[12px] font-mono text-right w-[24px] leading-[18px] ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
                       {lineNum}
                     </span>
                     <div className="w-[14px] h-[14px] flex items-center justify-center shrink-0">
@@ -7199,7 +7784,7 @@ ods graphics off;`;
                   <div
                     key={index}
                     onClick={() => handleLineClick(lineNum)}
-                    className={`h-[20px] px-[16px] whitespace-pre font-mono text-[13px] leading-[20px] cursor-pointer ${
+                    className={`h-[18px] px-[16px] whitespace-pre font-mono text-[12px] leading-[18px] cursor-pointer ${
                       isSelected ? 'bg-[#FBF4F7]' : ''
                     }`}
                   >
@@ -7314,11 +7899,13 @@ function WorkspaceContent({
   const shellPreviewOpen = panelView !== 'code';
   const codeOpen = panelView !== 'shell';
   const [metadataOpen, setMetadataOpen] = useState(false);
+  const [groupViewOpen, setGroupViewOpen] = useState(false);
   const [rtfOpen, setRtfOpen] = useState(true);
   const [aiCopilotOpen, setAiCopilotOpen] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [shellPreviewWidth, setShellPreviewWidth] = useState(560);
   const [metadataWidth, setMetadataWidth] = useState(440);
+  const [groupViewWidth, setGroupViewWidth] = useState(380);
   const [aiCopilotWidth, setAiCopilotWidth] = useState(360);
   const [treeListAutoCollapsed, setTreeListAutoCollapsed] = useState(false);
 
@@ -7603,6 +8190,7 @@ function WorkspaceContent({
   };
   const selectedTable = getSelectedTable();
   const docType = selectedTable?.docType || 'table';
+  const currentGroupCodes = MOCK_GROUP_CODES[selectedId || ''] || (selectedId === 't2' || selectedId === 't4' ? MOCK_GROUP_CODES['t2'] : selectedId === 'l1' ? MOCK_GROUP_CODES['l1'] : selectedId === 'f1' ? MOCK_GROUP_CODES['f1'] : []);
 
   const figureOpenedRef = React.useRef(false);
 
@@ -7812,8 +8400,10 @@ function WorkspaceContent({
           />
         )}
 
-        <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="shrink-0 w-full overflow-hidden mt-[4px] px-[4px]">
+        {/* Middle Column: (视图切换行 + Code&Shell卡 + Group Code浮层) */}
+        <div ref={contentAreaRef} className="relative flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden p-[4px]">
+          {/* 视图切换行 (Top bar) */}
+          <div className="shrink-0 w-full overflow-hidden mb-[4px]">
             <ViewToggleBar
               treeListOpen={treeListOpen}
               onToggleTreeList={() => setTreeListOpen(true)}
@@ -7826,345 +8416,302 @@ function WorkspaceContent({
               docType={docType}
               rtfOpen={rtfOpen}
               onToggleRtf={() => setRtfOpen(v => !v)}
+              groupViewOpen={groupViewOpen}
+              onToggleGroupView={() => setGroupViewOpen(v => !v)}
             />
           </div>
 
-          <div className="flex min-w-0 min-h-0 flex-1 flex-col p-[4px]">
-            <div ref={contentAreaRef} className="relative flex min-h-0 min-w-0 flex-1 gap-[6px]">
+          {/* Below ViewToggleBar: Container for Code&Shell card and floating GroupCodePanel */}
+          <div className="relative min-w-0 min-h-0 flex-1 overflow-hidden">
+            {/* Code & Shell 统一白卡 (不受 Group View 影响，不被挤压) */}
             {docType === 'listing' ? (
-              // Listing layout with configurable panel direction (vertical = top/bottom, horizontal = left/right)
-              <div className="flex min-w-0 min-h-0 flex-1 gap-[6px]">
-                {/* Shell + Code area — direction depends on panelLayout */}
-                <div className="flex min-w-0 min-h-0 flex-1" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row', gap: '6px' }}>
-                  {panelView !== 'code' && (
-                    <div
-                      style={panelLayout === 'vertical'
-                        ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
-                        : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
-                      }
-                      className={`h-full flex flex-col overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)] ${panelView === 'both' ? 'shrink-0' : 'flex-1'}`}
-                    >
-                      <ListingShellPreview
-                        selectedItemName={getSelectedItemName()}
-                        onBlockClick={(blockName) => {
-                          setMetadataOpen(true);
-                          if (blockName) {
-                            setTargetBlockName(blockName);
-                            setTargetBlockTrigger(prev => prev + 1);
-                          }
-                        }}
-                        onMetadataClick={() => setMetadataOpen((open) => !open)}
-                        metadataOpen={metadataOpen}
-                        onCloseMetadata={() => setMetadataOpen(false)}
-                        isLocked={selectedTableLocked}
-                        onPagePreviewChange={handleShellPagePreviewChange}
-                        onOpenAICopilot={handleOpenAICopilotFromShell}
-                        frozenUntilIndex={frozenUntilIndex}
-                        setFrozenUntilIndex={setFrozenUntilIndex}
-                        pageSepActive={pageSepActive}
-                        setPageSepActive={setPageSepActive}
-                        pageColumnCounts={pageColumnCounts}
-                        setPageColumnCounts={setPageColumnCounts}
-                        idpageBaseline={idpageBaseline}
-                        idlistBaseline={idlistBaseline}
-                        onIdpageBaselineChange={setIdpageBaseline}
-                        onIdlistBaselineChange={setIdlistBaseline}
-                        metadataWidth={metadataWidth}
-                        onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
-                      />
-                    </div>
-                  )}
-
-                  {panelView === 'both' && (
-                    panelLayout === 'vertical' ? (
-                      <HorizontalWorkspaceDivider
-                        onDragStart={() => setIsResizing(true)}
-                        onDragEnd={() => setIsResizing(false)}
-                        onDrag={(delta) => setShellHeight((h) => {
-                          const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
-                          const minH = 240;
-                          const maxH = containerHeight - 240 - 4;
-                          return clamp(h + delta, minH, Math.max(minH, maxH));
-                        })}
-                      />
-                    ) : (
-                      <WorkspaceDivider
-                        onDragStart={() => setIsResizing(true)}
-                        onDragEnd={() => setIsResizing(false)}
-                        onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, dynamicShellMax))}
-                      />
-                    )
-                  )}
-
-                  {panelView !== 'shell' && (
-                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
-                      <CodePanel
-                        selectedItem={getSelectedItemName()}
-                        docType="listing"
-                        isLocked={selectedTableLocked}
-                        onToggleLock={handleCodePanelToggleLock}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* AI Copilot Panel (always on the right) */}
-                {aiCopilotOpen && (
-                  <WorkspaceDivider
-                    onDragStart={() => setIsResizing(true)}
-                    onDragEnd={() => setIsResizing(false)}
-                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
-                  />
-                )}
-
-                <div
-                  className="shrink-0 overflow-hidden bg-transparent"
-                  style={{
-                    width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
-                    opacity: aiCopilotOpen ? 1 : 0,
-                    transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
-                  }}
-                >
-                  {aiCopilotOpen && (
-                    <AICopilotPanel 
-                      key={docType}
-                      quoteInsertRef={quoteInsertRef}
-                      panelWidth={aiCopilotWidth} 
-                      onClose={handleCloseAICopilot} 
-                      inputValue={aiInputValue}
-                      onChangeInputValue={setAiInputValue}
-                      focusTrigger={aiInputFocusTrigger}
-                      onOpenCodePanel={() => handlePanelViewChange('code')}
-                      onOpenSpatialView={() => setRtfOpen(true)}
-                      onJumpToMetadata={(blockId, fieldId) => {
+              <div className="flex min-w-0 min-h-0 h-full w-full overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}>
+                {panelView !== 'code' && (
+                  <div
+                    style={panelLayout === 'vertical'
+                      ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
+                      : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
+                    }
+                    className={`h-full flex flex-col min-w-0 overflow-hidden bg-white ${panelView === 'both' ? (panelLayout === 'vertical' ? 'border-b border-graphite-10 shrink-0' : 'border-r border-graphite-10 shrink-0') : 'flex-1'}`}
+                  >
+                    <ListingShellPreview
+                      selectedItemName={getSelectedItemName()}
+                      onBlockClick={(blockName) => {
                         setMetadataOpen(true);
-                        if (fieldId) {
-                          setTargetMetadataFieldId(fieldId);
+                        if (blockName) {
+                          setTargetBlockName(blockName);
+                          setTargetBlockTrigger(prev => prev + 1);
                         }
                       }}
-                      docType={docType}
-                      metaDiffItems={metaDiffItems}
-                      metaUpdateActive={metaUpdateActive}
-                      hasPendingCodeChanges={hasPendingCodeChanges}
-                      onMetaCancel={() => setMetaUpdateActive(false)}
-                      onCodeDiffChange={setHasPendingCodeChanges}
-                      onMetaProceed={() => {
-                        setMetaUpdateActive(false);
-                        setMetaUpdateProcessing(true);
-                        setSubmittedDiffItems(metaDiffItems);
-                        setTimeout(() => {
-                          setBaselineAdvanceTrigger(prev => prev + 1);
-                          setTimeout(() => {
-                            setMetaUpdateProcessing(false);
-                            setSubmittedDiffItems([]);
-                          }, 50);
-                        }, 2500);
-                      }}
-                      onAddComponentPrompt={(name, type, inst) => handleGenerateComponentInWorkspace(name, type, inst)}
-                      renderPreviewOpen={renderPreviewOpen}
-                      activeRenderVersionLabel={activeRenderVersionLabel}
-                      onRenderThumbnailClick={(v) => {
-                        setActiveRenderVersionLabel(v.versionLabel);
-                        setRenderPreviewOpen(true);
-                      }}
+                      onMetadataClick={() => setMetadataOpen((open) => !open)}
+                      metadataOpen={metadataOpen}
+                      onCloseMetadata={() => setMetadataOpen(false)}
+                      isLocked={selectedTableLocked}
+                      onPagePreviewChange={handleShellPagePreviewChange}
+                      onOpenAICopilot={handleOpenAICopilotFromShell}
+                      frozenUntilIndex={frozenUntilIndex}
+                      setFrozenUntilIndex={setFrozenUntilIndex}
+                      pageSepActive={pageSepActive}
+                      setPageSepActive={setPageSepActive}
+                      pageColumnCounts={pageColumnCounts}
+                      setPageColumnCounts={setPageColumnCounts}
+                      idpageBaseline={idpageBaseline}
+                      idlistBaseline={idlistBaseline}
+                      onIdpageBaselineChange={setIdpageBaseline}
+                      onIdlistBaselineChange={setIdlistBaseline}
+                      metadataWidth={metadataWidth}
+                      onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
                     />
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {!aiCopilotOpen && <FloatingAICopilotButton onClick={handleOpenAICopilot} />}
+                {panelView === 'both' && (
+                  panelLayout === 'vertical' ? (
+                    <HorizontalWorkspaceDivider
+                      onDragStart={() => setIsResizing(true)}
+                      onDragEnd={() => setIsResizing(false)}
+                      onDrag={(delta) => setShellHeight((h) => {
+                        const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
+                        const minH = 240;
+                        const maxH = containerHeight - 240 - 4;
+                        return clamp(h + delta, minH, Math.max(minH, maxH));
+                      })}
+                    />
+                  ) : (
+                    <WorkspaceDivider
+                      onDragStart={() => setIsResizing(true)}
+                      onDragEnd={() => setIsResizing(false)}
+                      onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, dynamicShellMax))}
+                    />
+                  )
+                )}
+
+                {panelView !== 'shell' && (
+                  <div
+                    className={`min-w-0 flex-1 overflow-hidden flex flex-col bg-white ${
+                      panelView === 'both'
+                        ? (panelLayout === 'vertical' ? 'border-t border-solid border-graphite-10' : 'border-l border-solid border-graphite-10')
+                        : ''
+                    }`}
+                    style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
+                  >
+                    <CodePanel
+                      selectedItem={getSelectedItemName()}
+                      docType="listing"
+                      isLocked={selectedTableLocked}
+                      onToggleLock={handleCodePanelToggleLock}
+                    />
+                  </div>
+                )}
               </div>
             ) : (
-              // Table Layout — supports both horizontal (default) and vertical panel layout
-              <div className="flex h-full flex-1 min-w-0 gap-[6px]" style={{ minWidth: panelLayout === 'vertical' ? undefined : `${tableTotalMinWidth}px` }}>
-                {/* Shell + Code area — direction depends on panelLayout */}
-                <div className="flex min-w-0 min-h-0 flex-1" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row', gap: '6px' }}>
-                  {/* Shell Preview with subordinate Metadata card */}
-                  {shellPreviewOpen && (
-                    <div
-                      className={`h-full flex flex-col min-w-0 overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)] ${panelView === 'shell' ? 'flex-1' : 'shrink-0'}`}
-                      style={panelLayout === 'vertical'
-                        ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
-                        : { width: panelView === 'shell' ? undefined : `${shellPreviewWidth}px` }
-                      }
-                    >
-                      <ShellPreview
-                        docType={docType}
-                        isLocked={hasPendingCodeChanges}
-                        onBlockClick={(blockName) => {
-                          setMetadataOpen(true);
-                          if (blockName) {
-                            setTargetBlockName(blockName);
-                            setTargetBlockTrigger(prev => prev + 1);
-                          }
-                        }}
-                        onMetadataClick={() => setMetadataOpen((open) => {
-                          if (!open) {
-                            setHasUnreadMetadataUpdate(false);
-                          }
-                          return !open;
-                        })}
-                        hasUnreadMetadataUpdate={hasUnreadMetadataUpdate}
-                        figureComponents={figureComponents}
-                        setFigureComponents={setFigureComponents}
-                        metadataOpen={metadataOpen}
-                        onMetadataClose={() => setMetadataOpen(false)}
-                        metadataWidth={metadataWidth}
-                        onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
-                        metadataMaxWidth={metadataMaxWidth}
-                        shellPreviewWidth={shellPreviewWidth}
-                        onShellPreviewResize={(newWidth) => setShellPreviewWidth(newWidth)}
-                        shellPreviewMinWidth={constraints.shellPreview.min}
-                        shellPreviewMaxWidth={constraints.shellPreview.max}
-                        isShellFlex={panelView === 'shell'}
-                        selectedItemName={getSelectedItemName()}
-                        onJumpToTL={handleJumpToTL}
-                        showCI={showCI}
-                        showCensorMarks={showCensorMarks}
-                        showMedianLines={showMedianLines}
-                        showRiskTable={showRiskTable}
-                        onShowCIChange={setShowCI}
-                        onShowCensorMarksChange={setShowCensorMarks}
-                        onShowMedianLinesChange={setShowMedianLines}
-                        onShowRiskTableChange={setShowRiskTable}
-                        associatedTLStatus={associatedTLStatus}
-                        rtfOpen={rtfOpen}
-                        onToggleRtf={() => setRtfOpen(v => !v)}
-                        onMetaDiffChange={setMetaDiffItems}
-                        onRequestUpdateCode={() => {
-                          setMetaUpdateActive(true);
-                          setAiCopilotOpen(true);
-                        }}
-                        baselineAdvanceTrigger={baselineAdvanceTrigger}
-                        addComponentTrigger={addComponentTrigger}
-                        metaUpdateActive={metaUpdateActive}
-                        metaUpdateProcessing={metaUpdateProcessing}
-                        submittedDiffItems={submittedDiffItems}
-                        targetFieldId={targetMetadataFieldId || undefined}
-                        onReviewItemsChange={setReviewItems}
-                        onMetaCancel={() => setMetaUpdateActive(false)}
-                        onQuoteField={handleQuoteField}
-                      />
-                    </div>
-                  )}
-
-                  {/* Shell ↔ Code divider (when both are open) */}
-                  {shellPreviewOpen && codeOpen && (
-                    panelLayout === 'vertical' ? (
-                      <HorizontalWorkspaceDivider
-                        onDragStart={() => setIsResizing(true)}
-                        onDragEnd={() => setIsResizing(false)}
-                        onDrag={(delta) => setShellHeight((h) => {
-                          const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
-                          const minH = 240;
-                          const maxH = containerHeight - 240 - 4;
-                          return clamp(h + delta, minH, Math.max(minH, maxH));
-                        })}
-                      />
-                    ) : (
-                      <WorkspaceDivider
-                        onDragStart={() => setIsResizing(true)}
-                        onDragEnd={() => setIsResizing(false)}
-                        onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, dynamicShellMax))}
-                      />
-                    )
-                  )}
-
-                  {codeOpen && (
-                    <div className="min-w-0 flex-1 overflow-hidden flex flex-col rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]" style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}>
-                      <CodePanel
-                        selectedItem={getSelectedItemName()}
-                        docType={docType}
-                        isLocked={selectedTableLocked}
-                        onToggleLock={handleCodePanelToggleLock}
-                        showCI={showCI}
-                        showCensorMarks={showCensorMarks}
-                        showMedianLines={showMedianLines}
-                        showRiskTable={showRiskTable}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Shell ↔ AI divider (when Shell is open, Code is closed, AI is open) */}
-                {/* Adjusts AI width since Shell is flex-1 in this view */}
-                {shellPreviewOpen && !codeOpen && aiCopilotOpen && (
-                  <WorkspaceDivider
-                    onDragStart={() => setIsResizing(true)}
-                    onDragEnd={() => setIsResizing(false)}
-                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
-                  />
-                )}
-
-                {/* Code ↔ AI divider */}
-                {codeOpen && aiCopilotOpen && (
-                  <WorkspaceDivider
-                    onDragStart={() => setIsResizing(true)}
-                    onDragEnd={() => setIsResizing(false)}
-                    onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
-                  />
-                )}
-
-                <div
-                  className="shrink-0 overflow-hidden bg-transparent"
-                  style={{
-                    width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
-                    opacity: aiCopilotOpen ? 1 : 0,
-                    transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
-                  }}
-                >
-                  {aiCopilotOpen && (
-                    <AICopilotPanel
-                      key={docType}
-                      quoteInsertRef={quoteInsertRef}
-                      panelWidth={aiCopilotWidth}
-                      onClose={handleCloseAICopilot}
-                      inputValue={aiInputValue}
-                      onChangeInputValue={setAiInputValue}
-                      focusTrigger={aiInputFocusTrigger}
-                      onOpenCodePanel={() => handlePanelViewChange('code')}
-                      onOpenSpatialView={() => setRtfOpen(true)}
-                      onJumpToMetadata={(blockId, fieldId) => {
+              <div
+                className="flex min-w-0 min-h-0 h-full w-full overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]"
+                style={{
+                  flexDirection: panelLayout === 'vertical' ? 'column' : 'row',
+                  minWidth: panelLayout === 'vertical' ? undefined : `${tableTotalMinWidth}px`,
+                }}
+              >
+                {shellPreviewOpen && (
+                  <div
+                    className={`h-full flex flex-col min-w-0 overflow-hidden bg-white ${
+                      panelView === 'both'
+                        ? (panelLayout === 'vertical' ? 'border-b border-graphite-10 shrink-0' : 'border-r border-graphite-10 shrink-0')
+                        : 'flex-1'
+                    }`}
+                    style={panelLayout === 'vertical'
+                      ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
+                      : { width: panelView === 'shell' ? undefined : `${shellPreviewWidth}px` }
+                    }
+                  >
+                    <ShellPreview
+                      docType={docType}
+                      isLocked={hasPendingCodeChanges}
+                      onBlockClick={(blockName) => {
                         setMetadataOpen(true);
-                        if (fieldId) {
-                          setTargetMetadataFieldId(fieldId);
+                        if (blockName) {
+                          setTargetBlockName(blockName);
+                          setTargetBlockTrigger(prev => prev + 1);
                         }
                       }}
-                      docType={docType}
-                      metaDiffItems={metaDiffItems}
+                      onMetadataClick={() => setMetadataOpen((open) => {
+                        if (!open) {
+                          setHasUnreadMetadataUpdate(false);
+                        }
+                        return !open;
+                      })}
+                      hasUnreadMetadataUpdate={hasUnreadMetadataUpdate}
+                      figureComponents={figureComponents}
+                      setFigureComponents={setFigureComponents}
+                      metadataOpen={metadataOpen}
+                      onMetadataClose={() => setMetadataOpen(false)}
+                      metadataWidth={metadataWidth}
+                      onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
+                      metadataMaxWidth={metadataMaxWidth}
+                      shellPreviewWidth={shellPreviewWidth}
+                      onShellPreviewResize={(newWidth) => setShellPreviewWidth(newWidth)}
+                      shellPreviewMinWidth={constraints.shellPreview.min}
+                      shellPreviewMaxWidth={constraints.shellPreview.max}
+                      isShellFlex={panelView === 'shell'}
+                      selectedItemName={getSelectedItemName()}
+                      onJumpToTL={handleJumpToTL}
+                      showCI={showCI}
+                      showCensorMarks={showCensorMarks}
+                      showMedianLines={showMedianLines}
+                      showRiskTable={showRiskTable}
+                      onShowCIChange={setShowCI}
+                      onShowCensorMarksChange={setShowCensorMarks}
+                      onShowMedianLinesChange={setShowMedianLines}
+                      onShowRiskTableChange={setShowRiskTable}
+                      associatedTLStatus={associatedTLStatus}
+                      rtfOpen={rtfOpen}
+                      onToggleRtf={() => setRtfOpen(v => !v)}
+                      onMetaDiffChange={setMetaDiffItems}
+                      onRequestUpdateCode={() => {
+                        setMetaUpdateActive(true);
+                        setAiCopilotOpen(true);
+                      }}
+                      baselineAdvanceTrigger={baselineAdvanceTrigger}
+                      addComponentTrigger={addComponentTrigger}
                       metaUpdateActive={metaUpdateActive}
-                      hasPendingCodeChanges={hasPendingCodeChanges}
+                      metaUpdateProcessing={metaUpdateProcessing}
+                      submittedDiffItems={submittedDiffItems}
+                      targetFieldId={targetMetadataFieldId || undefined}
+                      onReviewItemsChange={setReviewItems}
                       onMetaCancel={() => setMetaUpdateActive(false)}
-                      onCodeDiffChange={setHasPendingCodeChanges}
-                      onMetaProceed={() => {
-                        setMetaUpdateActive(false);
-                        setMetaUpdateProcessing(true);
-                        setSubmittedDiffItems(metaDiffItems);
-                        setTimeout(() => {
-                          setBaselineAdvanceTrigger(prev => prev + 1);
-                          setTimeout(() => {
-                            setMetaUpdateProcessing(false);
-                            setSubmittedDiffItems([]);
-                          }, 50);
-                        }, 2500);
-                      }}
-                      onAddComponentPrompt={(name, type, inst) => handleGenerateComponentInWorkspace(name, type, inst)}
-                      renderPreviewOpen={renderPreviewOpen}
-                      activeRenderVersionLabel={activeRenderVersionLabel}
-                      onRenderThumbnailClick={(v) => {
-                        setActiveRenderVersionLabel(v.versionLabel);
-                        setRenderPreviewOpen(true);
-                      }}
+                      onQuoteField={handleQuoteField}
                     />
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {!aiCopilotOpen && <FloatingAICopilotButton onClick={handleOpenAICopilot} />}
+                {/* Shell ↔ Code divider (when both are open) */}
+                {shellPreviewOpen && codeOpen && (
+                  panelLayout === 'vertical' ? (
+                    <HorizontalWorkspaceDivider
+                      onDragStart={() => setIsResizing(true)}
+                      onDragEnd={() => setIsResizing(false)}
+                      onDrag={(delta) => setShellHeight((h) => {
+                        const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
+                        const minH = 240;
+                        const maxH = containerHeight - 240 - 4;
+                        return clamp(h + delta, minH, Math.max(minH, maxH));
+                      })}
+                    />
+                  ) : (
+                    <WorkspaceDivider
+                      onDragStart={() => setIsResizing(true)}
+                      onDragEnd={() => setIsResizing(false)}
+                      onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, dynamicShellMax))}
+                    />
+                  )
+                )}
+
+                {codeOpen && (
+                  <div
+                    className={`min-w-0 flex-1 overflow-hidden flex flex-col bg-white ${
+                      panelView === 'both'
+                        ? (panelLayout === 'vertical' ? 'border-t border-solid border-graphite-10' : 'border-l border-solid border-graphite-10')
+                        : ''
+                    }`}
+                    style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
+                  >
+                    <CodePanel
+                      selectedItem={getSelectedItemName()}
+                      docType={docType}
+                      isLocked={selectedTableLocked}
+                      onToggleLock={handleCodePanelToggleLock}
+                      showCI={showCI}
+                      showCensorMarks={showCensorMarks}
+                      showMedianLines={showMedianLines}
+                      showRiskTable={showRiskTable}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Group Code 浮层面板 (top-0 和 Card 顶部完美齐平，不挤压工作区) */}
+            {groupViewOpen && (
+              <div
+                className="absolute top-0 right-0 bottom-0 z-[80] flex flex-col overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_8px_28px_0_rgba(0,0,0,0.16),0_2px_6px_0_rgba(0,0,0,0.08)] animate-in fade-in zoom-in-95 duration-150"
+                style={{ width: `${groupViewWidth}px`, maxWidth: 'calc(100% - 16px)' }}
+              >
+                <GroupCodePanel
+                  onClose={() => setGroupViewOpen(false)}
+                  selectedItemName={getSelectedItemName()}
+                  groupCodes={currentGroupCodes}
+                />
               </div>
             )}
           </div>
         </div>
+
+        {/* Middle ↔ AI Copilot Divider */}
+        {aiCopilotOpen && (
+          <WorkspaceDivider
+            onDragStart={() => setIsResizing(true)}
+            onDragEnd={() => setIsResizing(false)}
+            onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
+          />
+        )}
+
+        {/* Right Column: AI Copilot Panel (Full Height on the Right, Frameless & Transparent) */}
+        <div
+          className="shrink-0 overflow-hidden bg-transparent"
+          style={{
+            width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
+            opacity: aiCopilotOpen ? 1 : 0,
+            transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
+          }}
+        >
+          {aiCopilotOpen && (
+            <AICopilotPanel
+              key={docType}
+              quoteInsertRef={quoteInsertRef}
+              panelWidth={aiCopilotWidth}
+              onClose={handleCloseAICopilot}
+              inputValue={aiInputValue}
+              onChangeInputValue={setAiInputValue}
+              focusTrigger={aiInputFocusTrigger}
+              onOpenCodePanel={() => handlePanelViewChange('code')}
+              onOpenSpatialView={() => setRtfOpen(true)}
+              onJumpToMetadata={(blockId, fieldId) => {
+                setMetadataOpen(true);
+                if (fieldId) {
+                  setTargetMetadataFieldId(fieldId);
+                }
+              }}
+              docType={docType}
+              metaDiffItems={metaDiffItems}
+              metaUpdateActive={metaUpdateActive}
+              hasPendingCodeChanges={hasPendingCodeChanges}
+              onMetaCancel={() => setMetaUpdateActive(false)}
+              onCodeDiffChange={setHasPendingCodeChanges}
+              onMetaProceed={() => {
+                setMetaUpdateActive(false);
+                setMetaUpdateProcessing(true);
+                setSubmittedDiffItems(metaDiffItems);
+                setTimeout(() => {
+                  setBaselineAdvanceTrigger(prev => prev + 1);
+                  setTimeout(() => {
+                    setMetaUpdateProcessing(false);
+                    setSubmittedDiffItems([]);
+                  }, 50);
+                }, 2500);
+              }}
+              onAddComponentPrompt={(name, type, inst) => handleGenerateComponentInWorkspace(name, type, inst)}
+              renderPreviewOpen={renderPreviewOpen}
+              activeRenderVersionLabel={activeRenderVersionLabel}
+              onRenderThumbnailClick={(v) => {
+                setActiveRenderVersionLabel(v.versionLabel);
+                setRenderPreviewOpen(true);
+              }}
+            />
+          )}
+        </div>
+
+        {!aiCopilotOpen && <FloatingAICopilotButton onClick={handleOpenAICopilot} />}
       </div>
-    </div>
 
       <WorkspaceModal
         isOpen={modalState.type === 'locked-by-parent'}
@@ -8190,6 +8737,7 @@ function WorkspaceContent({
         panelLayout={panelLayout}
         panelView={panelView}
         copilotOpen={aiCopilotOpen}
+        copilotWidth={aiCopilotWidth}
       />
     </div>
   );

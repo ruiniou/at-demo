@@ -147,16 +147,16 @@
     },
     "code-editor": {
       "fontFamily": "{fontFamily.mono}",
-      "fontSize": "{fontSize.md}",
+      "fontSize": "{fontSize.sm}",
       "fontWeight": "{fontWeight.normal}",
       "lineHeight": "{lineHeight.relaxed}",
-      "$description": "Code block content in editor (14px)"
+      "$description": "Code block content in editor (12px)"
     },
     "code-shell": {
       "fontFamily": "{fontFamily.mono}",
       "fontSize": "{fontSize.sm}",
       "fontWeight": "{fontWeight.normal}",
-      "lineHeight": "{lineHeight.normal}",
+      "lineHeight": "{lineHeight.relaxed}",
       "$description": "Terminal / shell preview text (12px)"
     },
     "code": {

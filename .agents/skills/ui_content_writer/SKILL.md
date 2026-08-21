@@ -10,6 +10,14 @@ description: >
 ## 角色
 临床业务文案与 Mock 数据撰写。生成符合医疗/临床试验语境的界面文案和测试数据。
 
+## 触发条件
+满足以下任一条件时激活：
+- 任务涉及 Mock 数据、示例文案、Sample 数据生成
+- 用户要求生成临床业务数据、空状态文案
+- 用户说「写文案」「UI content」「帮我生成数据」
+
+**不激活**：用户要求编写技术文档（如 README、API 文档）；或用户要求编写测试用例代码。
+
 ## 执行规则
 
 ### 输入处理
@@ -33,3 +41,8 @@ description: >
 - Atlas：TFL（Tables, Figures, Listings）、Shell/Preview/Code、PARAMCD、ADSL/ADAE 等 ADaM 数据集
 - iCTA：eTMF 文件分类、归档元数据（区域/国家/研究中心/试验）
 - iDM：CRF 字段、Protocol 条目、测试用例
+
+## 预期输出产物
+- **文案类**：符合语气规范的英文/中文 UI 文案（可直接复制到组件中）
+- **Mock 数据类**：JSON 或 TypeScript `const` 格式，可直接 import 到项目
+- 所有输出必须覆盖四态：正常态 + 空态 + 异常态 + 超长文本边界

@@ -3,6 +3,40 @@ name: bug_logger
 description: Use this skill when you need to record a bug, its root cause, and the solution in the Bug-Log-and-Troubleshooting.md file. This ensures bug records are written in a concise, human-readable format suitable for frontend engineers and designers.
 ---
 
+# Bug Logger
+
+## 触发条件
+满足以下任一条件时激活：
+- 用户明确要求「记录 bug」「记一下这个问题」「归档到 Bug Log」
+- `troubleshooter` 完成排障后自动调用
+- 对话中修复了一个非平凡问题，用户说「把这个记下来」
+
+**不激活**：用户只是口头描述了一个 bug 但没有要求记录；或问题过于琐碎（如拼写错误）不值得归档。
+
+## 执行流程
+
+1. **收集信息**：确认以下要素齐全——
+   - 现象（用户视角的异常表现）
+   - 根因（技术层面的具体原因：CSS 属性、JS 逻辑、架构缺陷）
+   - 解决方案（实际采用的修复方式）
+   - 经验教训（1-2 条可复用的防范建议）
+2. **读取现有文件**：打开 `Bug-Log-and-Troubleshooting.md`，确认末尾条目的日期，避免重复记录
+3. **格式化写入**：按下方模板追加到文件末尾
+4. **回读验证**：写入后重新读取文件末尾，确认格式正确、内容完整
+
+## 预期输出产物
+- 在 `Bug-Log-and-Troubleshooting.md` 末尾追加一条结构化记录
+- 在对话中向用户确认「已记录」并给出条目摘要（一句话）
+
+## 验证步骤
+- [ ] 日期格式为 `YYYY-MM-DD`，且与当天日期一致
+- [ ] 四个字段（现象 / 根因 / 方案 / 教训）全部填写，无空字段
+- [ ] 根因描述包含具体技术细节（CSS 属性名 / 函数名 / DOM 结构），而非笼统的「样式问题」
+- [ ] 经验教训至少包含一条可操作的防范建议
+- [ ] 文件末尾格式与已有条目风格一致
+
+---
+
 # Bug Logging Guidelines
 
 When the user asks you to record a bug, its root cause, and the solution, follow these guidelines to write the entry in `Bug-Log-and-Troubleshooting.md`.

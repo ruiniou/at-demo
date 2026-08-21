@@ -130,7 +130,7 @@
 }
 .t-code-editor {
   font-family: var(--font-mono, 'Menlo', 'Courier New', Courier, monospace);
-  font-size: var(--text-md, 14px);
+  font-size: var(--text-sm, 12px);
   font-weight: var(--font-weight-normal, 400);
   line-height: 1.5;
 }
@@ -138,7 +138,7 @@
   font-family: var(--font-mono, 'Menlo', 'Courier New', Courier, monospace);
   font-size: var(--text-sm, 12px);
   font-weight: var(--font-weight-normal, 400);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 /* ── Scrollbar: Default (Panel级, 12px容器 / 8px thumb) ── */
