@@ -116,3 +116,60 @@
   1. **自定义滚动条的代价**：一旦在 Web 项目中自定义了 `::-webkit-scrollbar` 宽度，就会破坏 Mac 系统自带的原生 zero-width overlay 浮动特性。
   2. **警惕“全局防抖”的副作用**：**绝对不要**试图在 `globals.css` 中用 `* { overflow-y: scroll !important; }` 去做全局防抖！这会导致页面中原本完美贴合的静态 Flex 容器和网格布局莫名其妙被吃掉 10px 宽度，从而引发全站大面积的排版破坏。
   3. **防抖动（Layout Shift）最佳实践**：针对长短高度会发生剧烈变化的**具体业务列表区**，最优解是在**局部组件**上直接使用 `overflow-y-scroll`（或 `scrollbar-gutter: stable`）常驻预留空间，配合透明的 Track 背景色即可兼顾美观与极度稳定的排版体验。
+
+---
+
+### [2026-08-13] Props 接口新增属性未在组件参数中解构引发的 `ReferenceError` 白屏
+
+* **现象 (Symptom)**：
+  控制台报错 `Uncaught ReferenceError: submitDisabled is not defined at ChatBox (ChatBox.tsx:482)`，导致包含 ChatBox 的界面组件崩溃。
+* **根本原因 (Root Cause)**：
+  在扩展 `ChatBoxProps` 接口添加 `submitDisabled?: boolean` 属性后，`ChatBox.tsx` 函数参数解构处漏写了 `submitDisabled`。因此，在 JSX 内部引用 `submitDisabled` 变量时，试图访问一个未解构且未声明的标识符，触发运行时 `ReferenceError`。
+* **解决方案 (Solution)**：
+  在 `ChatBox({ ... })` 函数参数解构中补全 `submitDisabled = false`。
+* **经验教训 (Takeaways)**：
+  1. TypeScript 接口类型添加新字段时，必须同步核对组件函数形参列表，确保所有在函数体或 JSX 中使用的 Prop 均已明确解构。
+  2. 构建阶段 `npm run build` 通过只能保证语法（Syntax）无误，运行前需检查形参作用域绑定。
+
+---
+
+### [2026-08-13] `Cancel update` 按钮未重置草稿数据导致无法回归默认初始态
+
+* **现象 (Symptom)**：
+  在 Metadata 面板进入 `To be updated` 待更新视图后，点击 `Cancel update` 按钮毫无响应，面板无法恢复到包含默认字段且无差分的初始状态。
+* **根本原因 (Root Cause)**：
+  1. **数据与视图解耦缺失**：最初 `onMetaCancel` 仅将控制视图模式的布尔标识 `metaUpdateActive` 设为 `false`，但没有撤销/重置 `figureBlocks` 与 `figureComponents` 中已被修改的字段草稿值 (`f.value`)。
+  2. **组件解构断链**：中间容器组件 `WorkspaceContent` 漏写了 `onMetaCancel` 的参数解构，导致传递给 `<MetadataPanel>` 的回调实际上是 `undefined`。
+  因此，即使关闭了 `metaUpdateActive`，底层差分比较逻辑 `metaDiffItems` 依然包含改动项（`length > 0`），导致 Header 浮框、Update Code 按钮与编辑态文本依然常驻，未能真正回到无改动的初始态。
+* **解决方案 (Solution)**：
+  1. 在 `WorkspaceContent` 参数解构中补齐 `onMetaCancel`，修复事件透传链条。
+  2. 在 `MetadataPanel` 内部实现 `handleCancelUpdate` 方法，点击时遍历 `figureBlocks` 和 `figureComponents`，将所有字段的 `value` 恢复至 baseline 初始基线，并移除临时新增的 Component 节点，最后触发 `onMetaCancel?.()`。
+* **经验教训 (Takeaways)**：
+  1. **取消/回退操作必须兼顾“视图”与“状态数据”**：对于带 Track Changes / 差分对比的面板，Cancel 操作不仅是关闭对比视图，更必须将数据 model 还原至对比基线（Baseline）。
+  2. **多层组件 Props 传递防御**：深层嵌套组件中传递回调函数时，需要沿着组件树检查每一层 wrapper 的解构，确保回调不会在半路丢失。
+
+---
+
+### [2026-08-13] 内部组件错误引用父层 `setMetaUpdateActive` 抛出 `ReferenceError` 导致按钮点击失败
+
+* **现象 (Symptom)**：
+  控制台报错 `Uncaught ReferenceError: setMetaUpdateActive is not defined at onMetaCancel (Main.tsx:4310)`，点击 `Cancel update` 按钮报错崩溃。
+* **根本原因 (Root Cause)**：
+  在 `WorkspaceContent` 组件内部（行 4310），向 `<MetadataPanel>` 传递 `onMetaCancel` 时，误写成了 `onMetaCancel={() => setMetaUpdateActive(false)}`。由于 `setMetaUpdateActive` 状态定义在顶层 `WorkspaceShell` / `Main` 中，`WorkspaceContent` 局部作用域并没有 `setMetaUpdateActive` 标识符，导致调用时抛出 `ReferenceError`。
+* **解决方案 (Solution)**：
+  将行 4310 的 `onMetaCancel={() => setMetaUpdateActive(false)}` 修正为直接传递 `onMetaCancel={onMetaCancel}`，正确消费从顶层逐层透传进来的回调函数。
+* **经验教训 (Takeaways)**：
+  在 React 多层嵌套组件中，深层 Element 挂载回调时切勿凭感觉直接调用父级 State setter，必须严格透传 Props 形参 `onMetaCancel`。
+
+---
+
+### [2026-08-13] `WorkspaceShell` 中渲染 `<ShellPreview>` 遗漏 `onQuoteField` Prop 导致悬浮 Quote 按钮无法显示
+
+* **现象 (Symptom)**：
+  用户在 Metadata 面板任意字段或组件上悬浮鼠标，双引号 Quote 按钮始终不显示，无法触发引用。
+* **根本原因 (Root Cause)**：
+  顶层组件 `WorkspaceShell` 在渲染 `<ShellPreview>` 时（行 8044），只传了 `onReviewItemsChange` 和 `onMetaCancel`，遗漏了 `onQuoteField={handleQuoteField}` 的传递。导致 `ShellPreview` 内部收到的 `onQuoteField` 始终为 `undefined`，进而透传给 `MetadataPanel` 的 `onQuoteField` 也是 `undefined`。由于条件判断 `{onQuoteField && (...)}` 评估为 `false`，组件未向 DOM 渲染任何 Quote 按钮。
+* **解决方案 (Solution)**：
+  在 `WorkspaceShell` 中渲染 `<ShellPreview>` 时补全 `onQuoteField={handleQuoteField}`。
+* **经验教训 (Takeaways)**：
+  当深层组件中的条件渲染按钮 (`{fn && <button />}`) 持续不露显时，第一排查要点应当是检查最上层 state/handler 闭包是否在最外层 JSX 调用的地方被遗漏传递。

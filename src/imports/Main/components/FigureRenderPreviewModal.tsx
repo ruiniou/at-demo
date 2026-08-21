@@ -17,6 +17,7 @@ interface FigureRenderPreviewModalProps {
   panelLayout?: 'horizontal' | 'vertical';
   panelView?: 'shell' | 'code' | 'both';
   copilotOpen?: boolean;
+  copilotWidth?: number;
 }
 
 export function FigureRenderPreviewModal({
@@ -28,6 +29,7 @@ export function FigureRenderPreviewModal({
   panelLayout = 'horizontal',
   panelView = 'shell',
   copilotOpen = true,
+  copilotWidth = 360,
 }: FigureRenderPreviewModalProps) {
   if (!isOpen) return null;
 
@@ -48,26 +50,26 @@ export function FigureRenderPreviewModal({
     setImgLoadError(false);
   }, [activeVersionLabel]);
 
-  // Initial position calculation when not dragged yet
+  // Initial position calculation: Anchored to the rightmost edge (over AI Copilot area) to avoid covering Shell Preview on the left
   useEffect(() => {
     if (position === null) {
       const windowW = window.innerWidth;
       const windowH = window.innerHeight;
       
-      // Default: position on non-Shell side
-      let defaultX = windowW - size.width - (copilotOpen ? 360 : 40);
-      let defaultY = Math.max(80, (windowH - size.height) / 2);
+      // Position anchored to the right edge with 16px margin (landing over Copilot on the right)
+      let targetX = windowW - size.width - 16;
+      let targetY = 96;
 
-      if (panelView === 'both') {
-        if (panelLayout === 'horizontal') {
-          // Right half
-          defaultX = windowW - size.width - (copilotOpen ? 360 : 40);
-        } else {
-          // Bottom half
-          defaultY = windowH - size.height - 60;
-        }
-      }
-      setPosition({ x: Math.max(20, defaultX), y: Math.max(60, defaultY) });
+      // Anti-collision boundaries: ensure it stays within visible screen area
+      const minX = 16;
+      const maxX = Math.max(minX, windowW - size.width - 16);
+      const minY = 60;
+      const maxY = Math.max(minY, windowH - size.height - 16);
+
+      const safeX = Math.min(Math.max(targetX, minX), maxX);
+      const safeY = Math.min(Math.max(targetY, minY), maxY);
+
+      setPosition({ x: safeX, y: safeY });
     }
   }, []);
 
