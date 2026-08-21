@@ -5723,6 +5723,21 @@ function MetadataPanel({
     });
   };
 
+  // ── Container Width Observation for Responsive Top Bar ──
+  const panelContainerRef = useRef<HTMLDivElement>(null);
+  const [isNarrow, setIsNarrow] = useState(false);
+
+  useEffect(() => {
+    if (!panelContainerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setIsNarrow(entry.contentRect.width < 400);
+      }
+    });
+    observer.observe(panelContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   // ── Table States (Original) ──
   const [blockFields, setBlockFields] = useState<{ id: string; label: string; value: string; status: FieldStatus; confirmed: boolean }[]>(() => {
     const fallback = [
@@ -5752,6 +5767,20 @@ function MetadataPanel({
     return stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
   });
   useEffect(() => { sessionStorage.setItem('metadataBlocks', JSON.stringify(blocks)); }, [blocks]);
+
+  const [tableBlocks, setTableBlocks] = useState<any[]>(() => {
+    const stored = loadFromSession('metadataBlocks_table_blocks', METADATA_BLOCK_ITEMS_DATA);
+    if (!Array.isArray(stored)) return METADATA_BLOCK_ITEMS_DATA;
+    return stored;
+  });
+  useEffect(() => { sessionStorage.setItem('metadataBlocks_table_blocks', JSON.stringify(tableBlocks)); }, [tableBlocks]);
+
+  const handleTableBlockFieldEdit = (blockId: string, fieldId: string, value: string) => {
+    setTableBlocks(prev => prev.map(b => b.id !== blockId ? b : {
+      ...b,
+      fields: b.fields.map((f: any) => f.id !== fieldId ? f : { ...f, value, status: 'edited' })
+    }));
+  };
 
   const [selectedGroupIdx, setSelectedGroupIdx] = useState(() => loadFromSession('metadataSelectedGroupIdx', 0));
   const [groupStatus, setGroupStatus] = useState<FieldStatus>(() => loadFromSession('metadataGroupStatus', 'default'));
@@ -5847,8 +5876,13 @@ function MetadataPanel({
 
   const [tableFieldBaseline, setTableFieldBaseline] = useState<Record<string, string>>(() => {
     const fallback: Record<string, string> = {};
-    blockFields.forEach(f => { fallback[f.id] = f.value; });
     blocks.forEach(b => b.fields.forEach(f => { fallback[f.id] = f.value; }));
+    fallback['groupName'] = GROUP_OPTIONS[0]?.name || '';
+    METADATA_BLOCK_ITEMS_DATA.forEach(b => {
+      b.fields.forEach((f: any) => {
+        fallback[`${b.id}_${f.id}`] = f.value;
+      });
+    });
     return loadFromSession('metadataTableFieldBaseline', fallback);
   });
   useEffect(() => { sessionStorage.setItem('metadataTableFieldBaseline', JSON.stringify(tableFieldBaseline)); }, [tableFieldBaseline]);
@@ -6094,7 +6128,8 @@ function MetadataPanel({
         });
       }
     } else {
-      // Table diffs: blocks and blockFields
+      // Table diffs:
+      // 1. Basic Info fields
       blocks.forEach(b => {
         b.fields.forEach(f => {
           const baseVal = tableFieldBaseline[f.id];
@@ -6105,26 +6140,45 @@ function MetadataPanel({
               oldValue: baseVal,
               newValue: f.value,
               blockId: b.id,
-              blockName: b.name || 'Basic Information',
+              blockName: 'Basic Information',
               changeType: 'modified'
             });
           }
         });
       });
 
-      blockFields.forEach(f => {
-        const baseVal = tableFieldBaseline[f.id];
-        if (baseVal !== undefined && baseVal !== f.value) {
-          items.push({
-            fieldId: f.id,
-            label: f.label,
-            oldValue: baseVal,
-            newValue: f.value,
-            blockId: 'tableBasic',
-            blockName: 'Basic Information',
-            changeType: 'modified'
-          });
-        }
+      // 2. Group Name
+      const currentGroupName = GROUP_OPTIONS[selectedGroupIdx]?.name || '';
+      const baseGroupName = tableFieldBaseline['groupName'];
+      if (baseGroupName !== undefined && baseGroupName !== currentGroupName) {
+        items.push({
+          fieldId: 'groupName',
+          label: 'Group Name',
+          oldValue: baseGroupName,
+          newValue: currentGroupName,
+          blockId: 'group',
+          blockName: 'Basic Information',
+          changeType: 'modified'
+        });
+      }
+
+      // 3. Table Blocks tab
+      tableBlocks.forEach(b => {
+        b.fields.forEach((f: any) => {
+          const fieldKey = `${b.id}_${f.id}`;
+          const baseVal = tableFieldBaseline[fieldKey];
+          if (baseVal !== undefined && baseVal !== f.value) {
+            items.push({
+              fieldId: fieldKey,
+              label: f.label,
+              oldValue: baseVal,
+              newValue: f.value,
+              blockId: b.id,
+              blockName: b.name || 'Block',
+              changeType: 'modified'
+            });
+          }
+        });
       });
     }
 
@@ -6133,7 +6187,7 @@ function MetadataPanel({
     docType,
     figureBlocks, figureComponents, figureFieldBaseline, figureComponentDeprecatedBaseline, figureComponentListBaseline,
     listingBlocks, listingColumnFields, listingFieldBaseline, isRepeatColumnEdited, isPageBreakColumnEdited, repeatColumnBaseline, frozenUntilIndex, pageBreakColumnBaseline, pageBreakColumns,
-    blocks, blockFields, tableFieldBaseline
+    blocks, selectedGroupIdx, tableBlocks, tableFieldBaseline
   ]);
 
   const newDiffItems = useMemo<MetaDiffItem[]>(() => {
@@ -6208,10 +6262,17 @@ function MetadataPanel({
             return isSubmitted ? { ...f, status: 'default' as const } : f;
           })
         })));
-        setBlockFields(prev => prev.map(f => {
-          const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === f.id && sub.newValue === f.value);
-          return isSubmitted ? { ...f, status: 'default' as const } : f;
-        }));
+        setTableBlocks(prev => prev.map(b => ({
+          ...b,
+          fields: b.fields.map((f: any) => {
+            const fieldKey = `${b.id}_${f.id}`;
+            const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === fieldKey && sub.newValue === f.value);
+            return isSubmitted ? { ...f, status: 'default' as const } : f;
+          })
+        })));
+        if (submittedDiffItems.some(sub => sub.fieldId === 'groupName')) {
+          setGroupStatus('default');
+        }
       } else if (docType === 'listing') {
         setListingFieldBaseline(prev => {
           const updated = { ...prev };
@@ -6723,18 +6784,18 @@ function MetadataPanel({
   const [deleteConfirmBlockId, setDeleteConfirmBlockId] = useState<string | null>(null);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
+    <div ref={panelContainerRef} className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       {/* Top Bar */}
-      <div className="flex h-[40px] shrink-0 items-center justify-between border-b border-graphite-10 bg-white">
-        <div className="flex h-full items-center">
+      <div className="flex h-[40px] shrink-0 items-center justify-between border-b border-graphite-10 bg-white flex-nowrap min-w-0 overflow-hidden">
+        <div className="flex h-full items-center min-w-0 shrink-0">
           {(["basic", "blocks"] as const).map((tab) => {
             const tabCount = tab === 'basic' ? basicTabDiffCount : componentsTabDiffCount;
             return (
               <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`relative flex h-full items-center justify-center border-b-2 px-[16px] active:scale-[0.96] ${activeTab === tab ? "border-brand-1" : "border-transparent"}`}>
-                <div className="flex items-center gap-[6px]">
-                  <p className={`t-small font-medium ${activeTab === tab ? "text-brand-1" : "text-text-primary"}`}>
-                    {tab === "basic" ? (docType === 'listing' ? "Basic info" : docType === 'figure' ? "Basic" : "Basic Information") : (docType === 'listing' ? "Column" : docType === 'figure' ? "Components" : "Blocks")}
+                className={`relative flex h-full items-center justify-center border-b-2 ${isNarrow ? 'px-[8px]' : 'px-[16px]'} active:scale-[0.96] shrink-0 ${activeTab === tab ? "border-brand-1" : "border-transparent"}`}>
+                <div className="flex items-center gap-[4px]">
+                  <p className={`t-small font-medium ${activeTab === tab ? "text-brand-1" : "text-text-primary"} whitespace-nowrap`}>
+                    {tab === "basic" ? (docType === 'listing' ? "Basic info" : docType === 'figure' ? "Basic" : (isNarrow ? "Basic" : "Basic Information")) : (docType === 'listing' ? "Column" : docType === 'figure' ? "Components" : "Blocks")}
                   </p>
                   {/* To be Updated: Header-style count badge attached right next to title */}
                   {showPanelDiff && tabCount > 0 && (
@@ -6757,7 +6818,7 @@ function MetadataPanel({
             );
           })}
         </div>
-        <div className="flex items-center pr-[12px] gap-[8px]">
+        <div className="flex items-center pr-[12px] gap-[6px] shrink-0">
           {/* Secondary Button when in Updated / To be updated mode */}
           {showPanelDiff && (
             <button
@@ -6765,7 +6826,7 @@ function MetadataPanel({
               className="flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] bg-graphite-20 hover:bg-graphite-40 px-[8px] t-small font-medium text-text-primary active:scale-[0.96] transition-all cursor-pointer select-none shrink-0"
               title="Cancel updated view and return to normal editing mode"
             >
-              <span>Cancel update</span>
+              <span>{isNarrow ? 'Cancel' : 'Cancel update'}</span>
             </button>
           )}
 
@@ -6778,15 +6839,16 @@ function MetadataPanel({
                   onRequestUpdateCode?.();
                 }}
                 disabled={isUpdateDisabled}
-                className={`flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] px-[8px] text-[12px] font-medium transition-all ${
+                title={isNarrow ? `Update Code (${metaDiffItems.length})` : undefined}
+                className={`flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] ${isNarrow ? 'w-[24px] px-0' : 'px-[8px]'} text-[12px] font-medium transition-all shrink-0 ${
                   isUpdateDisabled
                     ? 'bg-border-default text-text-secondary cursor-not-allowed'
                     : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'
                 }`}
               >
                 <LocalIcon src={addMetadiffIconUrl} className="h-[14px] w-[14px]" color={isUpdateDisabled ? '#888E8E' : 'white'} />
-                <span>Update Code</span>
-                {!metaUpdateProcessing && (
+                {!isNarrow && <span>Update Code</span>}
+                {!isNarrow && !metaUpdateProcessing && (
                   <div className="flex items-center justify-center h-[14px] min-w-[14px] px-[3px] py-px rounded-[10px] bg-white/20 shrink-0">
                     <span className="text-[10px] leading-[12px] font-medium text-white">{metaDiffItems.length}</span>
                   </div>
@@ -6796,7 +6858,7 @@ function MetadataPanel({
           })()}
 
           <TooltipText label="Batch Edit Macro">
-            <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Batch edit">
+            <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] shrink-0" aria-label="Batch edit">
               <LocalIcon src={batchMicroIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
             </button>
           </TooltipText>
@@ -7582,11 +7644,11 @@ function MetadataPanel({
               </div>
             ) : (
             <BlocksTabContent
-              blocks={METADATA_BLOCK_ITEMS_DATA}
+              blocks={tableBlocks}
               targetBlockId={targetBlockId}
               confirmedBlocks={blockItemConfirmed}
               onToggleBlockConfirm={(blockId) => {
-                const block = METADATA_BLOCK_ITEMS_DATA.find(b => b.id === blockId);
+                const block = tableBlocks.find((b: any) => b.id === blockId);
                 if (!block) return;
                 const allConfirmed = block.fields.length > 0 && block.fields.every((f: any) => blockItemConfirmed[`${blockId}_${f.id}`]);
                 const nextState = !allConfirmed;
@@ -7599,6 +7661,9 @@ function MetadataPanel({
                 });
               }}
               isLocked={false}
+              onFieldEdit={handleTableBlockFieldEdit}
+              fieldRefs={fieldRefs}
+              onQuoteField={onQuoteField}
             />
             )
           )
