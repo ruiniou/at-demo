@@ -2601,6 +2601,15 @@ interface ListingShellPreviewProps {
   groupCodes?: GroupCodeItem[];
   groupViewWidth?: number;
   onGroupViewResize?: (delta: number) => void;
+  onMetaDiffChange?: (diffItems: MetaDiffItem[]) => void;
+  onRequestUpdateCode?: () => void;
+  onMetaCancel?: () => void;
+  baselineAdvanceTrigger?: number;
+  metaUpdateActive?: boolean;
+  metaUpdateProcessing?: boolean;
+  submittedDiffItems?: MetaDiffItem[];
+  onReviewItemsChange?: (items: ReviewItem[]) => void;
+  onQuoteField?: (fieldId: string, fieldName: string, blockName: string) => void;
 }
 
 function ListingShellPreview({
@@ -2630,6 +2639,15 @@ function ListingShellPreview({
   groupCodes = [],
   groupViewWidth = 380,
   onGroupViewResize,
+  onMetaDiffChange,
+  onRequestUpdateCode,
+  onMetaCancel,
+  baselineAdvanceTrigger,
+  metaUpdateActive,
+  metaUpdateProcessing,
+  submittedDiffItems = [],
+  onReviewItemsChange,
+  onQuoteField,
 }: ListingShellPreviewProps) {
   const [pageScale] = useState(100);
   const [selectedPrintPageIndex, setSelectedPrintPageIndex] = useState(0);
@@ -3658,10 +3676,18 @@ function ListingShellPreview({
                   idpageBaseline={idpageBaseline}
                   idlistBaseline={idlistBaseline}
                   onIdpageBaselineChange={onIdpageBaselineChange}
-                  onIdlistBaselineChange={onIdlistBaselineChange}
                   onAddChangesToChat={(text) => {
                     onOpenAICopilot?.(text);
                   }}
+                  onMetaDiffChange={onMetaDiffChange}
+                  onRequestUpdateCode={onRequestUpdateCode}
+                  onMetaCancel={onMetaCancel}
+                  baselineAdvanceTrigger={baselineAdvanceTrigger}
+                  metaUpdateActive={metaUpdateActive}
+                  metaUpdateProcessing={metaUpdateProcessing}
+                  submittedDiffItems={submittedDiffItems}
+                  onReviewItemsChange={onReviewItemsChange}
+                  onQuoteField={onQuoteField}
                 />
               </div>
             </div>
@@ -5819,6 +5845,22 @@ function MetadataPanel({
 
   const [hasMetadataComponentEdits, setHasMetadataComponentEdits] = useState(false);
 
+  const [tableFieldBaseline, setTableFieldBaseline] = useState<Record<string, string>>(() => {
+    const fallback: Record<string, string> = {};
+    blockFields.forEach(f => { fallback[f.id] = f.value; });
+    blocks.forEach(b => b.fields.forEach(f => { fallback[f.id] = f.value; }));
+    return loadFromSession('metadataTableFieldBaseline', fallback);
+  });
+  useEffect(() => { sessionStorage.setItem('metadataTableFieldBaseline', JSON.stringify(tableFieldBaseline)); }, [tableFieldBaseline]);
+
+  const [listingFieldBaseline, setListingFieldBaseline] = useState<Record<string, string>>(() => {
+    const fallback: Record<string, string> = {};
+    listingBlocks.forEach(b => b.fields.forEach(f => { fallback[f.id] = f.value; }));
+    listingColumnFields.forEach(f => { fallback[f.id] = f.value; });
+    return loadFromSession('metadataListingFieldBaseline', fallback);
+  });
+  useEffect(() => { sessionStorage.setItem('metadataListingFieldBaseline', JSON.stringify(listingFieldBaseline)); }, [listingFieldBaseline]);
+
   const [figureFieldBaseline, setFigureFieldBaseline] = useState<Record<string, string>>(() => {
     const baseline: Record<string, string> = {};
     figureBlocks.forEach(b => b.fields.forEach(f => { baseline[f.id] = f.value; }));
@@ -5847,30 +5889,9 @@ function MetadataPanel({
   const metaDiffItems = useMemo<MetaDiffItem[]>(() => {
     const items: MetaDiffItem[] = [];
 
-    // 1. Basic Block Field Edits (skip tag fields)
-    figureBlocks.forEach(b => b.fields.forEach(f => {
-      if (f.type === 'tag') return;
-      const baseVal = figureFieldBaseline[f.id];
-      if (baseVal !== undefined && baseVal !== f.value) {
-        items.push({ 
-          fieldId: f.id, 
-          label: f.label, 
-          oldValue: baseVal, 
-          newValue: f.value,
-          blockId: b.id,
-          blockName: b.name || 'Basic Info',
-          changeType: 'modified'
-        });
-      }
-    }));
-
-    // 2. Component Field Edits & Display Facts Edits (skip tag fields)
-    figureComponents.forEach(b => {
-      const isNewComp = !figureComponentListBaseline.some(cb => cb.id === b.id);
-      if (isNewComp) return;
-      const blockName = b.name || 'Component';
-
-      b.fields.forEach(f => {
+    if (docType === 'figure') {
+      // 1. Basic Block Field Edits (skip tag fields)
+      figureBlocks.forEach(b => b.fields.forEach(f => {
         if (f.type === 'tag') return;
         const baseVal = figureFieldBaseline[f.id];
         if (baseVal !== undefined && baseVal !== f.value) {
@@ -5880,101 +5901,218 @@ function MetadataPanel({
             oldValue: baseVal, 
             newValue: f.value,
             blockId: b.id,
-            blockName: blockName,
+            blockName: b.name || 'Basic Info',
             changeType: 'modified'
           });
         }
-      });
+      }));
 
-      // Display Facts Diffs
-      b.display_facts?.forEach((fact, factIdx) => {
-        const factKey = `${b.id}_fact_${factIdx}_value`;
-        const baseFactVal = figureFieldBaseline[factKey];
-        if (baseFactVal !== undefined && baseFactVal !== fact.value) {
-          items.push({
-            fieldId: factKey,
-            label: `${fact.section ? fact.section + ' > ' : ''}${fact.label}`,
-            oldValue: baseFactVal,
-            newValue: fact.value,
-            blockId: b.id,
-            blockName: blockName,
-            changeType: 'modified'
-          });
-        }
+      // 2. Component Field Edits & Display Facts Edits (skip tag fields)
+      figureComponents.forEach(b => {
+        const isNewComp = !figureComponentListBaseline.some(cb => cb.id === b.id);
+        if (isNewComp) return;
+        const blockName = b.name || 'Component';
 
-        fact.details?.forEach((det, detIdx) => {
-          const detKey = `${b.id}_fact_${factIdx}_det_${detIdx}`;
-          const baseDetVal = figureFieldBaseline[detKey];
-          if (baseDetVal !== undefined && baseDetVal !== det) {
-            items.push({
-              fieldId: detKey,
-              label: `${fact.section ? fact.section + ' > ' : ''}${fact.label} (Detail #${detIdx + 1})`,
-              oldValue: baseDetVal,
-              newValue: det,
+        b.fields.forEach(f => {
+          if (f.type === 'tag') return;
+          const baseVal = figureFieldBaseline[f.id];
+          if (baseVal !== undefined && baseVal !== f.value) {
+            items.push({ 
+              fieldId: f.id, 
+              label: f.label, 
+              oldValue: baseVal, 
+              newValue: f.value,
               blockId: b.id,
               blockName: blockName,
               changeType: 'modified'
             });
           }
         });
-      });
-    });
 
-    // 3. Component Deprecation / Undeprecation
-    figureComponents.forEach(c => {
-      const baseDep = figureComponentDeprecatedBaseline[c.id];
-      const isNewComp = !figureComponentListBaseline.some(cb => cb.id === c.id);
-      if (!isNewComp && baseDep !== undefined && baseDep !== !!c.deprecated) {
-        const blockName = c.name || 'Component';
+        // Display Facts Diffs
+        b.display_facts?.forEach((fact, factIdx) => {
+          const factKey = `${b.id}_fact_${factIdx}_value`;
+          const baseFactVal = figureFieldBaseline[factKey];
+          if (baseFactVal !== undefined && baseFactVal !== fact.value) {
+            items.push({
+              fieldId: factKey,
+              label: `${fact.section ? fact.section + ' > ' : ''}${fact.label}`,
+              oldValue: baseFactVal,
+              newValue: fact.value,
+              blockId: b.id,
+              blockName: blockName,
+              changeType: 'modified'
+            });
+          }
+
+          fact.details?.forEach((det, detIdx) => {
+            const detKey = `${b.id}_fact_${factIdx}_det_${detIdx}`;
+            const baseDetVal = figureFieldBaseline[detKey];
+            if (baseDetVal !== undefined && baseDetVal !== det) {
+              items.push({
+                fieldId: detKey,
+                label: `${fact.section ? fact.section + ' > ' : ''}${fact.label} (Detail #${detIdx + 1})`,
+                oldValue: baseDetVal,
+                newValue: det,
+                blockId: b.id,
+                blockName: blockName,
+                changeType: 'modified'
+              });
+            }
+          });
+        });
+      });
+
+      // 3. Component Deprecation / Undeprecation
+      figureComponents.forEach(c => {
+        const baseDep = figureComponentDeprecatedBaseline[c.id];
+        const isNewComp = !figureComponentListBaseline.some(cb => cb.id === c.id);
+        if (!isNewComp && baseDep !== undefined && baseDep !== !!c.deprecated) {
+          const blockName = c.name || 'Component';
+          items.push({
+            fieldId: `deprecate_${c.id}`,
+            label: 'Status',
+            oldValue: baseDep ? 'Deprecated' : 'Active',
+            newValue: c.deprecated ? 'Deprecated' : 'Active',
+            blockId: c.id,
+            blockName: blockName,
+            changeType: 'modified'
+          });
+        }
+      });
+
+      // 4. Component Deletion (deletion requires update code workflow)
+      figureComponentListBaseline.forEach(baseComp => {
+        const exists = figureComponents.some(c => c.id === baseComp.id);
+        if (!exists) {
+          items.push({
+            fieldId: `delete_${baseComp.id}`,
+            label: baseComp.name,
+            oldValue: 'Existing Component',
+            newValue: 'Removed',
+            blockId: baseComp.id,
+            blockName: baseComp.name,
+            changeType: 'removed'
+          });
+        }
+      });
+
+      // 5. Component Addition (state === 'ready')
+      figureComponents.forEach(c => {
+        if (c.state === 'ready') {
+          const inBaseline = figureComponentListBaseline.some(cb => cb.id === c.id);
+          if (!inBaseline) {
+            const blockName = c.name || 'New Component';
+            items.push({
+              fieldId: `add_${c.id}`,
+              label: blockName,
+              oldValue: '(None)',
+              newValue: blockName,
+              blockId: c.id,
+              blockName: blockName,
+              changeType: 'added'
+            });
+          }
+        }
+      });
+    } else if (docType === 'listing') {
+      listingBlocks.forEach(b => {
+        b.fields.forEach(f => {
+          const baseVal = listingFieldBaseline[f.id];
+          if (baseVal !== undefined && baseVal !== f.value) {
+            items.push({
+              fieldId: f.id,
+              label: f.label,
+              oldValue: baseVal,
+              newValue: f.value,
+              blockId: b.id,
+              blockName: 'Basic Info',
+              changeType: 'modified'
+            });
+          }
+        });
+      });
+
+      listingColumnFields.forEach(f => {
+        const baseVal = listingFieldBaseline[f.id];
+        if (baseVal !== undefined && baseVal !== f.value) {
+          items.push({
+            fieldId: f.id,
+            label: f.label,
+            oldValue: baseVal,
+            newValue: f.value,
+            blockId: 'columns',
+            blockName: 'Column',
+            changeType: 'modified'
+          });
+        }
+      });
+
+      if (isRepeatColumnEdited) {
         items.push({
-          fieldId: `deprecate_${c.id}`,
-          label: 'Status',
-          oldValue: baseDep ? 'Deprecated' : 'Active',
-          newValue: c.deprecated ? 'Deprecated' : 'Active',
-          blockId: c.id,
-          blockName: blockName,
+          fieldId: 'freeze_columns',
+          label: 'Freeze Columns',
+          oldValue: repeatColumnBaseline?.frozenUntilIndex !== null ? `Col 1-${(repeatColumnBaseline?.frozenUntilIndex ?? 0) + 1}` : 'None',
+          newValue: frozenUntilIndex !== null ? `Col 1-${frozenUntilIndex + 1}` : 'None',
+          blockId: 'layoutRepetitionSorting',
+          blockName: 'Basic Info',
           changeType: 'modified'
         });
       }
-    });
 
-    // 4. Component Deletion (deletion requires update code workflow)
-    figureComponentListBaseline.forEach(baseComp => {
-      const exists = figureComponents.some(c => c.id === baseComp.id);
-      if (!exists) {
+      if (isPageBreakColumnEdited) {
         items.push({
-          fieldId: `delete_${baseComp.id}`,
-          label: baseComp.name,
-          oldValue: 'Existing Component',
-          newValue: 'Removed',
-          blockId: baseComp.id,
-          blockName: baseComp.name,
-          changeType: 'removed'
+          fieldId: 'page_breaks',
+          label: 'Page Break Columns',
+          oldValue: (pageBreakColumnBaseline?.pageBreakColumns?.length || 0) > 0 ? `${pageBreakColumnBaseline?.pageBreakColumns?.length} breaks` : 'None',
+          newValue: `${pageBreakColumns.length} breaks`,
+          blockId: 'layoutRepetitionSorting',
+          blockName: 'Basic Info',
+          changeType: 'modified'
         });
       }
-    });
+    } else {
+      // Table diffs: blocks and blockFields
+      blocks.forEach(b => {
+        b.fields.forEach(f => {
+          const baseVal = tableFieldBaseline[f.id];
+          if (baseVal !== undefined && baseVal !== f.value) {
+            items.push({
+              fieldId: f.id,
+              label: f.label,
+              oldValue: baseVal,
+              newValue: f.value,
+              blockId: b.id,
+              blockName: b.name || 'Basic Information',
+              changeType: 'modified'
+            });
+          }
+        });
+      });
 
-    // 5. Component Addition (state === 'ready')
-    figureComponents.forEach(c => {
-      if (c.state === 'ready') {
-        const inBaseline = figureComponentListBaseline.some(cb => cb.id === c.id);
-        if (!inBaseline) {
-          const blockName = c.name || 'New Component';
+      blockFields.forEach(f => {
+        const baseVal = tableFieldBaseline[f.id];
+        if (baseVal !== undefined && baseVal !== f.value) {
           items.push({
-            fieldId: `add_${c.id}`,
-            label: blockName,
-            oldValue: '(None)',
-            newValue: blockName,
-            blockId: c.id,
-            blockName: blockName,
-            changeType: 'added'
+            fieldId: f.id,
+            label: f.label,
+            oldValue: baseVal,
+            newValue: f.value,
+            blockId: 'tableBasic',
+            blockName: 'Basic Information',
+            changeType: 'modified'
           });
         }
-      }
-    });
+      });
+    }
 
     return items;
-  }, [figureBlocks, figureComponents, figureFieldBaseline, figureComponentDeprecatedBaseline, figureComponentListBaseline]);
+  }, [
+    docType,
+    figureBlocks, figureComponents, figureFieldBaseline, figureComponentDeprecatedBaseline, figureComponentListBaseline,
+    listingBlocks, listingColumnFields, listingFieldBaseline, isRepeatColumnEdited, isPageBreakColumnEdited, repeatColumnBaseline, frozenUntilIndex, pageBreakColumnBaseline, pageBreakColumns,
+    blocks, blockFields, tableFieldBaseline
+  ]);
 
   const newDiffItems = useMemo<MetaDiffItem[]>(() => {
     if (!metaUpdateProcessing) return metaDiffItems;
@@ -5995,18 +6133,28 @@ function MetadataPanel({
   const figureComponentBlockIds = useMemo(() => new Set(figureComponents.map(c => c.id)), [figureComponents]);
 
   /** Count of diff items in the Basic Info tab (for tab badge) */
-  const basicTabDiffCount = useMemo(() =>
-    metaDiffItems.filter(d => figureBasicBlockIds.has(d.blockId || '')).length,
-    [metaDiffItems, figureBasicBlockIds]
-  );
+  const basicTabDiffCount = useMemo(() => {
+    if (docType === 'figure') {
+      return metaDiffItems.filter(d => figureBasicBlockIds.has(d.blockId || '')).length;
+    } else if (docType === 'listing') {
+      return metaDiffItems.filter(d => d.blockName === 'Basic Info').length;
+    } else {
+      return metaDiffItems.filter(d => d.blockName === 'Basic Information').length;
+    }
+  }, [metaDiffItems, figureBasicBlockIds, docType]);
 
-  /** Count of diff items in the Components tab (for tab badge) */
-  const componentsTabDiffCount = useMemo(() =>
-    metaDiffItems.filter(d =>
-      d.changeType === 'added' || d.changeType === 'removed' || figureComponentBlockIds.has(d.blockId || '')
-    ).length,
-    [metaDiffItems, figureComponentBlockIds]
-  );
+  /** Count of diff items in the Components/Column/Blocks tab (for tab badge) */
+  const componentsTabDiffCount = useMemo(() => {
+    if (docType === 'figure') {
+      return metaDiffItems.filter(d =>
+        d.changeType === 'added' || d.changeType === 'removed' || figureComponentBlockIds.has(d.blockId || '')
+      ).length;
+    } else if (docType === 'listing') {
+      return metaDiffItems.filter(d => d.blockId === 'columns').length;
+    } else {
+      return metaDiffItems.filter(d => d.blockName !== 'Basic Information').length;
+    }
+  }, [metaDiffItems, figureComponentBlockIds, docType]);
 
   /** Removed block IDs — used to suppress modified-field rows for deleted components */
   const removedCompBlockIds = useMemo(() =>
@@ -6023,72 +6171,112 @@ function MetadataPanel({
   const [lastBaselineTrigger, setLastBaselineTrigger] = useState(0);
   useEffect(() => {
     if (baselineAdvanceTrigger && baselineAdvanceTrigger > lastBaselineTrigger) {
-      setFigureFieldBaseline(prev => {
-        const updated = { ...prev };
-        submittedDiffItems.forEach(sub => {
-          if (!sub.fieldId.startsWith('deprecate_') && !sub.fieldId.startsWith('delete_') && !sub.fieldId.startsWith('add_')) {
+      if (docType === 'table') {
+        setTableFieldBaseline(prev => {
+          const updated = { ...prev };
+          submittedDiffItems.forEach(sub => {
             updated[sub.fieldId] = sub.newValue;
-          }
+          });
+          return updated;
         });
-        submittedDiffItems.forEach(sub => {
-          if (sub.fieldId.startsWith('add_')) {
-            const compId = sub.fieldId.replace('add_', '');
-            const comp = figureComponents.find(c => c.id === compId);
-            if (comp) {
-              comp.fields.forEach(f => { updated[f.id] = f.value; });
-            }
-          }
-        });
-        return updated;
-      });
-
-      setFigureComponentDeprecatedBaseline(prev => {
-        const updated = { ...prev };
-        submittedDiffItems.forEach(sub => {
-          if (sub.fieldId.startsWith('deprecate_')) {
-            const compId = sub.fieldId.replace('deprecate_', '');
-            updated[compId] = (sub.newValue === 'Deprecated');
-          }
-        });
-        return updated;
-      });
-
-      setFigureComponentListBaseline(prev => {
-        let updated = [...prev];
-        submittedDiffItems.forEach(sub => {
-          if (sub.fieldId.startsWith('delete_')) {
-            const compId = sub.fieldId.replace('delete_', '');
-            updated = updated.filter(c => c.id !== compId);
-          } else if (sub.fieldId.startsWith('add_')) {
-            const compId = sub.fieldId.replace('add_', '');
-            const comp = figureComponents.find(c => c.id === compId);
-            if (comp && !updated.some(c => c.id === compId)) {
-              updated.push({ id: compId, name: comp.name || compId });
-            }
-          }
-        });
-        return updated;
-      });
-      
-      setFigureBlocks(prev => prev.map(b => ({
-        ...b,
-        fields: b.fields.map(f => {
+        setBlocks(prev => prev.map(b => ({
+          ...b,
+          fields: b.fields.map(f => {
+            const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === f.id && sub.newValue === f.value);
+            return isSubmitted ? { ...f, status: 'default' as const } : f;
+          })
+        })));
+        setBlockFields(prev => prev.map(f => {
           const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === f.id && sub.newValue === f.value);
           return isSubmitted ? { ...f, status: 'default' as const } : f;
-        })
-      })));
-      
-      setFigureComponents(prev => prev.map(b => ({
-        ...b,
-        fields: b.fields.map(f => {
+        }));
+      } else if (docType === 'listing') {
+        setListingFieldBaseline(prev => {
+          const updated = { ...prev };
+          submittedDiffItems.forEach(sub => {
+            updated[sub.fieldId] = sub.newValue;
+          });
+          return updated;
+        });
+        setListingBlocks(prev => prev.map(b => ({
+          ...b,
+          fields: b.fields.map(f => {
+            const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === f.id && sub.newValue === f.value);
+            return isSubmitted ? { ...f, status: 'default' as const } : f;
+          })
+        })));
+        setListingColumnFields(prev => prev.map(f => {
           const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === f.id && sub.newValue === f.value);
           return isSubmitted ? { ...f, status: 'default' as const } : f;
-        })
-      })));
+        }));
+      } else {
+        setFigureFieldBaseline(prev => {
+          const updated = { ...prev };
+          submittedDiffItems.forEach(sub => {
+            if (!sub.fieldId.startsWith('deprecate_') && !sub.fieldId.startsWith('delete_') && !sub.fieldId.startsWith('add_')) {
+              updated[sub.fieldId] = sub.newValue;
+            }
+          });
+          submittedDiffItems.forEach(sub => {
+            if (sub.fieldId.startsWith('add_')) {
+              const compId = sub.fieldId.replace('add_', '');
+              const comp = figureComponents.find(c => c.id === compId);
+              if (comp) {
+                comp.fields.forEach(f => { updated[f.id] = f.value; });
+              }
+            }
+          });
+          return updated;
+        });
+
+        setFigureComponentDeprecatedBaseline(prev => {
+          const updated = { ...prev };
+          submittedDiffItems.forEach(sub => {
+            if (sub.fieldId.startsWith('deprecate_')) {
+              const compId = sub.fieldId.replace('deprecate_', '');
+              updated[compId] = (sub.newValue === 'Deprecated');
+            }
+          });
+          return updated;
+        });
+
+        setFigureComponentListBaseline(prev => {
+          let updated = [...prev];
+          submittedDiffItems.forEach(sub => {
+            if (sub.fieldId.startsWith('delete_')) {
+              const compId = sub.fieldId.replace('delete_', '');
+              updated = updated.filter(c => c.id !== compId);
+            } else if (sub.fieldId.startsWith('add_')) {
+              const compId = sub.fieldId.replace('add_', '');
+              const comp = figureComponents.find(c => c.id === compId);
+              if (comp && !updated.some(c => c.id === compId)) {
+                updated.push({ id: compId, name: comp.name || compId });
+              }
+            }
+          });
+          return updated;
+        });
+        
+        setFigureBlocks(prev => prev.map(b => ({
+          ...b,
+          fields: b.fields.map(f => {
+            const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === f.id && sub.newValue === f.value);
+            return isSubmitted ? { ...f, status: 'default' as const } : f;
+          })
+        })));
+        
+        setFigureComponents(prev => prev.map(b => ({
+          ...b,
+          fields: b.fields.map(f => {
+            const isSubmitted = submittedDiffItems.some(sub => sub.fieldId === f.id && sub.newValue === f.value);
+            return isSubmitted ? { ...f, status: 'default' as const } : f;
+          })
+        })));
+      }
 
       setLastBaselineTrigger(baselineAdvanceTrigger);
     }
-  }, [baselineAdvanceTrigger, submittedDiffItems, figureComponents, lastBaselineTrigger]);
+  }, [baselineAdvanceTrigger, submittedDiffItems, docType, figureComponents, lastBaselineTrigger]);
 
   const reviewItems = useMemo<ReviewItem[]>(() => {
     const items: ReviewItem[] = [];
@@ -6130,8 +6318,8 @@ function MetadataPanel({
   }, [figureBlocks, figureComponents, blockItemConfirmed]);
 
   useEffect(() => {
+    onMetaDiffChange?.(metaDiffItems);
     if (docType === 'figure') {
-      onMetaDiffChange?.(metaDiffItems);
       onReviewItemsChange?.(reviewItems);
     }
   }, [metaDiffItems, reviewItems, docType, onMetaDiffChange, onReviewItemsChange]);
@@ -6548,8 +6736,8 @@ function MetadataPanel({
                   <p className={`t-small font-medium ${activeTab === tab ? "text-brand-1" : "text-text-primary"}`}>
                     {tab === "basic" ? (docType === 'listing' ? "Basic info" : docType === 'figure' ? "Basic" : "Basic Information") : (docType === 'listing' ? "Column" : docType === 'figure' ? "Components" : "Blocks")}
                   </p>
-                  {/* Figure To be Updated: Header-style count badge attached right next to title */}
-                  {docType === 'figure' && showPanelDiff && tabCount > 0 && (
+                  {/* To be Updated: Header-style count badge attached right next to title */}
+                  {showPanelDiff && tabCount > 0 && (
                     <div className="bg-graphite-10 flex items-center justify-center px-[4px] py-px rounded-[16px] shrink-0 min-w-[16px] h-[16px]">
                       <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-text-secondary whitespace-nowrap">
                         <p className="leading-[14px]">{tabCount}</p>
@@ -6582,61 +6770,30 @@ function MetadataPanel({
           )}
 
           {/* Update Code button moved to Tab bar right side, left of Batch Edit Macro */}
-          {docType === 'figure' ? (
-            ((metaUpdateProcessing && newDiffItems.length > 0) || (!metaUpdateProcessing && metaDiffItems.length > 0 && !metaUpdateActive)) && (() => {
-              const isUpdateDisabled = metaUpdateProcessing || (isLocked && metaDiffItems.length > 0);
-              return (
-                <button
-                  onClick={isUpdateDisabled ? undefined : () => {
-                    onRequestUpdateCode?.();
-                  }}
-                  disabled={isUpdateDisabled}
-                  className={`flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] px-[8px] text-[12px] font-medium transition-all ${
-                    isUpdateDisabled
-                      ? 'bg-border-default text-text-secondary cursor-not-allowed'
-                      : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'
-                  }`}
-                >
-                  <LocalIcon src={addMetadiffIconUrl} className="h-[14px] w-[14px]" color={isUpdateDisabled ? '#888E8E' : 'white'} />
-                  <span>Update Code</span>
-                  {!metaUpdateProcessing && (
-                    <div className="flex items-center justify-center h-[14px] min-w-[14px] px-[3px] py-px rounded-[10px] bg-white/20 shrink-0">
-                      <span className="text-[10px] leading-[12px] font-medium text-white">{metaDiffItems.length}</span>
-                    </div>
-                  )}
-                </button>
-              );
-            })()
-          ) : (
-            hasAnyEdits && (() => {
-              const isUpdateDisabled = isLocked;
-              return (
-                <button
-                  onClick={isUpdateDisabled ? undefined : () => {
-                    if (docType === 'listing') {
-                      const allValid = listingBlocks.every(b => b.fields.every(f => f.status !== 'error'));
-                      if (!allValid) return;
-                      setListingBlocks(prev => prev.map(b => ({
-                        ...b,
-                        fields: b.fields.map(f => f.status === 'edited' ? { ...f, status: 'confirmed' as const, confirmed: true } : f)
-                      })));
-                      setListingColumnFields(prev => prev.map(f => f.status === 'edited' ? { ...f, status: 'confirmed' as const, confirmed: true } : f));
-                    }
-                    onRequestUpdateCode?.();
-                  }}
-                  disabled={isUpdateDisabled}
-                  className={`flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] px-[8px] text-[12px] font-medium transition-all ${
-                    isUpdateDisabled
-                      ? 'bg-border-default text-text-secondary cursor-not-allowed'
-                      : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'
-                  }`}
-                >
-                  <LocalIcon src={addMetadiffIconUrl} className="h-[14px] w-[14px]" color={isUpdateDisabled ? '#888E8E' : 'white'} />
-                  <span>Update Code</span>
-                </button>
-              );
-            })()
-          )}
+          {((metaUpdateProcessing && newDiffItems.length > 0) || (!metaUpdateProcessing && metaDiffItems.length > 0 && !metaUpdateActive)) && (() => {
+            const isUpdateDisabled = metaUpdateProcessing || (isLocked && metaDiffItems.length > 0);
+            return (
+              <button
+                onClick={isUpdateDisabled ? undefined : () => {
+                  onRequestUpdateCode?.();
+                }}
+                disabled={isUpdateDisabled}
+                className={`flex h-[24px] items-center justify-center gap-[4px] rounded-[4px] px-[8px] text-[12px] font-medium transition-all ${
+                  isUpdateDisabled
+                    ? 'bg-border-default text-text-secondary cursor-not-allowed'
+                    : 'bg-brand-1 text-white hover:bg-[#6D0043] active:scale-[0.98]'
+                }`}
+              >
+                <LocalIcon src={addMetadiffIconUrl} className="h-[14px] w-[14px]" color={isUpdateDisabled ? '#888E8E' : 'white'} />
+                <span>Update Code</span>
+                {!metaUpdateProcessing && (
+                  <div className="flex items-center justify-center h-[14px] min-w-[14px] px-[3px] py-px rounded-[10px] bg-white/20 shrink-0">
+                    <span className="text-[10px] leading-[12px] font-medium text-white">{metaDiffItems.length}</span>
+                  </div>
+                )}
+              </button>
+            );
+          })()}
 
           <TooltipText label="Batch Edit Macro">
             <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Batch edit">
@@ -6661,11 +6818,46 @@ function MetadataPanel({
       )}
 
       {/* Content */}
-      <div className={`min-h-0 flex-1 ${activeTab === "blocks" && docType !== 'listing' ? 'flex flex-col' : 'overflow-auto p-[4px]'}`}>
+      <div className={`min-h-0 flex-1 ${activeTab === "blocks" && docType === 'figure' && !showPanelDiff ? 'flex flex-col' : 'overflow-auto p-[4px]'}`}>
         {activeTab === "basic" && (
           <div className="flex flex-col gap-[4px]">
             {docType === 'listing' ? (
               // Listing Basic Tab
+              showPanelDiff ? (
+                <div className="flex flex-col gap-[12px] p-[8px]">
+                  {(() => {
+                    const listingBasicDiffs = metaDiffItems.filter(d => d.blockName === 'Basic Info');
+                    if (listingBasicDiffs.length === 0) {
+                      return <p className="text-center text-text-secondary t-small py-[20px]">No changes in Basic Info</p>;
+                    }
+                    return listingBasicDiffs.map(diff => (
+                      <div key={diff.fieldId} className="group relative">
+                        {onQuoteField && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onQuoteField(diff.fieldId, diff.label, 'Basic Info'); }}
+                            className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                            title={`Quote "${diff.label}"`}
+                            aria-label={`Quote "${diff.label}"`}
+                          >
+                            <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                          </button>
+                        )}
+                        <FormItem label={diff.label} disabled={true}>
+                          <div className="flex items-center gap-[6px] text-[13px] leading-[24px] py-[2px]">
+                            <span className="text-text-secondary line-through">
+                              {diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty'}
+                            </span>
+                            <span className="text-text-secondary">→</span>
+                            <span className="text-brand-1 font-medium">
+                              {diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty'}
+                            </span>
+                          </div>
+                        </FormItem>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              ) : (
               listingBlocks.map((block) => (
                 <div key={block.id} className="flex flex-col gap-[4px]">
                   {block.fields.map((field) => {
@@ -6723,6 +6915,7 @@ function MetadataPanel({
                   })}
                 </div>
               ))
+              )
             ) : docType === 'figure' ? (
               // Figure Basic Tab
               showPanelDiff ? (
@@ -6983,6 +7176,41 @@ function MetadataPanel({
               )
             ) : (
               // Table Basic Tab (Original)
+              showPanelDiff ? (
+                <div className="flex flex-col gap-[12px] p-[8px]">
+                  {(() => {
+                    const tableDiffs = metaDiffItems.filter(d => d.blockName === 'Basic Information');
+                    if (tableDiffs.length === 0) {
+                      return <p className="text-center text-text-secondary t-small py-[20px]">No changes in Basic Information</p>;
+                    }
+                    return tableDiffs.map(diff => (
+                      <div key={diff.fieldId} className="group relative">
+                        {onQuoteField && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onQuoteField(diff.fieldId, diff.label, 'Basic Information'); }}
+                            className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                            title={`Quote "${diff.label}"`}
+                            aria-label={`Quote "${diff.label}"`}
+                          >
+                            <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                          </button>
+                        )}
+                        <FormItem label={diff.label} disabled={true}>
+                          <div className="flex items-center gap-[6px] text-[13px] leading-[24px] py-[2px]">
+                            <span className="text-text-secondary line-through">
+                              {diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty'}
+                            </span>
+                            <span className="text-text-secondary">→</span>
+                            <span className="text-brand-1 font-medium">
+                              {diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty'}
+                            </span>
+                          </div>
+                        </FormItem>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              ) : (
               <>
                 {blocks.map((block) =>
                   block.fields.map((field) => {
@@ -7047,12 +7275,48 @@ function MetadataPanel({
                   </div>
                 </div>
               </>
+              )
             )}
           </div>
         )}
         {activeTab === "blocks" && (
           docType === 'listing' ? (
             // Listing Column Tab
+            showPanelDiff ? (
+              <div className="flex flex-col gap-[12px] p-[8px]">
+                {(() => {
+                  const colDiffs = metaDiffItems.filter(d => d.blockName === 'Column');
+                  if (colDiffs.length === 0) {
+                    return <p className="text-center text-text-secondary t-small py-[20px]">No changes in Column</p>;
+                  }
+                  return colDiffs.map(diff => (
+                    <div key={diff.fieldId} className="group relative">
+                      {onQuoteField && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onQuoteField(diff.fieldId, diff.label, 'Column'); }}
+                          className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                          title={`Quote "${diff.label}"`}
+                          aria-label={`Quote "${diff.label}"`}
+                        >
+                          <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                        </button>
+                      )}
+                      <FormItem label={diff.label} disabled={true}>
+                        <div className="flex items-center gap-[6px] text-[13px] leading-[24px] py-[2px]">
+                          <span className="text-text-secondary line-through">
+                            {diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty'}
+                          </span>
+                          <span className="text-text-secondary">→</span>
+                          <span className="text-brand-1 font-medium">
+                            {diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty'}
+                          </span>
+                        </div>
+                      </FormItem>
+                    </div>
+                  ));
+                })()}
+              </div>
+            ) : (
             <div className="flex flex-col gap-[4px]">
               {listingColumnFields.map((field) => {
                 const styles = getFieldStyles(getEffectiveStatus(field.id, field.status, field.value), false);
@@ -7096,6 +7360,7 @@ function MetadataPanel({
                 );
               })}
             </div>
+            )
           ) : docType === 'figure' ? (
             showPanelDiff ? (
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-[12px] gap-[16px]">
@@ -7281,6 +7546,41 @@ function MetadataPanel({
               />
             )
           ) : (
+            showPanelDiff ? (
+              <div className="flex flex-col gap-[12px] p-[8px]">
+                {(() => {
+                  const blockDiffs = metaDiffItems.filter(d => d.blockName !== 'Basic Information');
+                  if (blockDiffs.length === 0) {
+                    return <p className="text-center text-text-secondary t-small py-[20px]">No changes in Blocks</p>;
+                  }
+                  return blockDiffs.map(diff => (
+                    <div key={diff.fieldId} className="group relative">
+                      {onQuoteField && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onQuoteField(diff.fieldId, diff.label, diff.blockName || 'Blocks'); }}
+                          className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                          title={`Quote "${diff.label}"`}
+                          aria-label={`Quote "${diff.label}"`}
+                        >
+                          <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                        </button>
+                      )}
+                      <FormItem label={`${diff.blockName ? diff.blockName + ' > ' : ''}${diff.label}`} disabled={true}>
+                        <div className="flex items-center gap-[6px] text-[13px] leading-[24px] py-[2px]">
+                          <span className="text-text-secondary line-through">
+                            {diff.oldValue && diff.oldValue.trim() !== '' ? diff.oldValue : 'Empty'}
+                          </span>
+                          <span className="text-text-secondary">→</span>
+                          <span className="text-brand-1 font-medium">
+                            {diff.newValue && diff.newValue.trim() !== '' ? diff.newValue : 'Empty'}
+                          </span>
+                        </div>
+                      </FormItem>
+                    </div>
+                  ));
+                })()}
+              </div>
+            ) : (
             <BlocksTabContent
               blocks={METADATA_BLOCK_ITEMS_DATA}
               targetBlockId={targetBlockId}
@@ -7300,6 +7600,7 @@ function MetadataPanel({
               }}
               isLocked={false}
             />
+            )
           )
         )}
       </div>
@@ -8457,9 +8758,20 @@ function WorkspaceContent({
                       idpageBaseline={idpageBaseline}
                       idlistBaseline={idlistBaseline}
                       onIdpageBaselineChange={setIdpageBaseline}
-                      onIdlistBaselineChange={setIdlistBaseline}
                       metadataWidth={metadataWidth}
                       onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
+                      onMetaDiffChange={setMetaDiffItems}
+                      onRequestUpdateCode={() => {
+                        setMetaUpdateActive(true);
+                        setAiCopilotOpen(true);
+                      }}
+                      onMetaCancel={() => setMetaUpdateActive(false)}
+                      baselineAdvanceTrigger={baselineAdvanceTrigger}
+                      metaUpdateActive={metaUpdateActive}
+                      metaUpdateProcessing={metaUpdateProcessing}
+                      submittedDiffItems={submittedDiffItems}
+                      onReviewItemsChange={setReviewItems}
+                      onQuoteField={handleQuoteField}
                     />
                   </div>
                 )}
