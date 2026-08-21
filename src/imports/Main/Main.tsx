@@ -1070,15 +1070,17 @@ function ChatConversation({
                           onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
                           isOutdated={isMetadataOutdated}
                         />
-                      </div>
 
-                      {/* Image Render Tool Call Card — Complete state by default */}
-                      <ImageRenderToolCallCard
-                        state="complete"
-                        versions={INITIAL_FIGURE_RENDER_VERSIONS}
-                        focused={!!renderPreviewOpen && activeRenderVersionLabel === 'V1.0'}
-                        onThumbnailClick={onRenderThumbnailClick}
-                      />
+                        {/* Image Render Tool Call Card — Complete state by default */}
+                        <div className="pt-[4px]">
+                          <ImageRenderToolCallCard
+                            state="complete"
+                            versions={INITIAL_FIGURE_RENDER_VERSIONS}
+                            focused={!!renderPreviewOpen && activeRenderVersionLabel === 'V1.0'}
+                            onThumbnailClick={onRenderThumbnailClick}
+                          />
+                        </div>
+                      </div>
                     </>
                   ) : (
                     <>
@@ -1326,11 +1328,10 @@ function AICopilotPanel({
 
   return (
     <div 
-      className="flex flex-col h-full bg-transparent relative"
-      style={{ width: panelWidth }}
+      className="flex flex-col h-full w-full bg-transparent relative"
     >
       {/* Header */}
-      <div className="bg-transparent h-[40px] flex items-center justify-between px-[12px]">
+      <div className="bg-transparent h-[48px] shrink-0 flex items-center justify-between px-[12px] mb-[4px]">
         <div className="flex items-center gap-[8px]">
           <AtlasLogoIcon className="h-[20px] w-[20px]" color="var(--color-brand-1)" />
         </div>
@@ -1347,7 +1348,7 @@ function AICopilotPanel({
       {/* Chat Area */}
       <div ref={chatAreaRef} className="flex-1 overflow-y-auto scroll-smooth pb-[120px]">
         {messages.length === 0 ? (
-          <div className="absolute top-[40px] inset-x-0 flex flex-col items-center pt-[180px] gap-[12px]">
+          <div className="absolute top-[48px] inset-x-0 flex flex-col items-center pt-[180px] gap-[12px]">
             <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
             <span className="t-body text-text-secondary text-center">Automate TFLs. Accelerate Insights.</span>
           </div>
@@ -1794,7 +1795,6 @@ function ViewToggleBar({
 
   const rightControls = (
     <div className="flex items-center gap-[8px]">
-      <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
       {onToggleGroupView && (
         <TooltipText label={groupViewOpen ? "Close Group Code" : "Open Group Code"}>
           <button
@@ -1809,6 +1809,7 @@ function ViewToggleBar({
           </button>
         </TooltipText>
       )}
+      <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
     </div>
   );
 
@@ -1842,11 +1843,8 @@ function ViewToggleBar({
   // Expanded: view tabs row only
   return (
     <div className="shrink-0 w-full">
-      <div className="h-[48px] w-full flex items-center relative">
-
-        <div className="absolute right-[12px] top-[10px]">
-          {rightControls}
-        </div>
+      <div className="h-[48px] w-full flex items-center justify-end px-[12px]">
+        {rightControls}
       </div>
     </div>
   );
@@ -7817,10 +7815,10 @@ function FloatingAICopilotButton({
       onMouseLeave={() => setIsHovered(false)}
       className="group absolute bottom-[24px] right-[24px] z-50 flex h-[40px] items-center justify-center overflow-hidden rounded-full bg-brand-1 shadow-[0px_2px_3px_rgba(0,0,0,0.05),0px_4px_8px_rgba(0,0,0,0.1)] transition-all duration-200 active:scale-[0.96] disabled:pointer-events-none disabled:bg-border-default"
       style={{
-        width: isHovered ? 86 : 40,
+        width: isHovered ? 102 : 40,
         paddingLeft: isHovered ? 12 : 0,
         paddingRight: isHovered ? 12 : 0,
-        gap: isHovered ? 8 : 0,
+        gap: isHovered ? 6 : 0,
       }}
       aria-label="Open AI Copilot"
     >
@@ -7829,7 +7827,7 @@ function FloatingAICopilotButton({
         className="overflow-hidden whitespace-nowrap text-[14px] font-normal leading-[20px] transition-all duration-200"
         style={{
           color: "#FFFFFF",
-          maxWidth: isHovered ? 100 : 0,
+          maxWidth: isHovered ? 80 : 0,
           opacity: isHovered ? 1 : 0,
         }}
       >
@@ -8009,32 +8007,33 @@ function WorkspaceContent({
     (shellPreviewOpen && !codeOpen && aiCopilotOpen ? 1 : 0) +
     (codeOpen && aiCopilotOpen ? 1 : 0);
 
-  // Total width of the workspace content area + TreeList
-  const totalWidth = contentAreaWidth + (treeListOpen ? (treeListWidth + 1) : 0);
+  // Total width of the workspace from stable measured workspaceContainerRef
+  const totalWidth = workspaceWidth;
   const flexPanelMin = codeOpen ? constraints.code.min : constraints.shellPreview.min;
   const otherPanelsMin = (shellPreviewOpen && codeOpen) ? constraints.shellPreview.min : 0;
   const currentDividers = (treeListOpen ? 1 : 0) + tableDividerCount * DIVIDER_W;
 
   // Shell can grow until Code (flex-1) hits its minimum, with TreeList compressed and collapsed if needed
   const dynamicShellMax = totalWidth > 0
-    ? Math.max(constraints.shellPreview.min,
-        totalWidth
-        - (codeOpen ? constraints.code.min : 0)
-        - (aiCopilotOpen ? aiCopilotWidth : 0)
-        - currentDividers)
+    ? Math.min(
+        constraints.shellPreview.max,
+        Math.max(
+          constraints.shellPreview.min,
+          totalWidth
+          - (codeOpen ? constraints.code.min : 0)
+          - (aiCopilotOpen ? aiCopilotWidth : 0)
+          - currentDividers
+        )
+      )
     : constraints.shellPreview.max;
 
   // AI can grow until the flex-1 panel and any other fixed panels hit their minimums, with TreeList compressed and collapsed if needed
   const dynamicAiMax = totalWidth > 0
-    ? Math.max(constraints.aiCopilot.min, totalWidth - flexPanelMin - otherPanelsMin - currentDividers)
+    ? Math.min(
+        constraints.aiCopilot.max,
+        Math.max(constraints.aiCopilot.min, totalWidth - flexPanelMin - otherPanelsMin - currentDividers)
+      )
     : constraints.aiCopilot.max;
-
-  // Total minimum width for horizontal scroll fallback
-  const tableTotalMinWidth =
-    (shellPreviewOpen ? constraints.shellPreview.min : 0) +
-    (codeOpen ? constraints.code.min : 0) +
-    (aiCopilotOpen ? constraints.aiCopilot.min : 0) +
-    tableDividerCount * DIVIDER_W;
 
   // Clamp metadata width if shell shrinks below metadata
   useEffect(() => {
@@ -8509,7 +8508,6 @@ function WorkspaceContent({
                 className="flex min-w-0 min-h-0 h-full w-full overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]"
                 style={{
                   flexDirection: panelLayout === 'vertical' ? 'column' : 'row',
-                  minWidth: panelLayout === 'vertical' ? undefined : `${tableTotalMinWidth}px`,
                 }}
               >
                 {shellPreviewOpen && (
@@ -8657,7 +8655,7 @@ function WorkspaceContent({
 
         {/* Right Column: AI Copilot Panel (Full Height on the Right, Frameless & Transparent) */}
         <div
-          className="shrink-0 overflow-hidden bg-transparent"
+          className="shrink-0 overflow-hidden bg-transparent p-[4px]"
           style={{
             width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
             opacity: aiCopilotOpen ? 1 : 0,
