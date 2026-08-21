@@ -1346,9 +1346,9 @@ function AICopilotPanel({
       </div>
 
       {/* Chat Area */}
-      <div ref={chatAreaRef} className="flex-1 overflow-y-auto scroll-smooth pb-[120px]">
+      <div ref={chatAreaRef} className="flex-1 min-h-0 overflow-y-auto scroll-smooth">
         {messages.length === 0 ? (
-          <div className="absolute top-[48px] inset-x-0 flex flex-col items-center pt-[180px] gap-[12px]">
+          <div className="flex flex-col items-center justify-center h-full gap-[12px] pb-[40px]">
             <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
             <span className="t-body text-text-secondary text-center">Automate TFLs. Accelerate Insights.</span>
           </div>
@@ -1368,9 +1368,9 @@ function AICopilotPanel({
         )}
       </div>
 
-      {/* Input Area (Floating Overlay above Chat Area) */}
-      <div className="absolute bottom-0 inset-x-0 p-[8px] flex flex-col gap-[4px] z-20 pointer-events-none bg-gradient-to-t from-white via-white/95 to-transparent pt-[16px]">
-        <div className="pointer-events-auto w-full flex flex-col gap-[4px]">
+      {/* Input Area */}
+      <div className="shrink-0 p-[8px] flex flex-col gap-[4px] bg-transparent">
+        <div className="w-full flex flex-col gap-[4px]">
           {showAskUser && (
             <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50 rounded" />}>
               <AskUserComponent 
