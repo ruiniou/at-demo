@@ -793,7 +793,7 @@ export default function ChatBox({
           <div className="flex flex-col gap-[0px] items-start relative shrink-0 w-full">
             {/* Header row */}
             <div
-              className="flex items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full select-none cursor-pointer hover:bg-graphite-20/80 rounded-[6px] transition-colors"
+              className="flex items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full select-none cursor-pointer hover:bg-black/[0.06] active:bg-black/[0.09] rounded-[6px] transition-colors"
               onClick={() => setMetadataExpanded(v => !v)}
             >
               <div className="flex gap-[8px] items-center min-w-0 flex-1">
@@ -827,7 +827,7 @@ export default function ChatBox({
                     e.stopPropagation();
                     onCloseMetadataChanges();
                   }}
-                  className="w-[20px] h-[20px] rounded-[4px] flex items-center justify-center hover:bg-graphite-20 active:scale-[0.96] shrink-0 ml-[4px]"
+                  className="w-[20px] h-[20px] rounded-[4px] flex items-center justify-center hover:bg-black/10 active:scale-[0.96] shrink-0 ml-[4px]"
                   title="Cancel metadata changes"
                   aria-label="Close metadata changes"
                 >
@@ -863,7 +863,7 @@ export default function ChatBox({
                       {/* Group Header */}
                       <div
                         onClick={() => toggleGroup(groupKey)}
-                        className={`flex items-center gap-[6px] px-[8px] py-[5px] cursor-pointer select-none hover:bg-graphite-20/80 rounded-[6px] transition-colors ${headerBg}`}
+                        className={`flex items-center gap-[6px] px-[8px] py-[5px] cursor-pointer select-none hover:bg-black/[0.05] active:bg-black/[0.08] rounded-[6px] transition-colors ${headerBg}`}
                       >
                         <div className="w-[14px] h-[14px] flex items-center justify-center shrink-0">
                           {isExpanded
@@ -899,7 +899,7 @@ export default function ChatBox({
                               <div 
                                 key={dIdx}
                                 onClick={() => onJumpToMetadata?.(diff.fieldId)}
-                                className="flex flex-col gap-[2px] py-[3px] px-[6px] rounded-[4px] hover:bg-white/80 cursor-pointer select-none transition-colors"
+                                className="flex flex-col gap-[2px] py-[3px] px-[6px] rounded-[4px] hover:bg-white/80 active:bg-white cursor-pointer select-none transition-colors"
                               >
                                 {/* Line 1: Field Name */}
                                 <span className="text-[12px] font-medium text-text-secondary leading-[16px]">
