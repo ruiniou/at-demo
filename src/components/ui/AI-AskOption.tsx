@@ -27,19 +27,20 @@ export function AIAskOption({
     <div
       onClick={type === "selection" ? onClick : undefined}
       className={[
-        "flex items-center gap-[8px] p-[8px] rounded-[4px] h-[40px] transition-colors cursor-pointer",
-        "hover:bg-bg-panel",
-        selected ? "bg-bg-panel" : "bg-transparent",
+        "flex items-center gap-[8px] p-[8px] rounded-[4px] h-[40px] transition-all cursor-pointer",
+        selected 
+          ? "bg-white border border-brand-1/40 shadow-[0_1px_2px_rgba(0,0,0,0.04)]" 
+          : "bg-white/70 hover:bg-white border border-transparent",
         className,
       ].join(" ")}
     >
       <div
         className={[
-          "w-[20px] h-[20px] rounded-[4px] shrink-0 flex items-center justify-center border-[0.6px] border-graphite-10",
-          selected ? "bg-brand-1" : "bg-graphite-10",
+          "w-[20px] h-[20px] rounded-[4px] shrink-0 flex items-center justify-center transition-colors",
+          selected ? "bg-brand-1 text-white" : "bg-graphite-20 text-text-secondary",
         ].join(" ")}
       >
-        <span className={["t-small leading-[20px] text-center", selected ? "text-white" : "text-text-secondary"].join(" ")}>
+        <span className="t-small leading-[20px] text-center font-medium">
           {letter}
         </span>
       </div>
