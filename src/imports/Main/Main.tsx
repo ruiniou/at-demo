@@ -5886,6 +5886,28 @@ function MetadataPanel({
     return figureComponents.map(c => ({ id: c.id, name: c.name || c.id }));
   });
 
+  // Helper functions for listing configuration changes
+  const areColumnCountsEqual = (a: Record<string, number>, b: Record<string, number>) => {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    if (keysA.length !== keysB.length) return false;
+    return keysA.every(key => a[key] === b[key]);
+  };
+
+  const arePageBreakColumnsEqual = (a: number[] = [], b: number[] = []) => {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort((x, y) => x - y);
+    const sortedB = [...b].sort((x, y) => x - y);
+    return sortedA.every((value, index) => value === sortedB[index]);
+  };
+
+  const isRepeatColumnEdited = repeatColumnBaseline != null && repeatColumnBaseline.frozenUntilIndex !== (frozenUntilIndex ?? null);
+  const isPageBreakColumnEdited = pageBreakColumnBaseline != null && (
+    pageBreakColumnBaseline.pageSepActive !== (pageSepActive ?? false) ||
+    !areColumnCountsEqual(pageBreakColumnBaseline.pageColumnCounts ?? {}, pageColumnCounts) ||
+    !arePageBreakColumnsEqual(pageBreakColumnBaseline.pageBreakColumns ?? [], pageBreakColumns)
+  );
+
   const metaDiffItems = useMemo<MetaDiffItem[]>(() => {
     const items: MetaDiffItem[] = [];
 
@@ -6405,28 +6427,6 @@ function MetadataPanel({
     }));
     setHasMetadataComponentEdits(true);
   };
-
-  // Helper functions for configuration changes
-  const areColumnCountsEqual = (a: Record<string, number>, b: Record<string, number>) => {
-    const keysA = Object.keys(a);
-    const keysB = Object.keys(b);
-    if (keysA.length !== keysB.length) return false;
-    return keysA.every(key => a[key] === b[key]);
-  };
-
-  const arePageBreakColumnsEqual = (a: number[] = [], b: number[] = []) => {
-    if (a.length !== b.length) return false;
-    const sortedA = [...a].sort((x, y) => x - y);
-    const sortedB = [...b].sort((x, y) => x - y);
-    return sortedA.every((value, index) => value === sortedB[index]);
-  };
-
-  const isRepeatColumnEdited = repeatColumnBaseline != null && repeatColumnBaseline.frozenUntilIndex !== (frozenUntilIndex ?? null);
-  const isPageBreakColumnEdited = pageBreakColumnBaseline != null && (
-    pageBreakColumnBaseline.pageSepActive !== (pageSepActive ?? false) ||
-    !areColumnCountsEqual(pageBreakColumnBaseline.pageColumnCounts ?? {}, pageColumnCounts) ||
-    !arePageBreakColumnsEqual(pageBreakColumnBaseline.pageBreakColumns ?? [], pageBreakColumns)
-  );
 
   // Refs and Auto-scrolling to the first affected field on mount
   const fieldRefs = useRef<Record<string, HTMLDivElement | null>>({});
