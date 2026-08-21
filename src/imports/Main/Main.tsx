@@ -3287,7 +3287,7 @@ function ListingShellPreview({
         <div
           ref={listingScrollContainerRef}
           onScroll={(e) => setIsScrolled(e.currentTarget.scrollLeft > 0)}
-          className={`relative flex-1 overflow-auto ${pageSepActive ? 'bg-[#f2f3f3]' : ''}`}
+          className={`relative flex-1 overflow-auto ${pageSepActive ? 'bg-[#f2f3f3]' : ''} ${metadataOpen ? 'border-r border-graphite-10' : ''}`}
         >
           {pageSepActive && createPortal(
             <div className="fixed inset-0 z-[100] bg-border-default">
@@ -3546,7 +3546,7 @@ function ListingShellPreview({
                   </tbody>
                   </table>
 
-                  {/* Frozen zone tint — purple wash over the locked columns area */}
+                  {/* Freeze Column Shaded Zone */}
                   {frozenUntilIndex !== null && (
                     <div
                        className="absolute bottom-0 pointer-events-none"
@@ -3658,7 +3658,7 @@ function ListingShellPreview({
         {metadataOpen && (
           <>
             <WorkspaceDivider onDrag={handleMetadataDividerDrag} />
-            <div className="shrink-0 h-full py-[4px] pr-[4px] relative z-20" style={{ width: `${metadataWidth}px` }}>
+            <div className="shrink-0 h-full p-[4px] relative z-20" style={{ width: `${metadataWidth}px` }}>
               <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
                 <MetadataPanel
                   onClose={onCloseMetadata}
@@ -4417,7 +4417,7 @@ function ShellPreview({
       <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-white">
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full flex">
-            <div className="flex-1 min-w-0 h-full overflow-auto">
+            <div className={`flex-1 min-w-0 h-full overflow-auto ${metadataOpen && !rtfOpen ? 'border-r border-graphite-10' : ''}`}>
               <ZoomContainer scale={zoomScale} className="min-w-max p-[16px]">
               <div className={`w-max bg-white text-text-primary rounded-[4px] p-[20px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
                 <div className="flex flex-col gap-[12px] w-full">
@@ -4469,7 +4469,7 @@ function ShellPreview({
               </div>
             </ZoomContainer>
             {rtfOpen && (
-              <div className="flex-1 border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden">
+              <div className={`flex-1 border-l border-graphite-10 flex flex-col bg-bg-panel overflow-hidden ${metadataOpen ? 'border-r border-graphite-10' : ''}`}>
                 <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-[16px] bg-white">
                   <div className="w-full max-w-[90%] mx-auto">
                     <KMPlot
@@ -4544,7 +4544,7 @@ function ShellPreview({
             const totalTableWidth = firstColWidth + actualDataCols * dataColWidth;
 
             return (
-              <div ref={tableScrollRef} className="min-h-0 min-w-0 flex-1 overflow-auto">
+              <div ref={tableScrollRef} className={`min-h-0 min-w-0 flex-1 overflow-auto ${metadataOpen ? 'border-r border-graphite-10' : ''}`}>
                 <ZoomContainer scale={zoomScale} className="min-w-max p-[16px]">
                   <div className={`bg-white text-text-primary rounded-[4px] p-[20px] ${!metadataOpen ? 'mx-auto' : ''}`} style={{ width: `${totalTableWidth + 40}px` }}>
                     {/* Study Info & Page Info */}
@@ -4660,7 +4660,7 @@ function ShellPreview({
           <WorkspaceDivider onDrag={(delta) => onMetadataResize(-delta)} />
         )}
         <div
-          className={`shrink-0 relative z-20 ${metadataOpen ? 'py-[4px] pr-[4px]' : 'overflow-hidden'}`}
+          className={`shrink-0 relative z-20 ${metadataOpen ? 'p-[4px]' : 'overflow-hidden'}`}
           style={{
             width: metadataOpen ? `${metadataWidth}px` : "0px",
             opacity: metadataOpen ? 1 : 0,
