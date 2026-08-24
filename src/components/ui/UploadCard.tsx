@@ -77,7 +77,7 @@ export function UploadCard({
     setCurrentStatus(initialStatus);
     if (initialStatus === "use-existing") {
       setSegmentedIndex(1);
-    } else if (initialStatus === "pending" || initialStatus === "uploaded") {
+    } else if (initialStatus === "uploaded") {
       setSegmentedIndex(0);
     }
   }, [initialStatus]);
@@ -90,10 +90,12 @@ export function UploadCard({
     setLocalEventName(initialEventName);
   }, [initialEventName]);
 
-  // If use-existing becomes disabled while in use-existing mode, reset to upload pending
+  // If use-existing becomes disabled while in use-existing mode or tab, reset to upload pending
   useEffect(() => {
-    if (isUseExistingDisabled && currentStatus === "use-existing") {
-      handleClear();
+    if (isUseExistingDisabled) {
+      if (segmentedIndex === 1 || currentStatus === "use-existing") {
+        handleClear();
+      }
     }
   }, [isUseExistingDisabled]);
 
