@@ -5424,9 +5424,9 @@ function BlocksTabContent({
                               e.stopPropagation();
                               onDeleteComponent(block.id);
                             }}
-                            className="hidden group-hover:flex items-center justify-center shrink-0 w-[20px] h-[20px] rounded-[4px] bg-transparent hover:bg-black/5"
+                            className="hidden group-hover:flex items-center justify-center shrink-0 w-[20px] h-[20px] rounded-[4px] bg-transparent hover:bg-status-error-bg/60 active:scale-[0.96] transition-colors"
                           >
-                            <img src={deleteBinIconUrl} className="w-[14px] h-[14px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="delete" />
+                            <LocalIcon src={deleteBinIconUrl} className="w-[14px] h-[14px]" color="var(--color-status-error)" />
                           </div>
                         </TooltipText>
                       )}
