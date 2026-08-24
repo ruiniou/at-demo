@@ -147,9 +147,20 @@ export function UploadCard({
 
   const handleClear = () => {
     handleStatusUpdate("pending");
+    setLocalFileName("");
     setLocalEventName("");
     setSegmentedIndex(0);
     setDropdownOpen(false);
+    setSearchQuery("");
+    if (onFileSelect) onFileSelect("", "");
+  };
+
+  const handleClearUseExisting = () => {
+    handleStatusUpdate("pending");
+    setLocalFileName("");
+    setLocalEventName("");
+    setSegmentedIndex(1);
+    setDropdownOpen(true);
     setSearchQuery("");
     if (onFileSelect) onFileSelect("", "");
   };
@@ -293,34 +304,26 @@ export function UploadCard({
       </div>
     );
   } else if (currentStatus === "use-existing") {
-    // Figma 632:1322 — solid border, link icon + filename + event tag + status completed
+    // Figma 632:1322 — solid border, link icon + filename + status completed
     uploadArea = (
       <div className="flex flex-col rounded-[4px] border border-graphite-10 bg-white p-[8px_10px]">
         <div className="flex items-center gap-[16px] py-[8px]">
           <div className="flex flex-1 items-center gap-[8px] min-w-0">
             <img src={linkIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
             <div className="flex flex-1 min-w-0 flex-col gap-[2px]">
-              <div className="flex items-center gap-[6px] min-w-0 flex-wrap">
+              <div className="flex items-center gap-[6px] min-w-0">
                 <span className="t-small-medium text-text-primary truncate" title={localFileName || fileName}>
                   {localFileName || fileName}
                 </span>
-                {(localEventName || initialEventName) && (
-                  <span
-                    className="inline-flex items-center rounded-[3px] bg-graphite-10 px-[6px] py-px text-[12px] leading-[18px] text-text-secondary shrink-0 font-normal select-none"
-                    style={{ fontFamily: "'PingFang SC', sans-serif" }}
-                  >
-                    {localEventName || initialEventName}
-                  </span>
-                )}
                 <img src={statusCompletedUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
               </div>
             </div>
           </div>
           <button
             type="button"
-            onClick={handleClear}
+            onClick={handleClearUseExisting}
             className="relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 after:content-[''] after:absolute after:-inset-[8px] cursor-pointer"
-            title="Clear selection"
+            title="Replace or clear selection"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M12 10.586l4.95-4.95 1.414 1.414L13.414 12l4.95 4.95-1.414 1.414L12 13.414l-4.95 4.95-1.414-1.414L10.586 12 5.636 7.05l1.414-1.414L12 10.586z" fill="#888E8E"/>
