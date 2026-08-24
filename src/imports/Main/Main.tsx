@@ -5397,9 +5397,9 @@ function BlocksTabContent({
                 </div>
               ) : (
                 <>
-                  <div className="group relative flex items-center justify-between gap-[8px] mb-[12px]">
+                  <div className="group relative flex items-center justify-between gap-[8px] min-h-[24px] mb-[12px]">
                     <div className="flex items-center gap-[4px] min-w-0 flex-1">
-                      <p className="text-[14px] font-bold text-text-primary break-words m-0">
+                      <p className="text-[14px] leading-[20px] font-bold text-text-primary break-words m-0">
                         {blockName}
                       </p>
                       {onQuoteField && (
@@ -5413,7 +5413,7 @@ function BlocksTabContent({
                         </button>
                       )}
                     </div>
-                    <div className="flex items-center gap-[4px] shrink-0">
+                    <div className="flex items-center gap-[4px] shrink-0 h-[24px]">
                       {/* Delete button — Figure Components only, on the left of Checkbox */}
                       {onDeleteComponent && (
                         <TooltipText label="Delete" align="center">
@@ -5424,9 +5424,9 @@ function BlocksTabContent({
                               e.stopPropagation();
                               onDeleteComponent(block.id);
                             }}
-                            className="hidden group-hover:flex items-center justify-center shrink-0 w-[24px] h-[24px] rounded-[4px] bg-transparent hover:bg-black/5"
+                            className="hidden group-hover:flex items-center justify-center shrink-0 w-[20px] h-[20px] rounded-[4px] bg-transparent hover:bg-black/5"
                           >
-                            <img src={deleteBinIconUrl} className="w-[16px] h-[16px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="delete" />
+                            <img src={deleteBinIconUrl} className="w-[14px] h-[14px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="delete" />
                           </div>
                         </TooltipText>
                       )}
