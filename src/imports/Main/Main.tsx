@@ -5173,7 +5173,11 @@ function BlocksTabContent({
   getEffectiveStatus,
   getFieldStyles,
   fieldRefs,
-  onQuoteField
+  onQuoteField,
+  confirmedCount,
+  totalFields,
+  selectAllState,
+  onSelectAll,
 }: {
   blocks: any;
   targetBlockId?: string | null;
@@ -5190,14 +5194,24 @@ function BlocksTabContent({
   getFieldStyles?: (status: FieldStatus, isReadOnlyField?: boolean) => { containerBg: string; containerBorder: string; inputBorder: string };
   fieldRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
   onQuoteField?: (fieldId: string, label: string, blockName: string) => void;
+  confirmedCount?: number;
+  totalFields?: number;
+  selectAllState?: "empty" | "indeterminate" | "checked";
+  onSelectAll?: () => void;
 }) {
   const FieldCheckboxIcon = (confirmed: boolean) => {
     if (!confirmed) return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 0 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
     return <><rect width="20" height="20" rx="1" fill="var(--color-brand-1)" /><path d="M15.6567 7.58563L9.99951 13.2419L10.0005 13.2429L8.58545 14.6569L7.17139 13.2429V13.2419L4.34326 10.4138L5.75732 8.99969L8.58545 11.8278L14.2427 6.17157L15.6567 7.58563Z" fill="white" /></>;
   };
+  const selectAllCheckboxIcon = () => {
+    if (selectAllState === 'checked') return <><rect width="20" height="20" rx="1" fill="var(--color-brand-1)" /><path d="M15.6567 7.58563L9.99951 13.2419L10.0005 13.2429L8.58545 14.6569L7.17139 13.2429V13.2419L4.34326 10.4138L5.75732 8.99969L8.58545 11.8278L14.2427 6.17157L15.6567 7.58563Z" fill="white" /></>;
+    if (selectAllState === 'indeterminate') return <><rect width="20" height="20" rx="1" fill="var(--color-brand-1)" /><rect x="4" y="9" width="12" height="2" rx="1" fill="white" /></>;
+    return <path d="M18.8887 0C19.5023 0 20 0.497684 20 1.11133V18.8887C20 19.5023 19.5023 20 18.8887 20H1.11133C0.497684 0 0 19.5023 0 18.8887V1.11133C0 0.497684 0.497684 0 1.11133 0H18.8887ZM1.2998 1.2998V18.7002H18.7002V1.2998H1.2998Z" fill="#888E8E" />;
+  };
   const [selectedBlockId, setSelectedBlockId] = useState<string>(() => blocks[0]?.id || '');
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isScrollingProgrammatically = useRef(false);
 
   // Fallback to first block if selected block is deleted or empty
   useEffect(() => {
@@ -5217,13 +5231,45 @@ function BlocksTabContent({
     }
   }, [targetBlockId, blocks]);
 
-  const handleSidebarClick = (blockId: string) => {
+  // Select dropdown navigation handler — suppresses scroll-spy during programmatic scroll
+  const handleSelectNavChange = (blockId: string) => {
+    isScrollingProgrammatically.current = true;
     setSelectedBlockId(blockId);
     const el = sectionRefs.current[blockId];
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    // Re-enable scroll-spy after smooth scroll finishes (~500ms)
+    setTimeout(() => { isScrollingProgrammatically.current = false; }, 500);
   };
+
+  // IntersectionObserver scroll-spy: auto-update selectedBlockId based on visible section
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || blocks.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isScrollingProgrammatically.current) return;
+        // Find the topmost visible section
+        const visible = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible.length > 0) {
+          const blockId = visible[0].target.getAttribute('data-block-id');
+          if (blockId) setSelectedBlockId(blockId);
+        }
+      },
+      { root: container, rootMargin: '-10% 0px -80% 0px', threshold: 0 }
+    );
+
+    // Observe all section refs
+    Object.entries(sectionRefs.current).forEach(([, el]) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [blocks]);
 
   const LinkIcon = () => (
     <SvgIcon className="h-[12px] w-[12px] inline-block ml-[4px]" viewBox="0 0 24 24">
@@ -5262,63 +5308,40 @@ function BlocksTabContent({
   }, [blocks]);
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden">
-      {/* Left sidebar — block navigation */}
-      <div className="w-[176px] shrink min-w-[90px] border-r border-[#E5E8E8] overflow-y-auto bg-white flex flex-col gap-[2px] pt-[4px] pl-[4px] pb-[8px] pr-[4px]">
-        {blocks.map((block: any) => {
-          const isSelected = selectedBlockId === block.id;
-          const blockName = block.name || block.fields?.find((f: any) => f.id.includes('Label') || f.id.includes('Title') || f.label === 'Component Label' || f.label === 'Block Title')?.value || block.id;
-          return (
-            <div key={block.id} className="relative group">
-              <button
-                onClick={() => handleSidebarClick(block.id)}
-                className={`group flex items-center w-full h-[32px] pl-[8px] pr-[4px] py-[6px] rounded-[4px] transition-colors text-left shrink-0 gap-[4px] ${
-                  isSelected
-                    ? 'bg-az-secondary'
-                    : 'bg-transparent hover:bg-bg-panel'
-                }`}
-                title={blockName}
-              >
-                <p className={`flex-1 min-w-0 truncate text-[12px] font-medium leading-[18px] ${
-                  isSelected ? 'text-brand-1' : 'text-text-primary'
-                }`}>
-                  {blockName}
-                </p>
-                {block.state === 'loading' ? (
-                  <div className="flex items-center shrink-0">
-                    <img src={aiProcessingIconUrl} className="size-[16px]" alt="loading" />
-                  </div>
-                ) : onDeleteComponent ? (
-                  <div className="hidden group-hover:flex items-center shrink-0">
-                    <TooltipText label="Delete" align="center">
-                      <div
-                        role="button"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteComponent(block.id);
-                        }}
-                        className="flex items-center justify-center shrink-0 w-[24px] h-[24px] rounded-[4px] bg-transparent hover:bg-black/5"
-                      >
-                        <img src={deleteBinIconUrl} className="w-[16px] h-[16px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="delete" />
-                      </div>
-                    </TooltipText>
-                  </div>
-                ) : null}
-              </button>
-            </div>
-          );
-        })}
-        {blocks.length === 0 && (
-          <div className="px-[8px] py-[6px]">
-            <p className="t-small text-text-secondary">No Components Yet</p>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* Row 2: Select navigator (left) + Confirm stats (right) */}
+      <div className="shrink-0 flex items-center justify-between px-[12px] py-[8px] border-b border-[#E5E8E8] bg-bg-panel">
+        {/* Select dropdown navigator */}
+        <div className="flex-1 min-w-0 mr-[12px]">
+          {blocks.length > 0 ? (
+            <Dropdown
+              options={blocks.map((b: any) => ({
+                label: b.name || b.fields?.find((f: any) => f.id.includes('Label') || f.id.includes('Title') || f.label === 'Component Label' || f.label === 'Block Title')?.value || b.id,
+                value: b.id
+              }))}
+              value={selectedBlockId}
+              onChange={handleSelectNavChange}
+              placeholder="Select..."
+            />
+          ) : (
+            <p className="t-small text-text-secondary">No items</p>
+          )}
+        </div>
+        {/* Confirm stats: X/Y Confirmed + Select-all checkbox */}
+        {confirmedCount !== undefined && totalFields !== undefined && (
+          <div className="flex items-center gap-[6px] shrink-0">
+            <p className="t-small text-text-primary whitespace-nowrap">{confirmedCount}/{totalFields} confirmed</p>
+            <button onClick={isLocked ? undefined : onSelectAll} disabled={isLocked}
+              className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
+              aria-label="Select all">
+              <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{selectAllCheckboxIcon()}</SvgIcon>
+            </button>
           </div>
         )}
       </div>
 
-      {/* Right content — scrollable block sections */}
-      <div className="flex-1 flex flex-col min-w-[180px] min-h-0">
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-scroll overflow-x-hidden">
+      {/* Scrollable content — all blocks stacked vertically */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-scroll overflow-x-hidden">
         {blocks.length === 0 ? (
           <div className="flex w-full h-full items-center justify-center">
             <p className="t-small text-text-secondary">No Components</p>
@@ -5364,15 +5387,34 @@ function BlocksTabContent({
                         </button>
                       )}
                     </div>
-                    <button
-                      onClick={fieldIsDisabled ? undefined : () => onToggleBlockConfirm(block.id)}
-                      disabled={fieldIsDisabled}
-                      className="flex h-[16px] w-[16px] items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
-                    >
-                      <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">
-                        {FieldCheckboxIcon(block.fields.length > 0 && block.fields.every((f: any) => confirmedBlocks[`${block.id}_${f.id}`]))}
-                      </SvgIcon>
-                    </button>
+                    <div className="flex items-center gap-[4px]">
+                      {/* Delete button — Figure Components only */}
+                      {onDeleteComponent && (
+                        <TooltipText label="Delete" align="center">
+                          <div
+                            role="button"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteComponent(block.id);
+                            }}
+                            className="hidden group-hover:flex items-center justify-center shrink-0 w-[24px] h-[24px] rounded-[4px] bg-transparent hover:bg-black/5"
+                          >
+                            <img src={deleteBinIconUrl} className="w-[16px] h-[16px]" style={{ filter: 'invert(58%) sepia(10%) saturate(145%) hue-rotate(139deg) brightness(92%) contrast(90%)' }} alt="delete" />
+                          </div>
+                        </TooltipText>
+                      )}
+                      {/* Block-level confirm checkbox */}
+                      <button
+                        onClick={fieldIsDisabled ? undefined : () => onToggleBlockConfirm(block.id)}
+                        disabled={fieldIsDisabled}
+                        className="flex h-[16px] w-[16px] items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+                      >
+                        <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">
+                          {FieldCheckboxIcon(block.fields.length > 0 && block.fields.every((f: any) => confirmedBlocks[`${block.id}_${f.id}`]))}
+                        </SvgIcon>
+                      </button>
+                    </div>
                   </div>
                   <div className="flex flex-col gap-[12px]">
                     {standardFields.map((field: any) => {
@@ -5550,7 +5592,6 @@ function BlocksTabContent({
             </div>
           );
         })}
-      </div>
       </div>
     </div>
   );
@@ -6865,8 +6906,8 @@ function MetadataPanel({
         </div>
       </div>
 
-      {/* Status Bar: Hide in To be updated mode */}
-      {!showPanelDiff && (
+      {/* Status Bar: Only show for basic tab (blocks tab has its own confirm bar inside BlocksTabContent) */}
+      {!showPanelDiff && activeTab === 'basic' && (
         <div className="flex items-center justify-end bg-bg-panel px-[12px] py-[8px]">
           <div className="flex items-center gap-[6px]">
             <button onClick={isLocked ? undefined : handleSelectAll} disabled={isLocked}
@@ -6880,7 +6921,7 @@ function MetadataPanel({
       )}
 
       {/* Content */}
-      <div className={`min-h-0 flex-1 ${activeTab === "blocks" && docType === 'figure' && !showPanelDiff ? 'flex flex-col' : 'overflow-auto p-[4px]'}`}>
+      <div className={`min-h-0 flex-1 ${activeTab === "blocks" && !showPanelDiff ? 'flex flex-col' : 'overflow-auto p-[4px]'}`}>
         {activeTab === "basic" && (
           <div className="flex flex-col gap-[4px]">
             {docType === 'listing' ? (
@@ -7605,6 +7646,10 @@ function MetadataPanel({
                 onDetailEdit={handleDetailEdit}
                 fieldRefs={fieldRefs}
                 onQuoteField={onQuoteField}
+                confirmedCount={confirmedCount}
+                totalFields={totalFields}
+                selectAllState={selectAllState}
+                onSelectAll={handleSelectAll}
               />
             )
           ) : (
@@ -7664,6 +7709,10 @@ function MetadataPanel({
               onFieldEdit={handleTableBlockFieldEdit}
               fieldRefs={fieldRefs}
               onQuoteField={onQuoteField}
+              confirmedCount={confirmedCount}
+              totalFields={totalFields}
+              selectAllState={selectAllState}
+              onSelectAll={handleSelectAll}
             />
             )
           )
