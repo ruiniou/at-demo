@@ -7,6 +7,7 @@ export type SegmentedControlOption = {
   icon?: React.ReactNode | ((active: boolean) => React.ReactNode);
   ariaLabel?: string;
   tooltip?: React.ReactNode;
+  disabled?: boolean;
 };
 
 export interface SegmentedControlProps {
@@ -35,12 +36,15 @@ export function SegmentedControl({
             <button
               key={opt.value}
               type="button"
-              onClick={() => onChange(opt.value)}
+              disabled={opt.disabled}
+              onClick={() => !opt.disabled && onChange(opt.value)}
               aria-label={opt.ariaLabel ?? opt.label}
               className={`relative flex h-[22px] items-center justify-center rounded-[3px] px-[8px] whitespace-nowrap transition-colors after:content-[''] after:absolute after:-inset-y-[8px] after:inset-x-0 ${
-                isActive
-                  ? "bg-white text-text-primary border-[0.6px] border-[#D8DADA] shadow-sm t-small-medium"
-                  : "text-text-secondary hover:text-text-primary t-small hover:bg-black/5"
+                opt.disabled
+                  ? "opacity-40 text-text-secondary cursor-not-allowed select-none"
+                  : isActive
+                  ? "bg-white text-text-primary border-[0.6px] border-[#D8DADA] shadow-sm t-small-medium cursor-pointer"
+                  : "text-text-secondary hover:text-text-primary t-small hover:bg-black/5 cursor-pointer"
               }`}
             >
               {iconNode}

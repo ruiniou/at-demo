@@ -6,6 +6,7 @@ import { Button } from "../../../components/ui/Button";
 import { FormInputField as Input } from "../../../components/ui/FormInputField";
 import { Dropdown, DropdownOption } from "../../../components/ui/Dropdown";
 import { MultiSelectDropdown } from "../../../components/ui/MultiSelectDropdown";
+import { CreatableDropdown } from "../../../components/ui/CreatableDropdown";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
 
 import { createPortal } from "react-dom";
@@ -328,6 +329,49 @@ function Step2Body() {
   );
 }
 
+// ==================== Historical Events Mock per Study ====================
+const STUDY_HISTORICAL_EVENTS: Record<
+  string,
+  {
+    adam: Array<{ eventName: string; fileName: string; isLastUsed?: boolean }>;
+    sdtm: Array<{ eventName: string; fileName: string; isLastUsed?: boolean }>;
+    sap: Array<{ eventName: string; fileName: string; isLastUsed?: boolean }>;
+  }
+> = {
+  "aze2001-301": {
+    adam: [
+      { eventName: "CSR Interim Analysis", fileName: "adam_spec_aze2001_301_csr.xlsx", isLastUsed: true },
+      { eventName: "DSMB Q3 Review", fileName: "adam_spec_aze2001_301_dsmb_q3.xlsx" },
+      { eventName: "Safety Update 2025", fileName: "adam_spec_aze2001_301_safety_2025.xlsx" },
+    ],
+    sdtm: [
+      { eventName: "CSR Interim Analysis", fileName: "sdtm_spec_aze2001_301_v2.0.xlsx", isLastUsed: true },
+      { eventName: "DSMB Q3 Review", fileName: "sdtm_spec_aze2001_301_v1.5.xlsx" },
+    ],
+    sap: [
+      { eventName: "CSR Interim Analysis", fileName: "sap_statistical_plan_v3.1.pdf", isLastUsed: true },
+      { eventName: "Final CSR", fileName: "sap_statistical_plan_v2.0.pdf" },
+    ],
+  },
+  "aze2001-302": {
+    adam: [
+      { eventName: "Phase 2 Primary Analysis", fileName: "adam_spec_aze2001_302_primary.xlsx", isLastUsed: true },
+      { eventName: "Interim Dose Escalation", fileName: "adam_spec_aze2001_302_dose_esc.xlsx" },
+    ],
+    sdtm: [
+      { eventName: "Phase 2 Primary Analysis", fileName: "sdtm_aze2001_302_phase2.xlsx", isLastUsed: true },
+    ],
+    sap: [
+      { eventName: "Phase 2 Primary Analysis", fileName: "sap_aze2001_302_final.pdf", isLastUsed: true },
+    ],
+  },
+  "aze2001-303": {
+    adam: [],
+    sdtm: [],
+    sap: [],
+  },
+};
+
 // ==================== Main Modal ====================
 
 export default function CreateEventModal({
@@ -343,17 +387,25 @@ export default function CreateEventModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const [step1Height, setStep1Height] = useState<number | null>(null);
   const [taValue, setTaValue] = useState<string | null>(null);
-  const [projectCodes, setProjectCodes] = useState<string[]>([]);
-  const [studyCodes, setStudyCodes] = useState<string[]>([]);
+  const [projectCode, setProjectCode] = useState<string | null>(null);
+  const [isProjectNew, setIsProjectNew] = useState(false);
+  const [studyCode, setStudyCode] = useState<string | null>(null);
+  const [isStudyNew, setIsStudyNew] = useState(false);
   const [eventName, setEventName] = useState("");
   const [ogemValue, setOgemValue] = useState<string | null>("12.8");
 
   // UploadCard states
   const [adamStatus, setAdamStatus] = useState<UploadStatus>("error");
   const [adamFile, setAdamFile] = useState("");
+  const [adamEvent, setAdamEvent] = useState("");
 
   const [sdtmStatus, setSdtmStatus] = useState<UploadStatus>("uploaded");
   const [sdtmFile, setSdtmFile] = useState("sdtm_spec_v1.2.xlsx");
+  const [sdtmEvent, setSdtmEvent] = useState("");
+
+  const [sapStatus, setSapStatus] = useState<UploadStatus>("pending");
+  const [sapFile, setSapFile] = useState("");
+  const [sapEvent, setSapEvent] = useState("");
 
   const [shellStatus, setShellStatus] = useState<UploadStatus>("error");
   const [shellFile, setShellFile] = useState("");
@@ -369,13 +421,14 @@ export default function CreateEventModal({
     { label: "Neurology", value: "neurology" }, { label: "Immunology", value: "immunology" },
     { label: "Infectious Disease", value: "infectious" },
   ];
-  const projectOptions: DropdownOption[] = [
+  const projectOptions = [
     { label: "PRO001 - Breast Cancer Study", value: "pro001" },
     { label: "PRO002 - NSCLC Trial", value: "pro002" },
     { label: "PRO003 - Diabetes Study", value: "pro003" },
   ];
-  const studyOptions: DropdownOption[] = [
-    { label: "AZE2001-301", value: "aze2001-301" }, { label: "AZE2001-302", value: "aze2001-302" },
+  const studyOptions = [
+    { label: "AZE2001-301", value: "aze2001-301" },
+    { label: "AZE2001-302", value: "aze2001-302" },
     { label: "AZE2001-303", value: "aze2001-303" },
   ];
   const ogemOptions: DropdownOption[] = [
@@ -383,6 +436,39 @@ export default function CreateEventModal({
     { label: "12.7", value: "12.7" },
     { label: "12.6", value: "12.6" },
   ];
+
+  // Derive Study state: UNSELECTED | NEW | EXISTING
+  const studyState: "UNSELECTED" | "NEW" | "EXISTING" = !studyCode
+    ? "UNSELECTED"
+    : isStudyNew
+    ? "NEW"
+    : "EXISTING";
+
+  const isUseExistingEnabled = studyState === "EXISTING";
+
+  // When studyState changes away from EXISTING, reset any linked files to upload pending
+  useEffect(() => {
+    if (studyState !== "EXISTING") {
+      if (adamStatus === "use-existing") {
+        setAdamStatus("pending");
+        setAdamFile("");
+        setAdamEvent("");
+      }
+      if (sdtmStatus === "use-existing") {
+        setSdtmStatus("pending");
+        setSdtmFile("");
+        setSdtmEvent("");
+      }
+      if (sapStatus === "use-existing") {
+        setSapStatus("pending");
+        setSapFile("");
+        setSapEvent("");
+      }
+    }
+  }, [studyState]);
+
+  // Historical event lists for the selected study
+  const currentStudyEvents = studyCode && STUDY_HISTORICAL_EVENTS[studyCode] ? STUDY_HISTORICAL_EVENTS[studyCode] : { adam: [], sdtm: [], sap: [] };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -409,37 +495,37 @@ export default function CreateEventModal({
     return () => observer.disconnect();
   }, [isOpen, currentStep]);
 
-  const fieldsFilled = !!taValue && projectCodes.length > 0 && studyCodes.length > 0 && !!eventName.trim() && !!ogemValue;
+  const fieldsFilled = !!taValue && !!projectCode && !!studyCode && !!eventName.trim() && !!ogemValue;
 
   const requiredFilesUploaded =
     (adamStatus === "uploaded" || adamStatus === "use-existing") &&
     (sdtmStatus === "uploaded" || sdtmStatus === "use-existing") &&
-    (shellStatus === "uploaded" || shellStatus === "use-existing");
+    (sapStatus === "uploaded" || sapStatus === "use-existing") &&
+    (shellStatus === "uploaded");
 
   const canCreateEvent = fieldsFilled && requiredFilesUploaded;
 
   const handleCreate = () => {
     if (!canCreateEvent) return;
-    const selectedProjects = projectCodes
-      .map(val => projectOptions.find(o => o.value === val)?.label.split(" - ")[0] || val)
-      .join(", ");
-    const selectedStudies = studyCodes
-      .map(val => studyOptions.find(o => o.value === val)?.label || val)
-      .join(", ");
+    const selectedProjectLabel = projectOptions.find(o => o.value === projectCode)?.label.split(" - ")[0] || projectCode || "";
+    const selectedStudyLabel = studyOptions.find(o => o.value === studyCode)?.label || studyCode || "";
 
     onCreateEvent({
       name: eventName,
-      project: selectedProjects,
-      study: selectedStudies,
+      project: selectedProjectLabel,
+      study: selectedStudyLabel,
     });
     // Reset state
     setEventName("");
     setTaValue(null);
-    setProjectCodes([]);
-    setStudyCodes([]);
+    setProjectCode(null);
+    setIsProjectNew(false);
+    setStudyCode(null);
+    setIsStudyNew(false);
     setOgemValue("12.8");
     setAdamStatus("error");
     setSdtmStatus("uploaded");
+    setSapStatus("pending");
     setShellStatus("pending");
     setTifoStatus("pending");
     setCustomShellStatus("pending");
@@ -475,8 +561,32 @@ export default function CreateEventModal({
               {/* Left column */}
               <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto border-r border-graphite-10 p-[20px]">
                 <Dropdown label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} />
-                <MultiSelectDropdown label="Project Code" required placeholder="Required" options={projectOptions} value={projectCodes} onChange={setProjectCodes} />
-                <MultiSelectDropdown label="Study Code" required placeholder="Required" options={studyOptions} value={studyCodes} onChange={setStudyCodes} />
+                <CreatableDropdown
+                  label="Project Code"
+                  required
+                  placeholder="Select or enter new code"
+                  options={projectOptions}
+                  value={projectCode}
+                  isNew={isProjectNew}
+                  createPrefix="New Project"
+                  onChange={(val, isNew) => {
+                    setProjectCode(val);
+                    setIsProjectNew(isNew);
+                  }}
+                />
+                <CreatableDropdown
+                  label="Study Code"
+                  required
+                  placeholder="Select or enter new code"
+                  options={studyOptions}
+                  value={studyCode}
+                  isNew={isStudyNew}
+                  createPrefix="New Study"
+                  onChange={(val, isNew) => {
+                    setStudyCode(val);
+                    setIsStudyNew(isNew);
+                  }}
+                />
                 <Input label="Event Name" required placeholder="Required" value={eventName} onChange={(e) => setEventName(e.target.value)} />
                 <Dropdown label="O_GEM Version" required placeholder="Required" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
                 <OptionalSection />
@@ -488,20 +598,49 @@ export default function CreateEventModal({
                   required 
                   requirementText="Excel only (.xlsx / .xls), max 20MB per file" 
                   showSegmentedControl 
+                  isUseExistingDisabled={!isUseExistingEnabled}
                   status={adamStatus} 
                   fileName={adamFile}
+                  selectedEventName={adamEvent}
+                  existingEvents={currentStudyEvents.adam}
                   onStatusChange={setAdamStatus}
-                  onFileSelect={setAdamFile}
+                  onFileSelect={(f, evt) => {
+                    setAdamFile(f);
+                    setAdamEvent(evt || "");
+                  }}
                   errorMessage="Validation failed: missing column USUBJID." 
                 />
                 <UploadCard 
                   label="SDTM" 
                   required 
                   requirementText="Excel only (.xlsx / .xls), max 20MB" 
+                  showSegmentedControl 
+                  isUseExistingDisabled={!isUseExistingEnabled}
                   status={sdtmStatus} 
                   fileName={sdtmFile}
+                  selectedEventName={sdtmEvent}
+                  existingEvents={currentStudyEvents.sdtm}
                   onStatusChange={setSdtmStatus}
-                  onFileSelect={setSdtmFile}
+                  onFileSelect={(f, evt) => {
+                    setSdtmFile(f);
+                    setSdtmEvent(evt || "");
+                  }}
+                />
+                <UploadCard 
+                  label="SAP" 
+                  required 
+                  requirementText="PDF or Word (.pdf / .docx), max 20MB" 
+                  showSegmentedControl 
+                  isUseExistingDisabled={!isUseExistingEnabled}
+                  status={sapStatus} 
+                  fileName={sapFile}
+                  selectedEventName={sapEvent}
+                  existingEvents={currentStudyEvents.sap}
+                  onStatusChange={setSapStatus}
+                  onFileSelect={(f, evt) => {
+                    setSapFile(f);
+                    setSapEvent(evt || "");
+                  }}
                 />
                 <UploadCard 
                   label="Shell file" 
