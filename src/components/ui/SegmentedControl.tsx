@@ -41,10 +41,10 @@ export function SegmentedControl({
               aria-label={opt.ariaLabel ?? opt.label}
               className={`relative flex h-[22px] items-center justify-center rounded-[3px] px-[8px] whitespace-nowrap transition-colors after:content-[''] after:absolute after:-inset-y-[8px] after:inset-x-0 ${
                 opt.disabled
-                  ? "opacity-40 text-text-secondary cursor-not-allowed select-none"
+                  ? "opacity-40 text-text-secondary cursor-not-allowed select-none t-small font-normal"
                   : isActive
                   ? "bg-white text-text-primary border-[0.6px] border-[#D8DADA] shadow-sm t-small-medium cursor-pointer"
-                  : "text-text-secondary hover:text-text-primary t-small hover:bg-black/5 cursor-pointer"
+                  : "text-text-secondary hover:text-text-primary t-small font-normal hover:bg-black/5 cursor-pointer"
               }`}
             >
               {iconNode}

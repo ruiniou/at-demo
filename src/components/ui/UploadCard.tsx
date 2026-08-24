@@ -138,7 +138,7 @@ export function UploadCard({
       e.fileName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const showSegmented = showSegmentedControl && (currentStatus === "pending" || currentStatus === "error" || currentStatus === "use-existing");
+  const showSegmented = showSegmentedControl && currentStatus !== "uploading";
 
   const handleStatusUpdate = (status: UploadStatus) => {
     setCurrentStatus(status);
@@ -189,7 +189,7 @@ export function UploadCard({
               <div className="flex max-h-[220px] flex-col gap-[2px] overflow-y-auto px-[2px]">
                 {filteredEvents.length > 0 ? (
                   filteredEvents.map((evt) => {
-                    const isSelected = localEventName === evt.eventName;
+                    const isSelected = (localEventName || initialEventName) === evt.eventName;
                     return (
                       <button
                         key={`${evt.eventName}-${evt.fileName}`}
@@ -210,9 +210,12 @@ export function UploadCard({
                           <div className="flex items-center gap-[6px]">
                             <span className="t-small font-medium truncate">{evt.eventName}</span>
                             {evt.isLastUsed && (
-                              <Badge variant="default" className="h-[18px] px-[4px] text-[10px] font-medium shrink-0">
+                              <span
+                                className="inline-flex items-center rounded-[3px] bg-az-secondary px-[6px] py-px text-[12px] leading-[18px] text-brand-1 shrink-0 font-normal select-none"
+                                style={{ fontFamily: "'PingFang SC', sans-serif" }}
+                              >
                                 Last Used
-                              </Badge>
+                              </span>
                             )}
                           </div>
                           <span className="text-[11px] text-text-secondary truncate">{evt.fileName}</span>
@@ -283,8 +286,45 @@ export function UploadCard({
               </div>
             </div>
           </div>
-          <button type="button" onClick={handleClear} className="relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 after:content-[''] after:absolute after:-inset-[8px]">
+          <button type="button" onClick={handleClear} className="relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 after:content-[''] after:absolute after:-inset-[8px] cursor-pointer">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 10.586l4.95-4.95 1.414 1.414L13.414 12l4.95 4.95-1.414 1.414L12 13.414l-4.95 4.95-1.414-1.414L10.586 12 5.636 7.05l1.414-1.414L12 10.586z" fill="#888E8E"/></svg>
+          </button>
+        </div>
+      </div>
+    );
+  } else if (currentStatus === "use-existing") {
+    // Figma 632:1322 — solid border, link icon + filename + event tag + status completed
+    uploadArea = (
+      <div className="flex flex-col rounded-[4px] border border-graphite-10 bg-white p-[8px_10px]">
+        <div className="flex items-center gap-[16px] py-[8px]">
+          <div className="flex flex-1 items-center gap-[8px] min-w-0">
+            <img src={linkIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
+            <div className="flex flex-1 min-w-0 flex-col gap-[2px]">
+              <div className="flex items-center gap-[6px] min-w-0 flex-wrap">
+                <span className="t-small-medium text-text-primary truncate" title={localFileName || fileName}>
+                  {localFileName || fileName}
+                </span>
+                {(localEventName || initialEventName) && (
+                  <span
+                    className="inline-flex items-center rounded-[3px] bg-graphite-10 px-[6px] py-px text-[12px] leading-[18px] text-text-secondary shrink-0 font-normal select-none"
+                    style={{ fontFamily: "'PingFang SC', sans-serif" }}
+                  >
+                    {localEventName || initialEventName}
+                  </span>
+                )}
+                <img src={statusCompletedUrl} alt="" className="h-[16px] w-[16px] shrink-0" />
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleClear}
+            className="relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 after:content-[''] after:absolute after:-inset-[8px] cursor-pointer"
+            title="Clear selection"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 10.586l4.95-4.95 1.414 1.414L13.414 12l4.95 4.95-1.414 1.414L12 13.414l-4.95 4.95-1.414-1.414L10.586 12 5.636 7.05l1.414-1.414L12 10.586z" fill="#888E8E"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -315,6 +355,9 @@ export function UploadCard({
               const newIdx = Number(v);
               setSegmentedIndex(newIdx);
               if (newIdx === 1) {
+                if (currentStatus === "use-existing") {
+                  handleStatusUpdate("pending");
+                }
                 setDropdownOpen(true);
               } else {
                 setDropdownOpen(false);

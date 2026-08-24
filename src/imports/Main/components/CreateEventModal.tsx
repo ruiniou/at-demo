@@ -395,19 +395,19 @@ export default function CreateEventModal({
   const [ogemValue, setOgemValue] = useState<string | null>("12.8");
 
   // UploadCard states
-  const [adamStatus, setAdamStatus] = useState<UploadStatus>("error");
+  const [adamStatus, setAdamStatus] = useState<UploadStatus>("pending");
   const [adamFile, setAdamFile] = useState("");
   const [adamEvent, setAdamEvent] = useState("");
 
-  const [sdtmStatus, setSdtmStatus] = useState<UploadStatus>("uploaded");
-  const [sdtmFile, setSdtmFile] = useState("sdtm_spec_v1.2.xlsx");
+  const [sdtmStatus, setSdtmStatus] = useState<UploadStatus>("pending");
+  const [sdtmFile, setSdtmFile] = useState("");
   const [sdtmEvent, setSdtmEvent] = useState("");
 
   const [sapStatus, setSapStatus] = useState<UploadStatus>("pending");
   const [sapFile, setSapFile] = useState("");
   const [sapEvent, setSapEvent] = useState("");
 
-  const [shellStatus, setShellStatus] = useState<UploadStatus>("error");
+  const [shellStatus, setShellStatus] = useState<UploadStatus>("pending");
   const [shellFile, setShellFile] = useState("");
 
   const [tifoStatus, setTifoStatus] = useState<UploadStatus>("pending");
