@@ -93,23 +93,19 @@ export function Dropdown({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`relative flex w-full items-center justify-between transition-[border-color,box-shadow,background-color] after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0 ${triggerClassName || 'h-[32px] rounded-[4px] pl-[12px] pr-[10px]'} ${boxClasses}`}
+        className={`relative flex w-full items-center justify-between gap-[8px] transition-[border-color,box-shadow,background-color] after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0 ${triggerClassName || 'h-[32px] rounded-[4px] pl-[12px] pr-[10px]'} ${boxClasses}`}
       >
         <span
+          title={selectedOption ? selectedOption.label : placeholder}
           style={{
             fontFamily: "'PingFang SC', sans-serif",
             fontWeight: 400,
             fontSize: 12,
             lineHeight: "20px",
             color: textColor,
-            maxWidth: "calc(100% - 24px)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            display: "block",
-            textAlign: "left",
             ...customTextStyle,
           }}
+          className="flex-1 min-w-0 truncate text-left"
         >
           {selectedOption ? selectedOption.label : placeholder}
         </span>

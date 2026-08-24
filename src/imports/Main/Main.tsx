@@ -5277,32 +5277,58 @@ function BlocksTabContent({
     </SvgIcon>
   );
 
+  const prevBlockIdsRef = useRef<string[]>(blocks.map((b: any) => b.id));
   const prevLoadingIdRef = useRef<string | null>(null);
   const activeGeneratedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const currentIds = blocks.map((b: any) => b.id);
+    const newId = currentIds.find((id: string) => !prevBlockIdsRef.current.includes(id));
+    prevBlockIdsRef.current = currentIds;
+
     const loadingBlock = blocks.find((b: any) => b.state === 'loading');
     if (loadingBlock) {
       if (loadingBlock.id !== prevLoadingIdRef.current) {
         prevLoadingIdRef.current = loadingBlock.id;
         activeGeneratedIdRef.current = loadingBlock.id;
+        isScrollingProgrammatically.current = true;
         setSelectedBlockId(loadingBlock.id);
         setTimeout(() => {
           const el = sectionRefs.current[loadingBlock.id];
           if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
+          setTimeout(() => {
+            isScrollingProgrammatically.current = false;
+          }, 600);
         }, 100);
       }
     } else if (activeGeneratedIdRef.current) {
       const completedId = activeGeneratedIdRef.current;
       activeGeneratedIdRef.current = null;
+      isScrollingProgrammatically.current = true;
       setSelectedBlockId(completedId);
       setTimeout(() => {
         const el = sectionRefs.current[completedId];
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+        setTimeout(() => {
+          isScrollingProgrammatically.current = false;
+        }, 600);
+      }, 100);
+    } else if (newId) {
+      // Newly added block without loading state
+      isScrollingProgrammatically.current = true;
+      setSelectedBlockId(newId);
+      setTimeout(() => {
+        const el = sectionRefs.current[newId];
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        setTimeout(() => {
+          isScrollingProgrammatically.current = false;
+        }, 600);
       }, 100);
     }
   }, [blocks]);
@@ -5371,15 +5397,15 @@ function BlocksTabContent({
                 </div>
               ) : (
                 <>
-                  <div className="group relative flex items-center justify-between mb-[12px]">
-                    <div className="flex items-center gap-[6px]">
+                  <div className="group relative flex items-center justify-between gap-[8px] mb-[12px]">
+                    <div className="flex items-center gap-[4px] min-w-0 flex-1">
                       <p className="text-[14px] font-bold text-text-primary break-words m-0">
                         {blockName}
                       </p>
                       {onQuoteField && (
                         <button
                           onClick={(e) => { e.stopPropagation(); onQuoteField(block.id, blockName, blockName); }}
-                          className="absolute right-[24px] top-1/2 -translate-y-1/2 z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
+                          className="shrink-0 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
                           title={`Quote "${blockName}"`}
                           aria-label={`Quote "${blockName}"`}
                         >
@@ -5387,8 +5413,8 @@ function BlocksTabContent({
                         </button>
                       )}
                     </div>
-                    <div className="flex items-center gap-[4px]">
-                      {/* Delete button — Figure Components only */}
+                    <div className="flex items-center gap-[4px] shrink-0">
+                      {/* Delete button — Figure Components only, on the left of Checkbox */}
                       {onDeleteComponent && (
                         <TooltipText label="Delete" align="center">
                           <div
@@ -5733,6 +5759,7 @@ function MetadataPanel({
   useEffect(() => {
     if (addComponentTrigger && addComponentTrigger !== prevAddComponentTriggerRef.current) {
       prevAddComponentTriggerRef.current = addComponentTrigger;
+      setActiveTab("blocks");
       handleGenerateComponent(addComponentTrigger.name, addComponentTrigger.type, addComponentTrigger.instructions);
     }
   }, [addComponentTrigger]);

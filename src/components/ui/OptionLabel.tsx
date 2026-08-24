@@ -70,13 +70,14 @@ export function OptionLabel({
       )}
 
       <span
+        title={label}
         style={{
           fontFamily: "'PingFang SC', sans-serif",
           fontWeight: 400,
           fontSize: 12,
           lineHeight: "18px",
         }}
-        className={isHighlight ? highlightTextColor : "text-[#3F4444]"}
+        className={`flex-1 min-w-0 truncate ${isHighlight ? highlightTextColor : "text-[#3F4444]"}`}
       >
         {label}
       </span>
