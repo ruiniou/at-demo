@@ -48,6 +48,7 @@ import filterIconUrl from "../../icons/filter-line.svg";
 import addLineIconUrl from "../../icons/add-line.svg";
 import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
+import shiningFillIconUrl from "../../icons/shining-fill.svg";
 import snowflakeIconUrl from "../../icons/snowflake-line.svg";
 import deleteBinIconUrl from "../../icons/delete-bin-line.svg";
 import linkUnlinkIconUrl from "../../icons/link-unlink-m.svg";
@@ -62,6 +63,7 @@ import { Tooltip } from "../../components/ui/Tooltip";
 import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
+import { FilterChip } from "../../components/ui/FilterChip";
 import { BrowseVariablesField } from "./components/BrowseVariablesModal";
 import { FormTextArea as Textarea } from "../../components/ui/FormTextArea";
 import { AIInputBox } from "../../components/ui/AI-InputBox";
@@ -77,7 +79,6 @@ import { OptionLabel } from "../../components/ui/OptionLabel";
 import { FormInputField as Input } from "../../components/ui/FormInputField";
 import { Input as BaseInput } from "../../components/ui/Input";
 import { FormItem } from "../../components/ui/FormItem";
-import shiningFillIconUrl from "../../icons/shining-fill.svg";
 import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 import groupIconUrl from "../../icons/group.svg";
 import { GroupCodePanel, type GroupCodeItem } from "../../components/ui/GroupCodePanel";
@@ -1561,9 +1562,9 @@ function FolderIcon({ color = "#3F4444" }) {
   );
 }
 
-function SparklesIcon({ color }: { color?: string } = {}) {
+function SparklesIcon({ className = "w-[16px] h-[16px]", color }: { className?: string; color?: string } = {}) {
   return (
-    <SvgIcon className="w-[16px] h-[16px]">
+    <SvgIcon className={className}>
       {!color && (
         <defs>
           <linearGradient id="gradient-ai-tree" x1="4" x2="20" y1="4" y2="20" gradientUnits="userSpaceOnUse">
@@ -2376,13 +2377,13 @@ const listingData = [
 ];
 
 const listingColumns = [
-  { key: "studyDay", label: "Study day [b]", width: 160, widthPx: 160 },
-  { key: "lesionNum", label: "Lesion number", width: 120, widthPx: 120 },
-  { key: "lesionLoc", label: "Lesion location", width: 200, widthPx: 200 },
+  { key: "studyDay", label: "Study day [b]", width: 240, widthPx: 240 },
+  { key: "lesionNum", label: "Lesion number", width: 130, widthPx: 130 },
+  { key: "lesionLoc", label: "Lesion location", width: 160, widthPx: 160 },
   { key: "locSpec", label: "Location within site specification", width: 220, widthPx: 220 },
   { key: "method", label: "Method of assessment", width: 160, widthPx: 160 },
   { key: "diameter", label: "Diameter (mm) [c]", width: 170, widthPx: 170 },
-  { key: "sum", label: "Sum of diameters (mm) [d]", width: 180, widthPx: 180 },
+  { key: "sum", label: "Sum of diameters (mm) [d]", width: 200, widthPx: 200 },
 ] as const;
 
 // Experimental: inline metadata under Listing column headers.
@@ -3325,20 +3326,29 @@ function ListingShellPreview({
                                   const meta = LISTING_COLUMN_METADATA[column.key];
                                   return (
                                     <th key={column.key} style={{ fontWeight: 500 }} className="border-r border-border-default px-[8px] py-[3px] text-left align-top t-small-medium font-medium whitespace-normal break-words last:border-r-0">
-                                      <div className="flex flex-col items-start gap-[2px]">
-                                        <span>{column.label}</span>
+                                      <div className="flex flex-col items-start gap-[2px] w-full">
+                                        <span className="min-h-[36px] flex items-start leading-[18px]">{column.label}</span>
                                         {/* Experimental inline metadata (Line 2/3). Fixed heights keep header rows aligned. */}
-                                        <div className="t-footnote text-text-secondary text-left font-normal mt-[2px] w-full">
-                                          {/* Line 2: dataset.variable — always exactly 1 line, ellipsis when too long. */}
-                                          <div className="h-[14px] overflow-hidden whitespace-nowrap text-ellipsis">
-                                            {meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}
-                                          </div>
-                                          {/* Line 3: rule — wraps to at most 2 lines, then ellipsis. */}
-                                          <div
-                                            className="h-[28px] overflow-hidden whitespace-normal break-words"
-                                            style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
-                                          >
-                                            {meta?.rule ? `rule: ${meta.rule}` : '\u00A0'}
+                                        <div className="t-footnote text-text-secondary text-left font-normal mt-[4px] pt-[4px] border-t border-graphite-10 -mx-[8px] px-[8px] w-[calc(100%+16px)] min-h-[58px]">
+                                          <div className="flex items-start gap-[4px] w-full">
+                                            {meta ? (
+                                              <LocalIcon src={aiProcessingIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" />
+                                            ) : (
+                                              <div className="w-[12px] h-[12px] shrink-0" />
+                                            )}
+                                            <div className="flex-1 min-w-0">
+                                              {/* Line 2: dataset.variable — always exactly 1 line, ellipsis when too long. */}
+                                              <div className="h-[14px] overflow-hidden whitespace-nowrap text-ellipsis leading-[14px]">
+                                                {meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}
+                                              </div>
+                                              {/* Line 3: rule — wraps to up to 3 lines, fully displaying the rule text. */}
+                                              <div
+                                                className="min-h-[42px] overflow-hidden whitespace-normal break-words leading-[14px]"
+                                                style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3 }}
+                                              >
+                                                {meta?.rule ? `rule: ${meta.rule}` : '\u00A0'}
+                                              </div>
+                                            </div>
                                           </div>
                                         </div>
                                       </div>
@@ -3429,12 +3439,6 @@ function ListingShellPreview({
                               ref={(node) => { thRefs.current[columnIndex] = node; }}
                               style={cellStyle}
                               className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-text-primary border-r-border-default last:border-r-0 px-[8px] py-[3px] text-left align-top t-small-medium font-medium whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] relative z-10 ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
-                              onMouseEnter={() => {
-                                if (draggingBreak === null && draggingFreeze === null && columnIndex < firstPageBreakIndex) {
-                                  setHoveredFreezeColumn(columnIndex);
-                                }
-                              }}
-                              onMouseLeave={() => setHoveredFreezeColumn(null)}
                             >
                               {/* Hover tooltip for Add Freeze */}
                               {hoveredFreezeColumn === columnIndex && frozenUntilIndex === null && columnIndex < firstPageBreakIndex && hoveredGap === null && !pageSepActive && (
@@ -3449,25 +3453,40 @@ function ListingShellPreview({
                                 </div>
                               )}
                               {/* Button area */}
-                              <div className="flex w-full items-center justify-between gap-[4px] rounded-[3px]">
-                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} style={{ fontWeight: 500, fontSize: '12px', lineHeight: '20px' }} className="flex-1 min-w-0 whitespace-pre-wrap break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
+                              {/* Button area - Fixed shelf height aligns the divider line across all columns */}
+                              <div 
+                                className="flex w-full items-start justify-between gap-[4px] rounded-[3px] min-h-[36px]"
+                                onMouseEnter={() => {
+                                  if (draggingBreak === null && draggingFreeze === null && columnIndex < firstPageBreakIndex) {
+                                    setHoveredFreezeColumn(columnIndex);
+                                  }
+                                }}
+                                onMouseLeave={() => setHoveredFreezeColumn(null)}
+                              >
+                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} style={{ fontWeight: 500, fontSize: '12px', lineHeight: '18px' }} className="flex-1 min-w-0 whitespace-pre-wrap break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
                               </div>
 
                               {/* Experimental inline metadata (Line 2/3). Fixed heights keep header rows aligned. */}
-                              <div 
-                                className="t-footnote text-text-secondary text-left font-normal mt-[4px] cursor-pointer hover:bg-black/[0.03] rounded-[2px] p-[2px] -mx-[2px]"
-                                onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }}
-                              >
-                                {/* Line 2: dataset.variable — always exactly 1 line, ellipsis when too long. */}
-                                <div className="h-[14px] overflow-hidden whitespace-nowrap text-ellipsis">
-                                  {meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}
-                                </div>
-                                {/* Line 3: rule — wraps to at most 2 lines, then ellipsis. */}
-                                <div
-                                  className="h-[28px] overflow-hidden whitespace-normal break-words"
-                                  style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
-                                >
-                                  {meta?.rule ? `rule: ${meta.rule}` : '\u00A0'}
+                              <div className="t-footnote text-text-secondary text-left font-normal mt-[4px] pt-[4px] border-t border-graphite-10 -mx-[8px] px-[8px] min-h-[58px]">
+                                <div className="flex items-start gap-[4px] w-full">
+                                  {meta ? (
+                                    <LocalIcon src={aiProcessingIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" />
+                                  ) : (
+                                    <div className="w-[12px] h-[12px] shrink-0" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    {/* Line 2: dataset.variable — always exactly 1 line, ellipsis when too long. */}
+                                    <div className="h-[14px] overflow-hidden whitespace-nowrap text-ellipsis leading-[14px]">
+                                      {meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}
+                                    </div>
+                                    {/* Line 3: rule — wraps to up to 3 lines, fully displaying the rule text. */}
+                                    <div
+                                      className="min-h-[42px] overflow-hidden whitespace-normal break-words leading-[14px]"
+                                      style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3 }}
+                                    >
+                                      {meta?.rule ? `rule: ${meta.rule}` : '\u00A0'}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                               
@@ -5338,17 +5357,19 @@ function BlocksTabContent({
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       {/* Row 2: Select navigator (left) + Confirm stats (right) */}
       <div className="shrink-0 flex items-center justify-between px-[12px] py-[8px] border-b border-[#E5E8E8] bg-bg-panel">
-        {/* Select dropdown navigator */}
+        {/* FilterChip dropdown navigator */}
         <div className="flex-1 min-w-0 mr-[12px]">
           {blocks.length > 0 ? (
-            <Dropdown
+            <FilterChip
+              type="Dropdown"
+              showIcon={false}
               options={blocks.map((b: any) => ({
                 label: b.name || b.fields?.find((f: any) => f.id.includes('Label') || f.id.includes('Title') || f.label === 'Component Label' || f.label === 'Block Title')?.value || b.id,
                 value: b.id
               }))}
               value={selectedBlockId}
               onChange={handleSelectNavChange}
-              placeholder="Select..."
+              className="max-w-full"
             />
           ) : (
             <p className="t-small text-text-secondary">No items</p>
