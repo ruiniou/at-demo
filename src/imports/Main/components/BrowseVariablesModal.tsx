@@ -4,6 +4,8 @@ import { SearchBar } from "../../../components/ui/SearchBar";
 import { FormItem } from "../../../components/ui/FormItem";
 import { Tag } from "../../../components/ui/Tag";
 import { Tooltip } from "../../../components/ui/Tooltip";
+import { FilterChip } from "../../../components/ui/FilterChip";
+import { Checkbox } from "../../../components/ui/Checkbox";
 import arrowIconUrl from "../../../icons/arrow-down-s-line.svg";
 
 // ==================== Types ====================
@@ -18,6 +20,7 @@ export type Variable = {
   displayFormat: string;
   derivation: string;
   hasVlm: boolean;
+  standard?: "ADaM" | "SDTM";
 };
 
 export type VlmRow = {
@@ -59,75 +62,134 @@ export type InlineVariableListProps = {
 // ==================== Mock Data ====================
 
 export const mockVariables: Variable[] = [
-  { id: "v1", datasetName: "ADSL", variable: "AAGE", label: "Analysis Age", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to integer part of (Randomization Date - Date of Birth + 1) / 365.25.", hasVlm: false },
-  { id: "v2", datasetName: "ADSL", variable: "AAGEU", label: "Analysis Age Unit", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Set to "YEARS" if ADSL.AAGE is not missing.', hasVlm: false },
-  { id: "v3", datasetName: "ADSL", variable: "ACTARM", label: "Description of Actual Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ACTARM", hasVlm: false },
-  { id: "v4", datasetName: "ADSL", variable: "ACTARMCD", label: "Actual Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "DM.ACTARMCD", hasVlm: false },
-  { id: "v5", datasetName: "ADSL", variable: "ACTARMUD", label: "Description of Unplanned Actual Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ACTARMUD", hasVlm: false },
-  { id: "v6", datasetName: "ADSL", variable: "ADAFL", label: "Anti-Drug Antibody Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if SAFFL='Y' and patient has non-missing post-baseline ADA sample assessment.", hasVlm: false },
-  { id: "v7", datasetName: "ADSL", variable: "AGE", label: "Age at Enrollment", type: "Num", length: 8, displayFormat: "8.1", derivation: "Derived from informed consent date and date of birth.", hasVlm: false },
-  { id: "v8", datasetName: "ADSL", variable: "AGEGR1", label: "Age Group (years)", type: "Char", length: 8, displayFormat: "$8.", derivation: "Categorized: <65, 65-74, ≥75", hasVlm: false },
-  { id: "v9", datasetName: "ADSL", variable: "AGEGR2", label: "Age Group 2 (<65, >=65)", type: "Char", length: 8, displayFormat: "$8.", derivation: "Categorized: <65, >=65", hasVlm: false },
-  { id: "v_agesexra", datasetName: "ADSL", variable: "AGESEXRA", label: "Age/Sex/Race concatenated", type: "Char", length: 60, displayFormat: "$60.", derivation: 'Concatenate ADSL.AAGE, ADSL.SEX and ADSL.ARACE using "/" as separators.', hasVlm: false },
-  { id: "v_ageu", datasetName: "ADSL", variable: "AGEU", label: "Age Units", type: "Char", length: 10, displayFormat: "$10.", derivation: "DM.AGEU", hasVlm: false },
-  { id: "v10", datasetName: "ADSL", variable: "ALCSTAT", label: "Alcohol Consumption Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Direct copy from Medical History (MH) domain.", hasVlm: false },
-  { id: "v11", datasetName: "ADSL", variable: "ALCSTT", label: "Alcohol Status", type: "Char", length: 20, displayFormat: "$20.", derivation: 'Subset the data with SU.SUTRT = "ALCOHOL" If SUENRTPT="BEFORE" then ALCSTT="Former" else if SUENRTPT="ONGOING" then ALCSTT="Current" else if SUENRTPT="" and SUOCCUR="N" then ALCSTT="Never".', hasVlm: false },
-  { id: "v12", datasetName: "ADLB", variable: "ANRLO", label: "Analysis Normal Range Lower Limit", type: "Num", length: 8, displayFormat: "8.2", derivation: "Lower limit of normal range for the lab parameter.", hasVlm: false },
-  { id: "v13", datasetName: "ADLB", variable: "ANRHI", label: "Analysis Normal Range Upper Limit", type: "Num", length: 8, displayFormat: "8.2", derivation: "Upper limit of normal range for the lab parameter.", hasVlm: false },
-  { id: "v_arace", datasetName: "ADSL", variable: "ARACE", label: "Analysis Race", type: "Char", length: 50, displayFormat: "$50.", derivation: 'Set to "American Indian or Alaska Native" if ADSL.RACE="AMERICAN INDIAN OR ALASKA NATIVE". else "Asian" if ADSL.RACE="ASIAN". else "Black or African American" if ADSL.RACE="BLACK OR AFRICAN AMERICAN". else "Native Hawaiian or Other Pacific Islander" if ADSL.RACE="NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER". else "White" if ADSL.RACE="WHITE". else "Multiple" if ADSL.RACE="MULTIPLE". else "Other" if ADSL.RACE="OTHER".', hasVlm: false },
-  { id: "v_aracen", datasetName: "ADSL", variable: "ARACEN", label: "Analysis Race (N)", type: "Num", length: 8, displayFormat: "8.", derivation: 'Set to 1 if ADSL.ARACE="American Indian or Alaska Native". else set to 2 if ADSL.ARACE="Asian". else set to 3 if ADSL.ARACE="Black or African American". else set to 4 if ADSL.ARACE="Native Hawaiian or Other Pacific Islander". else set to 5 if ADSL.ARACE="White". else set to 6 if ADSL.ARACE="Multiple". else set to 7 if ADSL.ARACE="Other".', hasVlm: false },
-  { id: "v14", datasetName: "ADAE", variable: "AREL", label: "AE Relationship to Study Drug", type: "Char", length: 8, displayFormat: "$8.", derivation: "Related / Not Related / Possibly Related.", hasVlm: false },
-  { id: "v_arm", datasetName: "ADSL", variable: "ARM", label: "Description of Planned Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ARM", hasVlm: false },
-  { id: "v_armcd", datasetName: "ADSL", variable: "ARMCD", label: "Planned Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "DM.ARMCD", hasVlm: false },
-  { id: "v_armnrs", datasetName: "ADSL", variable: "ARMNRS", label: "Reason Arm and/or Actual Arm is Null", type: "Char", length: 60, displayFormat: "$60.", derivation: "DM.ARMNRS", hasVlm: false },
-  { id: "v15", datasetName: "ADSL", variable: "ASEX", label: "Analysis Sex", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Set to "Male" if ADSL.SEX="M". else "Female" if ADSL.SEX="F".', hasVlm: false },
-  { id: "v_asexn", datasetName: "ADSL", variable: "ASEXN", label: "Analysis Sex (N)", type: "Num", length: 8, displayFormat: "8.", derivation: 'Set to 1 if ADSL.ASEX="Male". else set to 2 if ADSL.ASEX="Female".', hasVlm: false },
-  { id: "v16", datasetName: "ADEXSUM", variable: "ATOXGR", label: "Analysis Toxicity Grade", type: "Char", length: 4, displayFormat: "$4.", derivation: "Toxicity grade applied to AVAL.", hasVlm: false },
-  { id: "v17", datasetName: "ADEXSUM", variable: "AVAL", label: "Analysis Value", type: "Num", length: 8, displayFormat: "8.2", derivation: "Varies by PARAM; see VLM for conditional logic.", hasVlm: true },
-  { id: "v18", datasetName: "ADLB", variable: "AVAL", label: "Analysis Value (Lab)", type: "Num", length: 8, displayFormat: "8.3", derivation: "Lab result in standard units. VLM defines per-PARAM logic.", hasVlm: true },
-  { id: "v19", datasetName: "ADTTE", variable: "AVAL", label: "Analysis Value (Time)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Time to event in days/months. VLM defines per-PARAM logic.", hasVlm: true },
-  { id: "v20", datasetName: "ADSL", variable: "BMIBL", label: "Baseline Body Mass Index (kg/m2)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to ADSL.WEIGHTBL / ((ADSL.HEIGHTBL / 100)**2) rounded to 1 decimal place.", hasVlm: false },
-  { id: "v21", datasetName: "ADSL", variable: "BMIGR1", label: "Baseline BMI Group (<25, 25-<30, >=30)", type: "Char", length: 12, displayFormat: "$12.", derivation: 'Set to "<25" if BMIBL<25; "25-<30" if 25<=BMIBL<30; ">=30" if BMIBL>=30.', hasVlm: false },
-  { id: "v22", datasetName: "ADSL", variable: "CIGPKYR", label: "Cigarette Pack Years", type: "Num", length: 8, displayFormat: "8.1", derivation: "Calculated from (Cigarettes per day / 20) * Years smoked.", hasVlm: false },
-  { id: "v23", datasetName: "ADTTE", variable: "CNSR", label: "Censor Indicator", type: "Num", length: 8, displayFormat: "1.", derivation: "0 = Event, 1 = Censored.", hasVlm: true },
-  { id: "v24", datasetName: "ADRESP", variable: "COHORT", label: "Study Cohort", type: "Char", length: 20, displayFormat: "$20.", derivation: "Dose expansion / escalation cohort identifier.", hasVlm: false },
-  { id: "v25", datasetName: "ADSL", variable: "ECOBLG1N", label: "Baseline ECOG Performance Score Numeric", type: "Num", length: 8, displayFormat: "8.", derivation: "Numeric value of baseline ECOG Performance Status (0, 1, 2, 3).", hasVlm: false },
-  { id: "v26", datasetName: "ADSL", variable: "ECOGBL", label: "Baseline ECOG Performance Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Baseline ECOG score collected at Day 1 / Screening.", hasVlm: false },
-  { id: "v27", datasetName: "ADSL", variable: "ECOGBLN", label: "Baseline ECOG Status Code", type: "Num", length: 8, displayFormat: "8.", derivation: "Numeric code for ECOG status (0, 1, 2, 3, 4).", hasVlm: false },
-  { id: "v28", datasetName: "ADRESP", variable: "FASFL", label: "Full Analysis Set Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if subject received at least one dose of study drug and has baseline assessment.", hasVlm: false },
-  { id: "v29", datasetName: "ADSL", variable: "HEIGHTBL", label: "Baseline Height (cm)", type: "Num", length: 8, displayFormat: "8.1", derivation: "VS.VSSTRESN where VSTESTCD='HEIGHT' and VSTPT='BASELINE'.", hasVlm: false },
-  { id: "v30", datasetName: "ADSL", variable: "ITT3LFL", label: "ITT Population Flag 3rd Line", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' for third-line Intent-to-Treat randomized subjects.", hasVlm: false },
-  { id: "v31", datasetName: "ADSL", variable: "ITTFL", label: "Intent-to-Treat Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if subject is randomized.", hasVlm: false },
-  { id: "v32", datasetName: "ADSL", variable: "NICPKYR", label: "Nicotine Pack Years", type: "Num", length: 8, displayFormat: "8.1", derivation: "Total nicotine pack years calculated from consumption history.", hasVlm: false },
-  { id: "v33", datasetName: "ADSL", variable: "NICSTT", label: "Nicotine Smoking Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Never, Former, Current smoker.", hasVlm: false },
-  { id: "v34", datasetName: "ADSL", variable: "NICSYN", label: "Nicotine Usage Flag (Y/N)", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if patient has documented history of nicotine use.", hasVlm: false },
-  { id: "v35", datasetName: "ADSL", variable: "NICTYP", label: "Nicotine Product Type", type: "Char", length: 30, displayFormat: "$30.", derivation: "Cigarettes, Cigars, E-cigarettes, Chewing tobacco.", hasVlm: false },
-  { id: "v36", datasetName: "ADRESP", variable: "OCCRVRFL", label: "Overall Confirmed Complete Response Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if confirmed complete response criteria met according to RECIST 1.1.", hasVlm: false },
-  { id: "v37", datasetName: "ADRESP", variable: "OCPRVRFL", label: "Overall Confirmed Partial Response Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if confirmed partial response criteria met according to RECIST 1.1.", hasVlm: false },
-  { id: "v38", datasetName: "ADEXSUM", variable: "PARAM", label: "Parameter Name", type: "Char", length: 40, displayFormat: "$40.", derivation: "Defines the exposure metric being summarized.", hasVlm: true },
-  { id: "v39", datasetName: "ADEXSUM", variable: "PARAMCD", label: "Parameter Code", type: "Char", length: 8, displayFormat: "$8.", derivation: "Short code for PARAM.", hasVlm: false },
-  { id: "v40", datasetName: "ADRESP", variable: "PARQUAL", label: "Parameter Qualifier", type: "Char", length: 40, displayFormat: "$40.", derivation: "Qualifier indicating 'INDEPENDENT ASSESSOR' or 'INVESTIGATOR'.", hasVlm: false },
-  { id: "v41", datasetName: "ADSL", variable: "PRHER2FL", label: "Prior HER2 Therapy Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if prior anti-HER2 targeted therapy documented.", hasVlm: false },
-  { id: "v42", datasetName: "ADSL", variable: "PRIMMFL", label: "Prior Immunotherapy Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if prior checkpoint inhibitor or immuno-oncology treatment documented.", hasVlm: false },
-  { id: "v43", datasetName: "ADSL", variable: "PRSYSG1", label: "Prior Systemic Therapy Regimen Group 1", type: "Char", length: 30, displayFormat: "$30.", derivation: "Categorized: 1 line, 2 lines, >=3 lines of prior systemic anticancer therapy.", hasVlm: false },
-  { id: "v44", datasetName: "ADSL", variable: "PRTOPOFL", label: "Prior Topoisomerase Inhibitor Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if prior topoisomerase I/II inhibitor therapy received.", hasVlm: false },
-  { id: "v45", datasetName: "ADSL", variable: "RACE", label: "Race", type: "Char", length: 32, displayFormat: "$32.", derivation: "As collected from site records.", hasVlm: false },
-  { id: "v46", datasetName: "ADSL", variable: "SAFFL", label: "Safety Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if subject received at least 1 dose of study drug.", hasVlm: false },
-  { id: "v47", datasetName: "ADSL", variable: "SEX", label: "Sex", type: "Char", length: 1, displayFormat: "$1.", derivation: "M = Male, F = Female", hasVlm: false },
-  { id: "v48", datasetName: "ADSL", variable: "SMOKSTAT", label: "Smoking Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Direct copy from Medical History (MH) domain.", hasVlm: false },
-  { id: "v49", datasetName: "ADSL", variable: "STRATA1", label: "Stratification Factor 1", type: "Char", length: 16, displayFormat: "$16.", derivation: "Region (Asia / Non-Asia).", hasVlm: false },
-  { id: "v50", datasetName: "ADSL", variable: "STUDYID", label: "Study Identifier", type: "Char", length: 20, displayFormat: "$20.", derivation: "Copied from SDTM DM.STUDYID", hasVlm: false },
-  { id: "v51", datasetName: "ADSL", variable: "TRT01P", label: "Planned Treatment", type: "Char", length: 20, displayFormat: "$20.", derivation: "Treatment arm as planned in randomization.", hasVlm: false },
-  { id: "v52", datasetName: "ADSL", variable: "TRT01PN", label: "Planned Treatment Code", type: "Num", length: 8, displayFormat: "8.", derivation: "1 = Treatment Arm A, 2 = Treatment Arm B.", hasVlm: false },
-  { id: "v53", datasetName: "ADAE", variable: "TRTEMFL", label: "Treatment Emergent AE Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if onset date >= first dose date and <= last dose date + 30 days.", hasVlm: false },
-  { id: "v54", datasetName: "ADSL", variable: "TUMGRADE", label: "Tumour Grade", type: "Char", length: 20, displayFormat: "$20.", derivation: "FA.FASTRESC when FA.FASCAT='PATHOLOGY FINDINGS'.", hasVlm: false },
-  { id: "v55", datasetName: "ADSL", variable: "USUBJID", label: "Unique Subject Identifier", type: "Char", length: 30, displayFormat: "$30.", derivation: "DM.USUBJID", hasVlm: false },
-  { id: "v56", datasetName: "ADSL", variable: "WEIGHTBL", label: "Baseline Weight (kg)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to the latest non missing VS.VSSTRESN where VSTESTCD='WEIGHT' and VSBLFL='Y'.", hasVlm: false },
-  { id: "v57", datasetName: "ADSL", variable: "WGHBLG1N", label: "Pooled Baseline Weight Group 1 Numeric", type: "Num", length: 8, displayFormat: "8.", derivation: "Set to 1 if ADSL.WTBLG1='<65', else set to 2 if ADSL.WTBLG1='>=65'.", hasVlm: false },
-  { id: "v58", datasetName: "ADSL", variable: "WGHTBLG1", label: "Pooled Baseline Weight Group 1", type: "Char", length: 12, displayFormat: "$12.", derivation: "Set to '<65' if ADSL.WEIGHTBL<65, else '>=65'.", hasVlm: false },
-  { id: "v59", datasetName: "ADSL", variable: "WGTBLU", label: "Baseline Weight Unit", type: "Char", length: 10, displayFormat: "$10.", derivation: "VS.VSSTRESU where VSTESTCD='WEIGHT'.", hasVlm: false },
-  { id: "v60", datasetName: "ADSL", variable: "WGTGR1", label: "Weight Group 1 (<65, >=65 kg)", type: "Char", length: 12, displayFormat: "$12.", derivation: "Categorized weight: <65 kg, >=65 kg.", hasVlm: false },
-  { id: "v61", datasetName: "ADSL", variable: "WHSTTYP", label: "WHO Classification", type: "Char", length: 40, displayFormat: "$40.", derivation: "Propercase of FA.FASTRESC when FA.FASCAT='HISTOLOGY'.", hasVlm: false },
+  // --- ADaM Variables ---
+  { id: "v1", standard: "ADaM", datasetName: "ADSL", variable: "AAGE", label: "Analysis Age", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to integer part of (Randomization Date - Date of Birth + 1) / 365.25.", hasVlm: false },
+  { id: "v2", standard: "ADaM", datasetName: "ADSL", variable: "AAGEU", label: "Analysis Age Unit", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Set to "YEARS" if ADSL.AAGE is not missing.', hasVlm: false },
+  { id: "v3", standard: "ADaM", datasetName: "ADSL", variable: "ACTARM", label: "Description of Actual Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ACTARM", hasVlm: false },
+  { id: "v4", standard: "ADaM", datasetName: "ADSL", variable: "ACTARMCD", label: "Actual Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "DM.ACTARMCD", hasVlm: false },
+  { id: "v5", standard: "ADaM", datasetName: "ADSL", variable: "ACTARMUD", label: "Description of Unplanned Actual Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ACTARMUD", hasVlm: false },
+  { id: "v6", standard: "ADaM", datasetName: "ADSL", variable: "ADAFL", label: "Anti-Drug Antibody Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if SAFFL='Y' and patient has non-missing post-baseline ADA sample assessment.", hasVlm: false },
+  { id: "v7", standard: "ADaM", datasetName: "ADSL", variable: "AGE", label: "Age at Enrollment", type: "Num", length: 8, displayFormat: "8.1", derivation: "Derived from informed consent date and date of birth.", hasVlm: false },
+  { id: "v8", standard: "ADaM", datasetName: "ADSL", variable: "AGEGR1", label: "Age Group (years)", type: "Char", length: 8, displayFormat: "$8.", derivation: "Categorized: <65, 65-74, ≥75", hasVlm: false },
+  { id: "v9", standard: "ADaM", datasetName: "ADSL", variable: "AGEGR2", label: "Age Group 2 (<65, >=65)", type: "Char", length: 8, displayFormat: "$8.", derivation: "Categorized: <65, >=65", hasVlm: false },
+  { id: "v_agesexra", standard: "ADaM", datasetName: "ADSL", variable: "AGESEXRA", label: "Age/Sex/Race concatenated", type: "Char", length: 60, displayFormat: "$60.", derivation: 'Concatenate ADSL.AAGE, ADSL.SEX and ADSL.ARACE using "/" as separators.', hasVlm: false },
+  { id: "v_ageu", standard: "ADaM", datasetName: "ADSL", variable: "AGEU", label: "Age Units", type: "Char", length: 10, displayFormat: "$10.", derivation: "DM.AGEU", hasVlm: false },
+  { id: "v10", standard: "ADaM", datasetName: "ADSL", variable: "ALCSTAT", label: "Alcohol Consumption Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Direct copy from Medical History (MH) domain.", hasVlm: false },
+  { id: "v11", standard: "ADaM", datasetName: "ADSL", variable: "ALCSTT", label: "Alcohol Status", type: "Char", length: 20, displayFormat: "$20.", derivation: 'Subset the data with SU.SUTRT = "ALCOHOL" If SUENRTPT="BEFORE" then ALCSTT="Former" else if SUENRTPT="ONGOING" then ALCSTT="Current" else if SUENRTPT="" and SUOCCUR="N" then ALCSTT="Never".', hasVlm: false },
+  { id: "v12", standard: "ADaM", datasetName: "ADLB", variable: "ANRLO", label: "Analysis Normal Range Lower Limit", type: "Num", length: 8, displayFormat: "8.2", derivation: "Lower limit of normal range for the lab parameter.", hasVlm: false },
+  { id: "v13", standard: "ADaM", datasetName: "ADLB", variable: "ANRHI", label: "Analysis Normal Range Upper Limit", type: "Num", length: 8, displayFormat: "8.2", derivation: "Upper limit of normal range for the lab parameter.", hasVlm: false },
+  { id: "v_arace", standard: "ADaM", datasetName: "ADSL", variable: "ARACE", label: "Analysis Race", type: "Char", length: 50, displayFormat: "$50.", derivation: 'Set to "American Indian or Alaska Native" if ADSL.RACE="AMERICAN INDIAN OR ALASKA NATIVE". else "Asian" if ADSL.RACE="ASIAN". else "Black or African American" if ADSL.RACE="BLACK OR AFRICAN AMERICAN". else "Native Hawaiian or Other Pacific Islander" if ADSL.RACE="NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER". else "White" if ADSL.RACE="WHITE". else "Multiple" if ADSL.RACE="MULTIPLE". else "Other" if ADSL.RACE="OTHER".', hasVlm: false },
+  { id: "v_aracen", standard: "ADaM", datasetName: "ADSL", variable: "ARACEN", label: "Analysis Race (N)", type: "Num", length: 8, displayFormat: "8.", derivation: 'Set to 1 if ADSL.ARACE="American Indian or Alaska Native". else set to 2 if ADSL.ARACE="Asian". else set to 3 if ADSL.ARACE="Black or African American". else set to 4 if ADSL.ARACE="Native Hawaiian or Other Pacific Islander". else set to 5 if ADSL.ARACE="White". else set to 6 if ADSL.ARACE="Multiple". else set to 7 if ADSL.ARACE="Other".', hasVlm: false },
+  { id: "v14", standard: "ADaM", datasetName: "ADAE", variable: "AREL", label: "AE Relationship to Study Drug", type: "Char", length: 8, displayFormat: "$8.", derivation: "Related / Not Related / Possibly Related.", hasVlm: false },
+  { id: "v_arm", standard: "ADaM", datasetName: "ADSL", variable: "ARM", label: "Description of Planned Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ARM", hasVlm: false },
+  { id: "v_armcd", standard: "ADaM", datasetName: "ADSL", variable: "ARMCD", label: "Planned Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "DM.ARMCD", hasVlm: false },
+  { id: "v_armnrs", standard: "ADaM", datasetName: "ADSL", variable: "ARMNRS", label: "Reason Arm and/or Actual Arm is Null", type: "Char", length: 60, displayFormat: "$60.", derivation: "DM.ARMNRS", hasVlm: false },
+  { id: "v15", standard: "ADaM", datasetName: "ADSL", variable: "ASEX", label: "Analysis Sex", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Set to "Male" if ADSL.SEX="M". else "Female" if ADSL.SEX="F".', hasVlm: false },
+  { id: "v_asexn", standard: "ADaM", datasetName: "ADSL", variable: "ASEXN", label: "Analysis Sex (N)", type: "Num", length: 8, displayFormat: "8.", derivation: 'Set to 1 if ADSL.ASEX="Male". else set to 2 if ADSL.ASEX="Female".', hasVlm: false },
+  { id: "v16", standard: "ADaM", datasetName: "ADEXSUM", variable: "ATOXGR", label: "Analysis Toxicity Grade", type: "Char", length: 4, displayFormat: "$4.", derivation: "Toxicity grade applied to AVAL.", hasVlm: false },
+  { id: "v17", standard: "ADaM", datasetName: "ADEXSUM", variable: "AVAL", label: "Analysis Value", type: "Num", length: 8, displayFormat: "8.2", derivation: "Varies by PARAM; see VLM for conditional logic.", hasVlm: true },
+  { id: "v18", standard: "ADaM", datasetName: "ADLB", variable: "AVAL", label: "Analysis Value (Lab)", type: "Num", length: 8, displayFormat: "8.3", derivation: "Lab result in standard units. VLM defines per-PARAM logic.", hasVlm: true },
+  { id: "v19", standard: "ADaM", datasetName: "ADTTE", variable: "AVAL", label: "Analysis Value (Time)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Time to event in days/months. VLM defines per-PARAM logic.", hasVlm: true },
+  { id: "v20", standard: "ADaM", datasetName: "ADSL", variable: "BMIBL", label: "Baseline Body Mass Index (kg/m2)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to ADSL.WEIGHTBL / ((ADSL.HEIGHTBL / 100)**2) rounded to 1 decimal place.", hasVlm: false },
+  { id: "v21", standard: "ADaM", datasetName: "ADSL", variable: "BMIGR1", label: "Baseline BMI Group (<25, 25-<30, >=30)", type: "Char", length: 12, displayFormat: "$12.", derivation: 'Set to "<25" if BMIBL<25; "25-<30" if 25<=BMIBL<30; ">=30" if BMIBL>=30.', hasVlm: false },
+  { id: "v22", standard: "ADaM", datasetName: "ADSL", variable: "CIGPKYR", label: "Cigarette Pack Years", type: "Num", length: 8, displayFormat: "8.1", derivation: "Calculated from (Cigarettes per day / 20) * Years smoked.", hasVlm: false },
+  { id: "v23", standard: "ADaM", datasetName: "ADTTE", variable: "CNSR", label: "Censor Indicator", type: "Num", length: 8, displayFormat: "1.", derivation: "0 = Event, 1 = Censored.", hasVlm: true },
+  { id: "v24", standard: "ADaM", datasetName: "ADRESP", variable: "COHORT", label: "Study Cohort", type: "Char", length: 20, displayFormat: "$20.", derivation: "Dose expansion / escalation cohort identifier.", hasVlm: false },
+  { id: "v25", standard: "ADaM", datasetName: "ADSL", variable: "ECOBLG1N", label: "Baseline ECOG Performance Score Numeric", type: "Num", length: 8, displayFormat: "8.", derivation: "Numeric value of baseline ECOG Performance Status (0, 1, 2, 3).", hasVlm: false },
+  { id: "v26", standard: "ADaM", datasetName: "ADSL", variable: "ECOGBL", label: "Baseline ECOG Performance Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Baseline ECOG score collected at Day 1 / Screening.", hasVlm: false },
+  { id: "v27", standard: "ADaM", datasetName: "ADSL", variable: "ECOGBLN", label: "Baseline ECOG Status Code", type: "Num", length: 8, displayFormat: "8.", derivation: "Numeric code for ECOG status (0, 1, 2, 3, 4).", hasVlm: false },
+  { id: "v28", standard: "ADaM", datasetName: "ADRESP", variable: "FASFL", label: "Full Analysis Set Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if subject received at least one dose of study drug and has baseline assessment.", hasVlm: false },
+  { id: "v29", standard: "ADaM", datasetName: "ADSL", variable: "HEIGHTBL", label: "Baseline Height (cm)", type: "Num", length: 8, displayFormat: "8.1", derivation: "VS.VSSTRESN where VSTESTCD='HEIGHT' and VSTPT='BASELINE'.", hasVlm: false },
+  { id: "v30", standard: "ADaM", datasetName: "ADSL", variable: "ITT3LFL", label: "ITT Population Flag 3rd Line", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' for third-line Intent-to-Treat randomized subjects.", hasVlm: false },
+  { id: "v31", standard: "ADaM", datasetName: "ADSL", variable: "ITTFL", label: "Intent-to-Treat Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if subject is randomized.", hasVlm: false },
+  { id: "v32", standard: "ADaM", datasetName: "ADSL", variable: "NICPKYR", label: "Nicotine Pack Years", type: "Num", length: 8, displayFormat: "8.1", derivation: "Total nicotine pack years calculated from consumption history.", hasVlm: false },
+  { id: "v33", standard: "ADaM", datasetName: "ADSL", variable: "NICSTT", label: "Nicotine Smoking Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Never, Former, Current smoker.", hasVlm: false },
+  { id: "v34", standard: "ADaM", datasetName: "ADSL", variable: "NICSYN", label: "Nicotine Usage Flag (Y/N)", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if patient has documented history of nicotine use.", hasVlm: false },
+  { id: "v35", standard: "ADaM", datasetName: "ADSL", variable: "NICTYP", label: "Nicotine Product Type", type: "Char", length: 30, displayFormat: "$30.", derivation: "Cigarettes, Cigars, E-cigarettes, Chewing tobacco.", hasVlm: false },
+  { id: "v36", standard: "ADaM", datasetName: "ADRESP", variable: "OCCRVRFL", label: "Overall Confirmed Complete Response Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if confirmed complete response criteria met according to RECIST 1.1.", hasVlm: false },
+  { id: "v37", standard: "ADaM", datasetName: "ADRESP", variable: "OCPRVRFL", label: "Overall Confirmed Partial Response Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if confirmed partial response criteria met according to RECIST 1.1.", hasVlm: false },
+  { id: "v38", standard: "ADaM", datasetName: "ADEXSUM", variable: "PARAM", label: "Parameter Name", type: "Char", length: 40, displayFormat: "$40.", derivation: "Defines the exposure metric being summarized.", hasVlm: true },
+  { id: "v39", standard: "ADaM", datasetName: "ADEXSUM", variable: "PARAMCD", label: "Parameter Code", type: "Char", length: 8, displayFormat: "$8.", derivation: "Short code for PARAM.", hasVlm: false },
+  { id: "v40", standard: "ADaM", datasetName: "ADRESP", variable: "PARQUAL", label: "Parameter Qualifier", type: "Char", length: 40, displayFormat: "$40.", derivation: "Qualifier indicating 'INDEPENDENT ASSESSOR' or 'INVESTIGATOR'.", hasVlm: false },
+  { id: "v41", standard: "ADaM", datasetName: "ADSL", variable: "PRHER2FL", label: "Prior HER2 Therapy Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if prior anti-HER2 targeted therapy documented.", hasVlm: false },
+  { id: "v42", standard: "ADaM", datasetName: "ADSL", variable: "PRIMMFL", label: "Prior Immunotherapy Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if prior checkpoint inhibitor or immuno-oncology treatment documented.", hasVlm: false },
+  { id: "v43", standard: "ADaM", datasetName: "ADSL", variable: "PRSYSG1", label: "Prior Systemic Therapy Regimen Group 1", type: "Char", length: 30, displayFormat: "$30.", derivation: "Categorized: 1 line, 2 lines, >=3 lines of prior systemic anticancer therapy.", hasVlm: false },
+  { id: "v44", standard: "ADaM", datasetName: "ADSL", variable: "PRTOPOFL", label: "Prior Topoisomerase Inhibitor Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if prior topoisomerase I/II inhibitor therapy received.", hasVlm: false },
+  { id: "v45", standard: "ADaM", datasetName: "ADSL", variable: "RACE", label: "Race", type: "Char", length: 32, displayFormat: "$32.", derivation: "As collected from site records.", hasVlm: false },
+  { id: "v46", standard: "ADaM", datasetName: "ADSL", variable: "SAFFL", label: "Safety Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if subject received at least 1 dose of study drug.", hasVlm: false },
+  { id: "v47", standard: "ADaM", datasetName: "ADSL", variable: "SEX", label: "Sex", type: "Char", length: 1, displayFormat: "$1.", derivation: "M = Male, F = Female", hasVlm: false },
+  { id: "v48", standard: "ADaM", datasetName: "ADSL", variable: "SMOKSTAT", label: "Smoking Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Direct copy from Medical History (MH) domain.", hasVlm: false },
+  { id: "v49", standard: "ADaM", datasetName: "ADSL", variable: "STRATA1", label: "Stratification Factor 1", type: "Char", length: 16, displayFormat: "$16.", derivation: "Region (Asia / Non-Asia).", hasVlm: false },
+  { id: "v50", standard: "ADaM", datasetName: "ADSL", variable: "STUDYID", label: "Study Identifier", type: "Char", length: 20, displayFormat: "$20.", derivation: "Copied from SDTM DM.STUDYID", hasVlm: false },
+  { id: "v51", standard: "ADaM", datasetName: "ADSL", variable: "TRT01P", label: "Planned Treatment", type: "Char", length: 20, displayFormat: "$20.", derivation: "Treatment arm as planned in randomization.", hasVlm: false },
+  { id: "v52", standard: "ADaM", datasetName: "ADSL", variable: "TRT01PN", label: "Planned Treatment Code", type: "Num", length: 8, displayFormat: "8.", derivation: "1 = Treatment Arm A, 2 = Treatment Arm B.", hasVlm: false },
+  { id: "v53", standard: "ADaM", datasetName: "ADAE", variable: "TRTEMFL", label: "Treatment Emergent AE Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if onset date >= first dose date and <= last dose date + 30 days.", hasVlm: false },
+  { id: "v54", standard: "ADaM", datasetName: "ADSL", variable: "TUMGRADE", label: "Tumour Grade", type: "Char", length: 20, displayFormat: "$20.", derivation: "FA.FASTRESC when FA.FASCAT='PATHOLOGY FINDINGS'.", hasVlm: false },
+  { id: "v55", standard: "ADaM", datasetName: "ADSL", variable: "USUBJID", label: "Unique Subject Identifier", type: "Char", length: 30, displayFormat: "$30.", derivation: "DM.USUBJID", hasVlm: false },
+  { id: "v56", standard: "ADaM", datasetName: "ADSL", variable: "WEIGHTBL", label: "Baseline Weight (kg)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to the latest non missing VS.VSSTRESN where VSTESTCD='WEIGHT' and VSBLFL='Y'.", hasVlm: false },
+  { id: "v57", standard: "ADaM", datasetName: "ADSL", variable: "WGHBLG1N", label: "Pooled Baseline Weight Group 1 Numeric", type: "Num", length: 8, displayFormat: "8.", derivation: "Set to 1 if ADSL.WTBLG1='<65', else set to 2 if ADSL.WTBLG1='>=65'.", hasVlm: false },
+  { id: "v58", standard: "ADaM", datasetName: "ADSL", variable: "WGHTBLG1", label: "Pooled Baseline Weight Group 1", type: "Char", length: 12, displayFormat: "$12.", derivation: "Set to '<65' if ADSL.WEIGHTBL<65, else '>=65'.", hasVlm: false },
+  { id: "v59", standard: "ADaM", datasetName: "ADSL", variable: "WGTBLU", label: "Baseline Weight Unit", type: "Char", length: 10, displayFormat: "$10.", derivation: "VS.VSSTRESU where VSTESTCD='WEIGHT'.", hasVlm: false },
+  { id: "v60", standard: "ADaM", datasetName: "ADSL", variable: "WGTGR1", label: "Weight Group 1 (<65, >=65 kg)", type: "Char", length: 12, displayFormat: "$12.", derivation: "Categorized weight: <65 kg, >=65 kg.", hasVlm: false },
+  { id: "v61", standard: "ADaM", datasetName: "ADSL", variable: "WHSTTYP", label: "WHO Classification", type: "Char", length: 40, displayFormat: "$40.", derivation: "Propercase of FA.FASTRESC when FA.FASCAT='HISTOLOGY'.", hasVlm: false },
+
+  // --- SDTM Variables ---
+  { id: "s1", standard: "SDTM", datasetName: "DM", variable: "STUDYID", label: "Study Identifier", type: "Char", length: 20, displayFormat: "$20.", derivation: "CRF / Protocol", hasVlm: false },
+  { id: "s2", standard: "SDTM", datasetName: "DM", variable: "DOMAIN", label: "Domain Abbreviation", type: "Char", length: 2, displayFormat: "$2.", derivation: 'Assigned: "DM"', hasVlm: false },
+  { id: "s3", standard: "SDTM", datasetName: "DM", variable: "USUBJID", label: "Unique Subject Identifier", type: "Char", length: 40, displayFormat: "$40.", derivation: 'Concatenate DM.STUDYID, "-", DM.SITEID, "-", DM.SUBJID', hasVlm: false },
+  { id: "s4", standard: "SDTM", datasetName: "DM", variable: "SUBJID", label: "Subject Identifier for the Study", type: "Char", length: 10, displayFormat: "$10.", derivation: "CRF: Demographics Page", hasVlm: false },
+  { id: "s5", standard: "SDTM", datasetName: "DM", variable: "RFSTDTC", label: "Subject Reference Start Date/Time", type: "Char", length: 20, displayFormat: "$20.", derivation: "First dose date recorded in EX domain", hasVlm: false },
+  { id: "s6", standard: "SDTM", datasetName: "DM", variable: "RFENDTC", label: "Subject Reference End Date/Time", type: "Char", length: 20, displayFormat: "$20.", derivation: "Last participation / dose date recorded in study", hasVlm: false },
+  { id: "s7", standard: "SDTM", datasetName: "DM", variable: "SITEID", label: "Study Site Identifier", type: "Char", length: 10, displayFormat: "$10.", derivation: "CRF: Investigational Site Number", hasVlm: false },
+  { id: "s8", standard: "SDTM", datasetName: "DM", variable: "AGE", label: "Age", type: "Num", length: 8, displayFormat: "8.", derivation: "CRF: Demographics Page (Age at screening)", hasVlm: false },
+  { id: "s9", standard: "SDTM", datasetName: "DM", variable: "AGEU", label: "Age Units", type: "Char", length: 10, displayFormat: "$10.", derivation: 'CRF / Codelist: "YEARS"', hasVlm: false },
+  { id: "s10", standard: "SDTM", datasetName: "DM", variable: "SEX", label: "Sex", type: "Char", length: 1, displayFormat: "$1.", derivation: 'CRF / Codelist: "M", "F"', hasVlm: false },
+  { id: "s11", standard: "SDTM", datasetName: "DM", variable: "RACE", label: "Race", type: "Char", length: 40, displayFormat: "$40.", derivation: "CRF: Demographics Page", hasVlm: false },
+  { id: "s12", standard: "SDTM", datasetName: "DM", variable: "ETHNIC", label: "Ethnicity", type: "Char", length: 40, displayFormat: "$40.", derivation: "CRF: Demographics Page", hasVlm: false },
+  { id: "s13", standard: "SDTM", datasetName: "DM", variable: "ARMCD", label: "Planned Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "Randomization record", hasVlm: false },
+  { id: "s14", standard: "SDTM", datasetName: "DM", variable: "ARM", label: "Description of Planned Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "Randomization record", hasVlm: false },
+  { id: "s15", standard: "SDTM", datasetName: "DM", variable: "ACTARMCD", label: "Actual Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "EX domain drug accountability record", hasVlm: false },
+  { id: "s16", standard: "SDTM", datasetName: "DM", variable: "ACTARM", label: "Description of Actual Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "EX domain drug accountability record", hasVlm: false },
+  { id: "s17", standard: "SDTM", datasetName: "DM", variable: "COUNTRY", label: "Country", type: "Char", length: 3, displayFormat: "$3.", derivation: "CRF / ISO 3166-1 alpha-3 code", hasVlm: false },
+
+  { id: "s18", standard: "SDTM", datasetName: "AE", variable: "AESEQ", label: "Sequence Number", type: "Num", length: 8, displayFormat: "8.", derivation: "Assigned sequential number for each subject AE record", hasVlm: false },
+  { id: "s19", standard: "SDTM", datasetName: "AE", variable: "AETERM", label: "Reported Term for the Adverse Event", type: "Char", length: 200, displayFormat: "$200.", derivation: "CRF: AE verbatim term", hasVlm: false },
+  { id: "s20", standard: "SDTM", datasetName: "AE", variable: "AEDECOD", label: "Dictionary-Derived Term", type: "Char", length: 100, displayFormat: "$100.", derivation: "MedDRA dictionary coding (Preferred Term)", hasVlm: false },
+  { id: "s21", standard: "SDTM", datasetName: "AE", variable: "AEBODSYS", label: "Body System or Organ Class", type: "Char", length: 100, displayFormat: "$100.", derivation: "MedDRA dictionary coding (System Organ Class)", hasVlm: false },
+  { id: "s22", standard: "SDTM", datasetName: "AE", variable: "AESEV", label: "Severity/Intensity", type: "Char", length: 20, displayFormat: "$20.", derivation: 'CRF / Codelist: "MILD", "MODERATE", "SEVERE"', hasVlm: false },
+  { id: "s23", standard: "SDTM", datasetName: "AE", variable: "AESER", label: "Serious Event", type: "Char", length: 1, displayFormat: "$1.", derivation: 'CRF: "Y", "N"', hasVlm: false },
+  { id: "s24", standard: "SDTM", datasetName: "AE", variable: "AEREL", label: "Causality", type: "Char", length: 30, displayFormat: "$30.", derivation: "CRF: Relationship to investigational product", hasVlm: false },
+  { id: "s25", standard: "SDTM", datasetName: "AE", variable: "AESTDTC", label: "Start Date/Time of Adverse Event", type: "Char", length: 20, displayFormat: "$20.", derivation: "CRF: AE Start Date in ISO 8601 format", hasVlm: false },
+  { id: "s26", standard: "SDTM", datasetName: "AE", variable: "AEENDTC", label: "End Date/Time of Adverse Event", type: "Char", length: 20, displayFormat: "$20.", derivation: "CRF: AE End Date in ISO 8601 format", hasVlm: false },
+  { id: "s27", standard: "SDTM", datasetName: "AE", variable: "AEOUT", label: "Outcome of Adverse Event", type: "Char", length: 40, displayFormat: "$40.", derivation: "CRF: Recovered/Resolved, Not Recovered, Fatal, etc.", hasVlm: false },
+
+  { id: "s28", standard: "SDTM", datasetName: "LB", variable: "LBSEQ", label: "Sequence Number", type: "Num", length: 8, displayFormat: "8.", derivation: "Assigned sequential number for each lab assessment", hasVlm: false },
+  { id: "s29", standard: "SDTM", datasetName: "LB", variable: "LBTESTCD", label: "Lab Test or Examination Short Name", type: "Char", length: 8, displayFormat: "$8.", derivation: "Codelist / CDISC CT (e.g. ALT, AST, HGB)", hasVlm: false },
+  { id: "s30", standard: "SDTM", datasetName: "LB", variable: "LBTEST", label: "Lab Test or Examination Name", type: "Char", length: 40, displayFormat: "$40.", derivation: "Codelist / Central Lab", hasVlm: false },
+  { id: "s31", standard: "SDTM", datasetName: "LB", variable: "LBCAT", label: "Category for Lab Test", type: "Char", length: 40, displayFormat: "$40.", derivation: 'CRF / Central Lab: "CHEMISTRY", "HEMATOLOGY", "URINALYSIS"', hasVlm: false },
+  { id: "s32", standard: "SDTM", datasetName: "LB", variable: "LBORRES", label: "Result or Finding in Original Units", type: "Char", length: 40, displayFormat: "$40.", derivation: "Central / Local Lab result as reported", hasVlm: false },
+  { id: "s33", standard: "SDTM", datasetName: "LB", variable: "LBORRESU", label: "Original Units", type: "Char", length: 20, displayFormat: "$20.", derivation: "Central / Local Lab original unit string", hasVlm: false },
+  { id: "s34", standard: "SDTM", datasetName: "LB", variable: "LBSTRESC", label: "Character Result/Finding in Std Format", type: "Char", length: 40, displayFormat: "$40.", derivation: "Standardized character result", hasVlm: false },
+  { id: "s35", standard: "SDTM", datasetName: "LB", variable: "LBSTRESN", label: "Numeric Result/Finding in Standard Units", type: "Num", length: 8, displayFormat: "8.3", derivation: "Standardized numeric result", hasVlm: false },
+  { id: "s36", standard: "SDTM", datasetName: "LB", variable: "LBSTRESU", label: "Standard Units", type: "Char", length: 20, displayFormat: "$20.", derivation: "CDISC CT Standard Units (e.g. g/dL, U/L)", hasVlm: false },
+  { id: "s37", standard: "SDTM", datasetName: "LB", variable: "LBNRIND", label: "Reference Range Indicator", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Codelist: "LOW", "NORMAL", "HIGH"', hasVlm: false },
+
+  { id: "s38", standard: "SDTM", datasetName: "VS", variable: "VSTESTCD", label: "Vital Signs Test Short Name", type: "Char", length: 8, displayFormat: "$8.", derivation: 'CRF / CDISC CT: "HEIGHT", "WEIGHT", "SYSBP", "DIABP", "PULSE"', hasVlm: false },
+  { id: "s39", standard: "SDTM", datasetName: "VS", variable: "VSTEST", label: "Vital Signs Test Name", type: "Char", length: 40, displayFormat: "$40.", derivation: "CRF: Vital Signs page", hasVlm: false },
+  { id: "s40", standard: "SDTM", datasetName: "VS", variable: "VSORRES", label: "Result or Finding in Original Units", type: "Char", length: 20, displayFormat: "$20.", derivation: "CRF: Vital Signs measured value", hasVlm: false },
+  { id: "s41", standard: "SDTM", datasetName: "VS", variable: "VSSTRESN", label: "Numeric Result/Finding in Standard Units", type: "Num", length: 8, displayFormat: "8.1", derivation: "Standardized numeric vital sign value", hasVlm: false },
+  { id: "s42", standard: "SDTM", datasetName: "VS", variable: "VSSTRESU", label: "Standard Units", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Standardized unit: "cm", "kg", "mmHg", "beats/min"', hasVlm: false },
+  { id: "s43", standard: "SDTM", datasetName: "VS", variable: "VSBLFL", label: "Baseline Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: 'Set to "Y" for last non-missing assessment on/prior to first dose', hasVlm: false },
+
+  { id: "s44", standard: "SDTM", datasetName: "CM", variable: "CMTRT", label: "Reported Name of Drug, Med, or Therapy", type: "Char", length: 200, displayFormat: "$200.", derivation: "CRF: Concomitant Medication verbatim name", hasVlm: false },
+  { id: "s45", standard: "SDTM", datasetName: "CM", variable: "CMDECOD", label: "Standardized Medication Name", type: "Char", length: 100, displayFormat: "$100.", derivation: "WHO Drug dictionary Preferred Name", hasVlm: false },
+  { id: "s46", standard: "SDTM", datasetName: "CM", variable: "CMINDC", label: "Indication", type: "Char", length: 100, displayFormat: "$100.", derivation: "CRF: Reason for medication use", hasVlm: false },
+  { id: "s47", standard: "SDTM", datasetName: "CM", variable: "CMDOSE", label: "Dose per Administration", type: "Num", length: 8, displayFormat: "8.", derivation: "CRF: Medication dose value", hasVlm: false },
+  { id: "s48", standard: "SDTM", datasetName: "CM", variable: "CMDOSU", label: "Dose Units", type: "Char", length: 20, displayFormat: "$20.", derivation: "CRF: mg, mL, etc.", hasVlm: false },
+  { id: "s49", standard: "SDTM", datasetName: "CM", variable: "CMDOSFRQ", label: "Dosing Frequency per Cycle", type: "Char", length: 20, displayFormat: "$20.", derivation: 'CRF / Codelist: "QD", "BID", "TID", "PRN"', hasVlm: false },
+  { id: "s50", standard: "SDTM", datasetName: "CM", variable: "CMROUTE", label: "Route of Administration", type: "Char", length: 20, displayFormat: "$20.", derivation: 'CRF / Codelist: "ORAL", "INTRAVENOUS", "TOPICAL"', hasVlm: false },
+  { id: "s51", standard: "SDTM", datasetName: "CM", variable: "CMSTDTC", label: "Start Date/Time of Medication", type: "Char", length: 20, displayFormat: "$20.", derivation: "CRF: Medication start date in ISO 8601 format", hasVlm: false },
+  { id: "s52", standard: "SDTM", datasetName: "CM", variable: "CMENDTC", label: "End Date/Time of Medication", type: "Char", length: 20, displayFormat: "$20.", derivation: "CRF: Medication end date in ISO 8601 format", hasVlm: false },
 ];
 
 const mockVlmData: VlmRow[] = [
@@ -164,21 +226,6 @@ function ChevronDownIcon({ className = "w-[16px] h-[16px]", color = "#888E8E" }:
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M12 13.17L18.36 6.81L19.78 8.22L12 16L4.22 8.22L5.64 6.81L12 13.17Z" fill={color} />
-    </svg>
-  );
-}
-
-function CheckboxIcon({ state }: { state: "empty" | "checked" }) {
-  return (
-    <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {state === "checked" ? (
-        <>
-          <rect x="3" y="3" width="18" height="18" rx="2" fill="#830051" />
-          <path d="M9.5 15.2L18.2 6.5L19.6 7.9L9.5 18L4 12.5L5.4 11.1L9.5 15.2Z" fill="white" />
-        </>
-      ) : (
-        <rect x="3.5" y="3.5" width="17" height="17" rx="1.5" stroke="#B2B4B4" strokeWidth="1" fill="none" />
-      )}
     </svg>
   );
 }
@@ -257,6 +304,7 @@ function InlineVariableList({
 }: InlineVariableListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("All");
   const [isExpandedTags, setIsExpandedTags] = useState(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -291,11 +339,14 @@ function InlineVariableList({
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
-        containerRef.current && !containerRef.current.contains(target) &&
-        dropdownRef.current && !dropdownRef.current.contains(target)
+        containerRef.current?.contains(target) ||
+        dropdownRef.current?.contains(target) ||
+        (target as HTMLElement).closest?.(".filter-chip-menu") ||
+        (target as HTMLElement).closest?.("[data-filter-chip-menu]")
       ) {
-        setIsOpen(false);
+        return;
       }
+      setIsOpen(false);
     };
 
     const handleScrollOrResize = () => {
@@ -314,13 +365,18 @@ function InlineVariableList({
   }, [isOpen, updatePos]);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    const items = variables.filter(
-      (v) =>
+    const q = search.toLowerCase().trim();
+    const items = variables.filter((v) => {
+      const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
+      if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
+      if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
+      if (!q) return true;
+      return (
         v.variable.toLowerCase().includes(q) ||
         v.label.toLowerCase().includes(q) ||
         v.datasetName.toLowerCase().includes(q)
-    );
+      );
+    });
     // Sort: selected first, then alphabetical
     return items.sort((a, b) => {
       const aS = selected.includes(a.variable) ? 0 : 1;
@@ -328,7 +384,7 @@ function InlineVariableList({
       if (aS !== bS) return aS - bS;
       return a.variable.localeCompare(b.variable);
     });
-  }, [variables, search, selected]);
+  }, [variables, search, selected, standardFilter]);
 
   const hasMoreThanThree = selected.length > 3;
   const visibleSelected = hasMoreThanThree && !isExpandedTags
@@ -358,14 +414,27 @@ function InlineVariableList({
       }}
       className="rounded-[4px] border border-[#D8DADA] bg-white p-[4px] shadow-[0px_4px_16px_rgba(0,0,0,0.15)] flex flex-col gap-[4px]"
     >
-      {/* Search bar */}
-      <div className="w-full">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Search..."
-          background="light"
-          autoFocus
+      {/* Search bar + Filter Chip */}
+      <div className="flex items-center gap-[6px] w-full">
+        <div className="flex-1 min-w-0">
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search..."
+            background="light"
+            autoFocus
+          />
+        </div>
+        <FilterChip
+          type="Dropdown"
+          showIcon={false}
+          value={standardFilter}
+          onChange={(val) => setStandardFilter(val as "All" | "ADaM" | "SDTM")}
+          options={[
+            { label: "All", value: "All" },
+            { label: "ADaM only", value: "ADaM" },
+            { label: "SDTM only", value: "SDTM" },
+          ]}
         />
       </div>
 
@@ -383,7 +452,7 @@ function InlineVariableList({
         <div className="max-h-[336px] overflow-y-auto bg-white">
           {filtered.length === 0 ? (
             <div className="px-[12px] py-[24px] text-center">
-              <p className="t-small text-[#888E8E]">No matching variables found</p>
+              <p className="t-small text-[#888E8E]">No Results Found</p>
             </div>
           ) : (
             filtered.map((v) => {
@@ -402,17 +471,10 @@ function InlineVariableList({
                 >
                   {/* Checkbox */}
                   <div className="flex h-[20px] w-[44px] items-center justify-center shrink-0">
-                    <span
-                      className={`flex h-[16px] w-[16px] items-center justify-center rounded-[2px] border transition-colors ${
-                        isSelected ? "border-[#830051] bg-[#830051]" : "border-[#D8DADA] bg-white hover:border-[#888E8E]"
-                      }`}
-                    >
-                      {isSelected && (
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                          <path d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" fill="white"/>
-                        </svg>
-                      )}
-                    </span>
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={() => onToggle(v.variable)}
+                    />
                   </div>
 
                   {/* Variable name */}
@@ -574,17 +636,21 @@ export function BrowseVariablesModal({
   vlmData,
 }: BrowseVariablesModalProps) {
   const [activeTab, setActiveTab] = useState<"all" | "vlm">("all");
+  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("All");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>(initialSelected);
 
-  // Sync initial selected when modal opens
+  // Sync initial selected ONLY when modal opens (false -> true)
+  const prevIsOpenRef = useRef(false);
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       setSelected([...initialSelected]);
       setSearch("");
+      setStandardFilter("All");
       setActiveTab("all");
     }
-  }, [isOpen, initialSelected]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]);
 
   const toggleVariable = useCallback((variable: string) => {
     setSelected((prev) =>
@@ -598,23 +664,28 @@ export function BrowseVariablesModal({
 
   // Jump to VLM tab and filter to variable
   const jumpToVlm = useCallback((variable: string) => {
+    setStandardFilter("ADaM");
     setActiveTab("vlm");
     setSearch(variable);
   }, []);
 
   const filteredVariables = useMemo(() => {
-    const q = search.toLowerCase();
-    if (!q) return variables;
-    return variables.filter(
-      (v) =>
+    const q = search.toLowerCase().trim();
+    return variables.filter((v) => {
+      const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
+      if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
+      if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
+      if (!q) return true;
+      return (
         v.variable.toLowerCase().includes(q) ||
         v.label.toLowerCase().includes(q) ||
         v.datasetName.toLowerCase().includes(q)
-    );
-  }, [variables, search]);
+      );
+    });
+  }, [variables, search, standardFilter]);
 
   const filteredVlm = useMemo(() => {
-    const q = search.toLowerCase();
+    const q = search.toLowerCase().trim();
     if (!q) return vlmData;
     return vlmData.filter(
       (v) =>
@@ -630,13 +701,13 @@ export function BrowseVariablesModal({
     .map((vName) => variables.find((v) => v.variable === vName))
     .filter(Boolean) as Variable[];
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center pointer-events-auto">
       {/* Backdrop */}
-      <button className="absolute inset-0 bg-black/40" onClick={onClose} aria-label="Close modal" />
+      <div className="fixed inset-0 bg-black/40 pointer-events-auto cursor-pointer" onClick={onClose} aria-label="Close modal" />
 
       {/* Modal */}
-      <div className="relative flex h-[600px] w-[800px] max-w-[90vw] max-h-[85vh] flex-col rounded-[8px] bg-white shadow-[0px_8px_24px_rgba(0,0,0,0.15)]">
+      <div className="relative z-10 flex h-[600px] w-[800px] max-w-[90vw] max-h-[85vh] flex-col rounded-[8px] bg-white shadow-[0px_8px_24px_rgba(0,0,0,0.15)] pointer-events-auto">
         {/* Header */}
         <div className="flex h-[48px] shrink-0 items-center justify-between border-b border-[#D8DADA] px-[20px]">
           <h2 className="t-heading text-text-primary">Browse All Variables</h2>
@@ -650,19 +721,53 @@ export function BrowseVariablesModal({
           </button>
         </div>
 
-        {/* Search + Tabs */}
-        <div className="flex shrink-0 items-center gap-[12px] border-b border-[#D8DADA] px-[20px]">
-          {/* Search */}
+        {/* Search + Filter Chip */}
+        <div className="flex shrink-0 items-center gap-[8px] border-b border-[#D8DADA] px-[20px] py-[8px]">
           <SearchBar
             value={search}
             onChange={setSearch}
             placeholder="Search Variables..."
             background="light"
-            className="flex-1 my-[4px]"
+            className="flex-1 w-full"
           />
-          {/* Tabs */}
-          <div className="flex h-full items-center">
-            {(["all", "vlm"] as const).map((tab) => {
+          <FilterChip
+            type="Dropdown"
+            showIcon={false}
+            value={standardFilter}
+            onChange={(val) => {
+              const nextVal = val as "All" | "ADaM" | "SDTM";
+              setStandardFilter(nextVal);
+              if (nextVal !== "ADaM" && activeTab === "vlm") {
+                setActiveTab("all");
+              }
+            }}
+            options={[
+              { label: "All", value: "All" },
+              { label: "ADaM only", value: "ADaM" },
+              { label: "SDTM only", value: "SDTM" },
+            ]}
+          />
+        </div>
+
+        {/* Selected Bar */}
+        {selected.length > 0 && (
+          <div className="flex shrink-0 flex-wrap items-center gap-[6px] border-b border-graphite-10 bg-bg-panel px-[20px] py-[8px]">
+            <span className="t-small text-[#888E8E] shrink-0 mr-[4px]">Selected:</span>
+            {selectedVariables.map((v) => (
+              <Tag
+                key={v.variable}
+                onClose={() => removeVariable(v.variable)}
+              >
+                {v.variable}
+              </Tag>
+            ))}
+          </div>
+        )}
+
+        {/* Tabs: Positioned below Selected Bar and above Table (shown when ADaM is selected) */}
+        {standardFilter === "ADaM" && (
+          <div className="flex shrink-0 h-[38px] items-center border-b border-[#D8DADA] px-[20px] bg-white gap-[16px]">
+            {(["all", "vlm"] as const).map((tab, idx) => {
               const isActive = activeTab === tab;
               return (
                 <button
@@ -672,7 +777,9 @@ export function BrowseVariablesModal({
                     setActiveTab(tab);
                     setSearch("");
                   }}
-                  className={`flex h-full items-center border-b-2 px-[12px] py-[8px] active:scale-[0.96] ${
+                  className={`flex h-full items-center border-b-2 ${
+                    idx === 0 ? "pl-0 pr-[4px]" : "px-[4px]"
+                  } active:scale-[0.96] transition-colors cursor-pointer ${
                     isActive ? "border-[#830051]" : "border-transparent"
                   }`}
                 >
@@ -683,28 +790,6 @@ export function BrowseVariablesModal({
               );
             })}
           </div>
-        </div>
-
-        {/* Selected Bar */}
-        {selected.length > 0 && (
-          <div className="flex shrink-0 flex-wrap items-center gap-[4px] border-b border-graphite-10 bg-bg-panel px-[20px] py-[8px]">
-            <span className="t-small text-[#888E8E] shrink-0 mr-[4px]">Selected:</span>
-            {selectedVariables.map((v) => (
-              <span
-                key={v.variable}
-                className="inline-flex h-[22px] items-center gap-[2px] rounded-[4px] bg-[#F4E8EE] pl-[6px] pr-[2px]"
-              >
-                <span className="t-small text-[#830051]">{v.variable}</span>
-                <button
-                  type="button"
-                  onClick={() => removeVariable(v.variable)}
-                  className="flex h-[16px] w-[16px] items-center justify-center rounded-[2px] hover:bg-black/5"
-                >
-                  <CloseIcon className="h-[10px] w-[10px]" color="#830051" />
-                </button>
-              </span>
-            ))}
-          </div>
         )}
 
         {/* Table Content */}
@@ -713,7 +798,23 @@ export function BrowseVariablesModal({
             <table className="w-full border-collapse">
               <thead className="sticky top-0 z-10 bg-bg-panel">
                 <tr className="border-b border-[#D8DADA]">
-                  <th className="w-[36px] px-[12px] py-[8px]" />
+                  <th className="w-[36px] px-[12px] py-[8px]">
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={filteredVariables.length > 0 && filteredVariables.every((v) => selected.includes(v.variable))}
+                        indeterminate={filteredVariables.some((v) => selected.includes(v.variable)) && !filteredVariables.every((v) => selected.includes(v.variable))}
+                        onChange={(allChecked) => {
+                          if (allChecked) {
+                            const toAdd = filteredVariables.map((v) => v.variable).filter((v) => !selected.includes(v));
+                            setSelected((prev) => [...prev, ...toAdd]);
+                          } else {
+                            const toRemove = new Set(filteredVariables.map((v) => v.variable));
+                            setSelected((prev) => prev.filter((v) => !toRemove.has(v)));
+                          }
+                        }}
+                      />
+                    </div>
+                  </th>
                   <th className="w-[100px] px-[8px] py-[8px] text-left">
                     <span className="t-small font-medium text-[#888E8E]">Dataset</span>
                   </th>
@@ -740,7 +841,7 @@ export function BrowseVariablesModal({
                     <td colSpan={7} className="px-[20px] py-[32px] text-center">
                       <div className="flex flex-col items-center gap-[8px]">
                         <p className="t-small text-[#888E8E]">
-                          当前 study 中未找到该变量，请确认 ADaM dataset 是否已包含
+                          No Results Found
                         </p>
                         {search && (
                           <button
@@ -748,7 +849,7 @@ export function BrowseVariablesModal({
                             onClick={() => setSearch("")}
                             className="t-small text-brand-1 hover:underline font-medium"
                           >
-                            清除搜索内容
+                            Clear search
                           </button>
                         )}
                       </div>
@@ -763,13 +864,12 @@ export function BrowseVariablesModal({
                         className={`border-b border-graphite-10 hover:bg-bg-panel ${isSelected ? "bg-[#F4E8EE]/40" : ""}`}
                       >
                         <td className="px-[12px] py-[6px]">
-                          <button
-                            type="button"
-                            onClick={() => toggleVariable(v.variable)}
-                            className="flex h-[18px] w-[18px] items-center justify-center"
-                          >
-                            <CheckboxIcon state={isSelected ? "checked" : "empty"} />
-                          </button>
+                          <div className="flex items-center justify-center">
+                            <Checkbox
+                              checked={isSelected}
+                              onChange={() => toggleVariable(v.variable)}
+                            />
+                          </div>
                         </td>
                         <td className="px-[8px] py-[6px]">
                           <span className="t-small whitespace-nowrap text-text-primary">{v.datasetName}</span>
@@ -781,9 +881,9 @@ export function BrowseVariablesModal({
                               <button
                                 type="button"
                                 onClick={() => jumpToVlm(v.variable)}
-                                className="inline-flex h-[18px] items-center gap-[1px] rounded-[4px] bg-[#E1F6F9] px-[4px] hover:bg-[#C3EDF2]"
+                                className="inline-flex h-[18px] items-center gap-[1px] rounded-[4px] bg-[#F4E8EE] px-[4px] hover:bg-[#EEDFE7] transition-colors"
                               >
-                                <span className="text-[10px] font-medium whitespace-nowrap text-text-primary">VLM ↗</span>
+                                <span className="text-[10px] font-medium whitespace-nowrap text-[#830051]">VLM ↗</span>
                               </button>
                             )}
                           </div>
@@ -840,7 +940,7 @@ export function BrowseVariablesModal({
                   <tr>
                     <td colSpan={7} className="px-[20px] py-[32px] text-center">
                       <p className="t-small text-[#888E8E]">
-                        当前 study 暂无 VLM 变量定义
+                        No Results Found
                       </p>
                     </td>
                   </tr>
@@ -900,7 +1000,8 @@ export function BrowseVariablesModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
