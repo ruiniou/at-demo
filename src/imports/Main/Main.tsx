@@ -5362,6 +5362,7 @@ function BlocksTabContent({
           {blocks.length > 0 ? (
             <FilterChip
               type="Dropdown"
+              variant="select"
               showIcon={false}
               options={blocks.map((b: any) => ({
                 label: b.name || b.fields?.find((f: any) => f.id.includes('Label') || f.id.includes('Title') || f.label === 'Component Label' || f.label === 'Block Title')?.value || b.id,

@@ -10,6 +10,8 @@ export interface FilterChipOption {
 export interface FilterChipProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type" | "onChange"> {
   /** Variant of the chip: "Toggle" (simple chip/toggle) or "Dropdown" (with chevron) */
   type?: "Toggle" | "Dropdown";
+  /** Semantic mode: "filter" (highlights with pink selected state when value is set) or "select" (neutral default state even when value is selected, only highlighting when open/hovered) */
+  variant?: "filter" | "select";
   /** Controlled active/selected state */
   active?: boolean;
   /** Explicit state override */
@@ -72,6 +74,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
   (
     {
       type = "Toggle",
+      variant = "filter",
       active = false,
       state: stateProp,
       label = "Label",
@@ -124,7 +127,9 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
     // Calculate effective state
     const isDropdown = type === "Dropdown" || Boolean(options?.length);
     const isDisabled = disabled || stateProp === "Disabled";
-    const isActive = active || stateProp === "Active" || isOpen || (value !== undefined && value !== "All" && value !== "");
+    const isFilterMode = variant === "filter";
+    const hasActiveFilterValue = isFilterMode && (value !== undefined && value !== "All" && value !== "");
+    const isActive = active || stateProp === "Active" || isOpen || hasActiveFilterValue;
 
     // Determine colors
     let colorScheme = {
