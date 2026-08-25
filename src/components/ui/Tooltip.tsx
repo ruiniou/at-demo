@@ -22,6 +22,12 @@ export interface TooltipProps {
   variant?: TooltipVariant;
   /** Sections for the metadata-table variants. */
   sections?: TooltipMetadataSection[];
+  /** Optional custom max width for long content like derivations */
+  maxWidth?: string | number;
+  /** Custom zIndex, defaults to 10050 to always float above modals & portal dropdowns */
+  zIndex?: number;
+  /** Antd placement */
+  placement?: "top" | "bottom" | "left" | "right" | "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
 }
 
 const TOOLTIP_FONT_FAMILY =
@@ -74,9 +80,14 @@ export function Tooltip({
   className = "",
   variant = "default",
   sections,
+  maxWidth,
+  zIndex = 10050,
+  placement,
 }: TooltipProps) {
   const isMetadata = variant === "metadata-table" || variant === "metadata-table-extreme";
   const isExtreme = variant === "metadata-table-extreme";
+
+  const defaultMaxWidth = maxWidth !== undefined ? maxWidth : (isExtreme ? "240px" : isMetadata ? "none" : "232px");
 
   const overlayInnerStyle: React.CSSProperties = isMetadata
     ? {
@@ -86,22 +97,22 @@ export function Tooltip({
         boxShadow: "0px 2px 8px rgba(0,0,0,0.08)",
         minHeight: "auto",
         width: isExtreme ? "240px" : "auto",
-        maxWidth: isExtreme ? "240px" : "none",
+        maxWidth: defaultMaxWidth,
         wordBreak: "break-word",
         whiteSpace: isExtreme ? "normal" : "nowrap",
         textAlign: "left",
       }
     : {
         borderRadius: "4px",
-        padding: "4px 6px",
+        padding: "6px 10px",
         fontSize: "12px",
-        lineHeight: "16px",
+        lineHeight: "17px",
         fontFamily: TOOLTIP_FONT_FAMILY,
         fontWeight: 400,
         color: "var(--color-tooltip-text)",
-        boxShadow: "0px 2px 4px rgba(0,0,0,0.08)",
+        boxShadow: "0px 4px 12px rgba(0,0,0,0.12)",
         minHeight: "auto",
-        maxWidth: "232px",
+        maxWidth: defaultMaxWidth,
         wordBreak: "break-word",
         whiteSpace: "normal",
         textAlign: "left",
@@ -114,20 +125,22 @@ export function Tooltip({
       label
     );
 
+  const effectivePlacement = placement || (align === "left" ? "bottomLeft" : "bottom");
+
   return (
     <AntdTooltip
       title={title}
-      placement={align === "left" ? "bottomLeft" : "bottom"}
-      align={align === "left" ? undefined : { offset: [0, 2] }}
+      placement={effectivePlacement}
+      align={placement ? undefined : (align === "left" ? undefined : { offset: [0, 2] })}
       arrow={false}
       autoAdjustOverflow={true}
       getPopupContainer={() => document.body}
-      zIndex={9999}
+      zIndex={zIndex}
       color="var(--color-tooltip-bg)"
       styles={{ container: overlayInnerStyle }}
       transitionName=""
-      mouseEnterDelay={0}
-      mouseLeaveDelay={0}
+      mouseEnterDelay={0.15}
+      mouseLeaveDelay={0.1}
     >
       <span className={`inline-flex ${className}`}>
         {children}

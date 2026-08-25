@@ -6,6 +6,10 @@ import { FormItem } from "./FormItem";
 export type DropdownOption = {
   label: string;
   value: string;
+  /** Optional: shown in Variable multiselect dropdown rows */
+  derivation?: string;
+  /** Optional: dataset name prefix shown in Variable multiselect dropdown rows */
+  dataset?: string;
 };
 
 export interface DropdownProps {

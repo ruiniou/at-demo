@@ -62,6 +62,7 @@ import { Tooltip } from "../../components/ui/Tooltip";
 import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
+import { BrowseVariablesField } from "./components/BrowseVariablesModal";
 import { FormTextArea as Textarea } from "../../components/ui/FormTextArea";
 import { AIInputBox } from "../../components/ui/AI-InputBox";
 import { AIUserPrompt } from "../../components/ui/AI-UserPrompt";
@@ -5467,39 +5468,65 @@ function BlocksTabContent({
                               <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
                             </button>
                           )}
-                          {effectiveInputType === 'multiselect' ? (
-                            <MultiSelectDropdown
-                              label={labelWithLink as any}
-                              required={field.required}
-                              disabled={fieldIsDisabled}
-                              badge={badgeNode}
-                              placeholder={field.required ? "Required" : "Optional"}
-                              options={field.options || []}
-                              value={field.value ? field.value.split(', ') : []}
-                              onChange={(val) => onFieldEdit?.(block.id, field.id, val.join(', '))}
-                            />
-                          ) : effectiveInputType === 'dropdown' ? (
-                            <Dropdown
-                              label={labelWithLink as any}
-                              required={field.required}
-                              disabled={fieldIsDisabled}
-                              badge={badgeNode}
-                              placeholder={field.required ? "Required" : "Optional"}
-                              options={field.options || []}
-                              value={field.value}
-                              onChange={(val) => onFieldEdit?.(block.id, field.id, val)}
-                            />
-                          ) : (
-                            <Input
-                              label={labelWithLink as any}
-                              required={field.required}
-                              disabled={fieldIsDisabled}
-                              badge={badgeNode}
-                              placeholder={field.required ? "Required" : "Optional"}
-                              value={field.value}
-                              onChange={(e) => onFieldEdit?.(block.id, field.id, e.target.value)}
-                            />
-                          )}
+                          {(() => {
+                            const isVariableField = field.id === 'variable' || field.id.toLowerCase().includes('variable') || String(field.label || '').toLowerCase().includes('variable');
+                            
+                            if (isVariableField) {
+                              return (
+                                <BrowseVariablesField
+                                  label={labelWithLink as any}
+                                  required={field.required}
+                                  disabled={fieldIsDisabled}
+                                  badge={badgeNode}
+                                  placeholder={field.required ? "Required" : "Optional"}
+                                  value={field.value ? field.value.split(', ').map((s: string) => s.trim()).filter(Boolean) : []}
+                                  onChange={(val) => onFieldEdit?.(block.id, field.id, val.join(', '))}
+                                />
+                              );
+                            }
+
+                            if (effectiveInputType === 'multiselect') {
+                              return (
+                                <MultiSelectDropdown
+                                  label={labelWithLink as any}
+                                  required={field.required}
+                                  disabled={fieldIsDisabled}
+                                  badge={badgeNode}
+                                  placeholder={field.required ? "Required" : "Optional"}
+                                  options={field.options || []}
+                                  value={field.value ? field.value.split(', ') : []}
+                                  onChange={(val) => onFieldEdit?.(block.id, field.id, val.join(', '))}
+                                />
+                              );
+                            }
+
+                            if (effectiveInputType === 'dropdown') {
+                              return (
+                                <Dropdown
+                                  label={labelWithLink as any}
+                                  required={field.required}
+                                  disabled={fieldIsDisabled}
+                                  badge={badgeNode}
+                                  placeholder={field.required ? "Required" : "Optional"}
+                                  options={field.options || []}
+                                  value={field.value}
+                                  onChange={(val) => onFieldEdit?.(block.id, field.id, val)}
+                                />
+                              );
+                            }
+
+                            return (
+                              <Input
+                                label={labelWithLink as any}
+                                required={field.required}
+                                disabled={fieldIsDisabled}
+                                badge={badgeNode}
+                                placeholder={field.required ? "Required" : "Optional"}
+                                value={field.value}
+                                onChange={(e) => onFieldEdit?.(block.id, field.id, e.target.value)}
+                              />
+                            );
+                          })()}
                         </div>
                       );
                     })}

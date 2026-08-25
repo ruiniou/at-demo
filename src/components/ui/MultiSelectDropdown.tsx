@@ -48,7 +48,10 @@ export function MultiSelectDropdown({
 
   const selectedOptions = options.filter((opt) => value.includes(opt.value));
 
-  // Border + bg per state (Figma 549:1458 — Select, MultiSelect=true)
+  // Whether options have derivation/dataset metadata (Variable-style dropdown)
+  const hasDerivation = options.some((opt) => opt.derivation !== undefined || opt.dataset !== undefined);
+
+  // Border + bg per state
   let boxClasses = "";
   if (disabled) {
     boxClasses = "border border-form-border bg-bg-panel cursor-not-allowed";
@@ -60,7 +63,6 @@ export function MultiSelectDropdown({
     boxClasses = "border border-form-border bg-white hover:border-graphite-50";
   }
 
-  // Label + star colors
   const labelColor = disabled ? "var(--color-graphite-20)" : "var(--color-text-primary)";
 
   const handleToggleOption = (optValue: string) => {
@@ -80,6 +82,12 @@ export function MultiSelectDropdown({
   const visibleOptions = hasMoreThanThree && !isExpandedTags
     ? selectedOptions.slice(0, 3)
     : selectedOptions;
+
+  // Sort: selected options first, then the rest (preserving original order within each group)
+  const sortedOptions = [
+    ...options.filter((opt) => value.includes(opt.value)),
+    ...options.filter((opt) => !value.includes(opt.value)),
+  ];
 
   return (
     <FormItem
@@ -153,24 +161,97 @@ export function MultiSelectDropdown({
       )}
 
       {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 top-[100%] z-[100] mt-[4px] flex flex-col gap-[2px] rounded-[4px] border border-form-border bg-white p-[4px] shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="flex max-h-[200px] flex-col gap-[2px] overflow-y-auto">
-            {options.map((opt) => {
-              const isSelected = value.includes(opt.value);
-              return (
-                <OptionLabel
-                  key={opt.value}
-                  label={opt.label}
-                  selected={isSelected}
-                  type="multi"
-                  onClick={() => handleToggleOption(opt.value)}
-                />
-              );
-            })}
-          </div>
+        <div
+          className={`absolute left-0 top-[100%] z-[100] mt-[4px] rounded-[4px] border border-form-border bg-white shadow-[0px_2px_6px_rgba(0,0,0,0.1)] ${
+            hasDerivation ? "w-[640px]" : "right-0"
+          }`}
+        >
+          {hasDerivation ? (
+            /* Variable-style dropdown: wide, with Dataset / Variable+Label / Derivation columns */
+            <>
+              {/* Column headers */}
+              <div className="grid grid-cols-[14px_72px_140px_1fr] gap-[8px] border-b border-form-border px-[8px] py-[5px]">
+                <div />
+                <span className="text-[11px] font-medium text-graphite-40">Dataset</span>
+                <span className="text-[11px] font-medium text-graphite-40">Variable / Label</span>
+                <span className="text-[11px] font-medium text-graphite-40">Derivation</span>
+              </div>
+              <div className="flex max-h-[320px] flex-col overflow-y-auto p-[4px] gap-[2px]">
+                {sortedOptions.map((opt) => {
+                  const isSelected = value.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => handleToggleOption(opt.value)}
+                      className={`grid w-full grid-cols-[14px_72px_140px_1fr] items-start gap-[8px] rounded-[2px] px-[6px] py-[6px] text-left transition-colors hover:bg-bg-panel ${
+                        isSelected ? "bg-az-secondary" : ""
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <span
+                        className={`mt-[2px] flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border ${
+                          isSelected ? "border-brand-1 bg-brand-1" : "border-[#D8DADA] bg-white"
+                        }`}
+                      >
+                        {isSelected && (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                            <path d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" fill="white"/>
+                          </svg>
+                        )}
+                      </span>
+
+                      {/* Dataset */}
+                      <span className="text-[11px] leading-[18px] text-graphite-40 whitespace-nowrap pt-[1px]">
+                        {opt.dataset ?? ""}
+                      </span>
+
+                      {/* Variable name + Label */}
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-medium leading-[18px] text-text-primary">{opt.label}</p>
+                        {opt.dataset && (
+                          <p className="text-[11px] leading-[16px] text-graphite-40">{opt.dataset}</p>
+                        )}
+                      </div>
+
+                      {/* Derivation — max 6 lines */}
+                      <p
+                        className="text-[12px] leading-[18px] text-text-primary"
+                        style={{
+                          display: "-webkit-box",
+                          WebkitLineClamp: 6,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {opt.derivation ?? "—"}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            /* Standard dropdown: compact, single-column */
+            <div className="flex max-h-[200px] flex-col gap-[2px] overflow-y-auto p-[4px]">
+              {sortedOptions.map((opt) => {
+                const isSelected = value.includes(opt.value);
+                return (
+                  <OptionLabel
+                    key={opt.value}
+                    label={opt.label}
+                    selected={isSelected}
+                    type="multi"
+                    onClick={() => handleToggleOption(opt.value)}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
       </div>
     </FormItem>
   );
 }
+
