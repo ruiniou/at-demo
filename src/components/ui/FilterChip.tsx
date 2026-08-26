@@ -129,11 +129,12 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
     const isDisabled = disabled || stateProp === "Disabled";
     const isFilterMode = variant === "filter";
     const hasActiveFilterValue = isFilterMode && (value !== undefined && value !== "All" && value !== "");
-    const isActive = active || stateProp === "Active" || isOpen || hasActiveFilterValue;
+    const isActive = active || stateProp === "Active" || hasActiveFilterValue;
+    const isHoveredOrOpen = (stateProp === "Hover" || isOpen) && !isActive && !isDisabled;
 
     // Determine colors
     let colorScheme = {
-      bg: "bg-transparent hover:bg-[#F8F7F7] active:bg-[#F0F2F2]",
+      bg: isHoveredOrOpen ? "bg-[#F8F7F7]" : "bg-transparent hover:bg-[#F8F7F7] active:bg-[#F0F2F2]",
       text: "text-[#3F4444]",
       iconColor: "#3F4444",
       chevronColor: "#3F4444",
