@@ -1236,6 +1236,43 @@ function AICopilotPanel({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
+  const attachFilesRef = useRef<((files: File[]) => void) | null>(null);
+
+  // --- Drag & Drop state for full AI Copilot panel ---
+  const [isCopilotDragOver, setIsCopilotDragOver] = useState(false);
+  const dragCounter = useRef(0);
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes("Files")) {
+      dragCounter.current += 1;
+      setIsCopilotDragOver(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current -= 1;
+    if (dragCounter.current <= 0) {
+      dragCounter.current = 0;
+      setIsCopilotDragOver(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setIsCopilotDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      attachFilesRef.current?.(files);
+    }
+  };
 
   useEffect(() => {
     if (focusTrigger > 0 && inputRef.current) {
@@ -1331,7 +1368,32 @@ function AICopilotPanel({
   return (
     <div 
       className="flex flex-col h-full w-full bg-transparent relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
+      {/* Drag & Drop Overlay Mask over AI Copilot Area */}
+      {isCopilotDragOver && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-[8px] pointer-events-none transition-all duration-150 animate-in fade-in">
+          <div className="w-full h-full rounded-[10px] bg-white/92 backdrop-blur-[2px] border-2 border-dashed border-brand-1 flex flex-col items-center justify-center gap-[12px] shadow-[0px_4px_16px_rgba(0,0,0,0.12)]">
+            <div className="w-[52px] h-[52px] rounded-full bg-az-secondary flex items-center justify-center text-brand-1">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 11V5H13V11H19V13H13V19H11V13H5V11H11Z" fill="currentColor" />
+              </svg>
+            </div>
+            <div className="flex flex-col items-center gap-[4px] px-[20px] text-center">
+              <p className="text-[16px] font-semibold text-text-primary leading-[24px]">
+                Attach to chat
+              </p>
+              <p className="text-[12px] text-text-secondary leading-[18px]">
+                Drop images to attach (PNG, JPG, JPEG · Max 5)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-transparent h-[48px] shrink-0 flex items-center justify-between px-[12px] mb-[4px]">
         <div className="flex items-center gap-[8px]">
@@ -1392,6 +1454,7 @@ function AICopilotPanel({
               onCloseMetadataChanges={() => onMetaCancel?.()}
               onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
               quoteInsertRef={quoteInsertRef}
+              attachFilesRef={attachFilesRef}
             />
           ) : hasCodeDiff ? (
             <ChatBox 
@@ -1402,6 +1465,7 @@ function AICopilotPanel({
               onAcceptPending={handleAcceptPending}
               onRejectPending={handleRejectPending}
               quoteInsertRef={quoteInsertRef}
+              attachFilesRef={attachFilesRef}
             />
           ) : (
             <ChatBox
@@ -1409,6 +1473,7 @@ function AICopilotPanel({
               onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
               quoteInsertRef={quoteInsertRef}
+              attachFilesRef={attachFilesRef}
             />
           )}
           {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
@@ -5189,7 +5254,11 @@ function BlocksTabContent({
   onDeleteComponent,
   onFieldEdit,
   onDisplayFactEdit,
+  onDisplayFactLabelEdit,
+  onDisplayFactDelete,
   onDetailEdit,
+  onDetailAdd,
+  onDetailDelete,
   getEffectiveStatus,
   getFieldStyles,
   fieldRefs,
@@ -5209,7 +5278,11 @@ function BlocksTabContent({
   onDeleteComponent?: (id: string) => void;
   onFieldEdit?: (blockId: string, fieldId: string, value: string) => void;
   onDisplayFactEdit?: (blockId: string, factIdx: number, value: string) => void;
+  onDisplayFactLabelEdit?: (blockId: string, factIdx: number, label: string) => void;
+  onDisplayFactDelete?: (blockId: string, factIdx: number) => void;
   onDetailEdit?: (blockId: string, factIdx: number, detailIdx: number, value: string) => void;
+  onDetailAdd?: (blockId: string, factIdx: number) => void;
+  onDetailDelete?: (blockId: string, factIdx: number, detailIdx: number) => void;
   getEffectiveStatus?: (fieldId: string | null, status: FieldStatus, currentValue: string | null) => FieldStatus;
   getFieldStyles?: (status: FieldStatus, isReadOnlyField?: boolean) => { containerBg: string; containerBorder: string; inputBorder: string };
   fieldRefs?: React.MutableRefObject<Record<string, HTMLDivElement | null>>;
@@ -5553,7 +5626,7 @@ function BlocksTabContent({
                       );
                     })}
 
-                    {/* Display Facts Section (Grouped by section into Cards) */}
+                    {/* Display Facts Section (Grouped by section into Cards with graphite-10 border, no shadow) */}
                     {(() => {
                       if (displayFacts.length === 0) return null;
 
@@ -5570,18 +5643,22 @@ function BlocksTabContent({
                       });
 
                       return (
-                        <div className="flex flex-col gap-[10px] mt-[4px]">
-                          <div className="flex items-center gap-[6px] py-[2px]">
-                            <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+                        <div className="flex flex-col gap-[8px] mt-[4px]">
+                          {/* Title styled with standard field label typography (t-small-medium / text-text-primary) */}
+                          <div className="flex items-center gap-[6px] h-[20px]">
+                            <span className="t-small-medium text-text-primary" style={{ fontFamily: "'PingFang SC', sans-serif" }}>
                               Display Facts
                             </span>
+                            <div className="flex items-center justify-center h-[16px] min-w-[16px] px-[4px] py-px rounded-[16px] bg-graphite-10 shrink-0">
+                              <span className="text-[10px] leading-[14px] font-medium text-text-secondary">{displayFacts.length}</span>
+                            </div>
                           </div>
 
                           <div className="flex flex-col gap-[10px]">
                             {sectionGroups.map((group, groupIdx) => (
                               <div
                                 key={groupIdx}
-                                className="bg-bg-panel/40 border border-graphite-15 rounded-[6px] p-[10px] flex flex-col gap-[10px]"
+                                className="bg-white border border-graphite-10 rounded-[6px] p-[10px] flex flex-col gap-[10px]"
                               >
                                 {/* Card Section Header (Read-only) */}
                                 <div className="flex items-center gap-[6px]">
@@ -5595,62 +5672,136 @@ function BlocksTabContent({
                                 <div className="flex flex-col gap-[12px]">
                                   {group.facts.map(({ fact, originalIndex }) => {
                                     const factKey = `${block.id}_fact_${originalIndex}_value`;
+                                    const labelKey = `${block.id}_fact_${originalIndex}_label`;
+                                    const isLabelEmpty = !fact.label || fact.label.trim() === '';
+                                    
                                     return (
                                       <div
                                         key={originalIndex}
-                                        className="flex flex-col gap-[6px]"
+                                        className="flex flex-col gap-[6px] relative group/fact"
                                       >
-                                        {/* Fact Label (Read-only) & Value (Editable) */}
-                                        <div
-                                          ref={el => { if (el && fieldRefs) fieldRefs.current[factKey] = el; }}
-                                          className="group relative"
-                                        >
-                                          {onQuoteField && (
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); onQuoteField(factKey, fact.label, blockName); }}
-                                              className="absolute right-[8px] top-[6px] z-30 flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover:opacity-100 cursor-pointer select-none"
-                                              title={`Quote "${fact.label}"`}
-                                            >
-                                              <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
-                                            </button>
-                                          )}
-                                          <FormItem
-                                            label={fact.label}
-                                            labelClassName="text-[12px] font-medium text-text-primary"
-                                            disabled={fieldIsDisabled}
-                                          >
-                                            <BaseInput
+                                        {/* Fact Header: Label (Editable, matching BaseInput style with border-transparent default) + Quote + Delete Fact Button */}
+                                        <div className="flex items-center justify-between gap-[6px]">
+                                          <div className="flex items-center gap-[6px] flex-1 min-w-0">
+                                            <input
                                               disabled={fieldIsDisabled}
-                                              value={fact.value}
-                                              onChange={(e) => onDisplayFactEdit?.(block.id, originalIndex, e.target.value)}
-                                              className="w-full text-[13px] leading-[20px] py-[4px] px-[8px] bg-white border-border-default hover:border-graphite-20 focus:border-brand-1 rounded-[2px]"
+                                              value={fact.label}
+                                              onChange={(e) => onDisplayFactLabelEdit?.(block.id, originalIndex, e.target.value)}
+                                              placeholder={fact.section ? `${fact.section} (Label required)` : "Label required"}
+                                              className={`w-full text-[13px] leading-[20px] py-[4px] px-[8px] rounded-[2px] bg-transparent border border-transparent hover:border-graphite-20 focus:border-brand-1 focus:bg-white outline-none transition-colors ${
+                                                isLabelEmpty ? 'text-status-error placeholder:text-status-error/70 italic' : 'text-text-primary font-medium'
+                                              }`}
                                             />
-                                          </FormItem>
+                                            {isLabelEmpty && (
+                                              <span className="shrink-0 px-[4px] py-px text-[10px] font-medium leading-[14px] rounded bg-status-error-bg text-status-error whitespace-nowrap">
+                                                Incomplete
+                                              </span>
+                                            )}
+                                          </div>
+
+                                          <div className="flex items-center gap-[2px] shrink-0">
+                                            {onQuoteField && (
+                                              <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); onQuoteField(factKey, fact.label || group.sectionName, blockName); }}
+                                                className="flex h-[20px] w-[20px] items-center justify-center rounded-[4px] border border-graphite-15 bg-white shadow-[0_2px_6px_rgba(0,0,0,0.12)] hover:bg-graphite-10 active:scale-[0.96] transition-all opacity-0 group-hover/fact:opacity-100 cursor-pointer select-none"
+                                                title={`Quote "${fact.label || group.sectionName}"`}
+                                              >
+                                                <img src={doubleQuotesLUrl} className="h-[14px] w-[14px]" style={{ opacity: 0.7 }} alt="" />
+                                              </button>
+                                            )}
+
+                                            {!fieldIsDisabled && onDisplayFactDelete && (
+                                              <TooltipText label="Delete" align="center">
+                                                <div
+                                                  role="button"
+                                                  onMouseDown={(e) => e.stopPropagation()}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onDisplayFactDelete(block.id, originalIndex);
+                                                  }}
+                                                  className="hidden group-hover/fact:flex items-center justify-center shrink-0 w-[20px] h-[20px] rounded-[4px] bg-transparent hover:bg-status-error-bg/60 active:scale-[0.96] transition-colors cursor-pointer"
+                                                >
+                                                  <LocalIcon src={closeIconUrl} className="w-[14px] h-[14px]" color="var(--color-status-error)" />
+                                                </div>
+                                              </TooltipText>
+                                            )}
+                                          </div>
                                         </div>
 
-                                        {/* Fact Details (Editable items, flattened list) */}
-                                        {fact.details && fact.details.length > 0 && (
-                                          <div className="flex flex-col gap-[4px] pl-[8px]">
-                                            {fact.details.map((detail: string, detIdx: number) => {
-                                              const detKey = `${block.id}_fact_${originalIndex}_det_${detIdx}`;
-                                              return (
-                                                <div
-                                                  key={detIdx}
-                                                  ref={el => { if (el && fieldRefs) fieldRefs.current[detKey] = el; }}
-                                                  className="group relative flex items-center gap-[6px] w-full"
-                                                >
-                                                  <span className="text-text-secondary text-[12px] select-none shrink-0">•</span>
-                                                  <BaseInput
-                                                    disabled={fieldIsDisabled}
-                                                    value={detail}
-                                                    onChange={(e) => onDetailEdit?.(block.id, originalIndex, detIdx, e.target.value)}
-                                                    className="flex-1 min-w-0 !h-[26px] text-[12px] px-[6px] py-[2px] bg-white border-border-default hover:border-graphite-20 focus:border-brand-1 rounded-[2px]"
-                                                  />
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        )}
+                                        {/* Fact Value (Editable Input — Default borderless, border on hover/focus) */}
+                                        <div ref={el => { if (el && fieldRefs) fieldRefs.current[factKey] = el; }} className="w-full">
+                                          <BaseInput
+                                            disabled={fieldIsDisabled}
+                                            value={fact.value}
+                                            onChange={(e) => onDisplayFactEdit?.(block.id, originalIndex, e.target.value)}
+                                            placeholder="Enter fact value..."
+                                            className="w-full text-[13px] leading-[20px] py-[4px] px-[8px] bg-transparent border-transparent hover:border-graphite-20 hover:bg-white focus:border-brand-1 focus:bg-white rounded-[2px]"
+                                          />
+                                        </div>
+
+                                        {/* Fact Details (Editable items, multi-line auto-wrap, aligned bullets & Add detail) */}
+                                        <div className="flex flex-col gap-[3px] pl-[6px]">
+                                          {fact.details && fact.details.map((detail: string, detIdx: number) => {
+                                            const detKey = `${block.id}_fact_${originalIndex}_det_${detIdx}`;
+                                            return (
+                                              <div
+                                                key={detIdx}
+                                                ref={el => { if (el && fieldRefs) fieldRefs.current[detKey] = el; }}
+                                                className="group/detail relative flex items-start gap-[3px] w-full"
+                                              >
+                                                <span className="text-text-secondary text-[12px] leading-[22px] select-none shrink-0 w-[12px] text-center">•</span>
+                                                <textarea
+                                                  disabled={fieldIsDisabled}
+                                                  value={detail}
+                                                  rows={1}
+                                                  onChange={(e) => {
+                                                    onDetailEdit?.(block.id, originalIndex, detIdx, e.target.value);
+                                                    e.target.style.height = 'auto';
+                                                    e.target.style.height = `${e.target.scrollHeight}px`;
+                                                  }}
+                                                  ref={(el) => {
+                                                    if (el) {
+                                                      el.style.height = 'auto';
+                                                      el.style.height = `${el.scrollHeight}px`;
+                                                    }
+                                                  }}
+                                                  placeholder="Detail specification..."
+                                                  className="flex-1 min-w-0 min-h-[22px] text-[12px] leading-[18px] px-[4px] py-[2px] bg-transparent border border-transparent hover:border-graphite-20 hover:bg-white focus:border-brand-1 focus:bg-white rounded-[2px] outline-none resize-none transition-colors overflow-hidden"
+                                                />
+                                                {!fieldIsDisabled && onDetailDelete && (
+                                                  <TooltipText label="Delete" align="center">
+                                                    <div
+                                                      role="button"
+                                                      onMouseDown={(e) => e.stopPropagation()}
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDetailDelete(block.id, originalIndex, detIdx);
+                                                      }}
+                                                      className="hidden group-hover/detail:flex items-center justify-center shrink-0 w-[18px] h-[18px] rounded-[4px] bg-transparent hover:bg-status-error-bg/60 active:scale-[0.96] transition-colors cursor-pointer mt-[2px]"
+                                                    >
+                                                      <LocalIcon src={closeIconUrl} className="w-[12px] h-[12px]" color="var(--color-status-error)" />
+                                                    </div>
+                                                  </TooltipText>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+
+                                          {/* Add Detail Button (Icon aligned with bullet point) */}
+                                          {!fieldIsDisabled && onDetailAdd && (
+                                            <button
+                                              type="button"
+                                              onClick={() => onDetailAdd(block.id, originalIndex)}
+                                              className="self-start flex items-center gap-[3px] text-[11px] leading-[18px] text-brand-1 hover:text-brand-1/80 hover:underline py-[2px] mt-[1px] active:scale-[0.98] transition-all cursor-pointer select-none"
+                                            >
+                                              <div className="w-[12px] flex items-center justify-center shrink-0">
+                                                <LocalIcon src={addLineIconUrl} className="w-[12px] h-[12px]" color="var(--color-brand-1)" />
+                                              </div>
+                                              <span>Add Detail</span>
+                                            </button>
+                                          )}
+                                        </div>
                                       </div>
                                     );
                                   })}
@@ -6018,6 +6169,7 @@ function MetadataPanel({
     figureComponents.forEach(b => {
       b.fields.forEach(f => { baseline[f.id] = f.value; });
       b.display_facts?.forEach((fact, factIdx) => {
+        baseline[`${b.id}_fact_${factIdx}_label`] = fact.label;
         baseline[`${b.id}_fact_${factIdx}_value`] = fact.value;
         fact.details?.forEach((det, detIdx) => {
           baseline[`${b.id}_fact_${factIdx}_det_${detIdx}`] = det;
@@ -6104,12 +6256,28 @@ function MetadataPanel({
 
         // Display Facts Diffs
         b.display_facts?.forEach((fact, factIdx) => {
+          // Label diff
+          const labelKey = `${b.id}_fact_${factIdx}_label`;
+          const baseLabelVal = figureFieldBaseline[labelKey];
+          if (baseLabelVal !== undefined && baseLabelVal !== fact.label) {
+            items.push({
+              fieldId: labelKey,
+              label: `${fact.section ? fact.section + ' > ' : ''}Label`,
+              oldValue: baseLabelVal || '(Empty)',
+              newValue: fact.label || '(Empty)',
+              blockId: b.id,
+              blockName: blockName,
+              changeType: 'modified'
+            });
+          }
+
+          // Value diff
           const factKey = `${b.id}_fact_${factIdx}_value`;
           const baseFactVal = figureFieldBaseline[factKey];
           if (baseFactVal !== undefined && baseFactVal !== fact.value) {
             items.push({
               fieldId: factKey,
-              label: `${fact.section ? fact.section + ' > ' : ''}${fact.label}`,
+              label: `${fact.section ? fact.section + ' > ' : ''}${fact.label || fact.section}`,
               oldValue: baseFactVal,
               newValue: fact.value,
               blockId: b.id,
@@ -6118,14 +6286,25 @@ function MetadataPanel({
             });
           }
 
+          // Details diff
           fact.details?.forEach((det, detIdx) => {
             const detKey = `${b.id}_fact_${factIdx}_det_${detIdx}`;
             const baseDetVal = figureFieldBaseline[detKey];
             if (baseDetVal !== undefined && baseDetVal !== det) {
               items.push({
                 fieldId: detKey,
-                label: `${fact.section ? fact.section + ' > ' : ''}${fact.label} (Detail #${detIdx + 1})`,
-                oldValue: baseDetVal,
+                label: `${fact.section ? fact.section + ' > ' : ''}${fact.label || fact.section} (Detail #${detIdx + 1})`,
+                oldValue: baseDetVal || '(New detail)',
+                newValue: det,
+                blockId: b.id,
+                blockName: blockName,
+                changeType: 'modified'
+              });
+            } else if (baseDetVal === undefined && det) {
+              items.push({
+                fieldId: detKey,
+                label: `${fact.section ? fact.section + ' > ' : ''}${fact.label || fact.section} (Detail #${detIdx + 1})`,
+                oldValue: '(None)',
                 newValue: det,
                 blockId: b.id,
                 blockName: blockName,
@@ -6589,6 +6768,33 @@ function MetadataPanel({
     setHasMetadataComponentEdits(true);
   };
 
+  const handleDisplayFactLabelEdit = (blockId: string, factIdx: number, label: string) => {
+    setFigureComponents(prev => prev.map(b => {
+      if (b.id !== blockId) return b;
+      const newFacts = [...(b.display_facts || [])];
+      if (newFacts[factIdx]) {
+        newFacts[factIdx] = { ...newFacts[factIdx], label };
+      }
+      return {
+        ...b,
+        display_facts: newFacts
+      };
+    }));
+    setHasMetadataComponentEdits(true);
+  };
+
+  const handleDisplayFactDelete = (blockId: string, factIdx: number) => {
+    setFigureComponents(prev => prev.map(b => {
+      if (b.id !== blockId) return b;
+      const newFacts = (b.display_facts || []).filter((_, idx) => idx !== factIdx);
+      return {
+        ...b,
+        display_facts: newFacts
+      };
+    }));
+    setHasMetadataComponentEdits(true);
+  };
+
   const handleDetailEdit = (blockId: string, factIdx: number, detailIdx: number, value: string) => {
     setFigureComponents(prev => prev.map(b => {
       if (b.id !== blockId) return b;
@@ -6596,6 +6802,38 @@ function MetadataPanel({
       if (newFacts[factIdx]) {
         const newDetails = [...(newFacts[factIdx].details || [])];
         newDetails[detailIdx] = value;
+        newFacts[factIdx] = { ...newFacts[factIdx], details: newDetails };
+      }
+      return {
+        ...b,
+        display_facts: newFacts
+      };
+    }));
+    setHasMetadataComponentEdits(true);
+  };
+
+  const handleDetailAdd = (blockId: string, factIdx: number) => {
+    setFigureComponents(prev => prev.map(b => {
+      if (b.id !== blockId) return b;
+      const newFacts = [...(b.display_facts || [])];
+      if (newFacts[factIdx]) {
+        const newDetails = [...(newFacts[factIdx].details || []), ''];
+        newFacts[factIdx] = { ...newFacts[factIdx], details: newDetails };
+      }
+      return {
+        ...b,
+        display_facts: newFacts
+      };
+    }));
+    setHasMetadataComponentEdits(true);
+  };
+
+  const handleDetailDelete = (blockId: string, factIdx: number, detailIdx: number) => {
+    setFigureComponents(prev => prev.map(b => {
+      if (b.id !== blockId) return b;
+      const newFacts = [...(b.display_facts || [])];
+      if (newFacts[factIdx]) {
+        const newDetails = (newFacts[factIdx].details || []).filter((_, idx) => idx !== detailIdx);
         newFacts[factIdx] = { ...newFacts[factIdx], details: newDetails };
       }
       return {
@@ -7719,7 +7957,11 @@ function MetadataPanel({
                 onDeleteComponent={(id) => setDeleteConfirmBlockId(id)}
                 onFieldEdit={handleFieldEditComponent}
                 onDisplayFactEdit={handleDisplayFactEdit}
+                onDisplayFactLabelEdit={handleDisplayFactLabelEdit}
+                onDisplayFactDelete={handleDisplayFactDelete}
                 onDetailEdit={handleDetailEdit}
+                onDetailAdd={handleDetailAdd}
+                onDetailDelete={handleDetailDelete}
                 fieldRefs={fieldRefs}
                 onQuoteField={onQuoteField}
                 confirmedCount={confirmedCount}

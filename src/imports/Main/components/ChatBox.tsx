@@ -300,6 +300,8 @@ export interface ChatBoxProps {
   onQuoteFieldRequest?: (fieldId: string, label: string) => void;
   /** Ref callback to expose an imperative insertQuote method to the parent */
   quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
+  /** Ref callback to expose an imperative addFiles method to the parent */
+  attachFilesRef?: React.MutableRefObject<((files: File[]) => void) | null>;
   className?: string;
 }
 
@@ -315,6 +317,7 @@ export default function ChatBox({
   onAcceptPending,
   onRejectPending,
   quoteInsertRef,
+  attachFilesRef,
   className = "",
 }: ChatBoxProps) {
   // --- Core Functional States ---
@@ -517,6 +520,15 @@ export default function ChatBox({
       return [...prev, ...newItems];
     });
   }, []);
+
+  // ---- Expose addFiles to parent via attachFilesRef ----
+  useEffect(() => {
+    if (attachFilesRef) {
+      attachFilesRef.current = (files: File[]) => {
+        addFiles(files);
+      };
+    }
+  }, [attachFilesRef, addFiles]);
 
   /** Remove an attachment by id and re-order remaining items sequentially */
   const removeAttachment = useCallback((id: string) => {
@@ -927,7 +939,7 @@ export default function ChatBox({
         {/* --- Inputbox Container (non-pending) --- */}
         {isNotPendingAndIsDefaultOrFocusedOrTypedOrMaxHeight && (
           <div
-            className={`bg-white border-solid flex flex-col items-start justify-start px-[10px] py-[8px] relative shrink-0 w-full transition-all duration-200 ${
+            className={`bg-white border-solid flex flex-col items-start justify-start p-[8px] relative shrink-0 w-full transition-all duration-200 ${
               isMaxHeightAndNotPending
                 ? "border border-graphite-10 rounded-[6px]"
                 : isFocusedAndNotPending
@@ -1042,7 +1054,7 @@ export default function ChatBox({
 
         {/* --- Inputbox when Pending is active --- */}
         {pending && (
-          <div className="bg-white border border-graphite-10 border-solid content-stretch flex flex-col items-start justify-center px-[10px] py-[8px] relative rounded-[8px] shrink-0 w-full">
+          <div className="bg-white border border-graphite-10 border-solid content-stretch flex flex-col items-start justify-center p-[8px] relative rounded-[8px] shrink-0 w-full">
             <div className="content-stretch flex gap-[16px] items-center relative shrink-0 w-full">
               <div className="content-stretch flex flex-[1_0_0] items-center justify-start min-w-px relative">
                 <input
