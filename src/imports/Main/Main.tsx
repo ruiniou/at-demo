@@ -5371,14 +5371,36 @@ function BlocksTabContent({
     setTimeout(() => { isScrollingProgrammatically.current = false; }, 500);
   };
 
-  // IntersectionObserver scroll-spy: auto-update selectedBlockId based on visible section
+  // IntersectionObserver scroll-spy: auto-update selectedBlockId based on visible section + bottom-pinned fallback
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || blocks.length === 0) return;
 
+    const checkBottom = () => {
+      if (isScrollingProgrammatically.current) return;
+      const isBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= 16;
+      if (isBottom && blocks.length > 0) {
+        const lastBlock = blocks[blocks.length - 1];
+        if (lastBlock?.id) {
+          setSelectedBlockId(lastBlock.id);
+        }
+      }
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (isScrollingProgrammatically.current) return;
+
+        // If user is at or near bottom, prioritize the last component
+        const isBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= 16;
+        if (isBottom && blocks.length > 0) {
+          const lastBlock = blocks[blocks.length - 1];
+          if (lastBlock?.id) {
+            setSelectedBlockId(lastBlock.id);
+            return;
+          }
+        }
+
         // Find the topmost visible section
         const visible = entries
           .filter(e => e.isIntersecting)
@@ -5396,7 +5418,12 @@ function BlocksTabContent({
       if (el) observer.observe(el);
     });
 
-    return () => observer.disconnect();
+    container.addEventListener('scroll', checkBottom, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      container.removeEventListener('scroll', checkBottom);
+    };
   }, [blocks]);
 
   const LinkIcon = () => (
@@ -5498,7 +5525,7 @@ function BlocksTabContent({
       </div>
 
       {/* Scrollable content — all blocks stacked vertically */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-scroll overflow-x-hidden">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-scroll overflow-x-hidden pb-[80px]">
         {blocks.length === 0 ? (
           <div className="flex w-full h-full items-center justify-center">
             <p className="t-small text-text-secondary">No Components</p>
