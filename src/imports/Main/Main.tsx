@@ -3537,7 +3537,7 @@ function ListingShellPreview({
                                         <div className="border-t border-graphite-10 -mx-[8px] my-[3px] w-[calc(100%+16px)]" />
                                         {meta ? (
                                           <div className="flex items-start gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
-                                            <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" color="var(--color-text-secondary)" />
+                                            <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" color="var(--color-brand-1)" />
                                             <span className="flex-1 min-w-0 break-all">{meta.dataset}.{meta.variable}</span>
                                           </div>
                                         ) : (
@@ -3678,7 +3678,7 @@ function ListingShellPreview({
                               >
                                 {meta ? (
                                   <div className="flex items-start gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
-                                    <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" color="var(--color-text-secondary)" />
+                                    <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" color="var(--color-brand-1)" />
                                     <span className="flex-1 min-w-0 break-all">{meta.dataset}.{meta.variable}</span>
                                   </div>
                                 ) : (
