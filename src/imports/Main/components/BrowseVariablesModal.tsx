@@ -807,6 +807,22 @@ export function BrowseVariablesModal({
     );
   }, [vlmData, search]);
 
+  const newlyAddedDatasets = useMemo(() => {
+    if (!sourceDatasets || sourceDatasets.length === 0) return [];
+    const currentSelectedDatasets = Array.from(
+      new Set(
+        selected
+          .map((itemKey) => {
+            if (itemKey.includes(".")) return itemKey.split(".")[0];
+            const matched = variables.find((v) => v.variable === itemKey);
+            return matched?.datasetName || "";
+          })
+          .filter(Boolean)
+      )
+    );
+    return currentSelectedDatasets.filter((d) => !sourceDatasets.includes(d));
+  }, [selected, sourceDatasets, variables]);
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -1124,42 +1140,44 @@ export function BrowseVariablesModal({
         </div>
 
         {/* Footer */}
-        <div className="flex shrink-0 items-center justify-end gap-[12px] border-t border-[#D8DADA] px-[20px] py-[12px]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-[32px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] t-small font-medium text-text-primary hover:bg-bg-panel active:scale-[0.96]"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onConfirm(selected);
-              // Calculate newly added datasets to expand source datasets in parent
-              const selectedDatasetNames = Array.from(
-                new Set(
-                  selected
-                    .map((itemKey) => {
-                      if (itemKey.includes(".")) return itemKey.split(".")[0];
-                      const matched = variables.find((v) => v.variable === itemKey);
-                      return matched?.datasetName || "";
-                    })
-                    .filter(Boolean)
-                )
-              );
-              const newlyAddedDatasets = selectedDatasetNames.filter(
-                (d) => !sourceDatasets?.includes(d)
-              );
-              if (newlyAddedDatasets.length > 0) {
-                onDatasetsExpand?.(newlyAddedDatasets);
-              }
-              onClose();
-            }}
-            className="h-[32px] rounded-[4px] bg-[#830051] px-[16px] t-small font-medium text-white hover:bg-[#6D0043] active:scale-[0.96]"
-          >
-            Confirm ({selected.length})
-          </button>
+        <div className="flex shrink-0 items-center justify-between border-t border-[#D8DADA] px-[20px] py-[12px] bg-white">
+          {/* Left info tip if datasets will be expanded */}
+          <div className="flex items-center gap-[6px] min-w-0 pr-[12px]">
+            {newlyAddedDatasets.length > 0 && (
+              <span className="t-small text-[#555A5A] truncate flex items-center gap-[6px]" title={`${newlyAddedDatasets.join(", ")} will be automatically added to Source Dataset(s).`}>
+                <span className="inline-flex size-[14px] items-center justify-center rounded-full bg-[#F4E8EE] text-[#830051] text-[10px] font-bold shrink-0">
+                  i
+                </span>
+                <span className="truncate">
+                  <span className="font-medium text-text-primary">+{newlyAddedDatasets.join(", ")}</span> will be added to Source Dataset(s)
+                </span>
+              </span>
+            )}
+          </div>
+
+          {/* Right action buttons */}
+          <div className="flex items-center gap-[12px] shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-[32px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] t-small font-medium text-text-primary hover:bg-bg-panel active:scale-[0.96]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onConfirm(selected);
+                if (newlyAddedDatasets.length > 0) {
+                  onDatasetsExpand?.(newlyAddedDatasets);
+                }
+                onClose();
+              }}
+              className="h-[32px] rounded-[4px] bg-[#830051] px-[16px] t-small font-medium text-white hover:bg-[#6D0043] active:scale-[0.96]"
+            >
+              Confirm ({selected.length})
+            </button>
+          </div>
         </div>
       </div>
     </div>,
