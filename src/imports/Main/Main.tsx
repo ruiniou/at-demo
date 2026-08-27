@@ -3453,32 +3453,33 @@ function ListingShellPreview({
 
           {/* Normal (non-preview) table view */}
           <ZoomContainer scale={zoomScale} className={`min-w-max p-[16px] ${pageSepActive ? 'hidden' : ''}`}>
-            <div className={`w-max bg-white text-text-primary rounded-[4px] p-[16px] ${!metadataOpen ? 'mx-auto' : ''}`}>
+            <div className={`w-max bg-white text-text-primary rounded-[4px] p-[20px] ${!metadataOpen ? 'mx-auto' : ''}`}>
               <div className="relative">
                 {/* Study Info & Page Info */}
-                <div className="flex justify-between items-end w-full mb-[16px]">
-                  <div className="t-small text-text-secondary whitespace-pre-wrap">AstraZeneca<br/>Study number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, &lt;&lt;Data cut-off ddmmyyyy&gt;&gt;</div>
-                  <div className="t-small text-text-secondary text-right">Page 266 of 280</div>
+                <div className="flex justify-between items-end w-full mb-[12px]">
+                  <div className="t-footnote text-text-secondary whitespace-pre-wrap">AstraZeneca<br/>Study number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, &lt;&lt;Data cut-off ddmmyyyy&gt;&gt;</div>
+                  <div className="t-footnote text-text-secondary text-right">Page 266 of 280</div>
                 </div>
 
                 {/* Title header */}
                 <div className="min-w-max flex flex-col items-center justify-center pb-[12px] gap-[4px]">
-                  <h1 className="text-[13px] font-medium leading-[16px] text-text-primary text-center tracking-[-0.01em]">
+                  <h1 className="t-table text-text-primary text-center tracking-[-0.01em]">
                     Appendix 16.2.12
                   </h1>
-                  <h2 className="t-small text-text-secondary text-center font-normal">
+                  <h2 className="t-footnote text-text-secondary text-center font-normal">
                     Tumour assessment details by blinded independent central review (ITT analysis set)
                   </h2>
-                  <h2 className="t-small text-text-secondary text-center font-normal">
+                  <h2 className="t-footnote text-text-secondary text-center font-normal">
                     Subject identifier: &lt;&lt;Exxxxxxxx&gt;&gt;
                   </h2>
                 </div>
 
                 {/* Subheader */}
-                <div className="w-full text-left t-small mb-[12px] text-text-secondary">
-                  <p>G. Target lesion details</p>
-                  <p>Reviewer: [[Radiologist 1|Radiologist 2]]*, Review identification number: &lt;&lt;xxxxxxx&gt;&gt;</p>
-                  <p>Planned treatment group: &lt;&lt;AZD1 (low dose)&gt;&gt;, Duration of actual exposure (months) [a]: &lt;&lt;xx&gt;&gt;, Death study day [b]: &lt;&lt;xx&gt;&gt;</p>
+                <div className="w-full text-left t-footnote mb-[8px] text-text-secondary flex flex-col gap-[2px]">
+                  <p className="m-0 leading-[16px]">Page by: USUBJID (Subject identifier: &lt;&lt;Exxxxxxxx&gt;&gt;)</p>
+                  <p className="m-0 leading-[16px]">G. Target lesion details</p>
+                  <p className="m-0 leading-[16px]">Reviewer: [[Radiologist 1|Radiologist 2]]*, Review identification number: &lt;&lt;xxxxxxx&gt;&gt;</p>
+                  <p className="m-0 leading-[16px]">Planned treatment group: &lt;&lt;AZD1 (low dose)&gt;&gt;, Duration of actual exposure (months) [a]: &lt;&lt;xx&gt;&gt;, Death study day [b]: &lt;&lt;xx&gt;&gt;</p>
                 </div>
                 <div ref={tableContainerRef} className="relative inline-block min-w-max">
                   <table className="table-fixed border-separate border-spacing-0 font-['Inter',sans-serif] text-text-primary border-t-2 border-text-primary" style={{ width: `${totalListingWidth}px` }}>
@@ -3730,7 +3731,7 @@ function ListingShellPreview({
                 {/* Footnotes */}
                 <div className="mt-[16px] flex flex-col gap-[4px] w-full text-left">
                   {listingFootnotes.map((fn, idx) => (
-                    <p key={idx} className="t-small text-text-secondary whitespace-pre-wrap">
+                    <p key={idx} className="t-footnote text-text-secondary whitespace-pre-wrap m-0">
                       {fn}
                     </p>
                   ))}
@@ -3792,6 +3793,7 @@ interface ShellTableData {
   population: string;
   studyInfo?: string;
   pageInfo?: string;
+  subHeader?: string[];
   footnotes?: string[];
   columnGroups: { name: string; span: number }[];
   columns: string[];
@@ -3805,6 +3807,9 @@ const shellTableData: Record<string, ShellTableData> = {
     studyInfo: 'AstraZeneca Page [X]\nStudy number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, <<Data cut-off ddmmmyyyy>>',
     pageInfo: '',
     population: '(Safety analysis set)',
+    subHeader: [
+      'Page by: TRTA (Planned Treatment Group: <<AZD999>>)',
+    ],
     footnotes: [
       '[a] ITT Population: All randomized subjects. Subjects are summarised in the arm to which they were randomised.',
       '[b] Kaplan-Meier estimates are used for survival curves. Median survival time and 95% CI are calculated.',
@@ -3825,6 +3830,9 @@ const shellTableData: Record<string, ShellTableData> = {
     studyInfo: 'AstraZeneca\nStudy number D1234C00001 <<Study name>> - <<Deliverable if not final>>, <<Dummy Treatment>>, <<Data cut-off ddmmmyyyy>>',
     pageInfo: 'Page x of y',
     population: '',
+    subHeader: [
+      'Page by: TRTA (Planned Treatment Group: <<AZD999 1 mg/kg>>)',
+    ],
     columnGroups: [
       { name: 'AZD999\n1 mg/kg\nN=xxx', span: 1 },
       { name: 'AZD999\n2 mg/kg\nN=xxx', span: 1 },
@@ -3921,7 +3929,13 @@ const shellTableData: Record<string, ShellTableData> = {
   'Listing 16.2.1': {
     tableNumber: 'Listing 16.2.1',
     tableTitle: 'Individual Subject Data - Vital Signs',
+    studyInfo: 'AstraZeneca\nStudy number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, <<Data cut-off ddmmmyyyy>>',
+    pageInfo: 'Page 1 of 10',
     population: 'Safety Analysis Set',
+    subHeader: [
+      'Page by: USUBJID (Subject ID: <<101-001>>)',
+      'Site: <<101>>, Planned treatment group: <<AZD0780 20mg>>',
+    ],
     columnGroups: [{ name: 'Subject-Level Data', span: 9 }],
     columns: ['Subject ID', 'Site', 'Treatment', 'Visit', 'Date', 'SBP (mmHg)', 'DBP (mmHg)', 'HR (bpm)', 'Temp (°C)'],
     rows: [
@@ -3936,6 +3950,10 @@ const shellTableData: Record<string, ShellTableData> = {
       { category: '101-002', values: ['101', 'Placebo', 'Week 8', '2026-04-01', '131', '83', '75', '36.6'] },
       { category: '102-003', values: ['102', 'AZD0780 10mg', 'Screening', '2026-01-20', '148', '92', '80', '36.8'] },
     ],
+    footnotes: [
+      'Vital signs are evaluated at baseline and scheduled visits.',
+      '<<output program path>> <<output file name>> <<date/time>>'
+    ]
   },
 
 };
@@ -4529,6 +4547,14 @@ function ShellPreview({
                       </h2>
                     )}
                   </div>
+                  {/* Subheader / Left-aligned Header Info (e.g. Page by variable) */}
+                  {shellData.subHeader && shellData.subHeader.length > 0 && (
+                    <div className="w-full text-left t-footnote mb-[8px] text-text-secondary">
+                      {shellData.subHeader.map((line, idx) => (
+                        <p key={idx} className="m-0 leading-[16px]">{line}</p>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <KMPlot
@@ -4656,6 +4682,15 @@ function ShellPreview({
                       </h2>
                     )}
                   </div>
+
+                  {/* Subheader / Left-aligned Header Info (e.g. Page by variable) */}
+                  {shellData.subHeader && shellData.subHeader.length > 0 && (
+                    <div className="w-full text-left t-footnote mb-[8px] text-text-secondary">
+                      {shellData.subHeader.map((line, idx) => (
+                        <p key={idx} className="m-0 leading-[16px]">{line}</p>
+                      ))}
+                    </div>
+                  )}
 
                   {(() => {
                     const hasSubHeader = Boolean(shellData.columns && shellData.columns.length > 0 && shellData.columns.some(c => c.trim() !== ''));
