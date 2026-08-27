@@ -1,80 +1,40 @@
-# Metadata: Source Dataset(s) & Variable(s) 联动规范
+# UX Review
 
-### 摘要信息
-* **定义**：Source Dataset(s) 与 Variable(s) 双字段在 TFL / Listing / Chart 元数据表单中的联动与数据一致性规则。
-* **适用范围**：Atlas 属性面板、Inline 变量下拉选择器、Browse Variables 弹窗。
-* **更新日期**：2026-08-27
+关联里程: AZ-2.0 (https://app.notion.com/p/AZ-2-0-37dc48b97b4f8067a44cf1dc3648de08?pvs=21)
+分类: 会议
+完成: 进行中
+日期: 2026/08/26
+相关项目: AZ-Atlas (https://app.notion.com/p/AZ-Atlas-352c48b97b4f806988acd17bc1319bcd?pvs=21)
 
----
+## Metadata-Source dataset&Variable
 
-### 一、 名词定义与层级关系
+## 背景
 
-```mermaid
-graph TD
-    Standard["Standard (ADaM / SDTM)"]
-    Dataset["Dataset (ADSL, ADAE / DM, AE...)"]
-    Variable["Variable (AAGE, SEX / AGE...)"]
+Source Dataset(s)和Source Variable(s)当前是两个互相独立维护的字段，缺乏依赖规则，导致用户想选一个当前Dataset范围外的Variable时，必须先退出去修改Dataset字段，产生额外往返成本。
 
-    Standard -->|"1:N"| Dataset
-    Dataset -->|"1:N"| Variable
-```
+#### 主要改进点
 
-| 实体 | 定义 | 归属规则 |
+| 项目 | 现状 | 改进后 |
 | --- | --- | --- |
-| **Standard** | CDISC 数据标准（ADaM / SDTM）。 | 顶层分类。 |
-| **Dataset** | 临床分析/原始数据集。 | **天然单亲归属**：每个 Dataset 唯一且固定归属于一个 Standard。 |
-| **Variable** | 业务变量。 | **唯一标识**：由 `Dataset.Variable` 唯一定位，不同 Dataset 下允许同名变量。 |
+| Source Dataset(s) / Variable(s)关系 | 两个字段互相独立，无联动规则 | 建立"非对称联动"规则（见下） |
+| Standard（ADaM/SDTM）与Dataset的关系 | 未明确 | 确认为同一维度的上下级关系，非独立筛选轴 |
 
----
+#### 设计方案
 
-### 二、 核心原则：非对称联动 (Asymmetric Coupling)
+**核心依赖规则（Dataset ↔ Variable，非对称联动）：**
 
-1. **向下约束（Dataset → Variable）**：
-   * **Inline 快速选择（640px 下拉）**：若 Source Dataset(s) 非空，执行**硬收窄**，仅展示指定 Dataset 下的变量；若 Source Dataset(s) 为空，开放全量检索。
-2. **向上扩展（Variable → Dataset）**：
-   * **Modal 完整浏览（800px 弹窗）**：默认按 Source Dataset(s) 范围初始化过滤器，但**允许越级浏览与勾选**。
-   * 用户在 Modal 中选中国元数据范围外的变量时，在点击 Confirm 时**自动将对应 Dataset 追加至 Source Dataset(s)**。
-3. **视图层与数据层严格解耦**：
-   * Modal 内对 FilterChip 的开启、关闭、切换仅作用于当前弹窗视图，**关闭过滤条件不会删除外层表单的 Source Dataset(s)**。
+- Source Dataset(s)独立可编辑，允许"已声明Dataset但0个Variable被选中"的合法状态（如AI预选后用户手动清空）。
+- 快速选择入口（下拉）：当Source Dataset(s)非空时，**硬过滤**——只展示这些Dataset下的Variable，不提供越界选项；范围提示以"当前范围：In [Dataset列表]"的文案呈现。Dataset(s)为空时开放全部。
+- 完整浏览入口（Modal）：默认按Source Dataset(s)预设过滤（沿用已定的Standard推导规则：Dataset(s)为空→默认"All"；全部同属一个Standard→默认落在该Standard；混合→默认"All"），但**允许越级选择**。用户在Modal中选中过滤范围外的Variable时，触发反向填充——对应Dataset自动追加进Source Dataset(s)。
+- 单向关系：Variable可以扩展Dataset(s)，但删除一个Source Dataset是否级联删除该Dataset下已选的Variable，需讨论
+- 层级关系：Standard → Dataset → Variable嵌套，Dataset天然只属于一个Standard；Modal内的Dataset Filter是Standard之下的下一级收窄，不是独立筛选维度。
 
----
+#### TBDs
 
-### 三、 交互状态流转表 (Status Table)
-
-| 场景 | 触发条件 | UI / 交互行为 | 数据处理结果 |
-| --- | --- | --- | --- |
-| **Inline 下拉展开** | Source Dataset(s) 非空 | 仅列出当前 Dataset 范围内的变量；FilterChip 显示当前生效范围。 | 不修改任何元数据。 |
-| **Inline 下拉展开** | Source Dataset(s) 为空 | 列出所有 Standard 与 Dataset 的变量；FilterChip 默认 `All`。 | 不修改任何元数据。 |
-| **Modal 弹窗打开** | 点击 Browse All Variables | 智能初始化 Filter：<br>1. Dataset 为空 → Standard 为 `All`<br>2. Dataset 全属于 ADaM → Standard 预设为 `ADaM only`<br>3. Dataset 跨 Standard → Standard 为 `All` | 读取外层数据，初始化弹窗本地状态。 |
-| **Modal 过滤调整** | 用户在 Modal 内关闭 FilterChip | 列表扩展为全量数据，展示所有可用变量。 | **不修改**外层 Source Dataset(s)。 |
-| **Modal 越级勾选** | 勾选当前 Dataset 范围外的变量 | 1. 变量进入 Selected Bar<br>2. Modal Footer 左下角展示提示：`Will automatically add [Dataset] to Source Dataset(s)` | 暂存于弹窗临时状态。 |
-| **Modal 取消越级** | 在 Selected Bar 移除所有越级变量 | Footer 左下角提示实时自动消失。 | 临时状态清除追加标记。 |
-| **Modal 提交确认** | 点击 Confirm | 1. 关闭 Modal<br>2. Variable 字段写入已选变量<br>3. Source Dataset(s) 字段自动合并新追加的 Dataset（去重并集） | 持久化写入表单元数据。 |
-| **Modal 取消退出** | 点击 Cancel 或蒙层关闭 | 关闭 Modal，销毁临时勾选与追加状态。 | 表单 Variable 与 Dataset 保持原样。 |
-
----
-
-### 四、 前端实现行为边界 (Do / Don't)
-
-#### Do (必须执行)
-* **Do**: 变量唯一性比对与反向推导必须基于 `Dataset.Variable` 复合键。
-* **Do**: Modal 底部提示 `Will automatically add [Dataset] to Source Dataset(s)` 必须与 Selected Bar 的勾选状态严格联动，包含多个新 Dataset 时使用英文逗号拼接（如 `Will automatically add DM, LB to Source Dataset(s)`）。
-* **Do**: 无论用户在 Modal 中如何切换 Tab 或 Filter，Selected Bar 必须持续保留并完整展示所有已选变量 Tag。
-* **Do**: 外部表单的 Dataset 字段合并逻辑必须执行并集去重（`prevDatasets ∪ newInferredDatasets`）。
-
-#### Don't (严格禁止)
-* **Don't**: 严禁在用户移除 Modal 内的 FilterChip 时触发对外层 Dataset 字段的删除。
-* **Don't**: 严禁在 Inline 640px 下拉内提供跨 Dataset 的越级勾选（必须保持快速入口的高收窄心智，跨范围需求统一由 Modal 承载）。
-* **Don't**: 严禁在用户点击 Cancel 或 ESC 关闭弹窗时留下任何数据变更副作用。
-
----
-
-### 五、 决策记录与待确认项 (Decisions & TBDs)
-
-| 问题项 | 最终决策 / 当前状态 | 影响范围 |
+| 待确认问题 | 当前状态 | 状态 |
 | --- | --- | --- |
-| Modal 预设 Filter 是否允许手动关闭 | 允许关闭，且关闭仅扩宽当前浏览视窗，不影响已存 Dataset。 | BrowseVariablesModal |
-| Filter 视觉提示文案 | FilterChip 自身已明确当前选中项，不添加额外提示文案，避免信息冗余。 | Inline & Modal |
-| 越级勾选感知位置 | 统一在 Modal Footer 左下角显示轻量提示文本，符合操作前明确后果规范。 | BrowseVariablesModal Footer |
-| 删除 Source Dataset 后的级联处理 | 建议采用软级联/保护提示（删除 Dataset 前若存在该 Dataset 下的已选 Variable 则提示用户）。 | 属性面板 Dataset 字段 |
-| AI 返回未定义变量时的兜底 | 需后端与 AI 架构师确认。 | AI 生成流程 |
+| Modal预设过滤器是否允许用户手动关闭 | 允许关闭 | ✅ |
+| Modal内选中越界Variable后，当次过滤范围是否同步扩展 | 是，同步扩展 | ✅ |
+| Modal的Dataset Filter与Standard Tab关系 | 父子关系；Dataset Filter选项直接取自Source Dataset(s)当前值，非独立维护列表 | ✅ |
+| AI返回Variable无法匹配已知Dataset+Variable时的兜底规则 | 未覆盖，需后端/AI架构师另行确认 | 🔴 |
+| Source Dataset(s)是否存在本方案未知的其他下游依赖 | 假设仅用于Metadata展示与Variable选择依赖 | 🟡 |

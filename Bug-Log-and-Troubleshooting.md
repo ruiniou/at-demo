@@ -173,3 +173,20 @@
   在 `WorkspaceShell` 中渲染 `<ShellPreview>` 时补全 `onQuoteField={handleQuoteField}`。
 * **经验教训 (Takeaways)**：
   当深层组件中的条件渲染按钮 (`{fn && <button />}`) 持续不露显时，第一排查要点应当是检查最上层 state/handler 闭包是否在最外层 JSX 调用的地方被遗漏传递。
+
+---
+
+### [2026-08-27] FilterChip 漏解构 multiSelect 等 Props 导致 ReferenceError 白屏与嵌套 Button DOM 警告
+
+* **现象 (Symptom)**：
+  1. 控制台抛出 `Uncaught ReferenceError: multiSelect is not defined at FilterChip.tsx:247/139`，导致依赖 FilterChip 的 BlocksTabContent / InlineVariableList / MetadataPanel 渲染崩溃白屏。
+  2. 控制台伴随 `Warning: validateDOMNesting(...): <button> cannot appear as a descendant of <button>` DOM 结构非法嵌套警告。
+* **根本原因 (Root Cause)**：
+  1. 在扩展 `FilterChipProps` 接口支持多选属性（`multiSelect`、`values`、`onChangeMulti`）时，`FilterChip.tsx` 的函数形参解构列表中遗漏了这三个字段，导致组件内部直接访问自由变量 `multiSelect` 时触发运行时 `ReferenceError`。
+  2. `BrowseVariablesModal.tsx` 中 `InlineVariableList` 的单行变量条目采用了 `<button>` 作为最外层容器，而内部包含的 `<Checkbox>` 组件本身亦渲染为 `<button type="button" role="checkbox">`，违反了 HTML 语义标准规范（`<button>` 内部禁止嵌套 `<button>`），触发 React DOM 嵌套警告。
+* **解决方案 (Solution)**：
+  1. 在 `FilterChip.tsx` 参数解构中补齐 `multiSelect, values, onChangeMulti`。
+  2. 在 `BrowseVariablesModal.tsx` 中将 `InlineVariableList` 行容器由 `<button>` 改为具备键盘可访问性支持的 `<div role="button" tabIndex={0} ...>`。
+* **经验教训 (Takeaways)**：
+  1. **严格对照 Props 接口与形参解构**：在为通用 UI 组件扩展属性时，必须确保 Interface 与函数签名解构字段 100% 对应，避免由于 `...props` 收集而导致内部访问未声明变量。
+  2. **避免容器 Button 嵌套交互元素**：当列表整行可点击且内部包含 Checkbox、Switch 或子按钮时，行容器应使用 `<div role="button">` 并补充键盘事件响应，防止浏览器与 React 的 `<button>` 嵌套校验异常。
