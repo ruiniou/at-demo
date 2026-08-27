@@ -887,7 +887,7 @@ export function BrowseVariablesModal({
               setSelectedDatasets(newDatasets);
             }}
             options={datasetOptions}
-            className="flex-1 max-w-full min-w-0"
+            className="w-fit max-w-full min-w-0"
           />
         </div>
 
