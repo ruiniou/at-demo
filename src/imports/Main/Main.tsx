@@ -5371,36 +5371,14 @@ function BlocksTabContent({
     setTimeout(() => { isScrollingProgrammatically.current = false; }, 500);
   };
 
-  // IntersectionObserver scroll-spy: auto-update selectedBlockId based on visible section + bottom-pinned fallback
+  // IntersectionObserver scroll-spy: auto-update selectedBlockId based on visible section
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || blocks.length === 0) return;
 
-    const checkBottom = () => {
-      if (isScrollingProgrammatically.current) return;
-      const isBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= 16;
-      if (isBottom && blocks.length > 0) {
-        const lastBlock = blocks[blocks.length - 1];
-        if (lastBlock?.id) {
-          setSelectedBlockId(lastBlock.id);
-        }
-      }
-    };
-
     const observer = new IntersectionObserver(
       (entries) => {
         if (isScrollingProgrammatically.current) return;
-
-        // If user is at or near bottom, prioritize the last component
-        const isBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= 16;
-        if (isBottom && blocks.length > 0) {
-          const lastBlock = blocks[blocks.length - 1];
-          if (lastBlock?.id) {
-            setSelectedBlockId(lastBlock.id);
-            return;
-          }
-        }
-
         // Find the topmost visible section
         const visible = entries
           .filter(e => e.isIntersecting)
@@ -5418,12 +5396,7 @@ function BlocksTabContent({
       if (el) observer.observe(el);
     });
 
-    container.addEventListener('scroll', checkBottom, { passive: true });
-
-    return () => {
-      observer.disconnect();
-      container.removeEventListener('scroll', checkBottom);
-    };
+    return () => observer.disconnect();
   }, [blocks]);
 
   const LinkIcon = () => (
@@ -5525,7 +5498,7 @@ function BlocksTabContent({
       </div>
 
       {/* Scrollable content — all blocks stacked vertically */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-scroll overflow-x-hidden pb-[80px]">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-scroll overflow-x-hidden">
         {blocks.length === 0 ? (
           <div className="flex w-full h-full items-center justify-center">
             <p className="t-small text-text-secondary">No Components</p>
@@ -5629,18 +5602,32 @@ function BlocksTabContent({
                             const isVariableField = field.id === 'variable' || field.id.toLowerCase().includes('variable') || String(field.label || '').toLowerCase().includes('variable');
                             
                             if (isVariableField) {
-                              const datasetField = block.fields?.find(
-                                (f: any) =>
-                                  f.id === 'dataset' ||
-                                  f.id === 'sourceDataset' ||
-                                  f.id === 'sourceDataset1' ||
-                                  f.id === 'sourceDataset2' ||
-                                  f.id === 'inputDataset' ||
-                                  String(f.label || '').toLowerCase().includes('dataset')
-                              );
-                              const currentSourceDatasets = datasetField?.value
+                              // Find dataset field in the same block to establish dependency
+                              const datasetField = block.fields?.find((f: any) => {
+                                const fId = (f.id || '').toLowerCase();
+                                const fLabel = (f.label || '').toLowerCase();
+                                return fId === 'dataset' || fId === 'datasets' || fId.includes('dataset') || fLabel.includes('dataset');
+                              });
+                              const sourceDatasets = datasetField?.value
                                 ? datasetField.value.split(',').map((s: string) => s.trim()).filter(Boolean)
                                 : [];
+
+                              const currentSelectedVars = field.value
+                                ? field.value.split(',').map((s: string) => s.trim()).filter(Boolean)
+                                : [];
+
+                              // Orphaned variable warning: variables whose dataset is not in sourceDatasets
+                              const orphanedVars = currentSelectedVars.filter((varKey: string) => {
+                                if (sourceDatasets.length === 0) return false;
+                                if (varKey.includes('.')) {
+                                  const dataset = varKey.split('.')[0];
+                                  return !sourceDatasets.includes(dataset);
+                                }
+                                return false;
+                              });
+                              const variableWarning = orphanedVars.length > 0
+                                ? `${orphanedVars.length} variable(s) outside dataset scope (${orphanedVars.map((v: string) => v.split('.')[0]).join(', ')}). Review or update dataset.`
+                                : undefined;
 
                               return (
                                 <BrowseVariablesField
@@ -5648,12 +5635,14 @@ function BlocksTabContent({
                                   required={field.required}
                                   disabled={fieldIsDisabled}
                                   badge={badgeNode}
+                                  error={variableWarning}
                                   placeholder={field.required ? "Required" : "Optional"}
-                                  value={field.value ? field.value.split(', ').map((s: string) => s.trim()).filter(Boolean) : []}
-                                  sourceDatasets={currentSourceDatasets}
-                                  onUpdateDatasets={(newDatasets) => {
+                                  value={currentSelectedVars}
+                                  sourceDatasets={sourceDatasets}
+                                  onDatasetsExpand={(newDatasets) => {
                                     if (datasetField) {
-                                      onFieldEdit?.(block.id, datasetField.id, newDatasets.join(', '));
+                                      const merged = Array.from(new Set([...sourceDatasets, ...newDatasets]));
+                                      onFieldEdit?.(block.id, datasetField.id, merged.join(', '));
                                     }
                                   }}
                                   onChange={(val) => onFieldEdit?.(block.id, field.id, val.join(', '))}

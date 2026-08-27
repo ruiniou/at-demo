@@ -1,5 +1,6 @@
 import React, { forwardRef, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { Checkbox } from "./Checkbox";
 
 export interface FilterChipOption {
   label: string;
@@ -24,10 +25,16 @@ export interface FilterChipProps extends Omit<React.ButtonHTMLAttributes<HTMLBut
   showIcon?: boolean;
   /** Options if used as an interactive dropdown selector */
   options?: FilterChipOption[];
-  /** Current selected value when used with options */
+  /** Current selected value when used with single-select options */
   value?: string;
-  /** Callback when option is selected */
+  /** Callback when option is selected in single-select mode */
   onChange?: (value: string) => void;
+  /** Whether multi-select is enabled */
+  multiSelect?: boolean;
+  /** Current selected values in multi-select mode */
+  values?: string[];
+  /** Callback when values change in multi-select mode */
+  onChangeMulti?: (values: string[]) => void;
   className?: string;
 }
 
@@ -128,7 +135,11 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
     const isDropdown = type === "Dropdown" || Boolean(options?.length);
     const isDisabled = disabled || stateProp === "Disabled";
     const isFilterMode = variant === "filter";
-    const hasActiveFilterValue = isFilterMode && (value !== undefined && value !== "All" && value !== "");
+    const hasActiveFilterValue = isFilterMode && (
+      multiSelect
+        ? (values !== undefined && values.length > 0 && (!options || values.length < options.length))
+        : (value !== undefined && value !== "All" && value !== "")
+    );
     const isActive = active || stateProp === "Active" || hasActiveFilterValue;
     const isHoveredOrOpen = (stateProp === "Hover" || isOpen) && !isActive && !isDisabled;
 
@@ -232,8 +243,28 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
     };
 
     // Determine display label if bound to options
-    const currentOption = options?.find((opt) => opt.value === value);
-    const displayLabel = currentOption ? currentOption.label : label;
+    let displayLabel = label;
+    if (multiSelect) {
+      if (values && values.length > 0) {
+        if (options && values.length === options.length) {
+          displayLabel = label || "All Datasets";
+        } else if (values.length === 1) {
+          displayLabel = options?.find((opt) => opt.value === values[0])?.label || values[0];
+        } else if (values.length === 2) {
+          const l1 = options?.find((opt) => opt.value === values[0])?.label || values[0];
+          const l2 = options?.find((opt) => opt.value === values[1])?.label || values[1];
+          displayLabel = `${l1}, ${l2}`;
+        } else {
+          const l1 = options?.find((opt) => opt.value === values[0])?.label || values[0];
+          displayLabel = `${l1} +${values.length - 1}`;
+        }
+      } else {
+        displayLabel = label || "All Datasets";
+      }
+    } else {
+      const currentOption = options?.find((opt) => opt.value === value);
+      displayLabel = currentOption ? currentOption.label : label;
+    }
 
     return (
       <>
@@ -289,38 +320,77 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
             }}
             className="filter-chip-menu relative rounded-[4px] border border-[#D8DADA] bg-white p-[4px] shadow-[0px_4px_12px_rgba(0,0,0,0.12)] flex flex-col gap-[2px] before:content-[''] before:absolute before:-top-[8px] before:left-0 before:right-0 before:h-[8px]"
           >
-            {options.map((opt) => {
-              const isOptionSelected = opt.value === value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    clearTimers();
-                    onChange?.(opt.value);
-                    setIsOpen(false);
-                  }}
-                  className={`flex w-full items-center justify-between px-[8px] py-[5px] rounded-[2px] text-left transition-colors cursor-pointer ${
-                    isOptionSelected
-                      ? "bg-[#F4E8EE] text-[#830051]"
-                      : "text-[#3F4444] hover:bg-[#F8F7F7]"
-                  }`}
-                >
-                  <span className="t-small font-normal leading-[18px] truncate flex-1 min-w-0 mr-[6px]" title={opt.label}>{opt.label}</span>
-                  {isOptionSelected && (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                      <path d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" fill="#830051" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
+            {multiSelect ? (
+              options.map((opt) => {
+                const isOptionSelected = Boolean(values?.includes(opt.value));
+                return (
+                  <div
+                    key={opt.value}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      clearTimers();
+                      const next = isOptionSelected
+                        ? (values || []).filter((v) => v !== opt.value)
+                        : [...(values || []), opt.value];
+                      onChangeMulti?.(next);
+                    }}
+                    className="flex w-full items-center gap-[8px] px-[8px] py-[5px] rounded-[2px] text-left transition-colors cursor-pointer hover:bg-[#F8F7F7] select-none"
+                  >
+                    <Checkbox
+                      checked={isOptionSelected}
+                      onChange={() => {
+                        clearTimers();
+                        const next = isOptionSelected
+                          ? (values || []).filter((v) => v !== opt.value)
+                          : [...(values || []), opt.value];
+                        onChangeMulti?.(next);
+                      }}
+                    />
+                    <span className="t-small font-normal leading-[18px] truncate flex-1 min-w-0 text-[#3F4444]" title={opt.label}>
+                      {opt.label}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              options.map((opt) => {
+                const isOptionSelected = opt.value === value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      clearTimers();
+                      onChange?.(opt.value);
+                      setIsOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between px-[8px] py-[5px] rounded-[2px] text-left transition-colors cursor-pointer ${
+                      isOptionSelected
+                        ? "bg-[#F4E8EE] text-[#830051]"
+                        : "text-[#3F4444] hover:bg-[#F8F7F7]"
+                    }`}
+                  >
+                    <span className="t-small font-normal leading-[18px] truncate flex-1 min-w-0 mr-[6px]" title={opt.label}>{opt.label}</span>
+                    {isOptionSelected && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                        <path d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" fill="#830051" />
+                      </svg>
+                    )}
+                  </button>
+                );
+              })
+            )}
           </div>,
           document.body
         )}

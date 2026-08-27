@@ -35,36 +35,22 @@ export type VlmRow = {
   derivation: string;
 };
 
-export function getStandardForDataset(dataset: string): "ADaM" | "SDTM" {
-  const d = dataset.trim().toUpperCase();
-  if (d.startsWith("AD")) return "ADaM";
-  return "SDTM";
-}
-
-export function inferStandardFromDatasets(datasets: string[]): "All" | "ADaM" | "SDTM" {
-  if (!datasets || datasets.length === 0) return "All";
-  const standards = new Set(datasets.map(getStandardForDataset));
-  if (standards.size === 1) {
-    return Array.from(standards)[0];
-  }
-  return "All";
-}
-
 export type BrowseVariablesModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (selected: string[], appendedDatasets?: string[]) => void;
-  sourceDatasets?: string[];
+  onConfirm: (selected: string[]) => void;
   initialSelected: string[];
   variables: Variable[];
   vlmData: VlmRow[];
+  sourceDatasets?: string[];
+  onDatasetsExpand?: (newDatasets: string[]) => void;
 };
 
 export type InlineVariableListProps = {
   label?: React.ReactNode;
   variables: Variable[];
-  sourceDatasets?: string[];
   selected: string[];
+  sourceDatasets?: string[];
   onToggle: (variable: string) => void;
   onRemove: (variable: string) => void;
   onBrowseAll: () => void;
@@ -308,8 +294,8 @@ function TruncatedDerivationCell({ text }: { text: string }) {
 function InlineVariableList({
   label,
   variables,
-  sourceDatasets = [],
   selected,
+  sourceDatasets = [],
   onToggle,
   onRemove,
   onBrowseAll,
@@ -322,47 +308,7 @@ function InlineVariableList({
 }: InlineVariableListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
-
-  const filterOptions = useMemo(() => {
-    if (sourceDatasets && sourceDatasets.length > 0) {
-      if (sourceDatasets.length === 1) {
-        const ds = sourceDatasets[0];
-        return [
-          { label: ds, value: ds },
-          { label: "All ADaM", value: "ADaM" },
-          { label: "All SDTM", value: "SDTM" },
-          { label: "All Datasets", value: "All" },
-        ];
-      }
-      return [
-        { label: `In Scope (${sourceDatasets.join(", ")})`, value: "in_scope" },
-        ...sourceDatasets.map((d) => ({ label: d, value: d })),
-        { label: "All ADaM", value: "ADaM" },
-        { label: "All SDTM", value: "SDTM" },
-        { label: "All Datasets", value: "All" },
-      ];
-    }
-    return [
-      { label: "All", value: "All" },
-      { label: "ADaM only", value: "ADaM" },
-      { label: "SDTM only", value: "SDTM" },
-    ];
-  }, [sourceDatasets]);
-
-  const initialFilter = useMemo(() => {
-    if (sourceDatasets && sourceDatasets.length > 0) {
-      if (sourceDatasets.length === 1) return sourceDatasets[0];
-      return "in_scope";
-    }
-    return "All";
-  }, [sourceDatasets]);
-
-  const [selectedFilter, setSelectedFilter] = useState<string>(initialFilter);
-
-  useEffect(() => {
-    setSelectedFilter(initialFilter);
-  }, [initialFilter]);
-
+  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("All");
   const [isExpandedTags, setIsExpandedTags] = useState(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -425,18 +371,13 @@ function InlineVariableList({
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     const items = variables.filter((v) => {
-      if (selectedFilter === "in_scope") {
-        if (!sourceDatasets.includes(v.datasetName)) return false;
-      } else if (selectedFilter === "ADaM") {
-        const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
-        if (vStd !== "ADaM") return false;
-      } else if (selectedFilter === "SDTM") {
-        const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
-        if (vStd !== "SDTM") return false;
-      } else if (selectedFilter !== "All") {
-        if (v.datasetName !== selectedFilter) return false;
+      const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
+      // Hard filter by sourceDatasets if defined and not empty
+      if (sourceDatasets && sourceDatasets.length > 0 && !sourceDatasets.includes(v.datasetName)) {
+        return false;
       }
-
+      if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
+      if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
       if (!q) return true;
       return (
         v.variable.toLowerCase().includes(q) ||
@@ -446,12 +387,14 @@ function InlineVariableList({
     });
     // Sort: selected first, then alphabetical
     return items.sort((a, b) => {
-      const aS = selected.includes(a.variable) ? 0 : 1;
-      const bS = selected.includes(b.variable) ? 0 : 1;
+      const keyA = `${a.datasetName}.${a.variable}`;
+      const keyB = `${b.datasetName}.${b.variable}`;
+      const aS = selected.includes(keyA) || selected.includes(a.variable) ? 0 : 1;
+      const bS = selected.includes(keyB) || selected.includes(b.variable) ? 0 : 1;
       if (aS !== bS) return aS - bS;
       return a.variable.localeCompare(b.variable);
     });
-  }, [variables, search, selected, selectedFilter, sourceDatasets]);
+  }, [variables, search, selected, standardFilter, sourceDatasets]);
 
   const hasMoreThanThree = selected.length > 3;
   const visibleSelected = hasMoreThanThree && !isExpandedTags
@@ -495,18 +438,21 @@ function InlineVariableList({
         <FilterChip
           type="Dropdown"
           showIcon={false}
-          value={selectedFilter}
-          onChange={(val) => setSelectedFilter(val)}
-          options={filterOptions}
+          value={standardFilter}
+          onChange={(val) => setStandardFilter(val as "All" | "ADaM" | "SDTM")}
+          options={[
+            { label: "All", value: "All" },
+            { label: "ADaM only", value: "ADaM" },
+            { label: "SDTM only", value: "SDTM" },
+          ]}
         />
       </div>
 
-      {/* Table structure with Dataset annotation column */}
+      {/* Table structure */}
       <div className="w-full rounded-[2px] border border-[#EAEAEA] overflow-hidden flex flex-col">
         {/* Table Header */}
-        <div className="grid grid-cols-[36px_74px_120px_160px_1fr] items-center bg-[#F8F9F9] border-b border-[#EAEAEA] h-[32px] px-[2px]">
+        <div className="grid grid-cols-[44px_130px_170px_1fr] items-center bg-[#F8F9F9] border-b border-[#EAEAEA] h-[32px] px-[2px]">
           <div />
-          <span className="t-small text-[#888E8E] pl-[2px]">Dataset</span>
           <span className="t-small text-[#888E8E] pl-[2px]">Variable</span>
           <span className="t-small text-[#888E8E] pl-[2px]">Label</span>
           <span className="t-small text-[#888E8E] pl-[2px]">Derivation</span>
@@ -520,35 +466,31 @@ function InlineVariableList({
             </div>
           ) : (
             filtered.map((v) => {
-              const isSelected = selected.includes(v.variable);
+              const itemKey = `${v.datasetName}.${v.variable}`;
+              const isSelected = selected.includes(itemKey) || selected.includes(v.variable);
               return (
                 <button
                   key={v.id}
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onToggle(v.variable);
+                    onToggle(itemKey);
                   }}
-                  className={`grid w-full grid-cols-[36px_74px_120px_160px_1fr] items-start px-[2px] py-[8px] min-h-[48px] text-left transition-colors border-b border-[#F0F0F0] last:border-b-0 cursor-pointer ${
+                  className={`grid w-full grid-cols-[44px_130px_170px_1fr] items-start px-[2px] py-[10px] min-h-[56px] text-left transition-colors border-b border-[#F0F0F0] last:border-b-0 cursor-pointer ${
                     isSelected ? "bg-[#F8EFF4] hover:bg-[#F3E3ED]" : "bg-white hover:bg-[#F8F9F9]"
                   }`}
                 >
                   {/* Checkbox */}
-                  <div className="flex h-[20px] w-[36px] items-center justify-center shrink-0">
+                  <div className="flex h-[20px] w-[44px] items-center justify-center shrink-0">
                     <Checkbox
                       checked={isSelected}
-                      onChange={() => onToggle(v.variable)}
+                      onChange={() => onToggle(itemKey)}
                     />
-                  </div>
-
-                  {/* Dataset Name */}
-                  <div className="min-w-0 pr-[4px]">
-                    <span className="t-small text-text-secondary whitespace-nowrap">{v.datasetName}</span>
                   </div>
 
                   {/* Variable name */}
                   <div className="min-w-0 pr-[6px]">
-                    <p className="t-small text-text-primary font-medium truncate">{v.variable}</p>
+                    <p className="t-small text-text-primary truncate">{v.variable}</p>
                   </div>
 
                   {/* Label */}
@@ -618,20 +560,31 @@ function InlineVariableList({
               </span>
             ) : (
               <>
-                {visibleSelected.map((v) => (
-                  <Tooltip label={v} key={v}>
-                    <Tag
-                      onClose={disabled ? undefined : (e) => {
-                        e.stopPropagation();
-                        onRemove(v);
-                      }}
-                      className="max-h-[26px] py-[1px] px-[4px]"
-                      style={{ maxWidth: "160px" }}
-                    >
-                      {v}
-                    </Tag>
-                  </Tooltip>
-                ))}
+                {visibleSelected.map((v) => {
+                  const parts = v.split(".");
+                  const hasDataset = parts.length > 1;
+                  return (
+                    <Tooltip label={v} key={v}>
+                      <Tag
+                        onClose={disabled ? undefined : (e) => {
+                          e.stopPropagation();
+                          onRemove(v);
+                        }}
+                        className="max-h-[26px] py-[1px] px-[4px]"
+                        style={{ maxWidth: "160px" }}
+                      >
+                        {hasDataset ? (
+                          <>
+                            <span className="text-[#888E8E] font-normal">{parts[0]}.</span>
+                            <span className="font-medium text-text-primary">{parts.slice(1).join(".")}</span>
+                          </>
+                        ) : (
+                          v
+                        )}
+                      </Tag>
+                    </Tooltip>
+                  );
+                })}
                 {hasMoreThanThree && (
                   <span
                     onClick={(e) => {
@@ -667,25 +620,23 @@ function InlineVariableList({
 function DerivationCell({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
   const lines = text.split("\n");
-  const needsTruncate = lines.length > 2 || text.length > 80;
+  const isMultiLine = lines.length > 1;
+  const isLongText = text.length > 50;
+  const shouldTruncate = isMultiLine || isLongText;
 
-  if (!needsTruncate) {
-    return <p className="t-small text-text-primary whitespace-normal">{text}</p>;
-  }
+  const firstLine = lines[0] || "";
+  const previewText = firstLine.length > 50 ? `${firstLine.slice(0, 50)}...` : firstLine;
 
   return (
-    <div>
-      <p className="t-small text-text-primary whitespace-normal">
-        {expanded ? text : text.slice(0, 80) + (text.length > 80 ? "…" : "")}
-      </p>
-      {needsTruncate && (
+    <div className="flex flex-col items-start gap-[2px]">
+      <span className="t-small text-text-primary whitespace-normal">
+        {expanded || !shouldTruncate ? text : `${previewText}${isMultiLine && firstLine.length <= 50 ? "..." : ""}`}
+      </span>
+      {shouldTruncate && (
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded(!expanded);
-          }}
-          className="t-small text-[#830051] hover:underline"
+          onClick={() => setExpanded(!expanded)}
+          className="t-footnote text-brand-1 hover:underline"
         >
           {expanded ? "Show less" : "Show more"}
         </button>
@@ -700,76 +651,89 @@ export function BrowseVariablesModal({
   isOpen,
   onClose,
   onConfirm,
-  sourceDatasets = [],
   initialSelected,
   variables,
   vlmData,
+  sourceDatasets = [],
+  onDatasetsExpand,
 }: BrowseVariablesModalProps) {
   const [activeTab, setActiveTab] = useState<"all" | "vlm">("all");
+  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("All");
+  const [selectedDatasets, setSelectedDatasets] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>(initialSelected);
 
-  const modalFilterOptions = useMemo(() => {
-    if (sourceDatasets && sourceDatasets.length > 0) {
-      if (sourceDatasets.length === 1) {
-        const ds = sourceDatasets[0];
-        return [
-          { label: ds, value: ds },
-          { label: "ADaM only", value: "ADaM" },
-          { label: "SDTM only", value: "SDTM" },
-          { label: "All", value: "All" },
-        ];
-      }
-      return [
-        { label: `In Scope (${sourceDatasets.join(", ")})`, value: "in_scope" },
-        ...sourceDatasets.map((d) => ({ label: d, value: d })),
-        { label: "ADaM only", value: "ADaM" },
-        { label: "SDTM only", value: "SDTM" },
-        { label: "All", value: "All" },
-      ];
-    }
-    return [
-      { label: "All", value: "All" },
-      { label: "ADaM only", value: "ADaM" },
-      { label: "SDTM only", value: "SDTM" },
-    ];
-  }, [sourceDatasets]);
+  // Compute available dataset names based on standardFilter
+  const availableDatasets = useMemo(() => {
+    const list = variables.filter((v) => {
+      const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
+      if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
+      if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
+      return true;
+    });
+    return Array.from(new Set(list.map((v) => v.datasetName))).sort();
+  }, [variables, standardFilter]);
 
-  const initialModalFilter = useMemo(() => {
-    if (sourceDatasets && sourceDatasets.length > 0) {
-      if (sourceDatasets.length === 1) return sourceDatasets[0];
-      return "in_scope";
-    }
-    return "All";
-  }, [sourceDatasets]);
+  // Compute dataset options for FilterChip
+  const datasetOptions = useMemo(() => {
+    return availableDatasets.map((d) => ({ label: d, value: d }));
+  }, [availableDatasets]);
 
-  const [selectedFilter, setSelectedFilter] = useState<string>(initialModalFilter);
-
-  // Sync initial selected & preset filter ONLY when modal opens (false -> true)
+  // Sync initial selected ONLY when modal opens (false -> true)
   const prevIsOpenRef = useRef(false);
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
       setSelected([...initialSelected]);
       setSearch("");
-      setSelectedFilter(initialModalFilter);
+      
+      // Determine initial standard filter:
+      // If sourceDatasets are all ADaM -> ADaM, all SDTM -> SDTM, otherwise All
+      if (sourceDatasets && sourceDatasets.length > 0) {
+        const hasAdam = sourceDatasets.some((d) => d.startsWith("AD"));
+        const hasSdtm = sourceDatasets.some((d) => !d.startsWith("AD"));
+        if (hasAdam && !hasSdtm) {
+          setStandardFilter("ADaM");
+        } else if (hasSdtm && !hasAdam) {
+          setStandardFilter("SDTM");
+        } else {
+          setStandardFilter("All");
+        }
+        setSelectedDatasets([...sourceDatasets]);
+      } else {
+        setStandardFilter("All");
+        setSelectedDatasets([]);
+      }
+      
       setActiveTab("all");
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen, initialSelected, initialModalFilter]);
+  }, [isOpen, initialSelected, sourceDatasets]);
 
-  const toggleVariable = useCallback((variable: string) => {
-    setSelected((prev) =>
-      prev.includes(variable) ? prev.filter((v) => v !== variable) : [...prev, variable]
-    );
+  const toggleVariable = useCallback((itemKey: string, datasetName: string) => {
+    setSelected((prev) => {
+      const isSelected = prev.includes(itemKey) || prev.includes(itemKey.split('.').pop() || '');
+      if (isSelected) {
+        return prev.filter((v) => v !== itemKey && v !== itemKey.split('.').pop());
+      } else {
+        // Auto-expand dataset filter if selected dataset is not in current dataset filter list
+        setSelectedDatasets((prevDatasets) => {
+          if (prevDatasets.length > 0 && !prevDatasets.includes(datasetName)) {
+            return [...prevDatasets, datasetName];
+          }
+          return prevDatasets;
+        });
+        return [...prev, itemKey];
+      }
+    });
   }, []);
 
-  const removeVariable = useCallback((variable: string) => {
-    setSelected((prev) => prev.filter((v) => v !== variable));
+  const removeVariable = useCallback((itemKey: string) => {
+    setSelected((prev) => prev.filter((v) => v !== itemKey && v !== itemKey.split('.').pop()));
   }, []);
 
   // Jump to VLM tab and filter to variable
   const jumpToVlm = useCallback((variable: string) => {
-    setSelectedFilter("ADaM");
+    setStandardFilter("ADaM");
     setActiveTab("vlm");
     setSearch(variable);
   }, []);
@@ -777,18 +741,13 @@ export function BrowseVariablesModal({
   const filteredVariables = useMemo(() => {
     const q = search.toLowerCase().trim();
     return variables.filter((v) => {
-      if (selectedFilter === "in_scope") {
-        if (!sourceDatasets.includes(v.datasetName)) return false;
-      } else if (selectedFilter === "ADaM") {
-        const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
-        if (vStd !== "ADaM") return false;
-      } else if (selectedFilter === "SDTM") {
-        const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
-        if (vStd !== "SDTM") return false;
-      } else if (selectedFilter !== "All") {
-        if (v.datasetName !== selectedFilter) return false;
+      const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
+      if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
+      if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
+      // Secondary filter by selectedDatasets (if any selected)
+      if (selectedDatasets.length > 0 && !selectedDatasets.includes(v.datasetName)) {
+        return false;
       }
-
       if (!q) return true;
       return (
         v.variable.toLowerCase().includes(q) ||
@@ -796,7 +755,7 @@ export function BrowseVariablesModal({
         v.datasetName.toLowerCase().includes(q)
       );
     });
-  }, [variables, search, selectedFilter, sourceDatasets]);
+  }, [variables, search, standardFilter, selectedDatasets]);
 
   const filteredVlm = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -808,25 +767,6 @@ export function BrowseVariablesModal({
         v.datasetName.toLowerCase().includes(q)
     );
   }, [vlmData, search]);
-
-  const selectedVariables = useMemo(() => {
-    return selected
-      .map((vName) => variables.find((v) => v.variable === vName))
-      .filter(Boolean) as Variable[];
-  }, [selected, variables]);
-
-  const appendedDatasets = useMemo(() => {
-    const current = new Set(sourceDatasets.map((s) => s.trim().toUpperCase()));
-    const appended = new Set<string>();
-    selectedVariables.forEach((v) => {
-      if (!current.has(v.datasetName.toUpperCase())) {
-        appended.add(v.datasetName);
-      }
-    });
-    return Array.from(appended);
-  }, [selectedVariables, sourceDatasets]);
-
-  const isAdamScope = selectedFilter === "ADaM" || (typeof selectedFilter === "string" && selectedFilter.startsWith("AD")) || (selectedFilter === "in_scope" && sourceDatasets.every((d) => d.startsWith("AD")));
 
   if (!isOpen) return null;
 
@@ -850,8 +790,8 @@ export function BrowseVariablesModal({
           </button>
         </div>
 
-        {/* Search + Filter Chip */}
-        <div className="flex shrink-0 items-center gap-[8px] border-b border-[#D8DADA] px-[20px] py-[8px]">
+        {/* Search Bar Row (Search takes full width) */}
+        <div className="flex shrink-0 items-center border-b border-[#D8DADA] px-[20px] py-[8px]">
           <SearchBar
             value={search}
             onChange={setSearch}
@@ -859,17 +799,39 @@ export function BrowseVariablesModal({
             background="light"
             className="flex-1 w-full"
           />
+        </div>
+
+        {/* Filters Row (Standard FilterChip + Dataset MultiSelect FilterChip below Search Bar) */}
+        <div className="flex shrink-0 items-center gap-[8px] border-b border-[#D8DADA] px-[20px] py-[6px] bg-white">
           <FilterChip
             type="Dropdown"
             showIcon={false}
-            value={selectedFilter}
+            value={standardFilter}
             onChange={(val) => {
-              setSelectedFilter(val);
-              if (val === "SDTM" && activeTab === "vlm") {
+              const nextVal = val as "All" | "ADaM" | "SDTM";
+              setStandardFilter(nextVal);
+              if (nextVal !== "ADaM" && activeTab === "vlm") {
                 setActiveTab("all");
               }
+              // Reset dataset filter when standard filter changes if current selections are outside new standard
+              setSelectedDatasets([]);
             }}
-            options={modalFilterOptions}
+            options={[
+              { label: "All", value: "All" },
+              { label: "ADaM only", value: "ADaM" },
+              { label: "SDTM only", value: "SDTM" },
+            ]}
+          />
+          <FilterChip
+            type="Dropdown"
+            showIcon={false}
+            multiSelect={true}
+            label="All Datasets"
+            values={selectedDatasets}
+            onChangeMulti={(newDatasets) => {
+              setSelectedDatasets(newDatasets);
+            }}
+            options={datasetOptions}
           />
         </div>
 
@@ -877,19 +839,30 @@ export function BrowseVariablesModal({
         {selected.length > 0 && (
           <div className="flex shrink-0 flex-wrap items-center gap-[6px] border-b border-graphite-10 bg-bg-panel px-[20px] py-[8px]">
             <span className="t-small text-[#888E8E] shrink-0 mr-[4px]">Selected:</span>
-            {selectedVariables.map((v) => (
-              <Tag
-                key={v.variable}
-                onClose={() => removeVariable(v.variable)}
-              >
-                {v.variable}
-              </Tag>
-            ))}
+            {selected.map((itemKey) => {
+              const parts = itemKey.split(".");
+              const hasDataset = parts.length > 1;
+              return (
+                <Tag
+                  key={itemKey}
+                  onClose={() => removeVariable(itemKey)}
+                >
+                  {hasDataset ? (
+                    <>
+                      <span className="text-[#888E8E] font-normal">{parts[0]}.</span>
+                      <span className="font-medium text-text-primary">{parts.slice(1).join(".")}</span>
+                    </>
+                  ) : (
+                    itemKey
+                  )}
+                </Tag>
+              );
+            })}
           </div>
         )}
 
-        {/* Tabs: Positioned below Selected Bar and above Table (shown when ADaM is in scope) */}
-        {isAdamScope && (
+        {/* Tabs: Positioned below Selected Bar and above Table (shown when ADaM is selected) */}
+        {standardFilter === "ADaM" && (
           <div className="flex shrink-0 h-[38px] items-center border-b border-[#D8DADA] px-[20px] bg-white gap-[16px]">
             {(["all", "vlm"] as const).map((tab, idx) => {
               const isActive = activeTab === tab;
@@ -925,15 +898,33 @@ export function BrowseVariablesModal({
                   <th className="w-[36px] px-[12px] py-[8px]">
                     <div className="flex items-center justify-center">
                       <Checkbox
-                        checked={filteredVariables.length > 0 && filteredVariables.every((v) => selected.includes(v.variable))}
-                        indeterminate={filteredVariables.some((v) => selected.includes(v.variable)) && !filteredVariables.every((v) => selected.includes(v.variable))}
+                        checked={
+                          filteredVariables.length > 0 &&
+                          filteredVariables.every((v) => {
+                            const key = `${v.datasetName}.${v.variable}`;
+                            return selected.includes(key) || selected.includes(v.variable);
+                          })
+                        }
+                        indeterminate={
+                          filteredVariables.some((v) => {
+                            const key = `${v.datasetName}.${v.variable}`;
+                            return selected.includes(key) || selected.includes(v.variable);
+                          }) &&
+                          !filteredVariables.every((v) => {
+                            const key = `${v.datasetName}.${v.variable}`;
+                            return selected.includes(key) || selected.includes(v.variable);
+                          })
+                        }
                         onChange={(allChecked) => {
                           if (allChecked) {
-                            const toAdd = filteredVariables.map((v) => v.variable).filter((v) => !selected.includes(v));
+                            const toAdd = filteredVariables
+                              .map((v) => `${v.datasetName}.${v.variable}`)
+                              .filter((key) => !selected.includes(key) && !selected.includes(key.split('.').pop() || ''));
                             setSelected((prev) => [...prev, ...toAdd]);
                           } else {
-                            const toRemove = new Set(filteredVariables.map((v) => v.variable));
-                            setSelected((prev) => prev.filter((v) => !toRemove.has(v)));
+                            const toRemove = new Set(filteredVariables.map((v) => `${v.datasetName}.${v.variable}`));
+                            const toRemoveShort = new Set(filteredVariables.map((v) => v.variable));
+                            setSelected((prev) => prev.filter((k) => !toRemove.has(k) && !toRemoveShort.has(k)));
                           }
                         }}
                       />
@@ -981,7 +972,8 @@ export function BrowseVariablesModal({
                   </tr>
                 ) : (
                   filteredVariables.map((v) => {
-                    const isSelected = selected.includes(v.variable);
+                    const itemKey = `${v.datasetName}.${v.variable}`;
+                    const isSelected = selected.includes(itemKey) || selected.includes(v.variable);
                     return (
                       <tr
                         key={v.id}
@@ -991,7 +983,7 @@ export function BrowseVariablesModal({
                           <div className="flex items-center justify-center">
                             <Checkbox
                               checked={isSelected}
-                              onChange={() => toggleVariable(v.variable)}
+                              onChange={() => toggleVariable(itemKey, v.datasetName)}
                             />
                           </div>
                         </td>
@@ -1104,36 +1096,42 @@ export function BrowseVariablesModal({
         </div>
 
         {/* Footer */}
-        <div className="flex shrink-0 items-center justify-between border-t border-[#D8DADA] px-[20px] py-[12px]">
-          {/* Left side: Reassurance note for reverse appending */}
-          <div className="flex items-center min-w-0 pr-[12px]">
-            {appendedDatasets.length > 0 && (
-              <span className="t-small text-[#888E8E] truncate">
-                Will automatically add {appendedDatasets.join(", ")} to Source Dataset(s)
-              </span>
-            )}
-          </div>
-
-          {/* Right side: Actions */}
-          <div className="flex items-center gap-[12px] shrink-0">
-            <button
-              type="button"
-              onClick={onClose}
-              className="h-[32px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] t-small font-medium text-text-primary hover:bg-bg-panel active:scale-[0.96] cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onConfirm(selected, appendedDatasets);
-                onClose();
-              }}
-              className="h-[32px] rounded-[4px] bg-[#830051] px-[16px] t-small font-medium text-white hover:bg-[#6D0043] active:scale-[0.96] cursor-pointer"
-            >
-              Confirm ({selected.length})
-            </button>
-          </div>
+        <div className="flex shrink-0 items-center justify-end gap-[12px] border-t border-[#D8DADA] px-[20px] py-[12px]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-[32px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] t-small font-medium text-text-primary hover:bg-bg-panel active:scale-[0.96]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onConfirm(selected);
+              // Calculate newly added datasets to expand source datasets in parent
+              const selectedDatasetNames = Array.from(
+                new Set(
+                  selected
+                    .map((itemKey) => {
+                      if (itemKey.includes(".")) return itemKey.split(".")[0];
+                      const matched = variables.find((v) => v.variable === itemKey);
+                      return matched?.datasetName || "";
+                    })
+                    .filter(Boolean)
+                )
+              );
+              const newlyAddedDatasets = selectedDatasetNames.filter(
+                (d) => !sourceDatasets?.includes(d)
+              );
+              if (newlyAddedDatasets.length > 0) {
+                onDatasetsExpand?.(newlyAddedDatasets);
+              }
+              onClose();
+            }}
+            className="h-[32px] rounded-[4px] bg-[#830051] px-[16px] t-small font-medium text-white hover:bg-[#6D0043] active:scale-[0.96]"
+          >
+            Confirm ({selected.length})
+          </button>
         </div>
       </div>
     </div>,
@@ -1147,9 +1145,9 @@ export interface BrowseVariablesFieldProps {
   label?: React.ReactNode;
   value?: string[];
   onChange?: (selected: string[]) => void;
-  sourceDatasets?: string[];
-  onUpdateDatasets?: (datasets: string[]) => void;
   initialSelected?: string[];
+  sourceDatasets?: string[];
+  onDatasetsExpand?: (newDatasets: string[]) => void;
   required?: boolean;
   disabled?: boolean;
   badge?: React.ReactNode;
@@ -1164,9 +1162,9 @@ export function BrowseVariablesField({
   label,
   value,
   onChange,
-  sourceDatasets = [],
-  onUpdateDatasets,
   initialSelected = [],
+  sourceDatasets = [],
+  onDatasetsExpand,
   required = false,
   disabled = false,
   badge,
@@ -1182,28 +1180,24 @@ export function BrowseVariablesField({
   const isControlled = value !== undefined;
   const currentSelected = isControlled ? value : internalSelected;
 
-  const handleToggle = (variable: string) => {
-    const next = currentSelected.includes(variable)
-      ? currentSelected.filter((v) => v !== variable)
-      : [...currentSelected, variable];
+  const handleToggle = (variableKey: string) => {
+    const isSel = currentSelected.includes(variableKey) || currentSelected.includes(variableKey.split('.').pop() || '');
+    const next = isSel
+      ? currentSelected.filter((v) => v !== variableKey && v !== variableKey.split('.').pop())
+      : [...currentSelected, variableKey];
     if (onChange) onChange(next);
     if (!isControlled) setInternalSelected(next);
   };
 
-  const handleRemove = (variable: string) => {
-    const next = currentSelected.filter((v) => v !== variable);
+  const handleRemove = (variableKey: string) => {
+    const next = currentSelected.filter((v) => v !== variableKey && v !== variableKey.split('.').pop());
     if (onChange) onChange(next);
     if (!isControlled) setInternalSelected(next);
   };
 
-  const handleConfirm = (newSelected: string[], appendedDatasets?: string[]) => {
+  const handleConfirm = (newSelected: string[]) => {
     if (onChange) onChange(newSelected);
     if (!isControlled) setInternalSelected(newSelected);
-    if (appendedDatasets && appendedDatasets.length > 0 && onUpdateDatasets) {
-      const currentList = sourceDatasets.map((s) => s.trim()).filter(Boolean);
-      const combined = Array.from(new Set([...currentList, ...appendedDatasets]));
-      onUpdateDatasets(combined);
-    }
   };
 
   return (
@@ -1217,8 +1211,8 @@ export function BrowseVariablesField({
         error={error}
         className={className}
         variables={variables}
-        sourceDatasets={sourceDatasets}
         selected={currentSelected}
+        sourceDatasets={sourceDatasets}
         onToggle={handleToggle}
         onRemove={handleRemove}
         onBrowseAll={() => setModalOpen(true)}
@@ -1227,8 +1221,9 @@ export function BrowseVariablesField({
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onConfirm={handleConfirm}
-        sourceDatasets={sourceDatasets}
         initialSelected={currentSelected}
+        sourceDatasets={sourceDatasets}
+        onDatasetsExpand={onDatasetsExpand}
         variables={variables}
         vlmData={vlmData}
       />
@@ -1237,4 +1232,3 @@ export function BrowseVariablesField({
 }
 
 export default BrowseVariablesField;
-
