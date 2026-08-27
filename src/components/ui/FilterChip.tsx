@@ -279,7 +279,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
         >
           {/* Leading Icon */}
           {showIcon && (
-            <div className="flex shrink-0 items-center justify-center size-[16px]">
+            <div className={`flex shrink-0 items-center justify-center size-[16px] ${colorScheme.text}`}>
               {icon || <DefaultSparkleIcon color={colorScheme.iconColor} />}
             </div>
           )}

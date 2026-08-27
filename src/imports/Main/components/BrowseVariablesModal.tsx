@@ -889,7 +889,7 @@ export function BrowseVariablesModal({
               setSelectedDatasets([]);
             }}
             options={[
-              { label: "All", value: "All" },
+              { label: "All Standards", value: "All" },
               { label: "ADaM only", value: "ADaM" },
               { label: "SDTM only", value: "SDTM" },
             ]}
