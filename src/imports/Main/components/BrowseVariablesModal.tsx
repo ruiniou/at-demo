@@ -322,14 +322,46 @@ function InlineVariableList({
 }: InlineVariableListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const initialStandard = useMemo(() => {
-    return inferStandardFromDatasets(sourceDatasets);
+
+  const filterOptions = useMemo(() => {
+    if (sourceDatasets && sourceDatasets.length > 0) {
+      if (sourceDatasets.length === 1) {
+        const ds = sourceDatasets[0];
+        return [
+          { label: ds, value: ds },
+          { label: "All ADaM", value: "ADaM" },
+          { label: "All SDTM", value: "SDTM" },
+          { label: "All Datasets", value: "All" },
+        ];
+      }
+      return [
+        { label: `In Scope (${sourceDatasets.join(", ")})`, value: "in_scope" },
+        ...sourceDatasets.map((d) => ({ label: d, value: d })),
+        { label: "All ADaM", value: "ADaM" },
+        { label: "All SDTM", value: "SDTM" },
+        { label: "All Datasets", value: "All" },
+      ];
+    }
+    return [
+      { label: "All", value: "All" },
+      { label: "ADaM only", value: "ADaM" },
+      { label: "SDTM only", value: "SDTM" },
+    ];
   }, [sourceDatasets]);
-  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">(initialStandard);
+
+  const initialFilter = useMemo(() => {
+    if (sourceDatasets && sourceDatasets.length > 0) {
+      if (sourceDatasets.length === 1) return sourceDatasets[0];
+      return "in_scope";
+    }
+    return "All";
+  }, [sourceDatasets]);
+
+  const [selectedFilter, setSelectedFilter] = useState<string>(initialFilter);
 
   useEffect(() => {
-    setStandardFilter(initialStandard);
-  }, [initialStandard]);
+    setSelectedFilter(initialFilter);
+  }, [initialFilter]);
 
   const [isExpandedTags, setIsExpandedTags] = useState(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
@@ -393,13 +425,18 @@ function InlineVariableList({
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     const items = variables.filter((v) => {
-      // Hard scope by sourceDatasets if defined and non-empty
-      if (sourceDatasets && sourceDatasets.length > 0) {
+      if (selectedFilter === "in_scope") {
         if (!sourceDatasets.includes(v.datasetName)) return false;
+      } else if (selectedFilter === "ADaM") {
+        const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
+        if (vStd !== "ADaM") return false;
+      } else if (selectedFilter === "SDTM") {
+        const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
+        if (vStd !== "SDTM") return false;
+      } else if (selectedFilter !== "All") {
+        if (v.datasetName !== selectedFilter) return false;
       }
-      const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
-      if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
-      if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
+
       if (!q) return true;
       return (
         v.variable.toLowerCase().includes(q) ||
@@ -414,7 +451,7 @@ function InlineVariableList({
       if (aS !== bS) return aS - bS;
       return a.variable.localeCompare(b.variable);
     });
-  }, [variables, search, selected, standardFilter, sourceDatasets]);
+  }, [variables, search, selected, selectedFilter, sourceDatasets]);
 
   const hasMoreThanThree = selected.length > 3;
   const visibleSelected = hasMoreThanThree && !isExpandedTags
@@ -458,21 +495,18 @@ function InlineVariableList({
         <FilterChip
           type="Dropdown"
           showIcon={false}
-          value={standardFilter}
-          onChange={(val) => setStandardFilter(val as "All" | "ADaM" | "SDTM")}
-          options={[
-            { label: "All", value: "All" },
-            { label: "ADaM only", value: "ADaM" },
-            { label: "SDTM only", value: "SDTM" },
-          ]}
+          value={selectedFilter}
+          onChange={(val) => setSelectedFilter(val)}
+          options={filterOptions}
         />
       </div>
 
-      {/* Table structure */}
+      {/* Table structure with Dataset annotation column */}
       <div className="w-full rounded-[2px] border border-[#EAEAEA] overflow-hidden flex flex-col">
         {/* Table Header */}
-        <div className="grid grid-cols-[44px_130px_170px_1fr] items-center bg-[#F8F9F9] border-b border-[#EAEAEA] h-[32px] px-[2px]">
+        <div className="grid grid-cols-[36px_74px_120px_160px_1fr] items-center bg-[#F8F9F9] border-b border-[#EAEAEA] h-[32px] px-[2px]">
           <div />
+          <span className="t-small text-[#888E8E] pl-[2px]">Dataset</span>
           <span className="t-small text-[#888E8E] pl-[2px]">Variable</span>
           <span className="t-small text-[#888E8E] pl-[2px]">Label</span>
           <span className="t-small text-[#888E8E] pl-[2px]">Derivation</span>
@@ -495,21 +529,26 @@ function InlineVariableList({
                     e.stopPropagation();
                     onToggle(v.variable);
                   }}
-                  className={`grid w-full grid-cols-[44px_130px_170px_1fr] items-start px-[2px] py-[10px] min-h-[56px] text-left transition-colors border-b border-[#F0F0F0] last:border-b-0 cursor-pointer ${
+                  className={`grid w-full grid-cols-[36px_74px_120px_160px_1fr] items-start px-[2px] py-[8px] min-h-[48px] text-left transition-colors border-b border-[#F0F0F0] last:border-b-0 cursor-pointer ${
                     isSelected ? "bg-[#F8EFF4] hover:bg-[#F3E3ED]" : "bg-white hover:bg-[#F8F9F9]"
                   }`}
                 >
                   {/* Checkbox */}
-                  <div className="flex h-[20px] w-[44px] items-center justify-center shrink-0">
+                  <div className="flex h-[20px] w-[36px] items-center justify-center shrink-0">
                     <Checkbox
                       checked={isSelected}
                       onChange={() => onToggle(v.variable)}
                     />
                   </div>
 
+                  {/* Dataset Name */}
+                  <div className="min-w-0 pr-[4px]">
+                    <span className="t-small text-text-secondary whitespace-nowrap">{v.datasetName}</span>
+                  </div>
+
                   {/* Variable name */}
                   <div className="min-w-0 pr-[6px]">
-                    <p className="t-small text-text-primary truncate">{v.variable}</p>
+                    <p className="t-small text-text-primary font-medium truncate">{v.variable}</p>
                   </div>
 
                   {/* Label */}
@@ -667,9 +706,44 @@ export function BrowseVariablesModal({
   vlmData,
 }: BrowseVariablesModalProps) {
   const [activeTab, setActiveTab] = useState<"all" | "vlm">("all");
-  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("All");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>(initialSelected);
+
+  const modalFilterOptions = useMemo(() => {
+    if (sourceDatasets && sourceDatasets.length > 0) {
+      if (sourceDatasets.length === 1) {
+        const ds = sourceDatasets[0];
+        return [
+          { label: ds, value: ds },
+          { label: "ADaM only", value: "ADaM" },
+          { label: "SDTM only", value: "SDTM" },
+          { label: "All", value: "All" },
+        ];
+      }
+      return [
+        { label: `In Scope (${sourceDatasets.join(", ")})`, value: "in_scope" },
+        ...sourceDatasets.map((d) => ({ label: d, value: d })),
+        { label: "ADaM only", value: "ADaM" },
+        { label: "SDTM only", value: "SDTM" },
+        { label: "All", value: "All" },
+      ];
+    }
+    return [
+      { label: "All", value: "All" },
+      { label: "ADaM only", value: "ADaM" },
+      { label: "SDTM only", value: "SDTM" },
+    ];
+  }, [sourceDatasets]);
+
+  const initialModalFilter = useMemo(() => {
+    if (sourceDatasets && sourceDatasets.length > 0) {
+      if (sourceDatasets.length === 1) return sourceDatasets[0];
+      return "in_scope";
+    }
+    return "All";
+  }, [sourceDatasets]);
+
+  const [selectedFilter, setSelectedFilter] = useState<string>(initialModalFilter);
 
   // Sync initial selected & preset filter ONLY when modal opens (false -> true)
   const prevIsOpenRef = useRef(false);
@@ -677,12 +751,11 @@ export function BrowseVariablesModal({
     if (isOpen && !prevIsOpenRef.current) {
       setSelected([...initialSelected]);
       setSearch("");
-      const preset = inferStandardFromDatasets(sourceDatasets);
-      setStandardFilter(preset);
+      setSelectedFilter(initialModalFilter);
       setActiveTab("all");
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen, initialSelected, sourceDatasets]);
+  }, [isOpen, initialSelected, initialModalFilter]);
 
   const toggleVariable = useCallback((variable: string) => {
     setSelected((prev) =>
@@ -696,7 +769,7 @@ export function BrowseVariablesModal({
 
   // Jump to VLM tab and filter to variable
   const jumpToVlm = useCallback((variable: string) => {
-    setStandardFilter("ADaM");
+    setSelectedFilter("ADaM");
     setActiveTab("vlm");
     setSearch(variable);
   }, []);
@@ -704,9 +777,18 @@ export function BrowseVariablesModal({
   const filteredVariables = useMemo(() => {
     const q = search.toLowerCase().trim();
     return variables.filter((v) => {
-      const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
-      if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
-      if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
+      if (selectedFilter === "in_scope") {
+        if (!sourceDatasets.includes(v.datasetName)) return false;
+      } else if (selectedFilter === "ADaM") {
+        const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
+        if (vStd !== "ADaM") return false;
+      } else if (selectedFilter === "SDTM") {
+        const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
+        if (vStd !== "SDTM") return false;
+      } else if (selectedFilter !== "All") {
+        if (v.datasetName !== selectedFilter) return false;
+      }
+
       if (!q) return true;
       return (
         v.variable.toLowerCase().includes(q) ||
@@ -714,7 +796,7 @@ export function BrowseVariablesModal({
         v.datasetName.toLowerCase().includes(q)
       );
     });
-  }, [variables, search, standardFilter]);
+  }, [variables, search, selectedFilter, sourceDatasets]);
 
   const filteredVlm = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -743,6 +825,8 @@ export function BrowseVariablesModal({
     });
     return Array.from(appended);
   }, [selectedVariables, sourceDatasets]);
+
+  const isAdamScope = selectedFilter === "ADaM" || (typeof selectedFilter === "string" && selectedFilter.startsWith("AD")) || (selectedFilter === "in_scope" && sourceDatasets.every((d) => d.startsWith("AD")));
 
   if (!isOpen) return null;
 
@@ -778,19 +862,14 @@ export function BrowseVariablesModal({
           <FilterChip
             type="Dropdown"
             showIcon={false}
-            value={standardFilter}
+            value={selectedFilter}
             onChange={(val) => {
-              const nextVal = val as "All" | "ADaM" | "SDTM";
-              setStandardFilter(nextVal);
-              if (nextVal !== "ADaM" && activeTab === "vlm") {
+              setSelectedFilter(val);
+              if (val === "SDTM" && activeTab === "vlm") {
                 setActiveTab("all");
               }
             }}
-            options={[
-              { label: "All", value: "All" },
-              { label: "ADaM only", value: "ADaM" },
-              { label: "SDTM only", value: "SDTM" },
-            ]}
+            options={modalFilterOptions}
           />
         </div>
 
@@ -809,8 +888,8 @@ export function BrowseVariablesModal({
           </div>
         )}
 
-        {/* Tabs: Positioned below Selected Bar and above Table (shown when ADaM is selected) */}
-        {standardFilter === "ADaM" && (
+        {/* Tabs: Positioned below Selected Bar and above Table (shown when ADaM is in scope) */}
+        {isAdamScope && (
           <div className="flex shrink-0 h-[38px] items-center border-b border-[#D8DADA] px-[20px] bg-white gap-[16px]">
             {(["all", "vlm"] as const).map((tab, idx) => {
               const isActive = activeTab === tab;
