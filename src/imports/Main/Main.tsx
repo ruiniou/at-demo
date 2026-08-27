@@ -2454,16 +2454,135 @@ const listingColumns = [
   { key: "sum", label: "Sum of diameters (mm) [d]", width: 200, widthPx: 200 },
 ] as const;
 
-// Metadata for Listing column headers (Source, Filter, Derivation Rule).
+// Metadata for Listing column headers.
 const LISTING_COLUMN_METADATA: Record<string, { dataset: string; variable: string; filter?: string; rule?: string }> = {
   studyDay: { dataset: 'ADTR', variable: 'ADY', filter: "SAFFL = 'Y'", rule: 'Study day relative to randomisation date; negative values indicate pre-randomisation assessments' },
   lesionNum: { dataset: 'ADTR', variable: 'TRLNKID', rule: 'Direct copy from ADTR.TRLNKID' },
-  lesionLoc: { dataset: 'ADTR', variable: 'TRLOC', filter: "TRLOC ^= ''", rule: 'Mapped from TR.TRLOC' },
+  lesionLoc: { dataset: 'ADTR', variable: 'TRLOC', rule: 'Mapped from TR.TRLOC' },
   locSpec: { dataset: 'ADTR', variable: 'TRLOCSP', rule: 'Direct copy from ADTR.TRLOCSP' },
   method: { dataset: 'ADTR', variable: 'TRMETHOD', rule: 'RECIST 1.1 assessment method' },
-  diameter: { dataset: 'ADTR', variable: 'AVAL', filter: "AVAL > 0", rule: 'Non-nodal longest diameter or nodal short axis, in mm' },
+  diameter: { dataset: 'ADTR', variable: 'AVAL', filter: "PARAMCD = 'DIAMETER'", rule: 'Non-nodal longest diameter or nodal short axis, in mm' },
   sum: { dataset: 'ADTR', variable: 'AVAL', filter: "PARAMCD = 'SUMDIAM'", rule: 'Sum of non-nodal longest diameters and nodal short axis diameters where PARAMCD=SUMDIAM' },
 };
+
+function buildListingColumnTooltipSections(meta: { dataset: string; variable: string; filter?: string; rule?: string } | undefined): TooltipMetadataSection[] {
+  if (!meta) return [];
+  const sections: TooltipMetadataSection[] = [];
+  sections.push({
+    label: 'Variable Mapping',
+    values: [`${meta.dataset}.${meta.variable}`],
+  });
+  if (meta.filter) {
+    sections.push({
+      label: 'Filter',
+      values: [meta.filter],
+    });
+  }
+  if (meta.rule) {
+    sections.push({
+      label: 'Derivation Rule',
+      values: [meta.rule],
+    });
+  }
+  return sections;
+}
+
+/**
+ * Read-only metadata hover for a table block or listing column header. Anchored to the target cell
+ * so position stays fixed. Rendered in a portal with fixed positioning so scroll container cannot
+ * clip it, tracks scroll/resize, and flips below when there is not enough room above.
+ */
+function BlockMetadataHover({
+  sections,
+  anchorRef,
+  scrollContainerRef,
+}: {
+  sections: TooltipMetadataSection[];
+  anchorRef: React.RefObject<HTMLElement | null>;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const anchor = anchorRef.current;
+      const node = ref.current;
+      if (!anchor || !node) return;
+
+      const anchorRect = anchor.getBoundingClientRect();
+      const tipRect = node.getBoundingClientRect();
+      const container = scrollContainerRef.current?.getBoundingClientRect();
+      // Sits 2px off the label's own edge; EDGE only keeps it off the container's edges.
+      const GAP = 2;
+      const EDGE = 4;
+      const minTop = (container?.top ?? 0) + EDGE;
+      const maxBottom = (container?.bottom ?? window.innerHeight) - EDGE;
+
+      // Prefer above the label. Flip below only when above is short AND below actually fits,
+      // otherwise clamp to the container top so the block's own rows stay unobscured.
+      let top = anchorRect.top - tipRect.height - GAP;
+      if (top < minTop) {
+        const below = anchorRect.bottom + GAP;
+        top = below + tipRect.height <= maxBottom ? below : minTop;
+      }
+
+      // Left-align with the label text; clamp so it never leaves the container horizontally.
+      const labelLeft = anchorRect.left;
+      const minLeft = (container?.left ?? 0) + EDGE;
+      const maxLeft = (container?.right ?? window.innerWidth) - tipRect.width - EDGE;
+      const left = Math.min(Math.max(labelLeft, minLeft), Math.max(minLeft, maxLeft));
+
+      setPos({ top, left });
+    };
+
+    update();
+
+    // Follow the anchor while anything scrolls (capture catches nested scroll containers).
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [anchorRef, scrollContainerRef]);
+
+  return createPortal(
+    <div
+      ref={ref}
+      className={`fixed z-[9999] pointer-events-none transition-opacity duration-[90ms] ${pos ? 'opacity-100' : 'opacity-0'}`}
+      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0 }}
+    >
+      <div className="w-[240px] rounded-[4px] bg-tooltip-bg px-[8px] py-[6px] text-left shadow-[0px_2px_8px_rgba(0,0,0,0.08)] flex flex-col gap-[8px]">
+        {sections.map((section, i) => (
+          <div key={i} className="flex flex-col gap-[2px] items-stretch">
+            <span className="t-footnote text-tooltip-label">{section.label}</span>
+            {section.values.map((value, j) => (
+              <span
+                key={j}
+                className="t-small text-tooltip-text"
+                style={
+                  section.clampLines
+                    ? {
+                        display: '-webkit-box',
+                        WebkitBoxOrient: 'vertical',
+                        WebkitLineClamp: section.clampLines,
+                        overflow: 'hidden',
+                      }
+                    : undefined
+                }
+              >
+                {value}
+              </span>
+            ))}
+            {section.more && <span className="t-small text-tooltip-label">{section.more}</span>}
+          </div>
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 const listingFootnotes = [
   '* Reviewer who completed baseline first in the absence of an adjudicator, or the reviewer the adjudicator agreed with.',
@@ -2681,93 +2800,6 @@ interface ListingShellPreviewProps {
   onQuoteField?: (fieldId: string, fieldName: string, blockName: string) => void;
 }
 
-function ListingColumnMetadataHover({
-  meta,
-  columnLabel,
-  anchorRef,
-  scrollContainerRef,
-}: {
-  meta: { dataset: string; variable: string; filter?: string; rule?: string } | undefined;
-  columnLabel: string;
-  anchorRef: React.RefObject<HTMLElement | null>;
-  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-
-  useLayoutEffect(() => {
-    const update = () => {
-      const anchor = anchorRef.current;
-      const node = ref.current;
-      if (!anchor || !node) return;
-
-      const anchorRect = anchor.getBoundingClientRect();
-      const tipRect = node.getBoundingClientRect();
-      const container = scrollContainerRef.current?.getBoundingClientRect();
-      const GAP = 4;
-      const EDGE = 4;
-      const minTop = (container?.top ?? 0) + EDGE;
-      const maxBottom = (container?.bottom ?? window.innerHeight) - EDGE;
-
-      let top = anchorRect.top - tipRect.height - GAP;
-      if (top < minTop) {
-        const below = anchorRect.bottom + GAP;
-        top = below + tipRect.height <= maxBottom ? below : minTop;
-      }
-
-      const labelLeft = anchorRect.left;
-      const minLeft = (container?.left ?? 0) + EDGE;
-      const maxLeft = (container?.right ?? window.innerWidth) - tipRect.width - EDGE;
-      const left = Math.min(Math.max(labelLeft, minLeft), Math.max(minLeft, maxLeft));
-
-      setPos({ top, left });
-    };
-
-    update();
-    window.addEventListener('scroll', update, true);
-    window.addEventListener('resize', update);
-    return () => {
-      window.removeEventListener('scroll', update, true);
-      window.removeEventListener('resize', update);
-    };
-  }, [anchorRef, scrollContainerRef]);
-
-  if (!meta) return null;
-
-  return createPortal(
-    <div
-      ref={ref}
-      className={`fixed z-[9999] pointer-events-none transition-opacity duration-[90ms] ${pos ? 'opacity-100' : 'opacity-0'}`}
-      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0 }}
-    >
-      <div className="w-[260px] rounded-[4px] bg-tooltip-bg px-[8px] py-[6px] text-left shadow-[0px_2px_8px_rgba(0,0,0,0.08)] flex flex-col gap-[6px]">
-        <div className="border-b border-white/10 pb-[4px]">
-          <span className="t-small-medium text-tooltip-text font-medium">{columnLabel}</span>
-        </div>
-        <div className="flex flex-col gap-[4px] text-left">
-          <div className="flex flex-col gap-[1px]">
-            <span className="t-footnote text-tooltip-label">Source Variable</span>
-            <span className="t-small text-tooltip-text font-mono text-[11px] leading-[15px]">{meta.dataset}.{meta.variable}</span>
-          </div>
-          {meta.filter && (
-            <div className="flex flex-col gap-[1px]">
-              <span className="t-footnote text-tooltip-label">Filter Condition</span>
-              <span className="t-small text-tooltip-text text-[11px] leading-[15px] break-words">{meta.filter}</span>
-            </div>
-          )}
-          {meta.rule && (
-            <div className="flex flex-col gap-[1px]">
-              <span className="t-footnote text-tooltip-label">Derivation Rule</span>
-              <span className="t-small text-tooltip-text text-[11px] leading-[15px] break-words whitespace-normal">{meta.rule}</span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
 function ListingShellPreview({
   selectedItemName,
   onBlockClick,
@@ -2831,7 +2863,7 @@ function ListingShellPreview({
   const [pageDragOriginX, setPageDragOriginX] = useState<number | null>(null);
   const [hoveredGap, setHoveredGap] = useState<number | null>(null);
   const [hoveredFreezeColumn, setHoveredFreezeColumn] = useState<number | null>(null);
-  const [hoveredListingColKey, setHoveredListingColKey] = useState<string | null>(null);
+  const [hoveredColumnKey, setHoveredColumnKey] = useState<string | null>(null);
   const [gapXPositions, setGapXPositions] = useState<number[]>([]);
 
   const listingScrollContainerRef = useRef<HTMLDivElement>(null);
@@ -2839,6 +2871,7 @@ function ListingShellPreview({
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const thRefs = useRef<Array<HTMLTableCellElement | null>>([]);
+  const aiElementRefs = useRef<Array<HTMLDivElement | null>>([]);
   const gapXPositionsRef = useRef<number[]>([]);
 
   const previousPageSepActiveRef = useRef(pageSepActive);
@@ -2846,6 +2879,24 @@ function ListingShellPreview({
   const pagePreviewScrollRef = useRef<HTMLDivElement>(null);
   const suppressPageSyncRef = useRef(false);
   const suppressPageSyncTimerRef = useRef<number | null>(null);
+  const freezeCloseTimerRef = useRef<number | null>(null);
+
+  const handleFreezeTriggerEnter = (columnIndex: number) => {
+    if (freezeCloseTimerRef.current) {
+      clearTimeout(freezeCloseTimerRef.current);
+      freezeCloseTimerRef.current = null;
+    }
+    if (draggingBreak === null && draggingFreeze === null && columnIndex < firstPageBreakIndex) {
+      setHoveredFreezeColumn(columnIndex);
+    }
+  };
+
+  const handleFreezeTriggerLeave = () => {
+    if (freezeCloseTimerRef.current) clearTimeout(freezeCloseTimerRef.current);
+    freezeCloseTimerRef.current = window.setTimeout(() => {
+      setHoveredFreezeColumn(null);
+    }, 250); // 250ms Safety zone grace period
+  };
 
   const totalListingWidth = useMemo(() => listingColumns.reduce((sum, col) => sum + col.widthPx, 0), [listingColumns]);
 
@@ -3481,11 +3532,17 @@ function ListingShellPreview({
                                   const meta = LISTING_COLUMN_METADATA[column.key];
                                   return (
                                     <th key={column.key} style={{ fontWeight: 500 }} className="border-r border-border-default px-[8px] py-[3px] text-left align-top t-small-medium font-medium whitespace-normal break-words last:border-r-0">
-                                      <div className="flex flex-col items-start gap-[2px] w-full">
-                                        <span className="flex items-start leading-[18px] text-text-primary">{column.label}</span>
-                                        <div className="t-footnote text-text-secondary text-left font-normal mt-[2px] min-h-[14px]">
-                                          <span className="font-mono text-[10px] leading-[14px] break-all">{meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}</span>
-                                        </div>
+                                      <div className="flex flex-col items-start w-full">
+                                        <span className="flex items-start leading-[18px]">{column.label}</span>
+                                        <div className="border-t border-graphite-10 -mx-[8px] my-[3px] w-[calc(100%+16px)]" />
+                                        {meta ? (
+                                          <div className="flex items-start gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
+                                            <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" color="var(--color-text-secondary)" />
+                                            <span className="flex-1 min-w-0 break-all">{meta.dataset}.{meta.variable}</span>
+                                          </div>
+                                        ) : (
+                                          <div className="h-[14px]" />
+                                        )}
                                       </div>
                                     </th>
                                   );
@@ -3569,28 +3626,28 @@ function ListingShellPreview({
                           if (frozen) { cellStyle.left = `${getFrozenLeft(columnIndex)}px`; cellStyle.zIndex = 22; cellStyle.backgroundColor = 'white'; }
                           if (shadows.length) cellStyle.boxShadow = shadows.join(', ');
                           const meta = LISTING_COLUMN_METADATA[column.key];
+                          const isHovered = hoveredColumnKey === column.key && hoveredFreezeColumn === null;
+                          const sections = isHovered && meta ? buildListingColumnTooltipSections(meta) : [];
+
                           return (
                             <th
                               key={column.key}
                               ref={(node) => { thRefs.current[columnIndex] = node; }}
                               style={cellStyle}
                               className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-text-primary border-r-border-default last:border-r-0 px-[8px] py-[3px] text-left align-top t-small-medium font-medium whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] relative z-10 ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
-                              onMouseEnter={() => {
-                                if (draggingBreak === null && draggingFreeze === null) {
-                                  if (columnIndex < firstPageBreakIndex) setHoveredFreezeColumn(columnIndex);
-                                  setHoveredListingColKey(column.key);
-                                }
-                              }}
-                              onMouseLeave={() => {
-                                setHoveredFreezeColumn(null);
-                                setHoveredListingColKey(null);
-                              }}
                             >
-                              {/* Hover tooltip for Add Freeze */}
+                              {/* Hover tooltip for Add Freeze (with safety zone bridge) */}
                               {hoveredFreezeColumn === columnIndex && frozenUntilIndex === null && columnIndex < firstPageBreakIndex && hoveredGap === null && !pageSepActive && (
                                 <div
-                                  className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full z-[60] pb-[6px] cursor-pointer active:scale-[0.96] transition-transform pointer-events-auto"
-                                  onClick={(e) => { e.stopPropagation(); setFrozenUntilIndex(columnIndex); setHoveredFreezeColumn(null); }}
+                                  className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full z-[60] pb-[8px] pt-[4px] cursor-pointer active:scale-[0.96] transition-transform pointer-events-auto"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (freezeCloseTimerRef.current) clearTimeout(freezeCloseTimerRef.current);
+                                    setFrozenUntilIndex(columnIndex);
+                                    setHoveredFreezeColumn(null);
+                                  }}
+                                  onMouseEnter={() => handleFreezeTriggerEnter(columnIndex)}
+                                  onMouseLeave={handleFreezeTriggerLeave}
                                 >
                                   <div className="flex items-center gap-[4px] bg-[#3F4444] text-[#EBEFEE] rounded-[4px] pl-[4px] pr-[6px] py-[4px] whitespace-nowrap shadow-[0px_2px_4px_rgba(0,0,0,0.08)]">
                                     <FreezeIcon color="white" />
@@ -3598,41 +3655,39 @@ function ListingShellPreview({
                                   </div>
                                 </div>
                               )}
-                              {/* Button area - Line 1: Column Label */}
-                              <div className="flex w-full items-start justify-between gap-[4px] rounded-[3px]">
-                                <button
-                                  type="button"
-                                  onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }}
-                                  style={{ fontWeight: 500, fontSize: '12px', lineHeight: '18px' }}
-                                  className="flex-1 min-w-0 whitespace-normal break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none"
-                                  aria-label={`Open ${column.label} metadata`}
-                                >
-                                  {column.label}
-                                </button>
+
+                              {/* Top Area: Column Header Label (Hover triggers Freeze tooltip with Safety zone) */}
+                              <div 
+                                className="w-full"
+                                onMouseEnter={() => handleFreezeTriggerEnter(columnIndex)}
+                                onMouseLeave={handleFreezeTriggerLeave}
+                              >
+                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} style={{ fontWeight: 500, fontSize: '12px', lineHeight: '18px' }} className="w-full text-left font-medium text-[12px] leading-[18px] text-text-primary whitespace-pre-wrap break-words rounded-[3px] transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
                               </div>
 
-                              {/* Line 2: dataset.variable (Supports wrapping naturally) */}
-                              <div className="t-footnote text-text-secondary text-left font-normal mt-[2px] min-h-[16px] flex items-start gap-[3px] break-words">
+                              {/* Divider between Column Header and AI Generated Row */}
+                              <div className="border-t border-graphite-10 -mx-[8px] my-[3px]" />
+
+                              {/* Bottom Area: AI Variable Mapping (Hover triggers Metadata Tooltip) */}
+                              <div
+                                ref={(node) => { aiElementRefs.current[columnIndex] = node; }}
+                                className="w-full cursor-pointer rounded-[2px] transition-colors hover:bg-black/[0.04] py-[1px]"
+                                onMouseEnter={() => setHoveredColumnKey(column.key)}
+                                onMouseLeave={() => setHoveredColumnKey(null)}
+                                onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }}
+                              >
                                 {meta ? (
-                                  <>
-                                    <span className="font-mono text-[10px] leading-[14px] break-all">{meta.dataset}.{meta.variable}</span>
-                                    {(meta.rule || meta.filter) && (
-                                      <span className="inline-block size-[4px] rounded-full bg-brand-1/80 mt-[5px] shrink-0" title="Has filter/rule (Hover to view)" />
-                                    )}
-                                  </>
+                                  <div className="flex items-start gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
+                                    <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" color="var(--color-text-secondary)" />
+                                    <span className="flex-1 min-w-0 break-all">{meta.dataset}.{meta.variable}</span>
+                                  </div>
                                 ) : (
-                                  <span>&nbsp;</span>
+                                  <div className="h-[14px]" />
                                 )}
                               </div>
 
-                              {/* Hover Tooltip for metadata */}
-                              {hoveredListingColKey === column.key && meta && (
-                                <ListingColumnMetadataHover
-                                  meta={meta}
-                                  columnLabel={column.label}
-                                  anchorRef={{ current: thRefs.current[columnIndex] }}
-                                  scrollContainerRef={tableContainerRef}
-                                />
+                              {sections.length > 0 && (
+                                <BlockMetadataHover sections={sections} anchorRef={{ current: aiElementRefs.current[columnIndex] || thRefs.current[columnIndex] }} scrollContainerRef={listingScrollContainerRef} />
                               )}
                               
                               {frozenBoundary && (
@@ -4265,104 +4320,6 @@ function buildBlockTooltipSections(meta: TableBlockMetadata | undefined): Toolti
   }
 
   return sections;
-}
-
-/**
- * Read-only metadata hover for a table block. Anchored to the block's parent label cell so the
- * position stays fixed while the pointer moves within the block. Rendered in a portal with fixed
- * positioning so the table's scroll container cannot clip it, tracks scroll/resize, and flips
- * below the label when there is not enough room above.
- */
-function BlockMetadataHover({
-  sections,
-  anchorRef,
-  scrollContainerRef,
-}: {
-  sections: TooltipMetadataSection[];
-  anchorRef: React.RefObject<HTMLElement | null>;
-  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
-
-  useLayoutEffect(() => {
-    const update = () => {
-      const anchor = anchorRef.current;
-      const node = ref.current;
-      if (!anchor || !node) return;
-
-      const anchorRect = anchor.getBoundingClientRect();
-      const tipRect = node.getBoundingClientRect();
-      const container = scrollContainerRef.current?.getBoundingClientRect();
-      // Sits 2px off the label's own edge; EDGE only keeps it off the container's edges.
-      const GAP = 2;
-      const EDGE = 4;
-      const minTop = (container?.top ?? 0) + EDGE;
-      const maxBottom = (container?.bottom ?? window.innerHeight) - EDGE;
-
-      // Prefer above the label. Flip below only when above is short AND below actually fits,
-      // otherwise clamp to the container top so the block's own rows stay unobscured.
-      let top = anchorRect.top - tipRect.height - GAP;
-      if (top < minTop) {
-        const below = anchorRect.bottom + GAP;
-        top = below + tipRect.height <= maxBottom ? below : minTop;
-      }
-
-      // Left-align with the label text; clamp so it never leaves the container horizontally.
-      const labelLeft = anchorRect.left;
-      const minLeft = (container?.left ?? 0) + EDGE;
-      const maxLeft = (container?.right ?? window.innerWidth) - tipRect.width - EDGE;
-      const left = Math.min(Math.max(labelLeft, minLeft), Math.max(minLeft, maxLeft));
-
-      setPos({ top, left });
-    };
-
-    update();
-
-    // Follow the anchor while anything scrolls (capture catches nested scroll containers).
-    window.addEventListener('scroll', update, true);
-    window.addEventListener('resize', update);
-    return () => {
-      window.removeEventListener('scroll', update, true);
-      window.removeEventListener('resize', update);
-    };
-  }, [anchorRef, scrollContainerRef]);
-
-  return createPortal(
-    <div
-      ref={ref}
-      className={`fixed z-[9999] pointer-events-none transition-opacity duration-[90ms] ${pos ? 'opacity-100' : 'opacity-0'}`}
-      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0 }}
-    >
-      <div className="w-[240px] rounded-[4px] bg-tooltip-bg px-[8px] py-[6px] text-left shadow-[0px_2px_8px_rgba(0,0,0,0.08)] flex flex-col gap-[8px]">
-        {sections.map((section, i) => (
-          <div key={i} className="flex flex-col gap-[2px] items-stretch">
-            <span className="t-footnote text-tooltip-label">{section.label}</span>
-            {section.values.map((value, j) => (
-              <span
-                key={j}
-                className="t-small text-tooltip-text"
-                style={
-                  section.clampLines
-                    ? {
-                        display: '-webkit-box',
-                        WebkitBoxOrient: 'vertical',
-                        WebkitLineClamp: section.clampLines,
-                        overflow: 'hidden',
-                      }
-                    : undefined
-                }
-              >
-                {value}
-              </span>
-            ))}
-            {section.more && <span className="t-small text-tooltip-label">{section.more}</span>}
-          </div>
-        ))}
-      </div>
-    </div>,
-    document.body
-  );
 }
 
 /** One shell table row. Highlights with its whole block and anchors the block's metadata hover. */
