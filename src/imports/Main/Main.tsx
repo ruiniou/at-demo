@@ -945,7 +945,7 @@ function ChatConversation({
   let flatMsgIdx = 0;
 
   return (
-    <div className="flex flex-col w-full px-[8px] gap-[12px] relative">
+    <div className="flex flex-col w-full px-[8px] pb-[16px] gap-[12px] relative">
       {rounds.map((round, rIndex) => (
         <div key={rIndex} className="flex flex-col w-full py-[10px] gap-[12px] relative">
           {round.map((msg, i) => {
@@ -1409,8 +1409,11 @@ function AICopilotPanel({
         </button>
       </div>
 
-      {/* Chat Area */}
-      <div ref={chatAreaRef} className="flex-1 min-h-0 overflow-y-auto scroll-smooth">
+      {/* Chat Area with Alpha Mask Fade at Bottom */}
+      <div 
+        ref={chatAreaRef} 
+        className="flex-1 min-h-0 overflow-y-auto scroll-smooth [mask-image:linear-gradient(to_bottom,black_calc(100%-36px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-36px),transparent_100%)]"
+      >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-[12px] pb-[40px]">
             <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
@@ -1433,8 +1436,8 @@ function AICopilotPanel({
       </div>
 
       {/* Input Area */}
-      <div className="shrink-0 p-[8px] flex flex-col gap-[4px] bg-transparent">
-        <div className="w-full flex flex-col gap-[4px]">
+      <div className="shrink-0 p-[8px] flex flex-col gap-[4px] bg-transparent relative z-10">
+        <div className="w-full flex flex-col gap-[4px] relative">
           {showAskUser && (
             <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50 rounded" />}>
               <AskUserComponent 
@@ -2451,16 +2454,15 @@ const listingColumns = [
   { key: "sum", label: "Sum of diameters (mm) [d]", width: 200, widthPx: 200 },
 ] as const;
 
-// Experimental: inline metadata under Listing column headers.
-// Kept separate from listingColumns so this can be removed wholesale.
-const LISTING_COLUMN_METADATA: Record<string, { dataset: string; variable: string; rule?: string }> = {
-  studyDay: { dataset: 'ADTR', variable: 'ADY', rule: 'Study day relative to randomisation date; negative values indicate pre-randomisation assessments' },
-  lesionNum: { dataset: 'ADTR', variable: 'TRLNKID' },
-  lesionLoc: { dataset: 'ADTR', variable: 'TRLOC', rule: 'Mapped from TR.TRLOC' },
-  locSpec: { dataset: 'ADTR', variable: 'TRLOCSP' },
+// Metadata for Listing column headers (Source, Filter, Derivation Rule).
+const LISTING_COLUMN_METADATA: Record<string, { dataset: string; variable: string; filter?: string; rule?: string }> = {
+  studyDay: { dataset: 'ADTR', variable: 'ADY', filter: "SAFFL = 'Y'", rule: 'Study day relative to randomisation date; negative values indicate pre-randomisation assessments' },
+  lesionNum: { dataset: 'ADTR', variable: 'TRLNKID', rule: 'Direct copy from ADTR.TRLNKID' },
+  lesionLoc: { dataset: 'ADTR', variable: 'TRLOC', filter: "TRLOC ^= ''", rule: 'Mapped from TR.TRLOC' },
+  locSpec: { dataset: 'ADTR', variable: 'TRLOCSP', rule: 'Direct copy from ADTR.TRLOCSP' },
   method: { dataset: 'ADTR', variable: 'TRMETHOD', rule: 'RECIST 1.1 assessment method' },
-  diameter: { dataset: 'ADTR', variable: 'AVAL', rule: 'Non-nodal longest diameter or nodal short axis, in mm' },
-  sum: { dataset: 'ADTR', variable: 'AVAL', rule: 'Sum of non-nodal longest diameters and nodal short axis diameters where PARAMCD=SUMDIAM' },
+  diameter: { dataset: 'ADTR', variable: 'AVAL', filter: "AVAL > 0", rule: 'Non-nodal longest diameter or nodal short axis, in mm' },
+  sum: { dataset: 'ADTR', variable: 'AVAL', filter: "PARAMCD = 'SUMDIAM'", rule: 'Sum of non-nodal longest diameters and nodal short axis diameters where PARAMCD=SUMDIAM' },
 };
 
 const listingFootnotes = [
@@ -2679,6 +2681,93 @@ interface ListingShellPreviewProps {
   onQuoteField?: (fieldId: string, fieldName: string, blockName: string) => void;
 }
 
+function ListingColumnMetadataHover({
+  meta,
+  columnLabel,
+  anchorRef,
+  scrollContainerRef,
+}: {
+  meta: { dataset: string; variable: string; filter?: string; rule?: string } | undefined;
+  columnLabel: string;
+  anchorRef: React.RefObject<HTMLElement | null>;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const anchor = anchorRef.current;
+      const node = ref.current;
+      if (!anchor || !node) return;
+
+      const anchorRect = anchor.getBoundingClientRect();
+      const tipRect = node.getBoundingClientRect();
+      const container = scrollContainerRef.current?.getBoundingClientRect();
+      const GAP = 4;
+      const EDGE = 4;
+      const minTop = (container?.top ?? 0) + EDGE;
+      const maxBottom = (container?.bottom ?? window.innerHeight) - EDGE;
+
+      let top = anchorRect.top - tipRect.height - GAP;
+      if (top < minTop) {
+        const below = anchorRect.bottom + GAP;
+        top = below + tipRect.height <= maxBottom ? below : minTop;
+      }
+
+      const labelLeft = anchorRect.left;
+      const minLeft = (container?.left ?? 0) + EDGE;
+      const maxLeft = (container?.right ?? window.innerWidth) - tipRect.width - EDGE;
+      const left = Math.min(Math.max(labelLeft, minLeft), Math.max(minLeft, maxLeft));
+
+      setPos({ top, left });
+    };
+
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [anchorRef, scrollContainerRef]);
+
+  if (!meta) return null;
+
+  return createPortal(
+    <div
+      ref={ref}
+      className={`fixed z-[9999] pointer-events-none transition-opacity duration-[90ms] ${pos ? 'opacity-100' : 'opacity-0'}`}
+      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0 }}
+    >
+      <div className="w-[260px] rounded-[4px] bg-tooltip-bg px-[8px] py-[6px] text-left shadow-[0px_2px_8px_rgba(0,0,0,0.08)] flex flex-col gap-[6px]">
+        <div className="border-b border-white/10 pb-[4px]">
+          <span className="t-small-medium text-tooltip-text font-medium">{columnLabel}</span>
+        </div>
+        <div className="flex flex-col gap-[4px] text-left">
+          <div className="flex flex-col gap-[1px]">
+            <span className="t-footnote text-tooltip-label">Source Variable</span>
+            <span className="t-small text-tooltip-text font-mono text-[11px] leading-[15px]">{meta.dataset}.{meta.variable}</span>
+          </div>
+          {meta.filter && (
+            <div className="flex flex-col gap-[1px]">
+              <span className="t-footnote text-tooltip-label">Filter Condition</span>
+              <span className="t-small text-tooltip-text text-[11px] leading-[15px] break-words">{meta.filter}</span>
+            </div>
+          )}
+          {meta.rule && (
+            <div className="flex flex-col gap-[1px]">
+              <span className="t-footnote text-tooltip-label">Derivation Rule</span>
+              <span className="t-small text-tooltip-text text-[11px] leading-[15px] break-words whitespace-normal">{meta.rule}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function ListingShellPreview({
   selectedItemName,
   onBlockClick,
@@ -2742,6 +2831,7 @@ function ListingShellPreview({
   const [pageDragOriginX, setPageDragOriginX] = useState<number | null>(null);
   const [hoveredGap, setHoveredGap] = useState<number | null>(null);
   const [hoveredFreezeColumn, setHoveredFreezeColumn] = useState<number | null>(null);
+  const [hoveredListingColKey, setHoveredListingColKey] = useState<string | null>(null);
   const [gapXPositions, setGapXPositions] = useState<number[]>([]);
 
   const listingScrollContainerRef = useRef<HTMLDivElement>(null);
@@ -3392,29 +3482,9 @@ function ListingShellPreview({
                                   return (
                                     <th key={column.key} style={{ fontWeight: 500 }} className="border-r border-border-default px-[8px] py-[3px] text-left align-top t-small-medium font-medium whitespace-normal break-words last:border-r-0">
                                       <div className="flex flex-col items-start gap-[2px] w-full">
-                                        <span className="min-h-[36px] flex items-start leading-[18px]">{column.label}</span>
-                                        {/* Experimental inline metadata (Line 2/3). Fixed heights keep header rows aligned. */}
-                                        <div className="t-footnote text-text-secondary text-left font-normal mt-[4px] pt-[4px] border-t border-graphite-10 -mx-[8px] px-[8px] w-[calc(100%+16px)] min-h-[58px]">
-                                          <div className="flex items-start gap-[4px] w-full">
-                                            {meta ? (
-                                              <LocalIcon src={aiProcessingIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" />
-                                            ) : (
-                                              <div className="w-[12px] h-[12px] shrink-0" />
-                                            )}
-                                            <div className="flex-1 min-w-0">
-                                              {/* Line 2: dataset.variable — always exactly 1 line, ellipsis when too long. */}
-                                              <div className="h-[14px] overflow-hidden whitespace-nowrap text-ellipsis leading-[14px]">
-                                                {meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}
-                                              </div>
-                                              {/* Line 3: rule — wraps to up to 3 lines, fully displaying the rule text. */}
-                                              <div
-                                                className="min-h-[42px] overflow-hidden whitespace-normal break-words leading-[14px]"
-                                                style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3 }}
-                                              >
-                                                {meta?.rule ? `rule: ${meta.rule}` : '\u00A0'}
-                                              </div>
-                                            </div>
-                                          </div>
+                                        <span className="flex items-start leading-[18px] text-text-primary">{column.label}</span>
+                                        <div className="t-footnote text-text-secondary text-left font-normal mt-[2px] min-h-[14px]">
+                                          <span className="font-mono text-[10px] leading-[14px] break-all">{meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}</span>
                                         </div>
                                       </div>
                                     </th>
@@ -3505,6 +3575,16 @@ function ListingShellPreview({
                               ref={(node) => { thRefs.current[columnIndex] = node; }}
                               style={cellStyle}
                               className={`group ${frozen ? 'sticky' : 'relative'} ${column.width > 0 ? '' : ''} border-r border-b-2 border-text-primary border-r-border-default last:border-r-0 px-[8px] py-[3px] text-left align-top t-small-medium font-medium whitespace-normal break-words select-none pointer-events-auto transition-[border-color,box-shadow,background-color,outline-color] duration-[180ms] relative z-10 ${frozenBoundary ? "after:content-[''] after:absolute after:top-[-2px] after:bottom-[-2px] after:right-[-2px] after:w-[2px] after:bg-brand-1 after:z-[40] after:pointer-events-none after:shadow-[2px_0_4px_rgba(0,0,0,0.08)]" : ''}`}
+                              onMouseEnter={() => {
+                                if (draggingBreak === null && draggingFreeze === null) {
+                                  if (columnIndex < firstPageBreakIndex) setHoveredFreezeColumn(columnIndex);
+                                  setHoveredListingColKey(column.key);
+                                }
+                              }}
+                              onMouseLeave={() => {
+                                setHoveredFreezeColumn(null);
+                                setHoveredListingColKey(null);
+                              }}
                             >
                               {/* Hover tooltip for Add Freeze */}
                               {hoveredFreezeColumn === columnIndex && frozenUntilIndex === null && columnIndex < firstPageBreakIndex && hoveredGap === null && !pageSepActive && (
@@ -3518,43 +3598,42 @@ function ListingShellPreview({
                                   </div>
                                 </div>
                               )}
-                              {/* Button area */}
-                              {/* Button area - Fixed shelf height aligns the divider line across all columns */}
-                              <div 
-                                className="flex w-full items-start justify-between gap-[4px] rounded-[3px] min-h-[36px]"
-                                onMouseEnter={() => {
-                                  if (draggingBreak === null && draggingFreeze === null && columnIndex < firstPageBreakIndex) {
-                                    setHoveredFreezeColumn(columnIndex);
-                                  }
-                                }}
-                                onMouseLeave={() => setHoveredFreezeColumn(null)}
-                              >
-                                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }} style={{ fontWeight: 500, fontSize: '12px', lineHeight: '18px' }} className="flex-1 min-w-0 whitespace-pre-wrap break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none" aria-label={`Open ${column.label} metadata`}>{column.label}</button>
+                              {/* Button area - Line 1: Column Label */}
+                              <div className="flex w-full items-start justify-between gap-[4px] rounded-[3px]">
+                                <button
+                                  type="button"
+                                  onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }}
+                                  style={{ fontWeight: 500, fontSize: '12px', lineHeight: '18px' }}
+                                  className="flex-1 min-w-0 whitespace-normal break-words rounded-[3px] text-left transition-colors duration-[180ms] hover:bg-black/[0.03] outline-none focus:outline-none"
+                                  aria-label={`Open ${column.label} metadata`}
+                                >
+                                  {column.label}
+                                </button>
                               </div>
 
-                              {/* Experimental inline metadata (Line 2/3). Fixed heights keep header rows aligned. */}
-                              <div className="t-footnote text-text-secondary text-left font-normal mt-[4px] pt-[4px] border-t border-graphite-10 -mx-[8px] px-[8px] min-h-[58px]">
-                                <div className="flex items-start gap-[4px] w-full">
-                                  {meta ? (
-                                    <LocalIcon src={aiProcessingIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" />
-                                  ) : (
-                                    <div className="w-[12px] h-[12px] shrink-0" />
-                                  )}
-                                  <div className="flex-1 min-w-0">
-                                    {/* Line 2: dataset.variable — always exactly 1 line, ellipsis when too long. */}
-                                    <div className="h-[14px] overflow-hidden whitespace-nowrap text-ellipsis leading-[14px]">
-                                      {meta ? `${meta.dataset}.${meta.variable}` : '\u00A0'}
-                                    </div>
-                                    {/* Line 3: rule — wraps to up to 3 lines, fully displaying the rule text. */}
-                                    <div
-                                      className="min-h-[42px] overflow-hidden whitespace-normal break-words leading-[14px]"
-                                      style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3 }}
-                                    >
-                                      {meta?.rule ? `rule: ${meta.rule}` : '\u00A0'}
-                                    </div>
-                                  </div>
-                                </div>
+                              {/* Line 2: dataset.variable (Supports wrapping naturally) */}
+                              <div className="t-footnote text-text-secondary text-left font-normal mt-[2px] min-h-[16px] flex items-start gap-[3px] break-words">
+                                {meta ? (
+                                  <>
+                                    <span className="font-mono text-[10px] leading-[14px] break-all">{meta.dataset}.{meta.variable}</span>
+                                    {(meta.rule || meta.filter) && (
+                                      <span className="inline-block size-[4px] rounded-full bg-brand-1/80 mt-[5px] shrink-0" title="Has filter/rule (Hover to view)" />
+                                    )}
+                                  </>
+                                ) : (
+                                  <span>&nbsp;</span>
+                                )}
                               </div>
+
+                              {/* Hover Tooltip for metadata */}
+                              {hoveredListingColKey === column.key && meta && (
+                                <ListingColumnMetadataHover
+                                  meta={meta}
+                                  columnLabel={column.label}
+                                  anchorRef={{ current: thRefs.current[columnIndex] }}
+                                  scrollContainerRef={tableContainerRef}
+                                />
+                              )}
                               
                               {frozenBoundary && (
                                 <>
