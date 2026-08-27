@@ -5602,6 +5602,19 @@ function BlocksTabContent({
                             const isVariableField = field.id === 'variable' || field.id.toLowerCase().includes('variable') || String(field.label || '').toLowerCase().includes('variable');
                             
                             if (isVariableField) {
+                              const datasetField = block.fields?.find(
+                                (f: any) =>
+                                  f.id === 'dataset' ||
+                                  f.id === 'sourceDataset' ||
+                                  f.id === 'sourceDataset1' ||
+                                  f.id === 'sourceDataset2' ||
+                                  f.id === 'inputDataset' ||
+                                  String(f.label || '').toLowerCase().includes('dataset')
+                              );
+                              const currentSourceDatasets = datasetField?.value
+                                ? datasetField.value.split(',').map((s: string) => s.trim()).filter(Boolean)
+                                : [];
+
                               return (
                                 <BrowseVariablesField
                                   label={labelWithLink as any}
@@ -5610,6 +5623,12 @@ function BlocksTabContent({
                                   badge={badgeNode}
                                   placeholder={field.required ? "Required" : "Optional"}
                                   value={field.value ? field.value.split(', ').map((s: string) => s.trim()).filter(Boolean) : []}
+                                  sourceDatasets={currentSourceDatasets}
+                                  onUpdateDatasets={(newDatasets) => {
+                                    if (datasetField) {
+                                      onFieldEdit?.(block.id, datasetField.id, newDatasets.join(', '));
+                                    }
+                                  }}
                                   onChange={(val) => onFieldEdit?.(block.id, field.id, val.join(', '))}
                                 />
                               );

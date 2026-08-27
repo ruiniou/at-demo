@@ -35,10 +35,26 @@ export type VlmRow = {
   derivation: string;
 };
 
+export function getStandardForDataset(dataset: string): "ADaM" | "SDTM" {
+  const d = dataset.trim().toUpperCase();
+  if (d.startsWith("AD")) return "ADaM";
+  return "SDTM";
+}
+
+export function inferStandardFromDatasets(datasets: string[]): "All" | "ADaM" | "SDTM" {
+  if (!datasets || datasets.length === 0) return "All";
+  const standards = new Set(datasets.map(getStandardForDataset));
+  if (standards.size === 1) {
+    return Array.from(standards)[0];
+  }
+  return "All";
+}
+
 export type BrowseVariablesModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (selected: string[]) => void;
+  onConfirm: (selected: string[], appendedDatasets?: string[]) => void;
+  sourceDatasets?: string[];
   initialSelected: string[];
   variables: Variable[];
   vlmData: VlmRow[];
@@ -47,6 +63,7 @@ export type BrowseVariablesModalProps = {
 export type InlineVariableListProps = {
   label?: React.ReactNode;
   variables: Variable[];
+  sourceDatasets?: string[];
   selected: string[];
   onToggle: (variable: string) => void;
   onRemove: (variable: string) => void;
@@ -291,6 +308,7 @@ function TruncatedDerivationCell({ text }: { text: string }) {
 function InlineVariableList({
   label,
   variables,
+  sourceDatasets = [],
   selected,
   onToggle,
   onRemove,
@@ -304,7 +322,15 @@ function InlineVariableList({
 }: InlineVariableListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("All");
+  const initialStandard = useMemo(() => {
+    return inferStandardFromDatasets(sourceDatasets);
+  }, [sourceDatasets]);
+  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">(initialStandard);
+
+  useEffect(() => {
+    setStandardFilter(initialStandard);
+  }, [initialStandard]);
+
   const [isExpandedTags, setIsExpandedTags] = useState(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -367,6 +393,10 @@ function InlineVariableList({
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     const items = variables.filter((v) => {
+      // Hard scope by sourceDatasets if defined and non-empty
+      if (sourceDatasets && sourceDatasets.length > 0) {
+        if (!sourceDatasets.includes(v.datasetName)) return false;
+      }
       const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
       if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
       if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
@@ -384,7 +414,7 @@ function InlineVariableList({
       if (aS !== bS) return aS - bS;
       return a.variable.localeCompare(b.variable);
     });
-  }, [variables, search, selected, standardFilter]);
+  }, [variables, search, selected, standardFilter, sourceDatasets]);
 
   const hasMoreThanThree = selected.length > 3;
   const visibleSelected = hasMoreThanThree && !isExpandedTags
@@ -631,6 +661,7 @@ export function BrowseVariablesModal({
   isOpen,
   onClose,
   onConfirm,
+  sourceDatasets = [],
   initialSelected,
   variables,
   vlmData,
@@ -640,17 +671,18 @@ export function BrowseVariablesModal({
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>(initialSelected);
 
-  // Sync initial selected ONLY when modal opens (false -> true)
+  // Sync initial selected & preset filter ONLY when modal opens (false -> true)
   const prevIsOpenRef = useRef(false);
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
       setSelected([...initialSelected]);
       setSearch("");
-      setStandardFilter("All");
+      const preset = inferStandardFromDatasets(sourceDatasets);
+      setStandardFilter(preset);
       setActiveTab("all");
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen]);
+  }, [isOpen, initialSelected, sourceDatasets]);
 
   const toggleVariable = useCallback((variable: string) => {
     setSelected((prev) =>
@@ -695,11 +727,24 @@ export function BrowseVariablesModal({
     );
   }, [vlmData, search]);
 
-  if (!isOpen) return null;
+  const selectedVariables = useMemo(() => {
+    return selected
+      .map((vName) => variables.find((v) => v.variable === vName))
+      .filter(Boolean) as Variable[];
+  }, [selected, variables]);
 
-  const selectedVariables = selected
-    .map((vName) => variables.find((v) => v.variable === vName))
-    .filter(Boolean) as Variable[];
+  const appendedDatasets = useMemo(() => {
+    const current = new Set(sourceDatasets.map((s) => s.trim().toUpperCase()));
+    const appended = new Set<string>();
+    selectedVariables.forEach((v) => {
+      if (!current.has(v.datasetName.toUpperCase())) {
+        appended.add(v.datasetName);
+      }
+    });
+    return Array.from(appended);
+  }, [selectedVariables, sourceDatasets]);
+
+  if (!isOpen) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center pointer-events-auto">
@@ -980,24 +1025,36 @@ export function BrowseVariablesModal({
         </div>
 
         {/* Footer */}
-        <div className="flex shrink-0 items-center justify-end gap-[12px] border-t border-[#D8DADA] px-[20px] py-[12px]">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-[32px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] t-small font-medium text-text-primary hover:bg-bg-panel active:scale-[0.96]"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onConfirm(selected);
-              onClose();
-            }}
-            className="h-[32px] rounded-[4px] bg-[#830051] px-[16px] t-small font-medium text-white hover:bg-[#6D0043] active:scale-[0.96]"
-          >
-            Confirm ({selected.length})
-          </button>
+        <div className="flex shrink-0 items-center justify-between border-t border-[#D8DADA] px-[20px] py-[12px]">
+          {/* Left side: Reassurance note for reverse appending */}
+          <div className="flex items-center min-w-0 pr-[12px]">
+            {appendedDatasets.length > 0 && (
+              <span className="t-small text-[#888E8E] truncate">
+                Will automatically add {appendedDatasets.join(", ")} to Source Dataset(s)
+              </span>
+            )}
+          </div>
+
+          {/* Right side: Actions */}
+          <div className="flex items-center gap-[12px] shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-[32px] rounded-[4px] border-[0.6px] border-[#D8DADA] bg-white px-[16px] t-small font-medium text-text-primary hover:bg-bg-panel active:scale-[0.96] cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onConfirm(selected, appendedDatasets);
+                onClose();
+              }}
+              className="h-[32px] rounded-[4px] bg-[#830051] px-[16px] t-small font-medium text-white hover:bg-[#6D0043] active:scale-[0.96] cursor-pointer"
+            >
+              Confirm ({selected.length})
+            </button>
+          </div>
         </div>
       </div>
     </div>,
@@ -1011,6 +1068,8 @@ export interface BrowseVariablesFieldProps {
   label?: React.ReactNode;
   value?: string[];
   onChange?: (selected: string[]) => void;
+  sourceDatasets?: string[];
+  onUpdateDatasets?: (datasets: string[]) => void;
   initialSelected?: string[];
   required?: boolean;
   disabled?: boolean;
@@ -1026,6 +1085,8 @@ export function BrowseVariablesField({
   label,
   value,
   onChange,
+  sourceDatasets = [],
+  onUpdateDatasets,
   initialSelected = [],
   required = false,
   disabled = false,
@@ -1056,9 +1117,14 @@ export function BrowseVariablesField({
     if (!isControlled) setInternalSelected(next);
   };
 
-  const handleConfirm = (newSelected: string[]) => {
+  const handleConfirm = (newSelected: string[], appendedDatasets?: string[]) => {
     if (onChange) onChange(newSelected);
     if (!isControlled) setInternalSelected(newSelected);
+    if (appendedDatasets && appendedDatasets.length > 0 && onUpdateDatasets) {
+      const currentList = sourceDatasets.map((s) => s.trim()).filter(Boolean);
+      const combined = Array.from(new Set([...currentList, ...appendedDatasets]));
+      onUpdateDatasets(combined);
+    }
   };
 
   return (
@@ -1072,6 +1138,7 @@ export function BrowseVariablesField({
         error={error}
         className={className}
         variables={variables}
+        sourceDatasets={sourceDatasets}
         selected={currentSelected}
         onToggle={handleToggle}
         onRemove={handleRemove}
@@ -1081,6 +1148,7 @@ export function BrowseVariablesField({
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onConfirm={handleConfirm}
+        sourceDatasets={sourceDatasets}
         initialSelected={currentSelected}
         variables={variables}
         vlmData={vlmData}
