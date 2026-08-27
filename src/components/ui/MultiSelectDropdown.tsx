@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import arrowIconUrl from "../../icons/arrow-down-s-line.svg";
 import { FormItem } from "./FormItem";
 import { OptionLabel } from "./OptionLabel";
@@ -46,23 +46,16 @@ export function MultiSelectDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const effectiveOptions = useMemo(() => {
-    const optValues = new Set(options.map((o) => o.value));
-    const extras = value
-      .filter((v) => !optValues.has(v))
-      .map((v) => ({ label: v, value: v }));
-    return [...options, ...extras];
-  }, [options, value]);
-
-  const selectedOptions = useMemo(() => {
-    return value.map((v) => {
-      const found = effectiveOptions.find((opt) => opt.value === v);
-      return found || { label: v, value: v };
-    });
-  }, [value, effectiveOptions]);
+  const allKnownOptions = [
+    ...options,
+    ...value
+      .filter((v) => !options.some((opt) => opt.value === v))
+      .map((v) => ({ label: v, value: v })),
+  ];
+  const selectedOptions = allKnownOptions.filter((opt) => value.includes(opt.value));
 
   // Whether options have derivation/dataset metadata (Variable-style dropdown)
-  const hasDerivation = effectiveOptions.some((opt) => opt.derivation !== undefined || opt.dataset !== undefined);
+  const hasDerivation = allKnownOptions.some((opt) => opt.derivation !== undefined || opt.dataset !== undefined);
 
   // Border + bg per state
   let boxClasses = "";
@@ -98,8 +91,8 @@ export function MultiSelectDropdown({
 
   // Sort: selected options first, then the rest (preserving original order within each group)
   const sortedOptions = [
-    ...effectiveOptions.filter((opt) => value.includes(opt.value)),
-    ...effectiveOptions.filter((opt) => !value.includes(opt.value)),
+    ...allKnownOptions.filter((opt) => value.includes(opt.value)),
+    ...allKnownOptions.filter((opt) => !value.includes(opt.value)),
   ];
 
   return (

@@ -90,6 +90,9 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
       options,
       value,
       onChange,
+      multiSelect,
+      values,
+      onChangeMulti,
       disabled = false,
       onClick,
       className = "",
@@ -248,15 +251,10 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
       if (values && values.length > 0) {
         if (options && values.length === options.length) {
           displayLabel = label || "All Datasets";
-        } else if (values.length === 1) {
-          displayLabel = options?.find((opt) => opt.value === values[0])?.label || values[0];
-        } else if (values.length === 2) {
-          const l1 = options?.find((opt) => opt.value === values[0])?.label || values[0];
-          const l2 = options?.find((opt) => opt.value === values[1])?.label || values[1];
-          displayLabel = `${l1}, ${l2}`;
         } else {
-          const l1 = options?.find((opt) => opt.value === values[0])?.label || values[0];
-          displayLabel = `${l1} +${values.length - 1}`;
+          displayLabel = values
+            .map((v) => options?.find((opt) => opt.value === v)?.label || v)
+            .join(", ");
         }
       } else {
         displayLabel = label || "All Datasets";
@@ -275,7 +273,8 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
           onClick={handleClick}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          className={`inline-flex h-[28px] max-w-[300px] items-center gap-[4px] py-[5px] rounded-[4px] transition-colors cursor-pointer select-none ${paddingClasses} ${colorScheme.bg} ${className}`}
+          title={typeof displayLabel === "string" ? displayLabel : undefined}
+          className={`inline-flex h-[28px] max-w-full items-center gap-[4px] py-[5px] rounded-[4px] transition-colors cursor-pointer select-none min-w-0 ${paddingClasses} ${colorScheme.bg} ${className}`}
           {...props}
         >
           {/* Leading Icon */}
@@ -287,7 +286,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
 
           {/* Label */}
           <span
-            className={`t-small font-normal leading-[18px] truncate ${colorScheme.text}`}
+            className={`t-small font-normal leading-[18px] truncate min-w-0 ${colorScheme.text}`}
           >
             {displayLabel}
           </span>

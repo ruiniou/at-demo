@@ -857,7 +857,7 @@ export function BrowseVariablesModal({
         </div>
 
         {/* Filters Row (Standard FilterChip + Dataset MultiSelect FilterChip below Search Bar) */}
-        <div className="flex shrink-0 items-center gap-[8px] border-b border-[#D8DADA] px-[20px] py-[6px] bg-white">
+        <div className="flex shrink-0 items-center gap-[8px] border-b border-[#D8DADA] px-[20px] py-[6px] bg-white min-w-0">
           <FilterChip
             type="Dropdown"
             showIcon={false}
@@ -887,6 +887,7 @@ export function BrowseVariablesModal({
               setSelectedDatasets(newDatasets);
             }}
             options={datasetOptions}
+            className="flex-1 max-w-full min-w-0"
           />
         </div>
 
@@ -1249,6 +1250,13 @@ export function BrowseVariablesField({
       : [...normalizedSelected, variableKey];
     if (onChange) onChange(next);
     if (!isControlled) setInternalSelected(next);
+
+    if (!isSel && variableKey.includes('.')) {
+      const dName = variableKey.split('.')[0];
+      if (sourceDatasets && sourceDatasets.length > 0 && !sourceDatasets.includes(dName)) {
+        onDatasetsExpand?.([dName]);
+      }
+    }
   };
 
   const handleRemove = (variableKey: string) => {
