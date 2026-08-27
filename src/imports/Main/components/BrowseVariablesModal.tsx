@@ -1226,17 +1226,33 @@ export function BrowseVariablesField({
   const isControlled = value !== undefined;
   const currentSelected = isControlled ? value : internalSelected;
 
+  // Auto-normalize any legacy short variable names without dataset prefix
+  const normalizedSelected = useMemo(() => {
+    return currentSelected.map((itemKey) => {
+      if (itemKey.includes(".")) return itemKey;
+      if (sourceDatasets && sourceDatasets.length > 0) {
+        const match = variables.find(
+          (v) => v.variable === itemKey && sourceDatasets.includes(v.datasetName)
+        );
+        if (match) return `${match.datasetName}.${match.variable}`;
+      }
+      const anyMatch = variables.find((v) => v.variable === itemKey);
+      if (anyMatch) return `${anyMatch.datasetName}.${anyMatch.variable}`;
+      return itemKey;
+    });
+  }, [currentSelected, sourceDatasets, variables]);
+
   const handleToggle = (variableKey: string) => {
-    const isSel = currentSelected.includes(variableKey) || currentSelected.includes(variableKey.split('.').pop() || '');
+    const isSel = normalizedSelected.includes(variableKey) || normalizedSelected.includes(variableKey.split('.').pop() || '');
     const next = isSel
-      ? currentSelected.filter((v) => v !== variableKey && v !== variableKey.split('.').pop())
-      : [...currentSelected, variableKey];
+      ? normalizedSelected.filter((v) => v !== variableKey && v !== variableKey.split('.').pop())
+      : [...normalizedSelected, variableKey];
     if (onChange) onChange(next);
     if (!isControlled) setInternalSelected(next);
   };
 
   const handleRemove = (variableKey: string) => {
-    const next = currentSelected.filter((v) => v !== variableKey && v !== variableKey.split('.').pop());
+    const next = normalizedSelected.filter((v) => v !== variableKey && v !== variableKey.split('.').pop());
     if (onChange) onChange(next);
     if (!isControlled) setInternalSelected(next);
   };
@@ -1257,7 +1273,7 @@ export function BrowseVariablesField({
         error={error}
         className={className}
         variables={variables}
-        selected={currentSelected}
+        selected={normalizedSelected}
         sourceDatasets={sourceDatasets}
         onToggle={handleToggle}
         onRemove={handleRemove}
@@ -1267,7 +1283,7 @@ export function BrowseVariablesField({
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onConfirm={handleConfirm}
-        initialSelected={currentSelected}
+        initialSelected={normalizedSelected}
         sourceDatasets={sourceDatasets}
         onDatasetsExpand={onDatasetsExpand}
         variables={variables}

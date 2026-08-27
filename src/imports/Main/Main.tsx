@@ -5944,7 +5944,7 @@ const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
       { id: 'compLabel1', label: 'Component Label', value: 'Confirmed objective response rate forest plot', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
       { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
       { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADRESP, ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-      { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'FASFL, COHORT, OCCRVRFL, OCPRVRFL, PARQUAL, PARAMCD', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on forest plot requirements.', inputType: 'multiselect' as const, options: [{label: 'FASFL', value: 'FASFL'}, {label: 'COHORT', value: 'COHORT'}, {label: 'OCCRVRFL', value: 'OCCRVRFL'}, {label: 'OCPRVRFL', value: 'OCPRVRFL'}, {label: 'PARQUAL', value: 'PARQUAL'}, {label: 'PARAMCD', value: 'PARAMCD'}] },
+      { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'ADRESP.FASFL, ADRESP.COHORT, ADRESP.OCCRVRFL, ADRESP.OCPRVRFL, ADRESP.PARQUAL, ADSL.SEX', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on forest plot requirements.', inputType: 'multiselect' as const, options: [{label: 'FASFL', value: 'FASFL'}, {label: 'COHORT', value: 'COHORT'}, {label: 'OCCRVRFL', value: 'OCCRVRFL'}, {label: 'OCPRVRFL', value: 'OCPRVRFL'}, {label: 'PARQUAL', value: 'PARQUAL'}, {label: 'SEX', value: 'SEX'}] },
       { id: 'filter1', label: 'Filter', value: "ADSL.FASFL='Y'; ADRESP.PARAMCD='TRVROV' and ADRESP.PARQUAL='INDEPENDENT ASSESSOR'.", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
     ],
     display_facts: [
@@ -5992,7 +5992,7 @@ const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
       { id: 'compLabel2', label: 'Component Label', value: 'Subgroup Statistics Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
       { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
       { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-      { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'PRSYSG1, AGEGR2, ASEX, ECOBLG1N, PRHER2FL, PRTOPOFL, PRIMMFL', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Subgroup variables verification required.', inputType: 'multiselect' as const, options: [{label: 'PRSYSG1', value: 'PRSYSG1'}, {label: 'AGEGR2', value: 'AGEGR2'}, {label: 'ASEX', value: 'ASEX'}, {label: 'ECOBLG1N', value: 'ECOBLG1N'}, {label: 'PRHER2FL', value: 'PRHER2FL'}, {label: 'PRTOPOFL', value: 'PRTOPOFL'}, {label: 'PRIMMFL', value: 'PRIMMFL'}] },
+      { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'ADSL.PRSYSG1, ADSL.AGEGR2, ADSL.ASEX, ADSL.ECOBLG1N, ADSL.PRHER2FL, ADSL.PRTOPOFL, ADSL.PRIMMFL', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Subgroup variables verification required.', inputType: 'multiselect' as const, options: [{label: 'PRSYSG1', value: 'PRSYSG1'}, {label: 'AGEGR2', value: 'AGEGR2'}, {label: 'ASEX', value: 'ASEX'}, {label: 'ECOBLG1N', value: 'ECOBLG1N'}, {label: 'PRHER2FL', value: 'PRHER2FL'}, {label: 'PRTOPOFL', value: 'PRTOPOFL'}, {label: 'PRIMMFL', value: 'PRIMMFL'}] },
       { id: 'filter2', label: 'Filter', value: "Subgroup rows are expanded from FAS subjects by the fixed page and category order; Male is excluded for Cervical Cancer, Endometrial Cancer, and Ovarian Cancer pages.", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
     ],
     display_facts: [
@@ -6106,12 +6106,7 @@ function MetadataPanel({
   });
   useEffect(() => { sessionStorage.setItem('metadataBlocks', JSON.stringify(blocks)); }, [blocks]);
 
-  const [tableBlocks, setTableBlocks] = useState<any[]>(() => {
-    const stored = loadFromSession('metadataBlocks_table_blocks', METADATA_BLOCK_ITEMS_DATA);
-    if (!Array.isArray(stored)) return METADATA_BLOCK_ITEMS_DATA;
-    return stored;
-  });
-  useEffect(() => { sessionStorage.setItem('metadataBlocks_table_blocks', JSON.stringify(tableBlocks)); }, [tableBlocks]);
+  const [tableBlocks, setTableBlocks] = useState<any[]>(METADATA_BLOCK_ITEMS_DATA);
 
   const handleTableBlockFieldEdit = (blockId: string, fieldId: string, value: string) => {
     setTableBlocks(prev => prev.map(b => b.id !== blockId ? b : {
