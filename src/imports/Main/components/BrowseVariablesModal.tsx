@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { createPortal } from "react-dom";
 import { SearchBar } from "../../../components/ui/SearchBar";
 import { FormItem } from "../../../components/ui/FormItem";
-import { Tag } from "../../../components/ui/Tag";
+import { Tag, GroupTag } from "../../../components/ui/Tag";
 import { Tooltip } from "../../../components/ui/Tooltip";
 import { FilterChip } from "../../../components/ui/FilterChip";
 import { Checkbox } from "../../../components/ui/Checkbox";
@@ -289,6 +289,35 @@ function TruncatedDerivationCell({ text }: { text: string }) {
   );
 }
 
+// ==================== Grouping Helper ====================
+
+export function groupVariablesByDataset(selected: string[]): Array<{ dataset: string; items: Array<{ key: string; label: string }> }> {
+  const datasetMap = new Map<string, Array<{ key: string; label: string }>>();
+
+  for (const key of selected) {
+    if (key.includes(".")) {
+      const [dName, ...rest] = key.split(".");
+      const vName = rest.join(".");
+      if (!datasetMap.has(dName)) {
+        datasetMap.set(dName, []);
+      }
+      datasetMap.get(dName)!.push({ key, label: vName });
+    } else {
+      const fallback = "Variable";
+      if (!datasetMap.has(fallback)) {
+        datasetMap.set(fallback, []);
+      }
+      datasetMap.get(fallback)!.push({ key, label: key });
+    }
+  }
+
+  const groups: Array<{ dataset: string; items: Array<{ key: string; label: string }> }> = [];
+  for (const [dataset, items] of datasetMap.entries()) {
+    groups.push({ dataset, items });
+  }
+  return groups;
+}
+
 // ==================== Inline Variable List ====================
 
 function InlineVariableList({
@@ -396,10 +425,29 @@ function InlineVariableList({
     });
   }, [variables, search, selected, standardFilter, sourceDatasets]);
 
+  const groupedSelected = useMemo(() => groupVariablesByDataset(selected), [selected]);
   const hasMoreThanThree = selected.length > 3;
-  const visibleSelected = hasMoreThanThree && !isExpandedTags
-    ? selected.slice(0, 3)
-    : selected;
+  const visibleGroups = useMemo(() => {
+    if (!hasMoreThanThree || isExpandedTags) return groupedSelected;
+    let count = 0;
+    const truncated: typeof groupedSelected = [];
+    for (const group of groupedSelected) {
+      const remaining = 3 - count;
+      if (remaining <= 0) break;
+      if (group.items.length <= remaining) {
+        truncated.push(group);
+        count += group.items.length;
+      } else {
+        truncated.push({
+          dataset: group.dataset,
+          items: group.items.slice(0, remaining),
+        });
+        count += remaining;
+        break;
+      }
+    }
+    return truncated;
+  }, [groupedSelected, hasMoreThanThree, isExpandedTags]);
 
   let boxClasses = "";
   if (disabled) {
@@ -469,12 +517,19 @@ function InlineVariableList({
               const itemKey = `${v.datasetName}.${v.variable}`;
               const isSelected = selected.includes(itemKey) || selected.includes(v.variable);
               return (
-                <button
+                <div
                   key={v.id}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggle(itemKey);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onToggle(itemKey);
+                    }
                   }}
                   className={`grid w-full grid-cols-[44px_130px_170px_1fr] items-start px-[2px] py-[10px] min-h-[56px] text-left transition-colors border-b border-[#F0F0F0] last:border-b-0 cursor-pointer ${
                     isSelected ? "bg-[#F8EFF4] hover:bg-[#F3E3ED]" : "bg-white hover:bg-[#F8F9F9]"
@@ -500,7 +555,7 @@ function InlineVariableList({
 
                   {/* Derivation with conditional Tooltip only on genuine text truncation */}
                   <TruncatedDerivationCell text={v.derivation} />
-                </button>
+                </div>
               );
             })
           )}
@@ -560,38 +615,22 @@ function InlineVariableList({
               </span>
             ) : (
               <>
-                {visibleSelected.map((v) => {
-                  const parts = v.split(".");
-                  const hasDataset = parts.length > 1;
-                  return (
-                    <Tooltip label={v} key={v}>
-                      <Tag
-                        onClose={disabled ? undefined : (e) => {
-                          e.stopPropagation();
-                          onRemove(v);
-                        }}
-                        className="max-h-[26px] py-[1px] px-[4px]"
-                        style={{ maxWidth: "160px" }}
-                      >
-                        {hasDataset ? (
-                          <>
-                            <span className="text-[#888E8E] font-normal">{parts[0]}.</span>
-                            <span className="font-medium text-text-primary">{parts.slice(1).join(".")}</span>
-                          </>
-                        ) : (
-                          v
-                        )}
-                      </Tag>
-                    </Tooltip>
-                  );
-                })}
+                {visibleGroups.map((group) => (
+                  <GroupTag
+                    key={group.dataset}
+                    prefix={group.dataset}
+                    items={group.items}
+                    disabled={disabled}
+                    onRemoveItem={onRemove}
+                  />
+                ))}
                 {hasMoreThanThree && (
                   <span
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsExpandedTags(!isExpandedTags);
                     }}
-                    className="inline-flex items-center gap-[4px] py-[2px] text-[11px] text-brand-1 cursor-pointer font-medium max-h-[26px] bg-transparent hover:bg-transparent transition-colors"
+                    className="inline-flex items-center gap-[4px] py-[2px] text-[11px] text-brand-1 cursor-pointer font-medium max-h-[26px] bg-transparent hover:bg-transparent transition-colors select-none"
                     style={{ fontFamily: "'PingFang SC', sans-serif" }}
                   >
                     {!isExpandedTags ? `+${selected.length - 3} more...` : "Show less"}
@@ -839,25 +878,14 @@ export function BrowseVariablesModal({
         {selected.length > 0 && (
           <div className="flex shrink-0 flex-wrap items-center gap-[6px] border-b border-graphite-10 bg-bg-panel px-[20px] py-[8px]">
             <span className="t-small text-[#888E8E] shrink-0 mr-[4px]">Selected:</span>
-            {selected.map((itemKey) => {
-              const parts = itemKey.split(".");
-              const hasDataset = parts.length > 1;
-              return (
-                <Tag
-                  key={itemKey}
-                  onClose={() => removeVariable(itemKey)}
-                >
-                  {hasDataset ? (
-                    <>
-                      <span className="text-[#888E8E] font-normal">{parts[0]}.</span>
-                      <span className="font-medium text-text-primary">{parts.slice(1).join(".")}</span>
-                    </>
-                  ) : (
-                    itemKey
-                  )}
-                </Tag>
-              );
-            })}
+            {groupVariablesByDataset(selected).map((group) => (
+              <GroupTag
+                key={group.dataset}
+                prefix={group.dataset}
+                items={group.items}
+                onRemoveItem={removeVariable}
+              />
+            ))}
           </div>
         )}
 
