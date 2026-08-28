@@ -10,20 +10,28 @@ export const AccessGuard: React.FC<AccessGuardProps> = ({
   children, 
   passcode = (import.meta as any).env?.VITE_ACCESS_PASSCODE || '202688' 
 }) => {
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  // 1. 本地开发环境（npm run dev）直接放行，完全不显示密码弹窗，不影响调试
+  if ((import.meta as any).env?.DEV) {
+    return <>{children}</>;
+  }
+
+  // 2. 生产环境使用 localStorage，输入一次后刷新页面 / 开新标签页均无需重复输入
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    try {
+      return localStorage.getItem('demo_review_unlocked') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [inputVal, setInputVal] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-
-  useEffect(() => {
-    if (sessionStorage.getItem('demo_review_unlocked') === 'true') {
-      setIsUnlocked(true);
-    }
-  }, []);
 
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputVal.trim() === passcode) {
-      sessionStorage.setItem('demo_review_unlocked', 'true');
+      try {
+        localStorage.setItem('demo_review_unlocked', 'true');
+      } catch {}
       setIsUnlocked(true);
       setErrorMsg('');
     } else {
