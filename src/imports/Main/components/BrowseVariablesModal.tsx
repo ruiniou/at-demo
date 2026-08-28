@@ -911,7 +911,7 @@ export function BrowseVariablesModal({
 
         {/* Selected Bar */}
         {selected.length > 0 && (
-          <div className="flex shrink-0 flex-wrap items-center gap-[6px] border-b border-graphite-10 bg-bg-panel px-[20px] py-[8px]">
+          <div className="flex shrink-0 flex-wrap items-center gap-[4px] border-b border-graphite-10 bg-bg-panel px-[20px] py-[8px]">
             <span className="t-small text-[#888E8E] shrink-0 mr-[4px]">Selected:</span>
             {groupVariablesByDataset(selected).map((group) => (
               <GroupTag
