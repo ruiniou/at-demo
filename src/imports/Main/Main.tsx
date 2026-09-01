@@ -65,7 +65,6 @@ import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
 import { FilterChip } from "../../components/ui/FilterChip";
-import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { BrowseVariablesField } from "./components/BrowseVariablesModal";
 import { FormTextArea as Textarea } from "../../components/ui/FormTextArea";
 import { AIInputBox } from "../../components/ui/AI-InputBox";
