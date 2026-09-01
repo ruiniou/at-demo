@@ -65,6 +65,7 @@ import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
 import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
 import { FilterChip } from "../../components/ui/FilterChip";
+import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { BrowseVariablesField } from "./components/BrowseVariablesModal";
 import { FormTextArea as Textarea } from "../../components/ui/FormTextArea";
 import { AIInputBox } from "../../components/ui/AI-InputBox";
@@ -1165,6 +1166,7 @@ function ChatConversation({
 }
 
 function AICopilotPanel({
+  variant = 'drawer',
   panelWidth,
   onClose,
   inputValue,
@@ -1189,6 +1191,7 @@ function AICopilotPanel({
   onRenderThumbnailClick,
   quoteInsertRef,
 }: {
+  variant?: 'drawer' | 'incard';
   quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
   panelWidth: number;
   onClose: () => void;
@@ -1396,19 +1399,39 @@ function AICopilotPanel({
       )}
 
       {/* Header */}
-      <div className="bg-transparent h-[48px] shrink-0 flex items-center justify-between px-[12px] mb-[4px]">
-        <div className="flex items-center gap-[8px]">
-          <AtlasLogoIcon className="h-[20px] w-[20px]" color="var(--color-brand-1)" />
+      {variant === 'incard' ? (
+        <PanelHeader
+          title={
+            <div className="flex items-center gap-[8px]">
+              <AtlasLogoIcon className="h-[20px] w-[20px]" color="var(--color-brand-1)" />
+            </div>
+          }
+          actions={
+            <button
+              onClick={onClose}
+              aria-label="Close AI Copilot"
+              title="Close AI Copilot"
+              className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+            >
+              <CloseIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+            </button>
+          }
+        />
+      ) : (
+        <div className="bg-transparent h-[48px] shrink-0 flex items-center justify-between px-[12px] mb-[4px]">
+          <div className="flex items-center gap-[8px]">
+            <AtlasLogoIcon className="h-[20px] w-[20px]" color="var(--color-brand-1)" />
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close AI Copilot"
+            title="Close AI Copilot"
+            className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
+          >
+            <CloseIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          aria-label="Close AI Copilot"
-          title="Close AI Copilot"
-          className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
-        >
-          <CloseIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-        </button>
-      </div>
+      )}
 
       {/* Chat Area with Alpha Mask Fade at Bottom */}
       <div 
@@ -1848,6 +1871,8 @@ function ViewToggleBar({
   onToggleGroupView,
   onOpenDownloadModal,
   onOpenAICopilot,
+  aiLayoutVariant = 'incard',
+  onAiLayoutVariantChange,
 }: {
   treeListOpen: boolean;
   onToggleTreeList: () => void;
@@ -1865,11 +1890,27 @@ function ViewToggleBar({
   onToggleGroupView?: () => void;
   onOpenDownloadModal?: () => void;
   onOpenAICopilot?: () => void;
+  aiLayoutVariant?: 'drawer' | 'incard';
+  onAiLayoutVariantChange?: (v: 'drawer' | 'incard') => void;
 }) {
 
 
   const rightControls = (
     <div className="flex items-center gap-[8px]">
+      {onAiLayoutVariantChange && (
+        <div className="flex items-center gap-[6px] mr-[4px]">
+          <span className="text-[11px] text-text-secondary whitespace-nowrap">AI Layout:</span>
+          <SegmentedControl
+            size="sm"
+            value={aiLayoutVariant}
+            onChange={(val) => onAiLayoutVariantChange(val as 'drawer' | 'incard')}
+            options={[
+              { label: "Drawer", value: "drawer" },
+              { label: "In-Card", value: "incard" },
+            ]}
+          />
+        </div>
+      )}
       {onToggleGroupView && (
         <TooltipText label={groupViewOpen ? "Close Group Code" : "Open Group Code"}>
           <button
@@ -8683,6 +8724,7 @@ function WorkspaceContent({
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
   onOpenDownloadModal?: () => void;
 }) {
+  const [aiLayoutVariant, setAiLayoutVariant] = useState<'drawer' | 'incard'>('incard');
   const [metaDiffItems, setMetaDiffItems] = useState<MetaDiffItem[]>([]);
   const [metaUpdateActive, setMetaUpdateActive] = useState(false);
   const [metaUpdateProcessing, setMetaUpdateProcessing] = useState(false);
@@ -9152,6 +9194,55 @@ function WorkspaceContent({
     setPanelView(v);
   };
 
+  const renderAICopilotComponent = (variant: 'drawer' | 'incard') => {
+    if (!aiCopilotOpen) return null;
+    return (
+      <AICopilotPanel
+        key={`${docType}-${variant}`}
+        variant={variant}
+        quoteInsertRef={quoteInsertRef}
+        panelWidth={aiCopilotWidth}
+        onClose={handleCloseAICopilot}
+        inputValue={aiInputValue}
+        onChangeInputValue={setAiInputValue}
+        focusTrigger={aiInputFocusTrigger}
+        onOpenCodePanel={() => handlePanelViewChange('code')}
+        onOpenSpatialView={() => setRtfOpen(true)}
+        onJumpToMetadata={(blockId, fieldId) => {
+          setMetadataOpen(true);
+          if (fieldId) {
+            setTargetMetadataFieldId(fieldId);
+          }
+        }}
+        docType={docType}
+        metaDiffItems={metaDiffItems}
+        metaUpdateActive={metaUpdateActive}
+        hasPendingCodeChanges={hasPendingCodeChanges}
+        onMetaCancel={() => setMetaUpdateActive(false)}
+        onCodeDiffChange={setHasPendingCodeChanges}
+        onMetaProceed={() => {
+          setMetaUpdateActive(false);
+          setMetaUpdateProcessing(true);
+          setSubmittedDiffItems(metaDiffItems);
+          setTimeout(() => {
+            setBaselineAdvanceTrigger(prev => prev + 1);
+            setTimeout(() => {
+              setMetaUpdateProcessing(false);
+              setSubmittedDiffItems([]);
+            }, 50);
+          }, 2500);
+        }}
+        onAddComponentPrompt={(name, type, inst) => handleGenerateComponentInWorkspace(name, type, inst)}
+        renderPreviewOpen={renderPreviewOpen}
+        activeRenderVersionLabel={activeRenderVersionLabel}
+        onRenderThumbnailClick={(v) => {
+          setActiveRenderVersionLabel(v.versionLabel);
+          setRenderPreviewOpen(true);
+        }}
+      />
+    );
+  };
+
   return (
     <div className="flex h-full min-w-0 flex-1 overflow-hidden bg-bg-panel">
       <div ref={workspaceContainerRef} className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
@@ -9252,6 +9343,8 @@ function WorkspaceContent({
               onToggleGroupView={() => setGroupViewOpen(v => !v)}
               onOpenDownloadModal={onOpenDownloadModal}
               onOpenAICopilot={handleOpenAICopilot}
+              aiLayoutVariant={aiLayoutVariant}
+              onAiLayoutVariantChange={setAiLayoutVariant}
             />
           </div>
 
@@ -9259,217 +9352,259 @@ function WorkspaceContent({
           <div className="relative min-w-0 min-h-0 flex-1 overflow-hidden">
             {/* Code & Shell 统一白卡 (不受 Group View 影响，不被挤压) */}
             {docType === 'listing' ? (
-              <div className="flex min-w-0 min-h-0 h-full w-full overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]" style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}>
-                {panelView !== 'code' && (
-                  <div
-                    style={panelLayout === 'vertical'
-                      ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
-                      : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
-                    }
-                    className={`h-full flex flex-col min-w-0 overflow-hidden bg-white ${panelView === 'both' ? (panelLayout === 'vertical' ? 'border-b border-graphite-10 shrink-0' : 'border-r border-graphite-10 shrink-0') : 'flex-1'}`}
-                  >
-                    <ListingShellPreview
-                      selectedItemName={getSelectedItemName()}
-                      onBlockClick={(blockName) => {
-                        setMetadataOpen(true);
-                        if (blockName) {
-                          setTargetBlockName(blockName);
-                          setTargetBlockTrigger(prev => prev + 1);
-                        }
-                      }}
-                      onMetadataClick={() => setMetadataOpen((open) => !open)}
-                      metadataOpen={metadataOpen}
-                      onCloseMetadata={() => setMetadataOpen(false)}
-                      isLocked={selectedTableLocked}
-                      onPagePreviewChange={handleShellPagePreviewChange}
-                      onOpenAICopilot={handleOpenAICopilotFromShell}
-                      frozenUntilIndex={frozenUntilIndex}
-                      setFrozenUntilIndex={setFrozenUntilIndex}
-                      pageSepActive={pageSepActive}
-                      setPageSepActive={setPageSepActive}
-                      pageColumnCounts={pageColumnCounts}
-                      setPageColumnCounts={setPageColumnCounts}
-                      idpageBaseline={idpageBaseline}
-                      idlistBaseline={idlistBaseline}
-                      onIdpageBaselineChange={setIdpageBaseline}
-                      metadataWidth={metadataWidth}
-                      onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
-                      onMetaDiffChange={setMetaDiffItems}
-                      onRequestUpdateCode={() => {
-                        setMetaUpdateActive(true);
-                        setAiCopilotOpen(true);
-                      }}
-                      onMetaCancel={() => setMetaUpdateActive(false)}
-                      baselineAdvanceTrigger={baselineAdvanceTrigger}
-                      metaUpdateActive={metaUpdateActive}
-                      metaUpdateProcessing={metaUpdateProcessing}
-                      submittedDiffItems={submittedDiffItems}
-                      onReviewItemsChange={setReviewItems}
-                      onQuoteField={handleQuoteField}
-                    />
-                  </div>
-                )}
+              <div className="flex min-w-0 min-h-0 h-full w-full overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]" style={{ flexDirection: 'row' }}>
+                <div
+                  className="flex-1 flex min-w-0 min-h-0 h-full overflow-hidden"
+                  style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}
+                >
+                  {panelView !== 'code' && (
+                    <div
+                      style={panelLayout === 'vertical'
+                        ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
+                        : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
+                      }
+                      className={`h-full flex flex-col min-w-0 overflow-hidden bg-white ${panelView === 'both' ? (panelLayout === 'vertical' ? 'border-b border-graphite-10 shrink-0' : 'border-r border-graphite-10 shrink-0') : 'flex-1'}`}
+                    >
+                      <ListingShellPreview
+                        selectedItemName={getSelectedItemName()}
+                        onBlockClick={(blockName) => {
+                          setMetadataOpen(true);
+                          if (blockName) {
+                            setTargetBlockName(blockName);
+                            setTargetBlockTrigger(prev => prev + 1);
+                          }
+                        }}
+                        onMetadataClick={() => setMetadataOpen((open) => !open)}
+                        metadataOpen={metadataOpen}
+                        onCloseMetadata={() => setMetadataOpen(false)}
+                        isLocked={selectedTableLocked}
+                        onPagePreviewChange={handleShellPagePreviewChange}
+                        onOpenAICopilot={handleOpenAICopilotFromShell}
+                        frozenUntilIndex={frozenUntilIndex}
+                        setFrozenUntilIndex={setFrozenUntilIndex}
+                        pageSepActive={pageSepActive}
+                        setPageSepActive={setPageSepActive}
+                        pageColumnCounts={pageColumnCounts}
+                        setPageColumnCounts={setPageColumnCounts}
+                        idpageBaseline={idpageBaseline}
+                        idlistBaseline={idlistBaseline}
+                        onIdpageBaselineChange={setIdpageBaseline}
+                        metadataWidth={metadataWidth}
+                        onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
+                        onMetaDiffChange={setMetaDiffItems}
+                        onRequestUpdateCode={() => {
+                          setMetaUpdateActive(true);
+                          setAiCopilotOpen(true);
+                        }}
+                        onMetaCancel={() => setMetaUpdateActive(false)}
+                        baselineAdvanceTrigger={baselineAdvanceTrigger}
+                        metaUpdateActive={metaUpdateActive}
+                        metaUpdateProcessing={metaUpdateProcessing}
+                        submittedDiffItems={submittedDiffItems}
+                        onReviewItemsChange={setReviewItems}
+                        onQuoteField={handleQuoteField}
+                      />
+                    </div>
+                  )}
 
-                {panelView === 'both' && (
-                  panelLayout === 'vertical' ? (
-                    <HorizontalWorkspaceDivider
-                      onDragStart={() => setIsResizing(true)}
-                      onDragEnd={() => setIsResizing(false)}
-                      onDrag={(delta) => setShellHeight((h) => {
-                        const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
-                        const minH = 240;
-                        const maxH = containerHeight - 240 - 4;
-                        return clamp(h + delta, minH, Math.max(minH, maxH));
-                      })}
-                    />
-                  ) : (
+                  {panelView === 'both' && (
+                    panelLayout === 'vertical' ? (
+                      <HorizontalWorkspaceDivider
+                        onDragStart={() => setIsResizing(true)}
+                        onDragEnd={() => setIsResizing(false)}
+                        onDrag={(delta) => setShellHeight((h) => {
+                          const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
+                          const minH = 240;
+                          const maxH = containerHeight - 240 - 4;
+                          return clamp(h + delta, minH, Math.max(minH, maxH));
+                        })}
+                      />
+                    ) : (
+                      <WorkspaceDivider
+                        onDragStart={() => setIsResizing(true)}
+                        onDragEnd={() => setIsResizing(false)}
+                        onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, dynamicShellMax))}
+                      />
+                    )
+                  )}
+
+                  {panelView !== 'shell' && (
+                    <div
+                      className={`min-w-0 flex-1 overflow-hidden flex flex-col bg-white ${
+                        panelView === 'both'
+                          ? (panelLayout === 'vertical' ? 'border-t border-solid border-graphite-10' : 'border-l border-solid border-graphite-10')
+                          : ''
+                      }`}
+                      style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
+                    >
+                      <CodePanel
+                        selectedItem={getSelectedItemName()}
+                        docType="listing"
+                        isLocked={selectedTableLocked}
+                        onToggleLock={handleCodePanelToggleLock}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* In-Card AI Column (Variant 2) */}
+                {aiLayoutVariant === 'incard' && aiCopilotOpen && (
+                  <>
                     <WorkspaceDivider
                       onDragStart={() => setIsResizing(true)}
                       onDragEnd={() => setIsResizing(false)}
-                      onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, dynamicShellMax))}
+                      onDrag={(delta) => setAiCopilotWidth((w) => clamp(w - delta, constraints.aiCopilot.min, constraints.aiCopilot.max))}
                     />
-                  )
-                )}
-
-                {panelView !== 'shell' && (
-                  <div
-                    className={`min-w-0 flex-1 overflow-hidden flex flex-col bg-white ${
-                      panelView === 'both'
-                        ? (panelLayout === 'vertical' ? 'border-t border-solid border-graphite-10' : 'border-l border-solid border-graphite-10')
-                        : ''
-                    }`}
-                    style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
-                  >
-                    <CodePanel
-                      selectedItem={getSelectedItemName()}
-                      docType="listing"
-                      isLocked={selectedTableLocked}
-                      onToggleLock={handleCodePanelToggleLock}
-                    />
-                  </div>
+                    <div
+                      style={{ width: `${aiCopilotWidth}px` }}
+                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 border-l border-graphite-10"
+                    >
+                      {renderAICopilotComponent('incard')}
+                    </div>
+                  </>
                 )}
               </div>
             ) : (
               <div
                 className="flex min-w-0 min-h-0 h-full w-full overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]"
-                style={{
-                  flexDirection: panelLayout === 'vertical' ? 'column' : 'row',
-                }}
+                style={{ flexDirection: 'row' }}
               >
-                {shellPreviewOpen && (
-                  <div
-                    className={`h-full flex flex-col min-w-0 overflow-hidden bg-white ${
-                      panelView === 'both'
-                        ? (panelLayout === 'vertical' ? 'border-b border-graphite-10 shrink-0' : 'border-r border-graphite-10 shrink-0')
-                        : 'flex-1'
-                    }`}
-                    style={panelLayout === 'vertical'
-                      ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
-                      : { width: panelView === 'shell' ? undefined : `${shellPreviewWidth}px` }
-                    }
-                  >
-                    <ShellPreview
-                      docType={docType}
-                      isLocked={hasPendingCodeChanges}
-                      onBlockClick={(blockName) => {
-                        setMetadataOpen(true);
-                        if (blockName) {
-                          setTargetBlockName(blockName);
-                          setTargetBlockTrigger(prev => prev + 1);
-                        }
-                      }}
-                      onMetadataClick={() => setMetadataOpen((open) => {
-                        if (!open) {
-                          setHasUnreadMetadataUpdate(false);
-                        }
-                        return !open;
-                      })}
-                      hasUnreadMetadataUpdate={hasUnreadMetadataUpdate}
-                      figureComponents={figureComponents}
-                      setFigureComponents={setFigureComponents}
-                      metadataOpen={metadataOpen}
-                      onMetadataClose={() => setMetadataOpen(false)}
-                      metadataWidth={metadataWidth}
-                      onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
-                      metadataMaxWidth={metadataMaxWidth}
-                      shellPreviewWidth={shellPreviewWidth}
-                      onShellPreviewResize={(newWidth) => setShellPreviewWidth(newWidth)}
-                      shellPreviewMinWidth={constraints.shellPreview.min}
-                      shellPreviewMaxWidth={constraints.shellPreview.max}
-                      isShellFlex={panelView === 'shell'}
-                      selectedItemName={getSelectedItemName()}
-                      onJumpToTL={handleJumpToTL}
-                      showCI={showCI}
-                      showCensorMarks={showCensorMarks}
-                      showMedianLines={showMedianLines}
-                      showRiskTable={showRiskTable}
-                      onShowCIChange={setShowCI}
-                      onShowCensorMarksChange={setShowCensorMarks}
-                      onShowMedianLinesChange={setShowMedianLines}
-                      onShowRiskTableChange={setShowRiskTable}
-                      associatedTLStatus={associatedTLStatus}
-                      rtfOpen={rtfOpen}
-                      onToggleRtf={() => setRtfOpen(v => !v)}
-                      onMetaDiffChange={setMetaDiffItems}
-                      onRequestUpdateCode={() => {
-                        setMetaUpdateActive(true);
-                        setAiCopilotOpen(true);
-                      }}
-                      baselineAdvanceTrigger={baselineAdvanceTrigger}
-                      addComponentTrigger={addComponentTrigger}
-                      metaUpdateActive={metaUpdateActive}
-                      metaUpdateProcessing={metaUpdateProcessing}
-                      submittedDiffItems={submittedDiffItems}
-                      targetFieldId={targetMetadataFieldId || undefined}
-                      onReviewItemsChange={setReviewItems}
-                      onMetaCancel={() => setMetaUpdateActive(false)}
-                      onQuoteField={handleQuoteField}
-                    />
-                  </div>
-                )}
+                <div
+                  className="flex-1 flex min-w-0 min-h-0 h-full overflow-hidden"
+                  style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}
+                >
+                  {shellPreviewOpen && (
+                    <div
+                      className={`h-full flex flex-col min-w-0 overflow-hidden bg-white ${
+                        panelView === 'both'
+                          ? (panelLayout === 'vertical' ? 'border-b border-graphite-10 shrink-0' : 'border-r border-graphite-10 shrink-0')
+                          : 'flex-1'
+                      }`}
+                      style={panelLayout === 'vertical'
+                        ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
+                        : { width: panelView === 'shell' ? undefined : `${shellPreviewWidth}px` }
+                      }
+                    >
+                      <ShellPreview
+                        docType={docType}
+                        isLocked={hasPendingCodeChanges}
+                        onBlockClick={(blockName) => {
+                          setMetadataOpen(true);
+                          if (blockName) {
+                            setTargetBlockName(blockName);
+                            setTargetBlockTrigger(prev => prev + 1);
+                          }
+                        }}
+                        onMetadataClick={() => setMetadataOpen((open) => {
+                          if (!open) {
+                            setHasUnreadMetadataUpdate(false);
+                          }
+                          return !open;
+                        })}
+                        hasUnreadMetadataUpdate={hasUnreadMetadataUpdate}
+                        figureComponents={figureComponents}
+                        setFigureComponents={setFigureComponents}
+                        metadataOpen={metadataOpen}
+                        onMetadataClose={() => setMetadataOpen(false)}
+                        metadataWidth={metadataWidth}
+                        onMetadataResize={(delta) => setMetadataWidth((w) => clamp(w + delta, constraints.metadata.min, metadataMaxWidth))}
+                        metadataMaxWidth={metadataMaxWidth}
+                        shellPreviewWidth={shellPreviewWidth}
+                        onShellPreviewResize={(newWidth) => setShellPreviewWidth(newWidth)}
+                        shellPreviewMinWidth={constraints.shellPreview.min}
+                        shellPreviewMaxWidth={constraints.shellPreview.max}
+                        isShellFlex={panelView === 'shell'}
+                        selectedItemName={getSelectedItemName()}
+                        onJumpToTL={handleJumpToTL}
+                        showCI={showCI}
+                        showCensorMarks={showCensorMarks}
+                        showMedianLines={showMedianLines}
+                        showRiskTable={showRiskTable}
+                        onShowCIChange={setShowCI}
+                        onShowCensorMarksChange={setShowCensorMarks}
+                        onShowMedianLinesChange={setShowMedianLines}
+                        onShowRiskTableChange={setShowRiskTable}
+                        associatedTLStatus={associatedTLStatus}
+                        rtfOpen={rtfOpen}
+                        onToggleRtf={() => setRtfOpen(v => !v)}
+                        onMetaDiffChange={setMetaDiffItems}
+                        onRequestUpdateCode={() => {
+                          setMetaUpdateActive(true);
+                          setAiCopilotOpen(true);
+                        }}
+                        baselineAdvanceTrigger={baselineAdvanceTrigger}
+                        addComponentTrigger={addComponentTrigger}
+                        metaUpdateActive={metaUpdateActive}
+                        metaUpdateProcessing={metaUpdateProcessing}
+                        submittedDiffItems={submittedDiffItems}
+                        targetFieldId={targetMetadataFieldId || undefined}
+                        onReviewItemsChange={setReviewItems}
+                        onMetaCancel={() => setMetaUpdateActive(false)}
+                        onQuoteField={handleQuoteField}
+                      />
+                    </div>
+                  )}
 
-                {/* Shell ↔ Code divider (when both are open) */}
-                {shellPreviewOpen && codeOpen && (
-                  panelLayout === 'vertical' ? (
-                    <HorizontalWorkspaceDivider
-                      onDragStart={() => setIsResizing(true)}
-                      onDragEnd={() => setIsResizing(false)}
-                      onDrag={(delta) => setShellHeight((h) => {
-                        const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
-                        const minH = 240;
-                        const maxH = containerHeight - 240 - 4;
-                        return clamp(h + delta, minH, Math.max(minH, maxH));
-                      })}
-                    />
-                  ) : (
+                  {/* Shell ↔ Code divider (when both are open) */}
+                  {shellPreviewOpen && codeOpen && (
+                    panelLayout === 'vertical' ? (
+                      <HorizontalWorkspaceDivider
+                        onDragStart={() => setIsResizing(true)}
+                        onDragEnd={() => setIsResizing(false)}
+                        onDrag={(delta) => setShellHeight((h) => {
+                          const containerHeight = contentAreaRef.current?.clientHeight ?? 800;
+                          const minH = 240;
+                          const maxH = containerHeight - 240 - 4;
+                          return clamp(h + delta, minH, Math.max(minH, maxH));
+                        })}
+                      />
+                    ) : (
+                      <WorkspaceDivider
+                        onDragStart={() => setIsResizing(true)}
+                        onDragEnd={() => setIsResizing(false)}
+                        onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, dynamicShellMax))}
+                      />
+                    )
+                  )}
+
+                  {codeOpen && (
+                    <div
+                      className={`min-w-0 flex-1 overflow-hidden flex flex-col bg-white ${
+                        panelView === 'both'
+                          ? (panelLayout === 'vertical' ? 'border-t border-solid border-graphite-10' : 'border-l border-solid border-graphite-10')
+                          : ''
+                      }`}
+                      style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
+                    >
+                      <CodePanel
+                        selectedItem={getSelectedItemName()}
+                        docType={docType}
+                        isLocked={selectedTableLocked}
+                        onToggleLock={handleCodePanelToggleLock}
+                        showCI={showCI}
+                        showCensorMarks={showCensorMarks}
+                        showMedianLines={showMedianLines}
+                        showRiskTable={showRiskTable}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* In-Card AI Column (Variant 2) */}
+                {aiLayoutVariant === 'incard' && aiCopilotOpen && (
+                  <>
                     <WorkspaceDivider
                       onDragStart={() => setIsResizing(true)}
                       onDragEnd={() => setIsResizing(false)}
-                      onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, dynamicShellMax))}
+                      onDrag={(delta) => setAiCopilotWidth((w) => clamp(w - delta, constraints.aiCopilot.min, constraints.aiCopilot.max))}
                     />
-                  )
-                )}
-
-                {codeOpen && (
-                  <div
-                    className={`min-w-0 flex-1 overflow-hidden flex flex-col bg-white ${
-                      panelView === 'both'
-                        ? (panelLayout === 'vertical' ? 'border-t border-solid border-graphite-10' : 'border-l border-solid border-graphite-10')
-                        : ''
-                    }`}
-                    style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
-                  >
-                    <CodePanel
-                      selectedItem={getSelectedItemName()}
-                      docType={docType}
-                      isLocked={selectedTableLocked}
-                      onToggleLock={handleCodePanelToggleLock}
-                      showCI={showCI}
-                      showCensorMarks={showCensorMarks}
-                      showMedianLines={showMedianLines}
-                      showRiskTable={showRiskTable}
-                    />
-                  </div>
+                    <div
+                      style={{ width: `${aiCopilotWidth}px` }}
+                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 border-l border-graphite-10"
+                    >
+                      {renderAICopilotComponent('incard')}
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -9490,69 +9625,28 @@ function WorkspaceContent({
           </div>
         </div>
 
-        {/* Middle ↔ AI Copilot Divider */}
-        {aiCopilotOpen && (
-          <WorkspaceDivider
-            onDragStart={() => setIsResizing(true)}
-            onDragEnd={() => setIsResizing(false)}
-            onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
-          />
+        {/* Right Column: AI Copilot Panel (Variant 1: Outside Drawer) */}
+        {aiLayoutVariant === 'drawer' && (
+          <>
+            {aiCopilotOpen && (
+              <WorkspaceDivider
+                onDragStart={() => setIsResizing(true)}
+                onDragEnd={() => setIsResizing(false)}
+                onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
+              />
+            )}
+            <div
+              className="shrink-0 overflow-hidden bg-transparent p-[4px]"
+              style={{
+                width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
+                opacity: aiCopilotOpen ? 1 : 0,
+                transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
+              }}
+            >
+              {renderAICopilotComponent('drawer')}
+            </div>
+          </>
         )}
-
-        {/* Right Column: AI Copilot Panel (Full Height on the Right, Frameless & Transparent) */}
-        <div
-          className="shrink-0 overflow-hidden bg-transparent p-[4px]"
-          style={{
-            width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
-            opacity: aiCopilotOpen ? 1 : 0,
-            transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
-          }}
-        >
-          {aiCopilotOpen && (
-            <AICopilotPanel
-              key={docType}
-              quoteInsertRef={quoteInsertRef}
-              panelWidth={aiCopilotWidth}
-              onClose={handleCloseAICopilot}
-              inputValue={aiInputValue}
-              onChangeInputValue={setAiInputValue}
-              focusTrigger={aiInputFocusTrigger}
-              onOpenCodePanel={() => handlePanelViewChange('code')}
-              onOpenSpatialView={() => setRtfOpen(true)}
-              onJumpToMetadata={(blockId, fieldId) => {
-                setMetadataOpen(true);
-                if (fieldId) {
-                  setTargetMetadataFieldId(fieldId);
-                }
-              }}
-              docType={docType}
-              metaDiffItems={metaDiffItems}
-              metaUpdateActive={metaUpdateActive}
-              hasPendingCodeChanges={hasPendingCodeChanges}
-              onMetaCancel={() => setMetaUpdateActive(false)}
-              onCodeDiffChange={setHasPendingCodeChanges}
-              onMetaProceed={() => {
-                setMetaUpdateActive(false);
-                setMetaUpdateProcessing(true);
-                setSubmittedDiffItems(metaDiffItems);
-                setTimeout(() => {
-                  setBaselineAdvanceTrigger(prev => prev + 1);
-                  setTimeout(() => {
-                    setMetaUpdateProcessing(false);
-                    setSubmittedDiffItems([]);
-                  }, 50);
-                }, 2500);
-              }}
-              onAddComponentPrompt={(name, type, inst) => handleGenerateComponentInWorkspace(name, type, inst)}
-              renderPreviewOpen={renderPreviewOpen}
-              activeRenderVersionLabel={activeRenderVersionLabel}
-              onRenderThumbnailClick={(v) => {
-                setActiveRenderVersionLabel(v.versionLabel);
-                setRenderPreviewOpen(true);
-              }}
-            />
-          )}
-        </div>
       </div>
 
       <WorkspaceModal
