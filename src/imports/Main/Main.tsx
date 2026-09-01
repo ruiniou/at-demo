@@ -1873,8 +1873,6 @@ function ViewToggleBar({
   onOpenDownloadModal,
   onOpenAICopilot,
   aiCopilotOpen = false,
-  aiLayoutVariant = 'incard',
-  onAiLayoutVariantChange,
 }: {
   treeListOpen: boolean;
   onToggleTreeList: () => void;
@@ -1893,27 +1891,11 @@ function ViewToggleBar({
   onOpenDownloadModal?: () => void;
   onOpenAICopilot?: () => void;
   aiCopilotOpen?: boolean;
-  aiLayoutVariant?: 'drawer' | 'incard';
-  onAiLayoutVariantChange?: (v: 'drawer' | 'incard') => void;
 }) {
 
 
   const rightControls = (
     <div className="flex items-center gap-[8px]">
-      {onAiLayoutVariantChange && (
-        <div className="flex items-center gap-[6px] mr-[4px]">
-          <span className="text-[11px] text-text-secondary whitespace-nowrap">AI Layout:</span>
-          <SegmentedControl
-            size="sm"
-            value={aiLayoutVariant}
-            onChange={(val) => onAiLayoutVariantChange(val as 'drawer' | 'incard')}
-            options={[
-              { label: "Drawer", value: "drawer" },
-              { label: "In-Card", value: "incard" },
-            ]}
-          />
-        </div>
-      )}
       {onToggleGroupView && (
         <TooltipText label={groupViewOpen ? "Close Group Code" : "Open Group Code"}>
           <button
@@ -1947,7 +1929,7 @@ function ViewToggleBar({
           onClick={onOpenAICopilot}
           className={`h-[28px] px-[10px] gap-[4px] inline-flex items-center justify-center rounded-[4px] text-[13px] transition-colors active:scale-[0.96] ${
             aiCopilotOpen
-              ? "bg-az-secondary text-brand-1 border border-[#830051]/30 font-medium hover:bg-az-secondary-hover shadow-sm"
+              ? "bg-az-secondary text-brand-1 font-medium hover:bg-az-secondary-hover"
               : "bg-brand-1 text-white font-normal hover:bg-az-warning shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
           }`}
           aria-label="Ask AI"
@@ -9318,6 +9300,20 @@ function WorkspaceContent({
                 ))}
               </div>
             </div>
+
+            {/* Tree List Bottom-Left: AI Layout Switcher */}
+            <div className="shrink-0 flex items-center justify-between px-[10px] py-[8px] border-t border-graphite-10 bg-bg-panel gap-[8px]">
+              <span className="text-[11px] text-text-secondary whitespace-nowrap">AI Layout</span>
+              <SegmentedControl
+                size="sm"
+                value={aiLayoutVariant}
+                onChange={(val) => setAiLayoutVariant(val as 'drawer' | 'incard')}
+                options={[
+                  { label: "Drawer", value: "drawer" },
+                  { label: "In-Card", value: "incard" },
+                ]}
+              />
+            </div>
           </div>
         </div>
 
@@ -9351,8 +9347,6 @@ function WorkspaceContent({
               onOpenDownloadModal={onOpenDownloadModal}
               onOpenAICopilot={handleOpenAICopilot}
               aiCopilotOpen={aiCopilotOpen}
-              aiLayoutVariant={aiLayoutVariant}
-              onAiLayoutVariantChange={setAiLayoutVariant}
             />
           </div>
 
