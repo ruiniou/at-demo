@@ -35,6 +35,8 @@ export interface FilterChipProps extends Omit<React.ButtonHTMLAttributes<HTMLBut
   values?: string[];
   /** Callback when values change in multi-select mode */
   onChangeMulti?: (values: string[]) => void;
+  /** Optional custom class for the label span */
+  labelClassName?: string;
   className?: string;
 }
 
@@ -93,6 +95,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
       multiSelect,
       values,
       onChangeMulti,
+      labelClassName = "font-normal",
       disabled = false,
       onClick,
       className = "",
@@ -286,7 +289,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
 
           {/* Label */}
           <span
-            className={`t-small font-normal leading-[18px] truncate min-w-0 ${colorScheme.text}`}
+            className={`t-small leading-[18px] truncate min-w-0 ${labelClassName} ${colorScheme.text}`}
           >
             {displayLabel}
           </span>

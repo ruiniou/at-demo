@@ -46,6 +46,7 @@ import teamIconUrl from "../../icons/team-line.svg";
 import searchLineIconUrl from "../../icons/search-line.svg";
 import filterIconUrl from "../../icons/filter-line.svg";
 import addLineIconUrl from "../../icons/add-line.svg";
+import arrowRightDoubleLineUrl from "../../icons/arrow-right-double-line.svg";
 import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
 import shiningFillIconUrl from "../../icons/shining-fill.svg";
@@ -1224,6 +1225,13 @@ function AICopilotPanel({
   });
   const [isPending, setIsPending] = useState(false);
 
+  const [sessionOptions] = useState([
+    { label: "Session: Demographics", value: "session-1" },
+    { label: "Session: Safety Analysis", value: "session-2" },
+    { label: "Session: KM Plot Generator", value: "session-3" },
+  ]);
+  const [selectedSession, setSelectedSession] = useState("session-1");
+
   const isSubmitDisabled = isPending || metaUpdateProcessing || (hasPendingCodeChanges && ((metaDiffItems?.length ?? 0) > 0));
 
   const [localInput, setLocalInput] = useState("");
@@ -1401,36 +1409,78 @@ function AICopilotPanel({
       {variant === 'incard' ? (
         <PanelHeader
           title={
-            <div className="flex items-center gap-[8px] min-w-0">
-              <span className="t-small text-text-primary truncate font-medium">Session: Demographics</span>
+            <div className="flex items-center min-w-0 max-w-[260px]">
+              <FilterChip
+                type="Dropdown"
+                variant="select"
+                showIcon={false}
+                labelClassName="t-small-medium font-medium"
+                options={sessionOptions}
+                value={selectedSession}
+                onChange={setSelectedSession}
+                className="max-w-full"
+              />
             </div>
           }
           actions={
-            <TooltipText label="New Session">
-              <button
-                type="button"
-                aria-label="New Session"
-                className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
-              >
-                <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-              </button>
-            </TooltipText>
+            <div className="flex items-center gap-[4px]">
+              <TooltipText label="New Session">
+                <button
+                  type="button"
+                  aria-label="New Session"
+                  className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+                >
+                  <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                </button>
+              </TooltipText>
+              <TooltipText label="Collapse AI Copilot">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  aria-label="Collapse AI Copilot"
+                  className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+                >
+                  <LocalIcon src={arrowRightDoubleLineUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                </button>
+              </TooltipText>
+            </div>
           }
         />
       ) : (
         <div className="bg-transparent h-[48px] shrink-0 flex items-center justify-between px-[12px] mb-[4px]">
-          <div className="flex items-center gap-[8px] min-w-0">
-            <span className="t-small text-text-primary truncate font-medium">Session: Demographics</span>
+          <div className="flex items-center min-w-0 max-w-[260px]">
+            <FilterChip
+              type="Dropdown"
+              variant="select"
+              showIcon={false}
+              labelClassName="t-small-medium font-medium"
+              options={sessionOptions}
+              value={selectedSession}
+              onChange={setSelectedSession}
+              className="max-w-full"
+            />
           </div>
-          <TooltipText label="New Session">
-            <button
-              type="button"
-              aria-label="New Session"
-              className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
-            >
-              <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-            </button>
-          </TooltipText>
+          <div className="flex items-center gap-[4px]">
+            <TooltipText label="New Session">
+              <button
+                type="button"
+                aria-label="New Session"
+                className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
+              >
+                <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+              </button>
+            </TooltipText>
+            <TooltipText label="Collapse AI Copilot">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Collapse AI Copilot"
+                className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
+              >
+                <LocalIcon src={arrowRightDoubleLineUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+              </button>
+            </TooltipText>
+          </div>
         </div>
       )}
 
