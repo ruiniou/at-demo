@@ -9509,7 +9509,7 @@ function WorkspaceContent({
                     />
                     <div
                       style={{ width: `${aiCopilotWidth}px` }}
-                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 border-l border-graphite-10"
+                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 border-l border-graphite-15"
                     >
                       {renderAICopilotComponent('incard')}
                     </div>
@@ -9652,7 +9652,7 @@ function WorkspaceContent({
                     />
                     <div
                       style={{ width: `${aiCopilotWidth}px` }}
-                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 border-l border-graphite-10"
+                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 border-l border-graphite-15"
                     >
                       {renderAICopilotComponent('incard')}
                     </div>
