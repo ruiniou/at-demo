@@ -56,6 +56,7 @@ import focusIconUrl from "../../icons/focus-3-line.svg";
 import barChartBoxAiIconUrl from "../../icons/bar-chart-box-ai-line.svg";
 import imageAiLineIconUrl from "../../icons/image-ai-line.svg";
 import CreateEventModal from "./components/CreateEventModal";
+import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal";
 import { KMPlot } from "./components/KMPlot";
 import { Button } from "../../components/ui/Button";
@@ -1845,6 +1846,8 @@ function ViewToggleBar({
   onToggleRtf,
   groupViewOpen,
   onToggleGroupView,
+  onOpenDownloadModal,
+  onOpenAICopilot,
 }: {
   treeListOpen: boolean;
   onToggleTreeList: () => void;
@@ -1860,6 +1863,8 @@ function ViewToggleBar({
   onToggleRtf?: () => void;
   groupViewOpen?: boolean;
   onToggleGroupView?: () => void;
+  onOpenDownloadModal?: () => void;
+  onOpenAICopilot?: () => void;
 }) {
 
 
@@ -1879,7 +1884,30 @@ function ViewToggleBar({
           </button>
         </TooltipText>
       )}
+      {onOpenDownloadModal && (
+        <TooltipText label="Download SAS Programs">
+          <button
+            type="button"
+            onClick={onOpenDownloadModal}
+            className="relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] border border-graphite-10 bg-white hover:bg-black/5 transition-colors active:scale-[0.96]"
+            aria-label="Download SAS Programs"
+          >
+            <LocalIcon src={downloadIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+          </button>
+        </TooltipText>
+      )}
       <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
+      {onOpenAICopilot && (
+        <Button
+          variant="primary"
+          onClick={onOpenAICopilot}
+          className="h-[28px] px-[10px] gap-[4px] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+          aria-label="Ask AI"
+        >
+          <AtlasLogoIcon className="h-[14px] w-[14px] shrink-0" color="white" />
+          <span>Ask AI</span>
+        </Button>
+      )}
     </div>
   );
 
@@ -8649,56 +8677,20 @@ ods graphics off;`;
   );
 }
 
-function FloatingAICopilotButton({
-  onClick,
-  disabled = false,
-}: {
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  const [isHovered, setIsHovered] = useState(false);
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="group absolute bottom-[24px] right-[24px] z-50 flex h-[40px] items-center justify-center overflow-hidden rounded-full bg-brand-1 shadow-[0px_2px_3px_rgba(0,0,0,0.05),0px_4px_8px_rgba(0,0,0,0.1)] transition-all duration-200 active:scale-[0.96] disabled:pointer-events-none disabled:bg-border-default"
-      style={{
-        width: isHovered ? 102 : 40,
-        paddingLeft: isHovered ? 12 : 0,
-        paddingRight: isHovered ? 12 : 0,
-        gap: isHovered ? 6 : 0,
-      }}
-      aria-label="Open AI Copilot"
-    >
-      <AtlasLogoIcon className="h-[16px] w-[16px] shrink-0" color="white" />
-      <span
-        className="overflow-hidden whitespace-nowrap text-[14px] font-normal leading-[20px] transition-all duration-200"
-        style={{
-          color: "#FFFFFF",
-          maxWidth: isHovered ? 80 : 0,
-          opacity: isHovered ? 1 : 0,
-        }}
-      >
-        Ask AI
-      </span>
-    </button>
-  );
-}
-
 function WorkspaceContent({
   onNavigateHome,
   treeListOpen,
   setTreeListOpen,
   treeListWidth,
   setTreeListWidth,
+  onOpenDownloadModal,
 }: {
   onNavigateHome: () => void;
   treeListOpen: boolean;
   setTreeListOpen: React.Dispatch<React.SetStateAction<boolean>>;
   treeListWidth: number;
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
+  onOpenDownloadModal?: () => void;
 }) {
   const [metaDiffItems, setMetaDiffItems] = useState<MetaDiffItem[]>([]);
   const [metaUpdateActive, setMetaUpdateActive] = useState(false);
@@ -9267,6 +9259,8 @@ function WorkspaceContent({
               onToggleRtf={() => setRtfOpen(v => !v)}
               groupViewOpen={groupViewOpen}
               onToggleGroupView={() => setGroupViewOpen(v => !v)}
+              onOpenDownloadModal={onOpenDownloadModal}
+              onOpenAICopilot={handleOpenAICopilot}
             />
           </div>
 
@@ -9568,8 +9562,6 @@ function WorkspaceContent({
             />
           )}
         </div>
-
-        {!aiCopilotOpen && <FloatingAICopilotButton onClick={handleOpenAICopilot} />}
       </div>
 
       <WorkspaceModal
@@ -9819,9 +9811,10 @@ interface EventCardProps {
   event: EventCardData;
   onEventClick: () => void;
   onUpdateStatus: (id: string, status: EventStatus) => void;
+  onOpenDownload?: () => void;
 }
 
-function EventCard({ event, onEventClick, onUpdateStatus }: EventCardProps) {
+function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload }: EventCardProps) {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const isError = event.status === 'error';
   const isUploading = event.status === ('uploading' as any);
@@ -9845,7 +9838,7 @@ function EventCard({ event, onEventClick, onUpdateStatus }: EventCardProps) {
     { icon: toolCallIconUrl, label: 'AI edit' },
     { icon: teamIconUrl, label: 'Team' },
     { icon: barChartIconUrl, label: 'View charts' },
-    { icon: downloadIconUrl, label: 'Download' },
+    { icon: downloadIconUrl, label: 'Download', onClick: onOpenDownload },
     { icon: deleteBinIconUrl, label: 'Delete' },
   ];
 
@@ -9939,7 +9932,10 @@ function EventCard({ event, onEventClick, onUpdateStatus }: EventCardProps) {
                 {actionButtons.map((btn, i) => (
                   <button
                     key={i}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      btn.onClick?.();
+                    }}
                     className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                     aria-label={btn.label}
                     title={btn.label}
@@ -9974,6 +9970,7 @@ function EventCard({ event, onEventClick, onUpdateStatus }: EventCardProps) {
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowMoreMenu(false);
+                          btn.onClick?.();
                         }}
                         className="w-full text-left px-[12px] py-[6px] t-small text-text-primary hover:bg-bg-panel flex items-center gap-[8px]"
                       >
@@ -10001,6 +9998,7 @@ function HomePage({
   setTreeListOpen,
   treeListWidth,
   setTreeListWidth,
+  onOpenDownloadModal,
 }: {
   onEventClick: () => void;
   onCreateEvent: () => void;
@@ -10010,6 +10008,7 @@ function HomePage({
   setTreeListOpen: React.Dispatch<React.SetStateAction<boolean>>;
   treeListWidth: number;
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
+  onOpenDownloadModal?: (event: EventCardData) => void;
 }) {
   const [searchValue, setSearchValue] = useState('');
   const [isResizing, setIsResizing] = useState(false);
@@ -10147,6 +10146,7 @@ function HomePage({
                     event={event}
                     onEventClick={onEventClick}
                     onUpdateStatus={onUpdateStatus}
+                    onOpenDownload={() => onOpenDownloadModal?.(event)}
                   />
                 ))}
             </div>
@@ -10162,7 +10162,14 @@ export default function Main() {
   const [treeListOpen, setTreeListOpen] = useState(true);
   const [treeListWidth, setTreeListWidth] = useState(240);
   const [createEventModalOpen, setCreateEventModalOpen] = useState(false);
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
+  const [selectedDownloadEvent, setSelectedDownloadEvent] = useState<string | undefined>(undefined);
   const [events, setEvents] = useState<EventCardData[]>(homeEvents);
+
+  const handleOpenDownload = (event?: EventCardData) => {
+    setSelectedDownloadEvent(event ? event.name : undefined);
+    setDownloadModalOpen(true);
+  };
 
   const handleCreateEvent = (eventData: { name: string; project: string; study: string }) => {
     const newEvent: EventCardData = {
@@ -10194,6 +10201,7 @@ export default function Main() {
           setTreeListOpen={setTreeListOpen}
           treeListWidth={treeListWidth}
           setTreeListWidth={setTreeListWidth}
+          onOpenDownloadModal={handleOpenDownload}
         />
       ) : (
         <WorkspaceContent
@@ -10202,12 +10210,17 @@ export default function Main() {
           setTreeListOpen={setTreeListOpen}
           treeListWidth={treeListWidth}
           setTreeListWidth={setTreeListWidth}
+          onOpenDownloadModal={() => handleOpenDownload()}
         />
       )}
       <CreateEventModal
         isOpen={createEventModalOpen}
         onClose={() => setCreateEventModalOpen(false)}
         onCreateEvent={handleCreateEvent}
+      />
+      <DownloadSasProgramsModal
+        isOpen={downloadModalOpen}
+        onClose={() => setDownloadModalOpen(false)}
       />
     </div>
   );
