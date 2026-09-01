@@ -1401,34 +1401,36 @@ function AICopilotPanel({
       {variant === 'incard' ? (
         <PanelHeader
           title={
-            <div className="flex items-center gap-[8px]">
-              <AtlasLogoIcon className="h-[20px] w-[20px]" color="var(--color-brand-1)" />
+            <div className="flex items-center gap-[8px] min-w-0">
+              <span className="t-small text-text-primary truncate font-medium">Session: Demographics</span>
             </div>
           }
           actions={
-            <button
-              onClick={onClose}
-              aria-label="Close AI Copilot"
-              title="Close AI Copilot"
-              className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
-            >
-              <CloseIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-            </button>
+            <TooltipText label="New Session">
+              <button
+                type="button"
+                aria-label="New Session"
+                className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+              >
+                <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+              </button>
+            </TooltipText>
           }
         />
       ) : (
         <div className="bg-transparent h-[48px] shrink-0 flex items-center justify-between px-[12px] mb-[4px]">
-          <div className="flex items-center gap-[8px]">
-            <AtlasLogoIcon className="h-[20px] w-[20px]" color="var(--color-brand-1)" />
+          <div className="flex items-center gap-[8px] min-w-0">
+            <span className="t-small text-text-primary truncate font-medium">Session: Demographics</span>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Close AI Copilot"
-            title="Close AI Copilot"
-            className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
-          >
-            <CloseIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-          </button>
+          <TooltipText label="New Session">
+            <button
+              type="button"
+              aria-label="New Session"
+              className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
+            >
+              <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+            </button>
+          </TooltipText>
         </div>
       )}
 
@@ -1870,6 +1872,7 @@ function ViewToggleBar({
   onToggleGroupView,
   onOpenDownloadModal,
   onOpenAICopilot,
+  aiCopilotOpen = false,
   aiLayoutVariant = 'incard',
   onAiLayoutVariantChange,
 }: {
@@ -1889,6 +1892,7 @@ function ViewToggleBar({
   onToggleGroupView?: () => void;
   onOpenDownloadModal?: () => void;
   onOpenAICopilot?: () => void;
+  aiCopilotOpen?: boolean;
   aiLayoutVariant?: 'drawer' | 'incard';
   onAiLayoutVariantChange?: (v: 'drawer' | 'incard') => void;
 }) {
@@ -1938,15 +1942,19 @@ function ViewToggleBar({
       )}
       <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
       {onOpenAICopilot && (
-        <Button
-          variant="primary"
+        <button
+          type="button"
           onClick={onOpenAICopilot}
-          className="h-[28px] px-[10px] gap-[4px] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+          className={`h-[28px] px-[10px] gap-[4px] inline-flex items-center justify-center rounded-[4px] text-[13px] transition-colors active:scale-[0.96] ${
+            aiCopilotOpen
+              ? "bg-az-secondary text-brand-1 border border-[#830051]/30 font-medium hover:bg-az-secondary-hover shadow-sm"
+              : "bg-brand-1 text-white font-normal hover:bg-az-warning shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+          }`}
           aria-label="Ask AI"
         >
-          <AtlasLogoIcon className="h-[14px] w-[14px] shrink-0" color="white" />
+          <AtlasLogoIcon className="h-[14px] w-[14px] shrink-0" color={aiCopilotOpen ? "var(--color-brand-1)" : "white"} />
           <span>Ask AI</span>
-        </Button>
+        </button>
       )}
     </div>
   );
@@ -9182,7 +9190,7 @@ function WorkspaceContent({
   };
 
   const handleOpenAICopilot = () => {
-    setAiCopilotOpen(true);
+    setAiCopilotOpen((prev) => !prev);
   };
 
   const handleCloseAICopilot = () => {
@@ -9342,6 +9350,7 @@ function WorkspaceContent({
               onToggleGroupView={() => setGroupViewOpen(v => !v)}
               onOpenDownloadModal={onOpenDownloadModal}
               onOpenAICopilot={handleOpenAICopilot}
+              aiCopilotOpen={aiCopilotOpen}
               aiLayoutVariant={aiLayoutVariant}
               onAiLayoutVariantChange={setAiLayoutVariant}
             />
