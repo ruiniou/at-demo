@@ -906,6 +906,7 @@ function ChatConversation({
   renderPreviewOpen,
   activeRenderVersionLabel,
   onRenderThumbnailClick,
+  variant = 'incard',
 }: { 
   messages: Message[]; 
   isPending: boolean; 
@@ -917,6 +918,7 @@ function ChatConversation({
   renderPreviewOpen?: boolean;
   activeRenderVersionLabel?: string;
   onRenderThumbnailClick?: (version: RenderVersion) => void;
+  variant?: 'drawer' | 'incard';
 }) {
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
@@ -956,7 +958,7 @@ function ChatConversation({
               (msg.type === 'ai_complete' || msg.type === 'ai_update_complete') &&
               currentFlatIdx < lastAiCompleteIdx;
             return <React.Fragment key={i}>
-              <div className={`flex flex-col w-full gap-[12px] relative ${msg.type === 'user' ? 'items-end pl-[36px]' : 'items-start'}`}>
+              <div className={`flex flex-col w-full gap-[12px] relative ${msg.type === 'user' ? (variant === 'incard' ? 'items-end pl-[36px]' : 'items-end') : 'items-start'}`}>
                 {msg.type === 'user' && (
                   <AIUserPrompt
                     content={msg.content || ""}
@@ -965,6 +967,7 @@ function ChatConversation({
                     metaDiffItems={msg.metaDiffItems}
                     attachments={msg.attachments}
                     onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
+                    variant={variant}
                     className="w-full"
                   />
                 )}
@@ -1507,6 +1510,7 @@ function AICopilotPanel({
             renderPreviewOpen={renderPreviewOpen}
             activeRenderVersionLabel={activeRenderVersionLabel}
             onRenderThumbnailClick={onRenderThumbnailClick}
+            variant={variant}
           />
         )}
       </div>
