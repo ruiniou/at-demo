@@ -956,7 +956,7 @@ function ChatConversation({
               (msg.type === 'ai_complete' || msg.type === 'ai_update_complete') &&
               currentFlatIdx < lastAiCompleteIdx;
             return <React.Fragment key={i}>
-              <div className={`flex flex-col w-full gap-[12px] relative ${msg.type === 'user' ? 'items-end' : 'items-start'}`}>
+              <div className={`flex flex-col w-full gap-[12px] relative ${msg.type === 'user' ? 'items-end pl-[36px]' : 'items-start'}`}>
                 {msg.type === 'user' && (
                   <AIUserPrompt
                     content={msg.content || ""}
@@ -965,6 +965,7 @@ function ChatConversation({
                     metaDiffItems={msg.metaDiffItems}
                     attachments={msg.attachments}
                     onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
+                    className="w-full"
                   />
                 )}
 
