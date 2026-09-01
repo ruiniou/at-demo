@@ -8437,18 +8437,8 @@ ods graphics off;`;
   };
 
   const [isSaving, setIsSaving] = useState(false);
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
-  const moreDropdownRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (moreDropdownRef.current && !moreDropdownRef.current.contains(event.target as Node)) {
-        setIsMoreOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
   const isCodeUnsaved = userCode !== savedCode;
 
   const handleSave = () => {
@@ -8459,68 +8449,69 @@ ods graphics off;`;
     }, 500);
   };
 
+  const handleCopyCode = () => {
+    navigator.clipboard?.writeText(userCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   const toolbarButtons = (
-    <>
+    <div className="flex items-center gap-[6px]">
+      {/* 1. Save (Secondary style, h-26px) */}
       <Button 
         variant="secondary" 
-        size="sm" 
         disabled={!isCodeUnsaved || isSaving} 
         onClick={handleSave}
-        className="w-[74px]"
+        className="h-[26px] px-[8px] py-0 gap-[4px] rounded-[4px]"
       >
-        <div className="flex items-center gap-[4px] justify-center w-full">
+        <div className="flex items-center gap-[4px] justify-center">
           {isSaving ? (
-            <div className="w-[14px] h-[14px] rounded-full border-[2px] border-transparent border-t-[#B2B4B4] border-l-[#B2B4B4] animate-spin" />
+            <div className="w-[12px] h-[12px] rounded-full border-[2px] border-transparent border-t-[#B2B4B4] border-l-[#B2B4B4] animate-spin" />
           ) : (
             <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color={!isCodeUnsaved ? "#B2B4B4" : "var(--color-text-primary)"} />
           )}
-          <span>{isSaving ? "Saving" : isCodeUnsaved ? "Save" : "Saved"}</span>
+          <span className="text-[12px] leading-[18px] font-normal">{isSaving ? "Saving" : isCodeUnsaved ? "Save" : "Saved"}</span>
         </div>
       </Button>
-      <TooltipText label={isLocked ? "Unlock Table Code" : "Lock Table Code"}>
-        <Button 
-          variant="primary" 
-          size="sm" 
-          onClick={onToggleLock}
-          className="w-[102px]"
+
+      {/* 2. Copy */}
+      <TooltipText label={copied ? "Copied!" : "Copy Code"}>
+        <button
+          onClick={handleCopyCode}
+          className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+          aria-label="Copy Code"
         >
-          <div className="flex items-center gap-[4px] justify-center w-full">
-            <LocalIcon src={isLocked ? lockIconUrl : unlockIconUrl} className="w-[14px] h-[14px]" color="white" />
-            <span>{isLocked ? "Unlock Code" : "Lock Code"}</span>
-          </div>
-        </Button>
-      </TooltipText>
-      <TooltipText label="Copy Code">
-        <button className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" aria-label="Copy Code">
-          <LocalIcon src={copyIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+          <LocalIcon src={copyIconUrl} className="h-[16px] w-[16px]" color={copied ? "#830051" : "var(--color-text-secondary)"} />
         </button>
       </TooltipText>
 
-      <div className="relative flex items-center" ref={moreDropdownRef}>
-        <TooltipText label="More">
-          <button 
-            className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] ${isMoreOpen ? 'bg-black/5' : ''}`}
-            onClick={() => setIsMoreOpen(!isMoreOpen)}
-            aria-label="More"
-          >
-            <LocalIcon src={moreIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-          </button>
-        </TooltipText>
-        
-        {isMoreOpen && (
-          <div className="absolute right-0 top-[100%] z-[100] mt-[4px] flex w-[160px] flex-col gap-[2px] rounded-[4px] border border-form-border bg-white p-[4px] shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
-            <button className="flex items-center gap-[8px] w-full rounded-[2px] px-[8px] py-[6px] hover:bg-black/5 text-left t-small text-text-primary" onClick={() => setIsMoreOpen(false)}>
-              <LocalIcon src={historyIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-              Version History
-            </button>
-            <button className="flex items-center gap-[8px] w-full rounded-[2px] px-[8px] py-[6px] hover:bg-black/5 text-left t-small text-text-primary" onClick={() => setIsMoreOpen(false)}>
-              <LocalIcon src={downloadIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-              Download
-            </button>
-          </div>
-        )}
-      </div>
-    </>
+      {/* 3. Lock */}
+      <TooltipText label={isLocked ? "Unlock Code" : "Lock Code"}>
+        <button
+          onClick={onToggleLock}
+          className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
+            isLocked ? "bg-az-secondary" : "hover:bg-black/5"
+          }`}
+          aria-label={isLocked ? "Unlock Code" : "Lock Code"}
+        >
+          <LocalIcon
+            src={isLocked ? lockIconUrl : unlockIconUrl}
+            className="h-[16px] w-[16px]"
+            color={isLocked ? "#830051" : "var(--color-text-secondary)"}
+          />
+        </button>
+      </TooltipText>
+
+      {/* 4. History */}
+      <TooltipText label="Version History">
+        <button
+          className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+          aria-label="Version History"
+        >
+          <LocalIcon src={historyIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+        </button>
+      </TooltipText>
+    </div>
   );
 
 
