@@ -35,6 +35,40 @@ export type VlmRow = {
   derivation: string;
 };
 
+export type AdamCodeListRow = {
+  id: string;
+  datasetName?: string;
+  codelist: string;
+  codelistName: string;
+  codelistType: string;
+  codelistValue: string;
+  codelistValueLabel: string;
+  cdiscCodelistCode: string;
+  cdiscCodelistValueCode: string;
+  rank: number | string;
+  orderNumber: number | string;
+  extensible: string;
+  definition: string;
+  used: string;
+  deliveryPart1Mini: string;
+  deliveryPart1: string;
+};
+
+export type SdtmCodeListRow = {
+  id: string;
+  datasetName?: string;
+  codelist: string;
+  codelistName: string;
+  codelistValue: string;
+  codelistValueLabel: string;
+  codelistCode: string;
+  codelistValueCode: string;
+  valueOrigin: string;
+  extensible: string;
+  used: string;
+  order: number | string;
+};
+
 export type BrowseVariablesModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -42,6 +76,8 @@ export type BrowseVariablesModalProps = {
   initialSelected: string[];
   variables: Variable[];
   vlmData: VlmRow[];
+  adamCodeListData?: AdamCodeListRow[];
+  sdtmCodeListData?: SdtmCodeListRow[];
   sourceDatasets?: string[];
   onDatasetsExpand?: (newDatasets: string[]) => void;
 };
@@ -205,6 +241,488 @@ const mockVlmData: VlmRow[] = [
   { id: "vlm7", datasetName: "ADTTE", parameterName: "Progression-Free Survival", whereClause: "PARAMCD='PFS'", variableName: "AVAL", type: "Num", length: 8, displayFormat: "8.1", derivation: "Time (months) from randomization to first documented progression or death, whichever occurs first." },
   { id: "vlm8", datasetName: "ADTTE", parameterName: "Overall Survival", whereClause: "PARAMCD='OS'", variableName: "CNSR", type: "Num", length: 8, displayFormat: "1.", derivation: "0 = death confirmed, 1 = alive at last follow-up (censored)." },
   { id: "vlm9", datasetName: "ADTTE", parameterName: "Progression-Free Survival", whereClause: "PARAMCD='PFS'", variableName: "CNSR", type: "Num", length: 8, displayFormat: "1.", derivation: "0 = progression or death, 1 = no event and censored at last assessment." },
+];
+
+export const mockAdamCodeListData: AdamCodeListRow[] = [
+  {
+    id: "adam_cl_1",
+    datasetName: "ADSL",
+    codelist: "AGEGR1",
+    codelistName: "Pooled Age Group 1",
+    codelistType: "User-defined",
+    codelistValue: "<65",
+    codelistValueLabel: "<65 years",
+    cdiscCodelistCode: "C66742",
+    cdiscCodelistValueCode: "C12345",
+    rank: 1,
+    orderNumber: 1,
+    extensible: "No",
+    definition: "Age grouping for non-elderly subjects under 65 years",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_2",
+    datasetName: "ADSL",
+    codelist: "AGEGR1",
+    codelistName: "Pooled Age Group 1",
+    codelistType: "User-defined",
+    codelistValue: "65-74",
+    codelistValueLabel: "65 to 74 years",
+    cdiscCodelistCode: "C66742",
+    cdiscCodelistValueCode: "C12346",
+    rank: 2,
+    orderNumber: 2,
+    extensible: "No",
+    definition: "Age grouping for elderly subjects between 65 and 74 years",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_3",
+    datasetName: "ADSL",
+    codelist: "AGEGR1",
+    codelistName: "Pooled Age Group 1",
+    codelistType: "User-defined",
+    codelistValue: ">=75",
+    codelistValueLabel: "75 years and older",
+    cdiscCodelistCode: "C66742",
+    cdiscCodelistValueCode: "C12347",
+    rank: 3,
+    orderNumber: 3,
+    extensible: "No",
+    definition: "Age grouping for advanced elderly subjects 75 years and older",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_4",
+    datasetName: "ADSL",
+    codelist: "BMIGR1",
+    codelistName: "Baseline BMI Group 1",
+    codelistType: "User-defined",
+    codelistValue: "<25",
+    codelistValueLabel: "Underweight / Normal (<25 kg/m2)",
+    cdiscCodelistCode: "-",
+    cdiscCodelistValueCode: "-",
+    rank: 1,
+    orderNumber: 1,
+    extensible: "No",
+    definition: "Baseline Body Mass Index less than 25 kg/m2",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_5",
+    datasetName: "ADSL",
+    codelist: "BMIGR1",
+    codelistName: "Baseline BMI Group 1",
+    codelistType: "User-defined",
+    codelistValue: "25-<30",
+    codelistValueLabel: "Overweight (25 to <30 kg/m2)",
+    cdiscCodelistCode: "-",
+    cdiscCodelistValueCode: "-",
+    rank: 2,
+    orderNumber: 2,
+    extensible: "No",
+    definition: "Baseline Body Mass Index between 25 and 30 kg/m2",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_6",
+    datasetName: "ADSL",
+    codelist: "BMIGR1",
+    codelistName: "Baseline BMI Group 1",
+    codelistType: "User-defined",
+    codelistValue: ">=30",
+    codelistValueLabel: "Obese (>=30 kg/m2)",
+    cdiscCodelistCode: "-",
+    cdiscCodelistValueCode: "-",
+    rank: 3,
+    orderNumber: 3,
+    extensible: "No",
+    definition: "Baseline Body Mass Index greater than or equal to 30 kg/m2",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_7",
+    datasetName: "ADAE",
+    codelist: "AREL",
+    codelistName: "Analysis AE Causality Scale",
+    codelistType: "CDISC CT",
+    codelistValue: "NOT RELATED",
+    codelistValueLabel: "Not Related to Study Drug",
+    cdiscCodelistCode: "C66768",
+    cdiscCodelistValueCode: "C53256",
+    rank: 1,
+    orderNumber: 1,
+    extensible: "No",
+    definition: "Investigator assessed relationship as not related to study intervention",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_8",
+    datasetName: "ADAE",
+    codelist: "AREL",
+    codelistName: "Analysis AE Causality Scale",
+    codelistType: "CDISC CT",
+    codelistValue: "POSSIBLY RELATED",
+    codelistValueLabel: "Possibly Related to Study Drug",
+    cdiscCodelistCode: "C66768",
+    cdiscCodelistValueCode: "C53257",
+    rank: 2,
+    orderNumber: 2,
+    extensible: "No",
+    definition: "Investigator assessed relationship as possibly related to study intervention",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_9",
+    datasetName: "ADAE",
+    codelist: "AREL",
+    codelistName: "Analysis AE Causality Scale",
+    codelistType: "CDISC CT",
+    codelistValue: "PROBABLY RELATED",
+    codelistValueLabel: "Probably Related to Study Drug",
+    cdiscCodelistCode: "C66768",
+    cdiscCodelistValueCode: "C53258",
+    rank: 3,
+    orderNumber: 3,
+    extensible: "No",
+    definition: "Investigator assessed relationship as probably related to study intervention",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_10",
+    datasetName: "ADEXSUM",
+    codelist: "ATOXGR",
+    codelistName: "NCI CTCAE v5.0 Toxicity Grade",
+    codelistType: "CDISC CT",
+    codelistValue: "1",
+    codelistValueLabel: "Grade 1 (Mild)",
+    cdiscCodelistCode: "C87162",
+    cdiscCodelistValueCode: "C49760",
+    rank: 1,
+    orderNumber: 1,
+    extensible: "No",
+    definition: "Mild; asymptomatic or mild symptoms; clinical or diagnostic observations only",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_11",
+    datasetName: "ADEXSUM",
+    codelist: "ATOXGR",
+    codelistName: "NCI CTCAE v5.0 Toxicity Grade",
+    codelistType: "CDISC CT",
+    codelistValue: "2",
+    codelistValueLabel: "Grade 2 (Moderate)",
+    cdiscCodelistCode: "C87162",
+    cdiscCodelistValueCode: "C49761",
+    rank: 2,
+    orderNumber: 2,
+    extensible: "No",
+    definition: "Moderate; minimal, local or noninvasive intervention indicated",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_12",
+    datasetName: "ADEXSUM",
+    codelist: "ATOXGR",
+    codelistName: "NCI CTCAE v5.0 Toxicity Grade",
+    codelistType: "CDISC CT",
+    codelistValue: "3",
+    codelistValueLabel: "Grade 3 (Severe)",
+    cdiscCodelistCode: "C87162",
+    cdiscCodelistValueCode: "C49762",
+    rank: 3,
+    orderNumber: 3,
+    extensible: "No",
+    definition: "Severe or medically significant but not immediately life-threatening; hospitalization indicated",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_13",
+    datasetName: "ADTTE",
+    codelist: "CNSR",
+    codelistName: "Time-to-Event Censor Flag",
+    codelistType: "CDISC CT",
+    codelistValue: "0",
+    codelistValueLabel: "Event Occurred",
+    cdiscCodelistCode: "C81223",
+    cdiscCodelistValueCode: "C81224",
+    rank: 0,
+    orderNumber: 1,
+    extensible: "No",
+    definition: "Analysis event of interest occurred during observation window",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+  {
+    id: "adam_cl_14",
+    datasetName: "ADTTE",
+    codelist: "CNSR",
+    codelistName: "Time-to-Event Censor Flag",
+    codelistType: "CDISC CT",
+    codelistValue: "1",
+    codelistValueLabel: "Censored",
+    cdiscCodelistCode: "C81223",
+    cdiscCodelistValueCode: "C81225",
+    rank: 1,
+    orderNumber: 2,
+    extensible: "No",
+    definition: "Subject censored at last known event-free contact date",
+    used: "Yes",
+    deliveryPart1Mini: "Yes",
+    deliveryPart1: "Required",
+  },
+];
+
+export const mockSdtmCodeListData: SdtmCodeListRow[] = [
+  {
+    id: "sdtm_cl_1",
+    datasetName: "DM",
+    codelist: "SEX",
+    codelistName: "Sex",
+    codelistValue: "M",
+    codelistValueLabel: "Male",
+    codelistCode: "C66731",
+    codelistValueCode: "C20197",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 1,
+  },
+  {
+    id: "sdtm_cl_2",
+    datasetName: "DM",
+    codelist: "SEX",
+    codelistName: "Sex",
+    codelistValue: "F",
+    codelistValueLabel: "Female",
+    codelistCode: "C66731",
+    codelistValueCode: "C16576",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 2,
+  },
+  {
+    id: "sdtm_cl_3",
+    datasetName: "DM",
+    codelist: "SEX",
+    codelistName: "Sex",
+    codelistValue: "U",
+    codelistValueLabel: "Unknown",
+    codelistCode: "C66731",
+    codelistValueCode: "C17998",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 3,
+  },
+  {
+    id: "sdtm_cl_4",
+    datasetName: "DM",
+    codelist: "NY",
+    codelistName: "No Yes Response",
+    codelistValue: "Y",
+    codelistValueLabel: "Yes",
+    codelistCode: "C66741",
+    codelistValueCode: "C49488",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 1,
+  },
+  {
+    id: "sdtm_cl_5",
+    datasetName: "DM",
+    codelist: "NY",
+    codelistName: "No Yes Response",
+    codelistValue: "N",
+    codelistValueLabel: "No",
+    codelistCode: "C66741",
+    codelistValueCode: "C49487",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 2,
+  },
+  {
+    id: "sdtm_cl_6",
+    datasetName: "DM",
+    codelist: "RACE",
+    codelistName: "Race",
+    codelistValue: "ASIAN",
+    codelistValueLabel: "Asian",
+    codelistCode: "C74457",
+    codelistValueCode: "C41260",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 1,
+  },
+  {
+    id: "sdtm_cl_7",
+    datasetName: "DM",
+    codelist: "RACE",
+    codelistName: "Race",
+    codelistValue: "WHITE",
+    codelistValueLabel: "White",
+    codelistCode: "C74457",
+    codelistValueCode: "C41261",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 2,
+  },
+  {
+    id: "sdtm_cl_8",
+    datasetName: "DM",
+    codelist: "RACE",
+    codelistName: "Race",
+    codelistValue: "BLACK OR AFRICAN AMERICAN",
+    codelistValueLabel: "Black or African American",
+    codelistCode: "C74457",
+    codelistValueCode: "C16352",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 3,
+  },
+  {
+    id: "sdtm_cl_9",
+    datasetName: "AE",
+    codelist: "AESEV",
+    codelistName: "Severity/Intensity Scale",
+    codelistValue: "MILD",
+    codelistValueLabel: "Mild",
+    codelistCode: "C66769",
+    codelistValueCode: "C49760",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 1,
+  },
+  {
+    id: "sdtm_cl_10",
+    datasetName: "AE",
+    codelist: "AESEV",
+    codelistName: "Severity/Intensity Scale",
+    codelistValue: "MODERATE",
+    codelistValueLabel: "Moderate",
+    codelistCode: "C66769",
+    codelistValueCode: "C49761",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 2,
+  },
+  {
+    id: "sdtm_cl_11",
+    datasetName: "AE",
+    codelist: "AESEV",
+    codelistName: "Severity/Intensity Scale",
+    codelistValue: "SEVERE",
+    codelistValueLabel: "Severe",
+    codelistCode: "C66769",
+    codelistValueCode: "C49762",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 3,
+  },
+  {
+    id: "sdtm_cl_12",
+    datasetName: "AE",
+    codelist: "AEOUT",
+    codelistName: "Outcome of Adverse Event",
+    codelistValue: "RECOVERED/RESOLVED",
+    codelistValueLabel: "Recovered/Resolved",
+    codelistCode: "C66768",
+    codelistValueCode: "C49498",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 1,
+  },
+  {
+    id: "sdtm_cl_13",
+    datasetName: "AE",
+    codelist: "AEOUT",
+    codelistName: "Outcome of Adverse Event",
+    codelistValue: "FATAL",
+    codelistValueLabel: "Fatal",
+    codelistCode: "C66768",
+    codelistValueCode: "C48275",
+    valueOrigin: "CRF",
+    extensible: "No",
+    used: "Yes",
+    order: 2,
+  },
+  {
+    id: "sdtm_cl_14",
+    datasetName: "VS",
+    codelist: "VSSTRESU",
+    codelistName: "Vital Signs Standard Units",
+    codelistValue: "mmHg",
+    codelistValueLabel: "Millimeter of Mercury",
+    codelistCode: "C66770",
+    codelistValueCode: "C49673",
+    valueOrigin: "Assigned",
+    extensible: "Yes",
+    used: "Yes",
+    order: 1,
+  },
+  {
+    id: "sdtm_cl_15",
+    datasetName: "VS",
+    codelist: "VSSTRESU",
+    codelistName: "Vital Signs Standard Units",
+    codelistValue: "beats/min",
+    codelistValueLabel: "Beats per Minute",
+    codelistCode: "C66770",
+    codelistValueCode: "C49674",
+    valueOrigin: "Assigned",
+    extensible: "Yes",
+    used: "Yes",
+    order: 2,
+  },
+  {
+    id: "sdtm_cl_16",
+    datasetName: "VS",
+    codelist: "VSSTRESU",
+    codelistName: "Vital Signs Standard Units",
+    codelistValue: "C",
+    codelistValueLabel: "Degrees Celsius",
+    codelistCode: "C66770",
+    codelistValueCode: "C42538",
+    valueOrigin: "Assigned",
+    extensible: "Yes",
+    used: "Yes",
+    order: 3,
+  },
 ];
 
 // ==================== Icons ====================
@@ -691,7 +1209,6 @@ function StackLineIcon({ className = "size-[16px]" }: { className?: string }) {
     </svg>
   );
 }
-
 function Database2LineIcon({ className = "size-[16px]" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -709,10 +1226,12 @@ export function BrowseVariablesModal({
   initialSelected,
   variables,
   vlmData,
+  adamCodeListData = mockAdamCodeListData,
+  sdtmCodeListData = mockSdtmCodeListData,
   sourceDatasets = [],
   onDatasetsExpand,
 }: BrowseVariablesModalProps) {
-  const [activeTab, setActiveTab] = useState<"all" | "vlm">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "vlm" | "codelist">("all");
   const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("All");
   const [selectedDatasets, setSelectedDatasets] = useState<string[]>([]);
   const [search, setSearch] = useState("");
@@ -823,6 +1342,46 @@ export function BrowseVariablesModal({
     );
   }, [vlmData, search]);
 
+  const filteredAdamCodeList = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return adamCodeListData.filter((row) => {
+      if (selectedDatasets.length > 0 && row.datasetName && !selectedDatasets.includes(row.datasetName)) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        row.codelist.toLowerCase().includes(q) ||
+        row.codelistName.toLowerCase().includes(q) ||
+        row.codelistValue.toLowerCase().includes(q) ||
+        row.codelistValueLabel.toLowerCase().includes(q) ||
+        row.cdiscCodelistCode.toLowerCase().includes(q) ||
+        row.cdiscCodelistValueCode.toLowerCase().includes(q) ||
+        row.definition.toLowerCase().includes(q) ||
+        (row.datasetName && row.datasetName.toLowerCase().includes(q))
+      );
+    });
+  }, [adamCodeListData, search, selectedDatasets]);
+
+  const filteredSdtmCodeList = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return sdtmCodeListData.filter((row) => {
+      if (selectedDatasets.length > 0 && row.datasetName && !selectedDatasets.includes(row.datasetName)) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        row.codelist.toLowerCase().includes(q) ||
+        row.codelistName.toLowerCase().includes(q) ||
+        row.codelistValue.toLowerCase().includes(q) ||
+        row.codelistValueLabel.toLowerCase().includes(q) ||
+        row.codelistCode.toLowerCase().includes(q) ||
+        row.codelistValueCode.toLowerCase().includes(q) ||
+        row.valueOrigin.toLowerCase().includes(q) ||
+        (row.datasetName && row.datasetName.toLowerCase().includes(q))
+      );
+    });
+  }, [sdtmCodeListData, search, selectedDatasets]);
+
   const newlyAddedDatasets = useMemo(() => {
     if (!sourceDatasets || sourceDatasets.length === 0) return [];
     const currentSelectedDatasets = Array.from(
@@ -847,7 +1406,7 @@ export function BrowseVariablesModal({
       <div className="fixed inset-0 bg-black/40 pointer-events-auto cursor-pointer" onClick={onClose} aria-label="Close modal" />
 
       {/* Modal */}
-      <div className="relative z-10 flex h-[600px] w-[800px] max-w-[90vw] max-h-[85vh] flex-col rounded-[8px] bg-white shadow-[0px_8px_24px_rgba(0,0,0,0.15)] pointer-events-auto">
+      <div className="relative z-10 flex h-[620px] w-[940px] max-w-[94vw] max-h-[88vh] flex-col rounded-[8px] bg-white shadow-[0px_8px_24px_rgba(0,0,0,0.15)] pointer-events-auto">
         {/* Header */}
         <div className="flex h-[48px] shrink-0 items-center justify-between border-b border-[#D8DADA] px-[20px]">
           <h2 className="t-heading text-text-primary">Browse All Variables</h2>
@@ -866,7 +1425,13 @@ export function BrowseVariablesModal({
           <SearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Search Variables..."
+            placeholder={
+              activeTab === "codelist"
+                ? "Search Code Lists (Name, Value, Label, NCI Code)..."
+                : activeTab === "vlm"
+                ? "Search VLM (Variable, Parameter, Dataset)..."
+                : "Search Variables..."
+            }
             background="light"
             className="flex-1 w-full"
           />
@@ -882,7 +1447,9 @@ export function BrowseVariablesModal({
             onChange={(val) => {
               const nextVal = val as "All" | "ADaM" | "SDTM";
               setStandardFilter(nextVal);
-              if (nextVal !== "ADaM" && activeTab === "vlm") {
+              if (nextVal === "All") {
+                setActiveTab("all");
+              } else if (nextVal === "SDTM" && activeTab === "vlm") {
                 setActiveTab("all");
               }
               // Reset dataset filter when standard filter changes if current selections are outside new standard
@@ -924,11 +1491,17 @@ export function BrowseVariablesModal({
           </div>
         )}
 
-        {/* Tabs: Positioned below Selected Bar and above Table (shown when ADaM is selected) */}
-        {standardFilter === "ADaM" && (
+        {/* Tabs: Shown when standardFilter is ADaM (All Variables / VLM / Code List) or SDTM (All Variables / Code List), hidden when All Standards */}
+        {(standardFilter === "ADaM" || standardFilter === "SDTM") && (
           <div className="flex shrink-0 h-[38px] items-center border-b border-[#D8DADA] px-[20px] bg-white gap-[16px]">
-            {(["all", "vlm"] as const).map((tab, idx) => {
+            {(
+              standardFilter === "ADaM"
+                ? (["all", "vlm", "codelist"] as const)
+                : (["all", "codelist"] as const)
+            ).map((tab, idx) => {
               const isActive = activeTab === tab;
+              const tabLabel =
+                tab === "all" ? "All Variables" : tab === "vlm" ? "VLM" : "Code List";
               return (
                 <button
                   key={tab}
@@ -944,7 +1517,7 @@ export function BrowseVariablesModal({
                   }`}
                 >
                   <span className={`t-small font-medium ${isActive ? "text-[#830051]" : "text-text-primary"}`}>
-                    {tab === "all" ? "All Variables" : "VLM"}
+                    {tabLabel}
                   </span>
                 </button>
               );
@@ -994,22 +1567,22 @@ export function BrowseVariablesModal({
                     </div>
                   </th>
                   <th className="w-[100px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Dataset</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Dataset</span>
                   </th>
                   <th className="w-[120px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Variable</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Variable</span>
                   </th>
                   <th className="px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Label</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Label</span>
                   </th>
                   <th className="w-[80px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Type/Len</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Type/Len</span>
                   </th>
                   <th className="w-[80px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Format</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Format</span>
                   </th>
                   <th className="w-[180px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Derivation</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Derivation</span>
                   </th>
                 </tr>
               </thead>
@@ -1037,12 +1610,15 @@ export function BrowseVariablesModal({
                   filteredVariables.map((v) => {
                     const itemKey = `${v.datasetName}.${v.variable}`;
                     const isSelected = selected.includes(itemKey) || selected.includes(v.variable);
+
                     return (
                       <tr
                         key={v.id}
-                        className={`border-b border-graphite-10 hover:bg-bg-panel ${isSelected ? "bg-[#F4E8EE]/40" : ""}`}
+                        className={`border-b border-graphite-10 hover:bg-bg-panel transition-colors ${
+                          isSelected ? "bg-bg-panel" : ""
+                        }`}
                       >
-                        <td className="px-[12px] py-[6px]">
+                        <td className="w-[36px] px-[12px] py-[6px]">
                           <div className="flex items-center justify-center">
                             <Checkbox
                               checked={isSelected}
@@ -1054,7 +1630,7 @@ export function BrowseVariablesModal({
                           <span className="t-small whitespace-nowrap text-text-primary">{v.datasetName}</span>
                         </td>
                         <td className="px-[8px] py-[6px]">
-                          <div className="flex items-center gap-[4px]">
+                          <div className="flex items-center gap-[6px]">
                             <span className="t-small font-medium whitespace-nowrap text-text-primary">{v.variable}</span>
                             {v.hasVlm && (
                               <button
@@ -1092,25 +1668,25 @@ export function BrowseVariablesModal({
               <thead className="sticky top-0 z-10 bg-bg-panel">
                 <tr className="border-b border-[#D8DADA]">
                   <th className="w-[100px] px-[12px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Dataset</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Dataset</span>
                   </th>
                   <th className="w-[160px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Parameter Name</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Parameter Name</span>
                   </th>
                   <th className="w-[140px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Where Clause</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Where Clause</span>
                   </th>
                   <th className="w-[100px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Variable</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Variable</span>
                   </th>
                   <th className="w-[80px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Type/Len</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Type/Len</span>
                   </th>
                   <th className="w-[80px] px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Format</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Format</span>
                   </th>
                   <th className="px-[8px] py-[8px] text-left">
-                    <span className="t-small font-medium text-[#888E8E]">Derivation</span>
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Derivation</span>
                   </th>
                 </tr>
               </thead>
@@ -1127,7 +1703,7 @@ export function BrowseVariablesModal({
                   filteredVlm.map((row) => (
                     <tr
                       key={row.id}
-                      className="border-b border-graphite-10 hover:bg-bg-panel"
+                      className="border-b border-graphite-10 hover:bg-bg-panel transition-colors"
                     >
                       <td className="px-[12px] py-[6px]">
                         <span className="t-small whitespace-nowrap text-text-primary">{row.datasetName}</span>
@@ -1136,7 +1712,7 @@ export function BrowseVariablesModal({
                         <span className="t-small text-text-primary whitespace-normal">{row.parameterName}</span>
                       </td>
                       <td className="px-[8px] py-[6px]">
-                        <span className="t-code text-text-primary">{row.whereClause}</span>
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.whereClause}</span>
                       </td>
                       <td className="px-[8px] py-[6px]">
                         <span className="t-small font-medium whitespace-nowrap text-text-primary">{row.variableName}</span>
@@ -1149,6 +1725,206 @@ export function BrowseVariablesModal({
                       </td>
                       <td className="px-[8px] py-[6px]">
                         <DerivationCell text={row.derivation} />
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
+
+          {activeTab === "codelist" && standardFilter === "ADaM" && (
+            <table className="w-full border-collapse min-w-[1400px]">
+              <thead className="sticky top-0 z-10 bg-bg-panel">
+                <tr className="border-b border-[#D8DADA]">
+                  <th className="w-[110px] px-[12px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist</span>
+                  </th>
+                  <th className="w-[160px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist Name</span>
+                  </th>
+                  <th className="w-[110px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist Type</span>
+                  </th>
+                  <th className="w-[110px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist Value</span>
+                  </th>
+                  <th className="w-[160px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist Value Label</span>
+                  </th>
+                  <th className="w-[140px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">CDISC_Codelist Code</span>
+                  </th>
+                  <th className="w-[180px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">CDISC Codelist Value Code</span>
+                  </th>
+                  <th className="w-[70px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Rank</span>
+                  </th>
+                  <th className="w-[100px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">OrderNumber</span>
+                  </th>
+                  <th className="w-[80px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Extensible</span>
+                  </th>
+                  <th className="min-w-[180px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Definition</span>
+                  </th>
+                  <th className="w-[70px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">used?</span>
+                  </th>
+                  <th className="w-[140px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Delivery_Part1_mini</span>
+                  </th>
+                  <th className="w-[120px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Delivery_Part1</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAdamCodeList.length === 0 ? (
+                  <tr>
+                    <td colSpan={14} className="px-[20px] py-[32px] text-center">
+                      <p className="t-small text-[#888E8E]">
+                        No Results Found
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAdamCodeList.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-b border-graphite-10 hover:bg-bg-panel transition-colors"
+                    >
+                      <td className="px-[12px] py-[6px]">
+                        <span className="t-small font-medium whitespace-nowrap text-text-primary">{row.codelist}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small text-text-primary whitespace-normal">{row.codelistName}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.codelistType}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small font-medium whitespace-nowrap text-text-primary">{row.codelistValue}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small text-text-primary whitespace-normal">{row.codelistValueLabel}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.cdiscCodelistCode}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.cdiscCodelistValueCode}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.rank}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.orderNumber}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.extensible}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <DerivationCell text={row.definition} />
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.used}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.deliveryPart1Mini}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.deliveryPart1}</span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
+
+          {activeTab === "codelist" && standardFilter === "SDTM" && (
+            <table className="w-full border-collapse min-w-[1100px]">
+              <thead className="sticky top-0 z-10 bg-bg-panel">
+                <tr className="border-b border-[#D8DADA]">
+                  <th className="w-[110px] px-[12px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist</span>
+                  </th>
+                  <th className="w-[160px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist Name</span>
+                  </th>
+                  <th className="w-[120px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist Value</span>
+                  </th>
+                  <th className="w-[180px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist Value Label</span>
+                  </th>
+                  <th className="w-[120px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist Code</span>
+                  </th>
+                  <th className="w-[140px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Codelist Value Code</span>
+                  </th>
+                  <th className="w-[110px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Value Origin</span>
+                  </th>
+                  <th className="w-[90px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Extensible</span>
+                  </th>
+                  <th className="w-[70px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Used</span>
+                  </th>
+                  <th className="w-[70px] px-[8px] py-[8px] text-left">
+                    <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Order</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSdtmCodeList.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-[20px] py-[32px] text-center">
+                      <p className="t-small text-[#888E8E]">
+                        No Results Found
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSdtmCodeList.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-b border-graphite-10 hover:bg-bg-panel transition-colors"
+                    >
+                      <td className="px-[12px] py-[6px]">
+                        <span className="t-small font-medium whitespace-nowrap text-text-primary">{row.codelist}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small text-text-primary whitespace-normal">{row.codelistName}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small font-medium whitespace-nowrap text-text-primary">{row.codelistValue}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small text-text-primary whitespace-normal">{row.codelistValueLabel}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.codelistCode}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.codelistValueCode}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.valueOrigin}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.extensible}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.used}</span>
+                      </td>
+                      <td className="px-[8px] py-[6px]">
+                        <span className="t-small whitespace-nowrap text-text-primary">{row.order}</span>
                       </td>
                     </tr>
                   ))
@@ -1221,6 +1997,8 @@ export interface BrowseVariablesFieldProps {
   className?: string;
   variables?: Variable[];
   vlmData?: VlmRow[];
+  adamCodeListData?: AdamCodeListRow[];
+  sdtmCodeListData?: SdtmCodeListRow[];
 }
 
 export function BrowseVariablesField({
@@ -1238,6 +2016,8 @@ export function BrowseVariablesField({
   className = "",
   variables = mockVariables,
   vlmData = mockVlmData,
+  adamCodeListData = mockAdamCodeListData,
+  sdtmCodeListData = mockSdtmCodeListData,
 }: BrowseVariablesFieldProps) {
   const [internalSelected, setInternalSelected] = useState<string[]>(initialSelected);
   const [modalOpen, setModalOpen] = useState(false);
@@ -1314,6 +2094,8 @@ export function BrowseVariablesField({
         onDatasetsExpand={onDatasetsExpand}
         variables={variables}
         vlmData={vlmData}
+        adamCodeListData={adamCodeListData}
+        sdtmCodeListData={sdtmCodeListData}
       />
     </>
   );
