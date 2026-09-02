@@ -131,6 +131,10 @@ CRA将CRF数据与原始资料（医疗记录）对比核查的活动。
 
 ## T
 
+**Tifo（Title & Footnote）** ⭐
+统计编程行业标准的Shell输入格式之一，与Shell PDF、MOSAIC ARS JSON同类（均属于Atlas新建Event时的Shell input方式）。核心字段包括：sect_num/sect_ttl（章节号/标题）、tocnumber（目录编号）、Output Type（Table/Listing/Figure）、Title、azsolid（AZ内部标准模板编号，疑似Cross-TA命名差异来源，待确认）、PROGRAM（程序命名主干，如t_ds）、SUFFIX（人群/分析集后缀，如fas/mono）、OUTFILE（PROGRAM+SUFFIX拼接，即最终Program Code命名）、title1-7/footnote1-9（实际标题脚注文本）。
+*UX影响*：原始Tifo文件的PROGRAM字段通常是系统自动生成的UUID占位符，SUFFIX为通用占位值，需要经过转换填入规范命名才能得到最终Program Code——这个转换发生的时机（Event创建时批量完成，还是任务分配后逐条补充）直接影响导航栏和Metadata review流程的设计，目前仍是TBD（对应AZ需求NAV-022）。
+
 **TMF（Trial Master File）** ⭐⭐ — 试验主文件
 临床试验中所有文件的集合，证明试验按照GCP标准进行。电子版即eTMF。
 *UX影响*：TMF的文件分类、完整性和及时性是合规审查的重点。

@@ -105,7 +105,7 @@
   --color-status-warning-text: #3F4444;
 
   /* Typography: Font Families */
-  --font-heading: 'Roboto Slab', 'Noto Sans SC', sans-serif;
+  --font-heading: 'Inter', 'Noto Sans SC', sans-serif;
   --font-body: 'Inter', 'Noto Sans SC', sans-serif;
   --font-mono: 'Menlo', 'Courier New', Courier, monospace;
   --font-numeric: 'Inter', sans-serif;

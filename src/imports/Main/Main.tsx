@@ -2568,23 +2568,45 @@ const listingColumns = [
 ] as const;
 
 // Metadata for Listing column headers.
-const LISTING_COLUMN_METADATA: Record<string, { dataset: string; variable: string; filter?: string; rule?: string }> = {
+const LISTING_COLUMN_METADATA: Record<string, { dataset: string; variable: string; additionalVariables?: string[]; filter?: string; rule?: string }> = {
   studyDay: { dataset: 'ADTR', variable: 'ADY', filter: "SAFFL = 'Y'", rule: 'Study day relative to randomisation date; negative values indicate pre-randomisation assessments' },
   lesionNum: { dataset: 'ADTR', variable: 'TRLNKID', rule: 'Direct copy from ADTR.TRLNKID' },
   lesionLoc: { dataset: 'ADTR', variable: 'TRLOC', rule: 'Mapped from TR.TRLOC' },
   locSpec: { dataset: 'ADTR', variable: 'TRLOCSP', rule: 'Direct copy from ADTR.TRLOCSP' },
   method: { dataset: 'ADTR', variable: 'TRMETHOD', rule: 'RECIST 1.1 assessment method' },
-  diameter: { dataset: 'ADTR', variable: 'AVAL', filter: "PARAMCD = 'DIAMETER'", rule: 'Non-nodal longest diameter or nodal short axis, in mm' },
-  sum: { dataset: 'ADTR', variable: 'AVAL', filter: "PARAMCD = 'SUMDIAM'", rule: 'Sum of non-nodal longest diameters and nodal short axis diameters where PARAMCD=SUMDIAM' },
+  diameter: { dataset: 'ADTR', variable: 'AVAL', additionalVariables: ['ADTR.BASE', 'ADTR.CHG', 'ADTR.PCHG', 'ADTR.ANL01FL'], filter: "PARAMCD = 'DIAMETER'", rule: 'Non-nodal longest diameter or nodal short axis, in mm' },
+  sum: { dataset: 'ADTR', variable: 'AVAL', additionalVariables: ['ADTR.PARAMCD', 'ADTR.AVALC'], filter: "PARAMCD = 'SUMDIAM'", rule: 'Sum of non-nodal longest diameters and nodal short axis diameters where PARAMCD=SUMDIAM' },
 };
 
-function buildListingColumnTooltipSections(meta: { dataset: string; variable: string; filter?: string; rule?: string } | undefined): TooltipMetadataSection[] {
+function buildListingColumnTooltipSections(meta: { dataset: string; variable: string; additionalVariables?: string[]; filter?: string; rule?: string } | undefined): TooltipMetadataSection[] {
   if (!meta) return [];
   const sections: TooltipMetadataSection[] = [];
+
+  // Group all variables by dataset
+  const allRawVars = [`${meta.dataset}.${meta.variable}`, ...(meta.additionalVariables || [])];
+  const datasetMap: Record<string, string[]> = {};
+  
+  allRawVars.forEach((raw) => {
+    const parts = raw.split('.');
+    if (parts.length === 2) {
+      const [ds, v] = parts;
+      if (!datasetMap[ds]) datasetMap[ds] = [];
+      if (!datasetMap[ds].includes(v)) datasetMap[ds].push(v);
+    } else {
+      if (!datasetMap[meta.dataset]) datasetMap[meta.dataset] = [];
+      if (!datasetMap[meta.dataset].includes(raw)) datasetMap[meta.dataset].push(raw);
+    }
+  });
+
+  const formattedValues = Object.entries(datasetMap).map(
+    ([ds, vars]) => `${ds}: ${vars.join(', ')}`
+  );
+
   sections.push({
     label: 'Variable Mapping',
-    values: [`${meta.dataset}.${meta.variable}`],
+    values: formattedValues,
   });
+
   if (meta.filter) {
     sections.push({
       label: 'Filter',
@@ -3649,9 +3671,14 @@ function ListingShellPreview({
                                         <span className="flex items-start leading-[18px]">{column.label}</span>
                                         <div className="border-t border-graphite-10 -mx-[8px] my-[3px] w-[calc(100%+16px)]" />
                                         {meta ? (
-                                          <div className="flex items-start gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
-                                            <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" color="var(--color-brand-1)" />
-                                            <span className="flex-1 min-w-0 break-all">{meta.dataset}.{meta.variable}</span>
+                                          <div className="flex items-center gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
+                                            <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0" color="var(--color-brand-1)" />
+                                            <span className="truncate">{meta.dataset}.{meta.variable}</span>
+                                            {meta.additionalVariables && meta.additionalVariables.length > 0 && (
+                                              <span className="inline-flex items-center justify-center px-[3px] py-0 h-[14px] rounded-[2px] bg-graphite-15 text-text-secondary text-[10px] font-medium shrink-0">
+                                                +{meta.additionalVariables.length}
+                                              </span>
+                                            )}
                                           </div>
                                         ) : (
                                           <div className="h-[14px]" />
@@ -3790,9 +3817,14 @@ function ListingShellPreview({
                                 onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }}
                               >
                                 {meta ? (
-                                  <div className="flex items-start gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
-                                    <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0 mt-[1px]" color="var(--color-brand-1)" />
-                                    <span className="flex-1 min-w-0 break-all">{meta.dataset}.{meta.variable}</span>
+                                  <div className="flex items-center gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
+                                    <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0" color="var(--color-brand-1)" />
+                                    <span className="truncate">{meta.dataset}.{meta.variable}</span>
+                                    {meta.additionalVariables && meta.additionalVariables.length > 0 && (
+                                      <span className="inline-flex items-center justify-center px-[3px] py-0 h-[14px] rounded-[2px] bg-graphite-15 text-text-secondary text-[10px] font-medium shrink-0">
+                                        +{meta.additionalVariables.length}
+                                      </span>
+                                    )}
                                   </div>
                                 ) : (
                                   <div className="h-[14px]" />
