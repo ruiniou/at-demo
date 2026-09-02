@@ -2009,7 +2009,7 @@ function ViewToggleBar({
             <TooltipText label="Open Tree List">
               <button
                 onClick={onToggleTreeList}
-                className="h-[24px] w-[24px] flex items-center justify-center hover:bg-black/5 rounded-[4px] active:scale-[0.96]"
+                className="h-[28px] w-[28px] flex items-center justify-center hover:bg-black/5 rounded-[4px] active:scale-[0.96]"
                 aria-label="Open tree list"
               >
                 <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
@@ -9335,7 +9335,7 @@ function WorkspaceContent({
               <TooltipText label="Back to Home">
                 <button
                   onClick={onNavigateHome}
-                  className="group flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                  className="group flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                   aria-label="Go to Home"
                 >
                   <AtlasLogoIcon className="group-hover:hidden" />
@@ -9348,7 +9348,7 @@ function WorkspaceContent({
               </div>
               <TooltipText label="Event Information">
                 <button
-                  className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                  className="flex h-[28px] w-[28px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                   aria-label="Event information"
                 >
                   <InfoIcon />
@@ -9357,7 +9357,7 @@ function WorkspaceContent({
               <TooltipText label="Collapse Tree List">
                 <button
                   onClick={() => setTreeListOpen(false)}
-                  className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                  className="flex h-[28px] w-[28px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                   aria-label="Collapse tree list"
                 >
                   <LocalIcon src={collapseIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
