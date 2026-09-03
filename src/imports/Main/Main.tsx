@@ -8869,7 +8869,7 @@ ods graphics off;`;
       <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container scrollbar-code">
         {docType === 'figure' ? (
           <div className="flex flex-1 min-w-max font-mono text-[12px] leading-[18px]">
-            <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[46px] sticky left-0 z-10">
+            <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
                 const lineNum = index + 1;
                 const isHovered = hoveredLineNumber === lineNum;
@@ -8881,15 +8881,15 @@ ods graphics off;`;
                     onMouseEnter={() => setHoveredLineNumber(lineNum)}
                     onMouseLeave={() => setHoveredLineNumber(null)}
                     onClick={() => handleLineClick(lineNum)}
-                    className="h-[18px] flex items-center justify-end pl-[4px] pr-[2px] gap-[2px] cursor-pointer select-none"
+                    className="h-[18px] flex items-center justify-end pl-[8px] pr-[4px] gap-[2px] cursor-pointer select-none"
                   >
                     <span className={`text-[12px] font-mono text-right w-[28px] leading-[18px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
                       {lineNum}
                     </span>
-                    <div className="w-[14px] h-[14px] flex items-center justify-center shrink-0">
+                    <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                       {isHovered && foldable ? (
-                        <SvgIcon className="h-[9px] w-[9px] text-text-secondary" viewBox="0 0 24 24">
-                          <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <SvgIcon className="h-[16px] w-[16px] text-text-secondary" viewBox="0 0 24 24">
+                          <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </SvgIcon>
                       ) : null}
                     </div>
@@ -8951,7 +8951,7 @@ ods graphics off;`;
           </div>
         ) : (
           <div className="flex min-w-max min-h-full font-mono text-[12px] leading-[18px]">
-            <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[46px] sticky left-0 z-10">
+            <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
                 const lineNum = index + 1;
                 const isHovered = hoveredLineNumber === lineNum;
@@ -8963,15 +8963,15 @@ ods graphics off;`;
                     onMouseEnter={() => setHoveredLineNumber(lineNum)}
                     onMouseLeave={() => setHoveredLineNumber(null)}
                     onClick={() => handleLineClick(lineNum)}
-                    className="h-[18px] flex items-center justify-end pl-[4px] pr-[2px] gap-[2px] cursor-pointer select-none"
+                    className="h-[18px] flex items-center justify-end pl-[8px] pr-[4px] gap-[2px] cursor-pointer select-none"
                   >
                     <span className={`text-[12px] font-mono text-right w-[28px] leading-[18px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
                       {lineNum}
                     </span>
-                    <div className="w-[14px] h-[14px] flex items-center justify-center shrink-0">
+                    <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                       {isHovered && foldable ? (
-                        <SvgIcon className="h-[9px] w-[9px] text-text-secondary" viewBox="0 0 24 24">
-                          <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <SvgIcon className="h-[16px] w-[16px] text-text-secondary" viewBox="0 0 24 24">
+                          <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </SvgIcon>
                       ) : null}
                     </div>
