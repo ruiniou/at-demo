@@ -1820,6 +1820,23 @@ function AtlasLogoIcon({ className = "h-[24px] w-[24px]", color }: { className?:
   return <img src={atlasLogoUrl} alt="" className={`${className} block shrink-0`} />;
 }
 
+function AskAIIcon({ className = "h-[24px] w-[24px]", color = "#830051" }: { className?: string; color?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={`${className} block shrink-0`}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M15.999 3C19.3131 3 22 5.69518 22 8.99414V21H8.00098C4.68691 21 2 18.3048 2 15.0059V8.99414C2 5.68389 4.67686 3 8.00098 3H15.999ZM11.9961 13.3164C11.9389 14.2507 11.1795 14.9983 10.2305 15.0547V15.0615C11.1795 15.1179 11.9388 15.8656 11.9961 16.7998H12.0039C12.0612 15.8656 12.8205 15.1179 13.7695 15.0615V15.0547C12.8205 14.9983 12.0611 14.2507 12.0039 13.3164H11.9961ZM10.7695 6.7998L7 16.7949H9.46191L12 10.0635L14.5381 16.7949H17L13.2305 6.7998H10.7695Z"
+        fill={color}
+      />
+    </svg>
+  );
+}
+
 function CodeStatusSlot({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-[20px] w-[20px] shrink-0 items-center justify-center">
@@ -2055,14 +2072,19 @@ function ViewToggleBar({
           <button
             type="button"
             onClick={onOpenAICopilot}
-            className={`h-[28px] w-[28px] shrink-0 inline-flex items-center justify-center rounded-[4px] transition-colors active:scale-[0.96] shadow-[0_1px_2px_rgba(0,0,0,0.06)] ${
+            className={`group relative flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] transition-all duration-150 active:scale-[0.92] ${
               aiCopilotOpen
-                ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover"
-                : "bg-brand-1 text-white hover:bg-az-warning"
+                ? "bg-az-secondary ring-1 ring-brand-1/25 shadow-sm"
+                : "hover:bg-black/5"
             }`}
             aria-label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}
           >
-            <AtlasLogoIcon className="h-[16px] w-[16px] shrink-0" color={aiCopilotOpen ? "var(--color-brand-1)" : "white"} />
+            <AskAIIcon
+              className={`h-[24px] w-[24px] transition-all duration-150 ${
+                aiCopilotOpen ? "scale-[1.04]" : "group-hover:scale-[1.06] group-hover:brightness-105"
+              }`}
+              color="#830051"
+            />
           </button>
         </TooltipText>
       )}
