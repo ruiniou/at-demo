@@ -1483,47 +1483,50 @@ function AICopilotPanel({
 
       {/* Header */}
       {variant === 'incard' ? (
-        <PanelHeader
-          title={
-            <div className="flex items-center min-w-0 max-w-[260px]">
-              <FilterChip
-                type="Dropdown"
-                variant="select"
-                showIcon={false}
-                labelClassName="t-small-medium font-medium"
-                options={sessionOptions}
-                value={selectedSession}
-                onChange={setSelectedSession}
-                className="max-w-full"
-              />
-            </div>
-          }
-          actions={
-            <div className="flex items-center gap-[4px]">
-              <TooltipText label="New Session">
-                <button
-                  type="button"
-                  aria-label="New Session"
-                  className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
-                >
-                  <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-                </button>
-              </TooltipText>
-              <TooltipText label="Collapse AI Copilot">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Collapse AI Copilot"
-                  className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
-                >
-                  <LocalIcon src={arrowRightDoubleLineUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-                </button>
-              </TooltipText>
-            </div>
-          }
-        />
+        <div className="relative z-10 shrink-0 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <PanelHeader
+            noBorder
+            title={
+              <div className="flex items-center min-w-0 max-w-[260px]">
+                <FilterChip
+                  type="Dropdown"
+                  variant="select"
+                  showIcon={false}
+                  labelClassName="t-small-medium font-medium"
+                  options={sessionOptions}
+                  value={selectedSession}
+                  onChange={setSelectedSession}
+                  className="max-w-full"
+                />
+              </div>
+            }
+            actions={
+              <div className="flex items-center gap-[4px]">
+                <TooltipText label="New Session">
+                  <button
+                    type="button"
+                    aria-label="New Session"
+                    className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+                  >
+                    <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                  </button>
+                </TooltipText>
+                <TooltipText label="Collapse AI Copilot">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Collapse AI Copilot"
+                    className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+                  >
+                    <LocalIcon src={arrowRightDoubleLineUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                  </button>
+                </TooltipText>
+              </div>
+            }
+          />
+        </div>
       ) : (
-        <div className="bg-transparent h-[48px] shrink-0 flex items-center justify-between px-[12px] mb-[4px]">
+        <div className="relative z-10 shrink-0 bg-transparent shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[48px] flex items-center justify-between px-[12px] mb-[4px]">
           <div className="flex items-center min-w-0 max-w-[260px]">
             <FilterChip
               type="Dropdown"
@@ -1560,10 +1563,10 @@ function AICopilotPanel({
         </div>
       )}
 
-      {/* Chat Area with Alpha Mask Fade at Bottom */}
+      {/* Chat Area with Alpha Mask Fade at Top & Bottom */}
       <div 
         ref={chatAreaRef} 
-        className="flex-1 min-h-0 overflow-y-auto scroll-smooth [mask-image:linear-gradient(to_bottom,black_calc(100%-36px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_calc(100%-36px),transparent_100%)]"
+        className="flex-1 min-h-0 overflow-y-auto scroll-smooth [mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_calc(100%-36px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_calc(100%-36px),transparent_100%)]"
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-[12px] pb-[40px]">
