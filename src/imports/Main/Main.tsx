@@ -8583,7 +8583,7 @@ ods graphics on / reset=all width=9.5in height=6.2in imagename="f_15_1_1" imagef
 /* Step 1: Extract Primary Time-to-Event and Demographics Data */
 data km_prep;
   merge adam.adtte(where=(paramcd="PFS" and saffl="Y") in=a)
-        adam.adsl(keep=usubjid age agegr1 sex ecoggr1 priorl pdl1fl in=b);
+    adam.adsl(keep=usubjid age agegr1 sex ecoggr1 priorl pdl1fl in=b);
   by usubjid;
   if a and b;
   /* Format time from days to months */
@@ -8591,9 +8591,10 @@ data km_prep;
 run;
 
 /* Step 2: Compute Kaplan-Meier Survival Estimates and Risk Counts */
-ods output ProductLimitEstimates = km_est
-           HomTests              = km_logrank
-           Quartiles             = km_quartiles;
+ods output
+  ProductLimitEstimates = km_est
+  HomTests              = km_logrank
+  Quartiles             = km_quartiles;
 
 proc lifetest data=km_prep method=km conftype=loglog plots=survival(atrisk=0 to 36 by 6);
   time time_months * cnsr(1);
@@ -8627,8 +8628,9 @@ proc template;
       
       layout lattice / rows=3 columns=1 rowweights=(0.52 0.16 0.32) columngutter=8px;
         /* Cell 1: Kaplan-Meier Step Curves */
-        layout overlay / xaxisopts=(label="Time from Randomization (Months)" linearopts=(viewmin=0 viewmax=36 tickvaluelist=(0 3 6 9 12 18 24 30 36)))
-                        yaxisopts=(label="Progression-Free Survival Probability" linearopts=(viewmin=0 viewmax=1.0 tickvaluesequence=(start=0 end=1.0 increment=0.2)));
+        layout overlay /
+          xaxisopts=(label="Time from Randomization (Months)" linearopts=(viewmin=0 viewmax=36 tickvaluelist=(0 3 6 9 12 18 24 30 36)))
+          yaxisopts=(label="Progression-Free Survival Probability" linearopts=(viewmin=0 viewmax=1.0 tickvaluesequence=(start=0 end=1.0 increment=0.2)));
           stepplot x=time_months y=survival / group=trt01p name="km" lineattrs=(thickness=2);
           censorplot x=time_months y=survival / group=trt01p name="cens" markerattrs=(symbol=plus size=7);
           discretelegend "km" / location=inside halign=right valign=top across=1;
@@ -8640,8 +8642,9 @@ proc template;
         endlayout;
 
         /* Cell 3: Subgroup Analysis Forest Plot */
-        layout overlay / xaxisopts=(type=log label="Hazard Ratio (95% CI) [Log scale]" linearopts=(viewmin=0.2 viewmax=2.5))
-                        yaxisopts=(type=discrete reverse=true display=(tickvalues));
+        layout overlay /
+          xaxisopts=(type=log label="Hazard Ratio (95% CI) [Log scale]" linearopts=(viewmin=0.2 viewmax=2.5))
+          yaxisopts=(type=discrete reverse=true display=(tickvalues));
           referenceline x=1.0 / lineattrs=(pattern=dash color=graphite);
           highlowplot y=subgroup low=ci_low high=ci_high / type=line lineattrs=(color=cx3C4242 thickness=1.2);
           scatterplot y=subgroup x=hr / markerattrs=(symbol=squarefilled size=8) sizegroup=weight;
