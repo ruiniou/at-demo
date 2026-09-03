@@ -1563,31 +1563,39 @@ function AICopilotPanel({
         </div>
       )}
 
-      {/* Chat Area with Alpha Mask Fade at Top & Bottom (Pure opacity fade matching bottom input area) */}
-      <div 
-        ref={chatAreaRef} 
-        className="flex-1 min-h-0 overflow-y-auto scroll-smooth [mask-image:linear-gradient(to_bottom,transparent_0px,black_24px,black_calc(100%-36px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_24px,black_calc(100%-36px),transparent_100%)]"
-      >
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-[12px] pb-[40px]">
-            <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
-            <span className="t-body text-text-secondary text-center">Automate TFLs. Accelerate Insights.</span>
-          </div>
-        ) : (
-          <ChatConversation 
-            messages={messages} 
-            isPending={isPending} 
-            onOpenCodePanel={onOpenCodePanel}
-            onOpenSpatialView={onOpenSpatialView}
-            onJumpToMetadata={onJumpToMetadata}
-            docType={docType}
-            reviewItems={reviewItems}
-            renderPreviewOpen={renderPreviewOpen}
-            activeRenderVersionLabel={activeRenderVersionLabel}
-            onRenderThumbnailClick={onRenderThumbnailClick}
-            variant={variant}
-          />
-        )}
+      {/* Chat Area with Isolated Top & Bottom Fades (Right-[12px] isolates and protects the scrollbar from fading) */}
+      <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
+        {/* Top compact fade (8px, avoids 12px scrollbar on right) */}
+        <div className="pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b from-white to-transparent z-10" />
+
+        <div 
+          ref={chatAreaRef} 
+          className="flex-1 min-h-0 overflow-y-auto scroll-smooth scrollbar-code"
+        >
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full gap-[12px] pb-[40px]">
+              <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
+              <span className="t-body text-text-secondary text-center">Automate TFLs. Accelerate Insights.</span>
+            </div>
+          ) : (
+            <ChatConversation 
+              messages={messages} 
+              isPending={isPending} 
+              onOpenCodePanel={onOpenCodePanel}
+              onOpenSpatialView={onOpenSpatialView}
+              onJumpToMetadata={onJumpToMetadata}
+              docType={docType}
+              reviewItems={reviewItems}
+              renderPreviewOpen={renderPreviewOpen}
+              activeRenderVersionLabel={activeRenderVersionLabel}
+              onRenderThumbnailClick={onRenderThumbnailClick}
+              variant={variant}
+            />
+          )}
+        </div>
+
+        {/* Bottom fade (16px, avoids 12px scrollbar on right) */}
+        <div className="pointer-events-none absolute bottom-0 left-0 right-[12px] h-[16px] bg-gradient-to-t from-white to-transparent z-10" />
       </div>
 
       {/* Input Area */}
@@ -4788,7 +4796,10 @@ function ShellPreview({
           </div>
         }
       />
-      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-white [mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_100%)]">
+      <div className="relative flex min-h-0 flex-1 min-w-0 overflow-hidden bg-white">
+        {/* Top compact fade (8px, avoids 12px scrollbar on right) */}
+        <div className="pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b from-white to-transparent z-20" />
+
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full flex">
             <div className={`flex-1 min-w-0 h-full overflow-auto ${metadataOpen && !rtfOpen ? 'border-r border-graphite-10' : ''}`}>
@@ -8884,7 +8895,11 @@ ods graphics off;`;
         }
         actions={toolbarButtons}
       />
-      <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container scrollbar-code [mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_100%)]">
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        {/* Top compact fade (8px, avoids 12px scrollbar on right) */}
+        <div className="pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b from-white to-transparent z-20" />
+
+        <div className="h-full w-full overflow-auto bg-white code-panel-scroll-container scrollbar-code">
         {docType === 'figure' ? (
           <div className="flex flex-1 min-w-max font-mono text-[12px] leading-[18px]">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
@@ -9016,6 +9031,7 @@ ods graphics off;`;
             </div>
           </div>
         )}
+        </div>
       </div>
 
     </div>
