@@ -8906,7 +8906,7 @@ ods graphics off;`;
                     <div
                       key={index}
                       onClick={() => handleLineClick(lineNum)}
-                      className={`h-[18px] px-[16px] whitespace-pre font-mono text-[12px] leading-[18px] cursor-pointer ${
+                      className={`h-[18px] pl-[8px] pr-[16px] whitespace-pre font-mono text-[12px] leading-[18px] cursor-pointer ${
                         isSelected ? 'bg-[#FBF4F7]' : ''
                       }`}
                     >
@@ -8927,7 +8927,7 @@ ods graphics off;`;
                     return (
                       <div
                         key={index}
-                        className={`h-[18px] px-[16px] whitespace-pre ${
+                        className={`h-[18px] pl-[8px] pr-[16px] whitespace-pre ${
                           isSelected ? 'bg-[#FBF4F7]' : ''
                         }`}
                       >
@@ -8943,7 +8943,7 @@ ods graphics off;`;
                   onSelect={handleTextareaSelectionChange}
                   onKeyUp={handleTextareaSelectionChange}
                   onMouseUp={handleTextareaSelectionChange}
-                  className="absolute inset-0 w-full h-full pt-[16px] pb-[16px] px-[16px] font-mono text-[12px] leading-[18px] text-transparent bg-transparent outline-none resize-none border-none caret-text-primary whitespace-pre overflow-hidden"
+                  className="absolute inset-0 w-full h-full pt-[16px] pb-[16px] pl-[8px] pr-[16px] font-mono text-[12px] leading-[18px] text-transparent bg-transparent outline-none resize-none border-none caret-text-primary whitespace-pre overflow-hidden"
                   style={{ caretColor: 'var(--color-text-primary)' }}
                 />
               </div>
@@ -8987,7 +8987,7 @@ ods graphics off;`;
                   <div
                     key={index}
                     onClick={() => handleLineClick(lineNum)}
-                    className={`h-[18px] px-[16px] whitespace-pre font-mono text-[12px] leading-[18px] cursor-pointer ${
+                    className={`h-[18px] pl-[8px] pr-[16px] whitespace-pre font-mono text-[12px] leading-[18px] cursor-pointer ${
                       isSelected ? 'bg-[#FBF4F7]' : ''
                     }`}
                   >
