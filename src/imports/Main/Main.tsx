@@ -1483,7 +1483,7 @@ function AICopilotPanel({
 
       {/* Header */}
       {variant === 'incard' ? (
-        <div className="relative z-10 shrink-0 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <div className="relative z-10 shrink-0 bg-white">
           <PanelHeader
             noBorder
             title={
@@ -1526,7 +1526,7 @@ function AICopilotPanel({
           />
         </div>
       ) : (
-        <div className="relative z-10 shrink-0 bg-transparent shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-[48px] flex items-center justify-between px-[12px] mb-[4px]">
+        <div className="relative z-10 shrink-0 bg-transparent h-[48px] flex items-center justify-between px-[12px] mb-[4px]">
           <div className="flex items-center min-w-0 max-w-[260px]">
             <FilterChip
               type="Dropdown"
@@ -1563,10 +1563,10 @@ function AICopilotPanel({
         </div>
       )}
 
-      {/* Chat Area with Alpha Mask Fade at Top & Bottom */}
+      {/* Chat Area with Alpha Mask Fade at Top & Bottom (Pure opacity fade matching bottom input area) */}
       <div 
         ref={chatAreaRef} 
-        className="flex-1 min-h-0 overflow-y-auto scroll-smooth [mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_calc(100%-36px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_calc(100%-36px),transparent_100%)]"
+        className="flex-1 min-h-0 overflow-y-auto scroll-smooth [mask-image:linear-gradient(to_bottom,transparent_0px,black_24px,black_calc(100%-36px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_24px,black_calc(100%-36px),transparent_100%)]"
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-[12px] pb-[40px]">
