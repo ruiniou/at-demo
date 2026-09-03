@@ -2051,19 +2051,20 @@ function ViewToggleBar({
       )}
       <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
       {onOpenAICopilot && (
-        <button
-          type="button"
-          onClick={onOpenAICopilot}
-          className={`h-[28px] px-[10px] gap-[4px] inline-flex items-center justify-center rounded-[4px] text-[13px] transition-colors active:scale-[0.96] ${
-            aiCopilotOpen
-              ? "bg-az-secondary text-brand-1 font-medium hover:bg-az-secondary-hover"
-              : "bg-brand-1 text-white font-normal hover:bg-az-warning shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-          }`}
-          aria-label="Ask AI"
-        >
-          <AtlasLogoIcon className="h-[14px] w-[14px] shrink-0" color={aiCopilotOpen ? "var(--color-brand-1)" : "white"} />
-          <span>Ask AI</span>
-        </button>
+        <TooltipText label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}>
+          <button
+            type="button"
+            onClick={onOpenAICopilot}
+            className={`h-[28px] w-[28px] shrink-0 inline-flex items-center justify-center rounded-[4px] transition-colors active:scale-[0.96] shadow-[0_1px_2px_rgba(0,0,0,0.06)] ${
+              aiCopilotOpen
+                ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover"
+                : "bg-brand-1 text-white hover:bg-az-warning"
+            }`}
+            aria-label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}
+          >
+            <AtlasLogoIcon className="h-[16px] w-[16px] shrink-0" color={aiCopilotOpen ? "var(--color-brand-1)" : "white"} />
+          </button>
+        </TooltipText>
       )}
     </div>
   );
