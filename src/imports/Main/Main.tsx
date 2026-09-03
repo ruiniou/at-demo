@@ -2049,6 +2049,9 @@ function ViewToggleBar({
           </button>
         </TooltipText>
       )}
+      {(onToggleGroupView || onOpenDownloadModal) && (
+        <div className="w-[1.2px] h-[24px] bg-graphite-10 rounded-full shrink-0 mx-[2px]" aria-hidden="true" />
+      )}
       <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
       {onOpenAICopilot && (
         <TooltipText label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}>
