@@ -8673,6 +8673,8 @@ ods graphics off;`;
 
   const [userCode, setUserCode] = useState(codeContent);
   const [lastRunCode, setLastRunCode] = useState(codeContent);
+  const [savedCode, setSavedCode] = useState(codeContent);
+
   useEffect(() => {
     setUserCode(codeContent);
     setLastRunCode(codeContent);
