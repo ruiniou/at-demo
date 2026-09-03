@@ -8492,8 +8492,9 @@ function renderCodeLineWithIndentGuides(line: string): React.ReactNode {
   }
 
   const leadingSpaces = match[1].length;
-  const indentCount = Math.floor(leadingSpaces / 4);
-  const remainder = leadingSpaces % 4;
+  // 现代 IDE 标准：以 2 空格为紧凑缩进单位 (2ch Indent Guides)
+  const indentCount = Math.floor(leadingSpaces / 2);
+  const remainder = leadingSpaces % 2;
 
   if (indentCount === 0) {
     return <code>{highlightSAS(line)}</code>;
@@ -8505,7 +8506,7 @@ function renderCodeLineWithIndentGuides(line: string): React.ReactNode {
       <span
         key={`guide-${i}`}
         className="inline-block relative select-none pointer-events-none align-top h-[18px]"
-        style={{ width: '4ch' }}
+        style={{ width: '2ch' }}
       >
         <span className="absolute left-0 top-0 bottom-0 w-[1px] bg-graphite-15" />
       </span>
@@ -8555,14 +8556,14 @@ title2 "Demographic and Baseline Characteristics (ITT Population)";
 
 /* Call standardized listing macro */
 %m_u_listing(
-    inds = adam.adsl,
-    cols = USUBJID | SUBJID | SITEID | AGE | SEX | RACE | TRT01A | VISIT | ASTDY | AEDECOD,
-    col_labels = Subject ID | Subj ID | Site ID | Age | Sex | Race | Treatment Group | Visit | Study Day | Adverse Event,
-    freeze_cols = ${freezeCols ?? 2},
-    page_cols = ${pageCols ?? 5},
-    page_num = 1,
-    orientation = L,
-    out_rtf = listing_16_2_1.rtf
+  inds = adam.adsl,
+  cols = USUBJID | SUBJID | SITEID | AGE | SEX | RACE | TRT01A | VISIT | ASTDY | AEDECOD,
+  col_labels = Subject ID | Subj ID | Site ID | Age | Sex | Race | Treatment Group | Visit | Study Day | Adverse Event,
+  freeze_cols = ${freezeCols ?? 2},
+  page_cols = ${pageCols ?? 5},
+  page_num = 1,
+  orientation = L,
+  out_rtf = listing_16_2_1.rtf
 );
 
 /* Footnotes */
@@ -8581,12 +8582,12 @@ ods graphics on / reset=all width=9.5in height=6.2in imagename="f_15_1_1" imagef
 
 /* Step 1: Extract Primary Time-to-Event and Demographics Data */
 data km_prep;
-    merge adam.adtte(where=(paramcd="PFS" and saffl="Y") in=a)
-          adam.adsl(keep=usubjid age agegr1 sex ecoggr1 priorl pdl1fl in=b);
-    by usubjid;
-    if a and b;
-    /* Format time from days to months */
-    time_months = aval / 30.4375;
+  merge adam.adtte(where=(paramcd="PFS" and saffl="Y") in=a)
+        adam.adsl(keep=usubjid age agegr1 sex ecoggr1 priorl pdl1fl in=b);
+  by usubjid;
+  if a and b;
+  /* Format time from days to months */
+  time_months = aval / 30.4375;
 run;
 
 /* Step 2: Compute Kaplan-Meier Survival Estimates and Risk Counts */
@@ -8595,19 +8596,19 @@ ods output ProductLimitEstimates = km_est
            Quartiles             = km_quartiles;
 
 proc lifetest data=km_prep method=km conftype=loglog plots=survival(atrisk=0 to 36 by 6);
-    time time_months * cnsr(1);
-    strata trt01p / test=logrank;
+  time time_months * cnsr(1);
+  strata trt01p / test=logrank;
 run;
 
 /* Step 3: Compute Subgroup Hazard Ratios via Cox Proportional Hazards Model */
 %macro calc_subgroup_hr(var=, label=);
-    proc phreg data=km_prep;
-        class trt01p(ref="Placebo") &var;
-        model time_months * cnsr(1) = trt01p;
-        by &var;
-        hazardratio trt01p / diff=ref;
-        ods output HazardRatios = hr_&var;
-    run;
+  proc phreg data=km_prep;
+    class trt01p(ref="Placebo") &var;
+    model time_months * cnsr(1) = trt01p;
+    by &var;
+    hazardratio trt01p / diff=ref;
+    ods output HazardRatios = hr_&var;
+  run;
 %mend calc_subgroup_hr;
 
 %calc_subgroup_hr(var=agegr1,  label=Age Category);
@@ -8618,48 +8619,48 @@ run;
 
 /* Step 4: GTL Template Definition for Composite Layout */
 proc template;
-    define statgraph KM_Subgroup_Layout;
-        dynamic _TITLE _SUBTITLE _SHOWCI _SHOWRISK _SHOWFOREST;
-        begingraph / designwidth=9.5in designheight=6.2in;
-            entrytitle "Figure 15.1.1: " _TITLE;
-            entrytitle "Progression-Free Survival and Subgroup Forest Plot (ITT Set)" / textattrs=(size=9pt);
-            
-            layout lattice / rows=3 columns=1 rowweights=(0.52 0.16 0.32) columngutter=8px;
-                /* Cell 1: Kaplan-Meier Step Curves */
-                layout overlay / xaxisopts=(label="Time from Randomization (Months)" linearopts=(viewmin=0 viewmax=36 tickvaluelist=(0 3 6 9 12 18 24 30 36)))
-                                yaxisopts=(label="Progression-Free Survival Probability" linearopts=(viewmin=0 viewmax=1.0 tickvaluesequence=(start=0 end=1.0 increment=0.2)));
-                    stepplot x=time_months y=survival / group=trt01p name="km" lineattrs=(thickness=2);
-                    censorplot x=time_months y=survival / group=trt01p name="cens" markerattrs=(symbol=plus size=7);
-                    discretelegend "km" / location=inside halign=right valign=top across=1;
-                endlayout;
+  define statgraph KM_Subgroup_Layout;
+    dynamic _TITLE _SUBTITLE _SHOWCI _SHOWRISK _SHOWFOREST;
+    begingraph / designwidth=9.5in designheight=6.2in;
+      entrytitle "Figure 15.1.1: " _TITLE;
+      entrytitle "Progression-Free Survival and Subgroup Forest Plot (ITT Set)" / textattrs=(size=9pt);
+      
+      layout lattice / rows=3 columns=1 rowweights=(0.52 0.16 0.32) columngutter=8px;
+        /* Cell 1: Kaplan-Meier Step Curves */
+        layout overlay / xaxisopts=(label="Time from Randomization (Months)" linearopts=(viewmin=0 viewmax=36 tickvaluelist=(0 3 6 9 12 18 24 30 36)))
+                        yaxisopts=(label="Progression-Free Survival Probability" linearopts=(viewmin=0 viewmax=1.0 tickvaluesequence=(start=0 end=1.0 increment=0.2)));
+          stepplot x=time_months y=survival / group=trt01p name="km" lineattrs=(thickness=2);
+          censorplot x=time_months y=survival / group=trt01p name="cens" markerattrs=(symbol=plus size=7);
+          discretelegend "km" / location=inside halign=right valign=top across=1;
+        endlayout;
 
-                /* Cell 2: Number at Risk Table */
-                layout overlay / pad=(top=2px bottom=2px);
-                    axistable x=tatrisk value=atrisk / class=trt01p title="Number at Risk" position=bottom;
-                endlayout;
+        /* Cell 2: Number at Risk Table */
+        layout overlay / pad=(top=2px bottom=2px);
+          axistable x=tatrisk value=atrisk / class=trt01p title="Number at Risk" position=bottom;
+        endlayout;
 
-                /* Cell 3: Subgroup Analysis Forest Plot */
-                layout overlay / xaxisopts=(type=log label="Hazard Ratio (95% CI) [Log scale]" linearopts=(viewmin=0.2 viewmax=2.5))
-                                yaxisopts=(type=discrete reverse=true display=(tickvalues));
-                    referenceline x=1.0 / lineattrs=(pattern=dash color=graphite);
-                    highlowplot y=subgroup low=ci_low high=ci_high / type=line lineattrs=(color=cx3C4242 thickness=1.2);
-                    scatterplot y=subgroup x=hr / markerattrs=(symbol=squarefilled size=8) sizegroup=weight;
-                endlayout;
-            endlayout;
+        /* Cell 3: Subgroup Analysis Forest Plot */
+        layout overlay / xaxisopts=(type=log label="Hazard Ratio (95% CI) [Log scale]" linearopts=(viewmin=0.2 viewmax=2.5))
+                        yaxisopts=(type=discrete reverse=true display=(tickvalues));
+          referenceline x=1.0 / lineattrs=(pattern=dash color=graphite);
+          highlowplot y=subgroup low=ci_low high=ci_high / type=line lineattrs=(color=cx3C4242 thickness=1.2);
+          scatterplot y=subgroup x=hr / markerattrs=(symbol=squarefilled size=8) sizegroup=weight;
+        endlayout;
+      endlayout;
 
-            entryfootnote halign=left "Program: /study/D9802C00001/csr/prod/figures/f_kmplot_subgroup.sas  |  Output: f_15_1_1.rtf" / textattrs=(size=7pt color=gray);
-        endgraph;
-    end;
+      entryfootnote halign=left "Program: /study/D9802C00001/csr/prod/figures/f_kmplot_subgroup.sas  |  Output: f_15_1_1.rtf" / textattrs=(size=7pt color=gray);
+    endgraph;
+  end;
 run;
 
 /* Step 5: Render Figure to RTF */
 ods rtf file="f_15_1_1.rtf" style=AZ_CSR_Figure;
 
 proc sgrender data=km_est template=KM_Subgroup_Layout;
-    dynamic _TITLE="Kaplan-Meier Plot of Progression-Free Survival (PFS) with Subgroup Analysis"
-            _SHOWCI="${showCI ? 'Y' : 'N'}"
-            _SHOWRISK="${showRiskTable ? 'Y' : 'N'}"
-            _SHOWFOREST="Y";
+  dynamic _TITLE="Kaplan-Meier Plot of Progression-Free Survival (PFS) with Subgroup Analysis"
+          _SHOWCI="${showCI ? 'Y' : 'N'}"
+          _SHOWRISK="${showRiskTable ? 'Y' : 'N'}"
+          _SHOWFOREST="Y";
 run;
 
 ods rtf close;
