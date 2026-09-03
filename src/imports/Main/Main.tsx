@@ -496,7 +496,7 @@ function ToolCallCard({ toolName, children }: { toolName: string; children?: Rea
   );
 }
 
-const KM_PLOT_THUMBNAIL_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="460" viewBox="0 0 600 460" fill="%23ffffff"><rect width="600" height="460" fill="%23ffffff"/><text x="20" y="22" font-family="sans-serif" font-size="9" fill="%23888E8E">AstraZeneca  |  Study D9802C00001 Clarity Gastric 01</text><text x="580" y="22" font-family="sans-serif" font-size="9" fill="%23888E8E" text-anchor="end">Page 1 of 1</text><text x="300" y="44" font-family="sans-serif" font-size="12" font-weight="600" fill="%233C4242" text-anchor="middle">Figure 15.1.1</text><text x="300" y="58" font-family="sans-serif" font-size="10" font-weight="400" fill="%23666C6C" text-anchor="middle">Kaplan-Meier plot of progression-free survival by treatment group</text><text x="300" y="70" font-family="sans-serif" font-size="9" font-weight="400" fill="%23888E8E" text-anchor="middle">(Safety analysis set)</text><line x1="20" y1="78" x2="580" y2="78" stroke="%23EBECEC" stroke-width="1"/><g transform="translate(20, 85)"><g stroke="%23F0F1F1" stroke-width="1" stroke-dasharray="2,2"><line x1="45" y1="20" x2="550" y2="20"/><line x1="45" y1="60" x2="550" y2="60"/><line x1="45" y1="100" x2="550" y2="100"/><line x1="45" y1="140" x2="550" y2="140"/></g><text x="40" y="23" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">1.0</text><text x="40" y="63" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">0.75</text><text x="40" y="103" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">0.50</text><text x="40" y="143" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">0.25</text><text x="40" y="183" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">0.0</text><line x1="45" y1="20" x2="45" y2="180" stroke="%23888E8E" stroke-width="1"/><line x1="45" y1="180" x2="550" y2="180" stroke="%23888E8E" stroke-width="1"/><line x1="45" y1="100" x2="310" y2="100" stroke="%23830051" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/><line x1="310" y1="100" x2="310" y2="180" stroke="%23830051" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/><path d="M45 20 L115 25 L185 45 L255 75 L325 110 L395 135 L465 155 L535 168 L535 178 L465 175 L395 160 L325 140 L255 110 L185 70 L115 45 L45 20 Z" fill="%23830051" opacity="0.08"/><path d="M45 20 L115 20 L115 35 L185 35 L185 55 L255 55 L255 90 L325 90 L325 125 L395 125 L395 150 L465 150 L465 165 L535 165" fill="none" stroke="%23830051" stroke-width="2"/><path d="M45 20 L115 30 L115 50 L185 50 L185 80 L255 80 L255 120 L325 120 L325 148 L395 148 L395 165 L465 165 L465 175 L535 175" fill="none" stroke="%232E7D32" stroke-width="2"/><circle cx="185" cy="35" r="2" fill="%23830051"/><circle cx="325" cy="90" r="2" fill="%23830051"/><circle cx="255" cy="120" r="2" fill="%232E7D32"/><text x="45" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">0</text><text x="115" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">3</text><text x="185" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">6</text><text x="255" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">9</text><text x="325" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">12</text><text x="395" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">15</text><text x="465" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">18</text><text x="535" y="193" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="middle">24</text><text x="290" y="206" font-family="sans-serif" font-size="9" fill="%233C4242" text-anchor="middle">Time (Months)</text><rect x="420" y="25" width="120" height="38" rx="3" fill="%23ffffff" stroke="%23EBECEC" stroke-width="1"/><line x1="428" y1="36" x2="446" y2="36" stroke="%23830051" stroke-width="2"/><text x="452" y="39" font-family="sans-serif" font-size="8" fill="%233C4242">AZD999 1 mg/kg</text><line x1="428" y1="52" x2="446" y2="52" stroke="%232E7D32" stroke-width="2"/><text x="452" y="55" font-family="sans-serif" font-size="8" fill="%233C4242">Placebo</text></g><g transform="translate(20, 305)"><text x="0" y="10" font-family="sans-serif" font-size="9" font-weight="600" fill="%233C4242">Number at Risk Table</text><line x1="0" y1="16" x2="560" y2="16" stroke="%233C4242" stroke-width="1"/><text x="10" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242">Treatment Group</text><text x="115" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">0</text><text x="185" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">3</text><text x="255" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">6</text><text x="325" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">9</text><text x="395" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">12</text><text x="465" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">18</text><text x="535" y="28" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242" text-anchor="middle">24</text><line x1="0" y1="33" x2="560" y2="33" stroke="%23EBECEC" stroke-width="1"/><text x="10" y="46" font-family="sans-serif" font-size="8" fill="%233C4242">AZD999 1 mg/kg (N=120)</text><text x="115" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">120</text><text x="185" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">102</text><text x="255" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">88</text><text x="325" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">65</text><text x="395" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">42</text><text x="465" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">14</text><text x="535" y="46" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">0</text><text x="10" y="60" font-family="sans-serif" font-size="8" fill="%233C4242">Placebo (N=118)</text><text x="115" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">118</text><text x="185" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">110</text><text x="255" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">96</text><text x="325" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">80</text><text x="395" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">62</text><text x="465" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">26</text><text x="535" y="60" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">5</text><line x1="0" y1="67" x2="560" y2="67" stroke="%233C4242" stroke-width="1"/></g><g transform="translate(20, 395)"><text x="0" y="10" font-family="sans-serif" font-size="7.5" fill="%23888E8E">[a] ITT Population: All randomized subjects.</text><text x="0" y="21" font-family="sans-serif" font-size="7.5" fill="%23888E8E">[b] Kaplan-Meier estimates are used for survival curves. Median survival time and 95% CI calculated.</text><text x="0" y="32" font-family="sans-serif" font-size="7.5" fill="%23888E8E">Program: /study/D9802C00001/csr/prod/figures/f_kmplot.sas  |  Output: f_15_1_1.rtf</text></g></svg>`;
+const KM_PLOT_THUMBNAIL_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="520" viewBox="0 0 600 520" fill="%23ffffff"><rect width="600" height="520" fill="%23ffffff"/><text x="20" y="20" font-family="sans-serif" font-size="8.5" fill="%23888E8E">AstraZeneca  |  Study D9802C00001 Clarity Gastric 01</text><text x="580" y="20" font-family="sans-serif" font-size="8.5" fill="%23888E8E" text-anchor="end">Page 1 of 1</text><text x="300" y="36" font-family="sans-serif" font-size="11" font-weight="600" fill="%233C4242" text-anchor="middle">Figure 15.1.1</text><text x="300" y="49" font-family="sans-serif" font-size="9.5" font-weight="500" fill="%23666C6C" text-anchor="middle">Kaplan-Meier Plot of Progression-Free Survival (PFS) with Subgroup Analysis</text><text x="300" y="60" font-family="sans-serif" font-size="8.5" font-weight="400" fill="%23888E8E" text-anchor="middle">(Safety Analysis Set)</text><line x1="20" y1="66" x2="580" y2="66" stroke="%23EBECEC" stroke-width="1"/><g transform="translate(20, 72)"><text x="45" y="10" font-family="sans-serif" font-size="8.5" font-weight="600" fill="%233C4242">Component 1: Kaplan-Meier PFS Curves</text><text x="550" y="10" font-family="sans-serif" font-size="8" fill="%23888E8E" text-anchor="end">Log-rank P &lt; 0.0001  |  HR=0.54 (95% CI: 0.38-0.76)</text><g stroke="%23F0F1F1" stroke-width="1" stroke-dasharray="2,2"><line x1="45" y1="20" x2="550" y2="20"/><line x1="45" y1="48" x2="550" y2="48"/><line x1="45" y1="76" x2="550" y2="76"/><line x1="45" y1="104" x2="550" y2="104"/><line x1="45" y1="132" x2="550" y2="132"/></g><text x="40" y="23" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="end">1.0</text><text x="40" y="51" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="end">0.75</text><text x="40" y="79" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="end">0.50</text><text x="40" y="107" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="end">0.25</text><text x="40" y="135" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="end">0.0</text><line x1="45" y1="20" x2="45" y2="132" stroke="%23888E8E" stroke-width="1"/><line x1="45" y1="132" x2="550" y2="132" stroke="%23888E8E" stroke-width="1"/><line x1="45" y1="76" x2="360" y2="76" stroke="%23830051" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/><line x1="360" y1="76" x2="360" y2="132" stroke="%23830051" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/><line x1="45" y1="76" x2="190" y2="76" stroke="%230284C7" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/><line x1="190" y1="76" x2="190" y2="132" stroke="%230284C7" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/><path d="M45 20 L108 26 L171 34 L234 45 L297 54 L360 65 L423 75 L486 86 L549 92 L549 108 L486 104 L423 94 L360 84 L297 73 L234 60 L171 46 L108 34 L45 20 Z" fill="%23830051" opacity="0.10"/><path d="M45 20 L108 24 L108 34 L171 34 L171 46 L234 46 L234 62 L297 62 L297 74 L360 74 L360 87 L423 87 L423 98 L486 98 L486 108 L549 108" fill="none" stroke="%23830051" stroke-width="2"/><path d="M45 20 L108 36 L108 52 L171 52 L171 72 L234 72 L234 94 L297 94 L297 110 L360 110 L360 120 L423 120 L423 126 L486 126 L549 130" fill="none" stroke="%230284C7" stroke-width="1.8" stroke-dasharray="4,3"/><text x="45" y="142" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">0</text><text x="108" y="142" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">3</text><text x="171" y="142" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">6</text><text x="234" y="142" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">9</text><text x="297" y="142" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">12</text><text x="360" y="142" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">18</text><text x="423" y="142" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">24</text><text x="486" y="142" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">30</text><text x="549" y="142" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">36</text><text x="297" y="152" font-family="sans-serif" font-size="8" fill="%233C4242" text-anchor="middle">Time from Randomization (Months)</text><rect x="420" y="24" width="125" height="34" rx="3" fill="%23ffffff" stroke="%23EBECEC" stroke-width="1"/><line x1="428" y1="33" x2="444" y2="33" stroke="%23830051" stroke-width="2"/><text x="448" y="36" font-family="sans-serif" font-size="7.5" fill="%233C4242">AZD999 (Med: 26.4 mo)</text><line x1="428" y1="47" x2="444" y2="47" stroke="%230284C7" stroke-width="1.8" stroke-dasharray="3,2"/><text x="448" y="50" font-family="sans-serif" font-size="7.5" fill="%233C4242">Placebo (Med: 11.2 mo)</text></g><g transform="translate(20, 235)"><text x="0" y="9" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242">Component 2: Number at Risk Table</text><line x1="0" y1="13" x2="560" y2="13" stroke="%233C4242" stroke-width="0.8"/><text x="10" y="23" font-family="sans-serif" font-size="7.5" font-weight="600" fill="%233C4242">Treatment</text><text x="108" y="23" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">0</text><text x="171" y="23" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">6</text><text x="297" y="23" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">12</text><text x="423" y="23" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">24</text><text x="549" y="23" font-family="sans-serif" font-size="7.5" fill="%23888E8E" text-anchor="middle">36</text><line x1="0" y1="27" x2="560" y2="27" stroke="%23EBECEC" stroke-width="1"/><text x="10" y="37" font-family="sans-serif" font-size="7.5" fill="%23830051">AZD999 1 mg/kg (N=120)</text><text x="108" y="37" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">120</text><text x="171" y="37" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">104</text><text x="297" y="37" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">86</text><text x="423" y="37" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">62</text><text x="549" y="37" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">32</text><text x="10" y="48" font-family="sans-serif" font-size="7.5" fill="%230284C7">Placebo (N=118)</text><text x="108" y="48" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">118</text><text x="171" y="48" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">81</text><text x="297" y="48" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">52</text><text x="423" y="48" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">19</text><text x="549" y="48" font-family="sans-serif" font-size="7.5" fill="%233C4242" text-anchor="middle">4</text><line x1="0" y1="52" x2="560" y2="52" stroke="%233C4242" stroke-width="0.8"/></g><g transform="translate(20, 305)"><text x="0" y="9" font-family="sans-serif" font-size="8" font-weight="600" fill="%233C4242">Component 3: Subgroup Analysis (Forest Plot)</text><line x1="0" y1="13" x2="560" y2="13" stroke="%233C4242" stroke-width="0.8"/><text x="10" y="23" font-family="sans-serif" font-size="7" font-weight="600" fill="%233C4242">Subgroup</text><text x="130" y="23" font-family="sans-serif" font-size="7" font-weight="600" fill="%233C4242">AZD999</text><text x="190" y="23" font-family="sans-serif" font-size="7" font-weight="600" fill="%233C4242">Placebo</text><text x="320" y="23" font-family="sans-serif" font-size="7" font-weight="600" fill="%233C4242" text-anchor="middle">Hazard Ratio (95% CI)</text><text x="455" y="23" font-family="sans-serif" font-size="7" font-weight="600" fill="%233C4242">HR (95% CI)</text><text x="540" y="23" font-family="sans-serif" font-size="7" font-weight="600" fill="%233C4242" text-anchor="end">P-int</text><line x1="0" y1="26" x2="560" y2="26" stroke="%23EBECEC" stroke-width="1"/><g transform="translate(0, 30)"><rect x="0" y="0" width="560" height="14" fill="%23F4E8EE" opacity="0.5"/><text x="10" y="10" font-family="sans-serif" font-size="7" font-weight="600" fill="%23830051">Overall (All Subjects)</text><text x="130" y="10" font-family="sans-serif" font-size="7" fill="%233C4242">46/120</text><text x="190" y="10" font-family="sans-serif" font-size="7" fill="%233C4242">78/118</text><line x1="280" y1="7" x2="350" y2="7" stroke="%23830051" stroke-width="1.5"/><polygon points="310,4 314,7 310,10 306,7" fill="%23830051"/><text x="455" y="10" font-family="sans-serif" font-size="7" font-weight="600" fill="%233C4242">0.54 (0.38, 0.76)</text><text x="540" y="10" font-family="sans-serif" font-size="7" fill="%23888E8E" text-anchor="end">—</text></g><g transform="translate(0, 47)"><text x="10" y="10" font-family="sans-serif" font-size="7" font-weight="600" fill="%23666C6C">Age Category</text><text x="15" y="22" font-family="sans-serif" font-size="7" fill="%233C4242">&lt; 65 years</text><text x="130" y="22" font-family="sans-serif" font-size="7" fill="%23656969">28/76</text><text x="190" y="22" font-family="sans-serif" font-size="7" fill="%23656969">48/72</text><line x1="270" y1="19" x2="355" y2="19" stroke="%233C4242" stroke-width="1"/><rect x="303" y="16" width="6" height="6" fill="%233C4242"/><text x="455" y="22" font-family="sans-serif" font-size="7" fill="%233C4242">0.51 (0.32, 0.81)</text><text x="540" y="22" font-family="sans-serif" font-size="7" fill="%23888E8E" text-anchor="end">0.68</text><text x="15" y="34" font-family="sans-serif" font-size="7" fill="%233C4242">≥ 65 years</text><text x="130" y="34" font-family="sans-serif" font-size="7" fill="%23656969">18/44</text><text x="190" y="34" font-family="sans-serif" font-size="7" fill="%23656969">30/46</text><line x1="275" y1="31" x2="375" y2="31" stroke="%233C4242" stroke-width="1"/><rect x="314" y="28" width="5" height="5" fill="%233C4242"/><text x="455" y="34" font-family="sans-serif" font-size="7" fill="%233C4242">0.59 (0.33, 1.05)</text></g><g transform="translate(0, 86)"><text x="10" y="10" font-family="sans-serif" font-size="7" font-weight="600" fill="%23666C6C">PD-L1 Expression (CPS)</text><text x="15" y="22" font-family="sans-serif" font-size="7" fill="%233C4242">CPS ≥ 1</text><text x="130" y="22" font-family="sans-serif" font-size="7" fill="%23656969">25/74</text><text x="190" y="22" font-family="sans-serif" font-size="7" fill="%23656969">52/70</text><line x1="260" y1="19" x2="340" y2="19" stroke="%233C4242" stroke-width="1"/><rect x="290" y="16" width="6" height="6" fill="%233C4242"/><text x="455" y="22" font-family="sans-serif" font-size="7" fill="%233C4242">0.41 (0.25, 0.67)</text><text x="540" y="22" font-family="sans-serif" font-size="7" fill="%23888E8E" text-anchor="end">0.08</text><text x="15" y="34" font-family="sans-serif" font-size="7" fill="%233C4242">CPS &lt; 1</text><text x="130" y="34" font-family="sans-serif" font-size="7" fill="%23656969">21/46</text><text x="190" y="34" font-family="sans-serif" font-size="7" fill="%23656969">26/48</text><line x1="290" y1="31" x2="410" y2="31" stroke="%233C4242" stroke-width="1"/><rect x="335" y="28" width="5" height="5" fill="%233C4242"/><text x="455" y="34" font-family="sans-serif" font-size="7" fill="%233C4242">0.78 (0.44, 1.39)</text></g><line x1="0" y1="130" x2="560" y2="130" stroke="%233C4242" stroke-width="0.8"/></g><g transform="translate(20, 465)"><text x="0" y="9" font-family="sans-serif" font-size="7" fill="%23888E8E">[a] ITT Population: All randomized subjects. Subgroups analyzed using unstratified Cox proportional hazards model.</text><text x="0" y="19" font-family="sans-serif" font-size="7" fill="%23888E8E">[b] Kaplan-Meier estimates are used for survival curves. Median survival times and 95% CIs calculated via log-log transformation.</text><text x="0" y="29" font-family="sans-serif" font-size="7" fill="%23888E8E">Program: /study/D9802C00001/csr/prod/figures/f_kmplot_subgroup.sas  |  Output: f_15_1_1.rtf</text></g></svg>`;
 
 const INITIAL_FIGURE_RENDER_VERSIONS: RenderVersion[] = [
   {
@@ -648,12 +648,14 @@ function SpatialViewCard({ onClick }: { onClick?: () => void }) {
 export type ReviewItem = { type: 'ai-infer' | 'conflict', fieldName: string, tooltip: string, blockId: string, fieldId: string };
 
 export const DEFAULT_FIGURE_REVIEW_ITEMS: ReviewItem[] = [
-  { type: 'ai-infer', fieldName: 'Input Dataset(s)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'figBasic', fieldId: 'inputDataset' },
-  { type: 'conflict', fieldName: 'General Filter', tooltip: 'Conflicting value detected with SAP specification.', blockId: 'figBasic', fieldId: 'generalFilter' },
+  { type: 'ai-infer', fieldName: 'Input Dataset(s)', tooltip: 'Inferred from standard TTE dataset naming convention (ADTTTE, ADSL).', blockId: 'figBasic', fieldId: 'inputDataset' },
+  { type: 'conflict', fieldName: 'General Filter', tooltip: 'Conflicting population filter: Safety Analysis Set vs ITT Analysis Set.', blockId: 'figBasic', fieldId: 'generalFilter' },
   { type: 'ai-infer', fieldName: 'Source Dataset(s) (KM Plot Chart)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'kmCurve', fieldId: 'sourceDataset1' },
-  { type: 'ai-infer', fieldName: 'Source Variable(s) (KM Plot Chart)', tooltip: 'Inferred based on typical KM Plot requirements.', blockId: 'kmCurve', fieldId: 'sourceVariable1' },
+  { type: 'ai-infer', fieldName: 'Source Variable(s) (KM Plot Chart)', tooltip: 'Inferred based on typical KM Plot requirements (AVAL, CNSR, PARAMCD).', blockId: 'kmCurve', fieldId: 'sourceVariable1' },
   { type: 'ai-infer', fieldName: 'Source Dataset(s) (Number at Risk Table)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'riskTable', fieldId: 'sourceDataset2' },
-  { type: 'conflict', fieldName: 'Source Variable(s) (Number at Risk Table)', tooltip: 'Conflicting variable: TRTA used instead of TRT01P.', blockId: 'riskTable', fieldId: 'sourceVariable2' }
+  { type: 'conflict', fieldName: 'Source Variable(s) (Number at Risk Table)', tooltip: 'Conflicting treatment variable: TRTA used instead of TRT01P.', blockId: 'riskTable', fieldId: 'sourceVariable2' },
+  { type: 'ai-infer', fieldName: 'Source Variable(s) (Subgroup Forest Plot)', tooltip: 'Inferred baseline subgroup variables from ADSL (AGEGR1, SEX, ECOGGR1, PRIORL, PDL1FL).', blockId: 'subgroupForest', fieldId: 'sourceVariable3' },
+  { type: 'conflict', fieldName: 'Subgroup Model Method (Forest Plot)', tooltip: 'Unstratified Cox PH model inferred; verify if stratified analysis is required by SAP.', blockId: 'subgroupForest', fieldId: 'filter3' }
 ];
 
 // ── Reusable Metadata entry bar ──────────────────────────────────────────────
@@ -1027,49 +1029,119 @@ function ChatConversation({
                   {docType === 'figure' ? (
                     <>
                       <div className="flex flex-col w-full px-[10px]">
-                        <div className="flex flex-col gap-[8px] mb-[8px]">
+                        <div className="flex flex-col gap-[6px] mb-[10px]">
                           <p className="t-body text-text-primary leading-relaxed">
-                            I have parsed the uploaded Shell file and successfully inferred the structure for SAS Code generation.
+                            I have parsed the uploaded Shell and SAP specifications, and successfully synthesized the multi-component structure for SAS Figure generation:
                           </p>
                         </div>
 
-                        <div className="flex flex-col">
-                          <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 1: KM Plot Chart</h1>
-                          <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
-                            <li className="t-body text-text-primary">
-                              <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
+                        {/* Component 1 */}
+                        <div className="flex flex-col mb-[6px]">
+                          <div className="flex items-center justify-between">
+                            <h1 className="text-[13px] font-semibold text-text-primary mb-[4px]" style={{ fontFamily: 'var(--font-body)' }}>
+                              Component 1: Kaplan-Meier PFS Curves
+                            </h1>
+                            <span className="text-[10px] text-text-secondary font-mono">Chart</span>
+                          </div>
+                          <ul className="list-disc pl-[20px] flex flex-col gap-[3px]">
+                            <li className="t-body text-text-primary text-[12px]">
+                              <span>Source: <InlineHighlight>adam.adtte</InlineHighlight> (<InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>CNSR</InlineHighlight>, <InlineHighlight>PARAMCD='PFS'</InlineHighlight>)</span>
                             </li>
-                            <li className="t-body text-text-primary">
-                              <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>CNSR</InlineHighlight>, <InlineHighlight>PARAMCD</InlineHighlight></span>
-                            </li>
-                          </ul>
-                          <div style={{ borderTop: '1px dashed var(--color-border-subtle)', width: '100%', margin: '8px 0' }}></div>
-                          <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Axis Setup</h1>
-                          <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
-                            <li className="t-body text-text-primary">
-                              <span>X-Axis: <InlineHighlight>Months</InlineHighlight> | Ticks <InlineHighlight>0, 3, 6, 9, 12</InlineHighlight></span>
-                            </li>
-                            <li className="t-body text-text-primary">
-                              <span>Y-Axis: <InlineHighlight>Probability</InlineHighlight> | Range <InlineHighlight>0.0 - 1.0</InlineHighlight></span>
-                            </li>
-                            <li className="t-body text-text-primary">
-                              <span>Reference: Contains <InlineHighlight>Median</InlineHighlight> line</span>
+                            <li className="t-body text-text-primary text-[12px]">
+                              <span>Axes: Time in <InlineHighlight>Months</InlineHighlight> (0-36 mo) | Probability (0.0-1.0) | <InlineHighlight>Log-log 95% CI</InlineHighlight></span>
                             </li>
                           </ul>
                         </div>
 
-                        <Divider className="!my-[8px]" />
+                        <Divider className="!my-[6px]" />
 
-                        <div className="flex flex-col">
-                          <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 2: Number at Risk Table</h1>
-                          <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
-                            <li className="t-body text-text-primary">
-                              <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
+                        {/* Component 2 */}
+                        <div className="flex flex-col mb-[6px]">
+                          <div className="flex items-center justify-between">
+                            <h1 className="text-[13px] font-semibold text-text-primary mb-[4px]" style={{ fontFamily: 'var(--font-body)' }}>
+                              Component 2: Number at Risk Table
+                            </h1>
+                            <span className="text-[10px] text-text-secondary font-mono">Table</span>
+                          </div>
+                          <ul className="list-disc pl-[20px] flex flex-col gap-[3px]">
+                            <li className="t-body text-text-primary text-[12px]">
+                              <span>Source: <InlineHighlight>adam.adtte</InlineHighlight> (<InlineHighlight>TRTA</InlineHighlight>, <InlineHighlight>AVAL</InlineHighlight>)</span>
                             </li>
-                            <li className="t-body text-text-primary">
-                              <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>TRTA</InlineHighlight></span>
+                            <li className="t-body text-text-primary text-[12px]">
+                              <span>Intervals: <InlineHighlight>0, 3, 6, 9, 12, 18, 24, 30, 36 Months</InlineHighlight></span>
                             </li>
                           </ul>
+                        </div>
+
+                        <Divider className="!my-[6px]" />
+
+                        {/* Component 3 */}
+                        <div className="flex flex-col mb-[8px]">
+                          <div className="flex items-center justify-between">
+                            <h1 className="text-[13px] font-semibold text-text-primary mb-[4px]" style={{ fontFamily: 'var(--font-body)' }}>
+                              Component 3: Subgroup Analysis (Forest Plot)
+                            </h1>
+                            <span className="text-[10px] text-text-secondary font-mono">Chart + Table</span>
+                          </div>
+                          <ul className="list-disc pl-[20px] flex flex-col gap-[3px]">
+                            <li className="t-body text-text-primary text-[12px]">
+                              <span>Sources: <InlineHighlight>adam.adtte</InlineHighlight> + <InlineHighlight>adam.adsl</InlineHighlight></span>
+                            </li>
+                            <li className="t-body text-text-primary text-[12px]">
+                              <span>Subgroups: <InlineHighlight>Age</InlineHighlight>, <InlineHighlight>Sex</InlineHighlight>, <InlineHighlight>ECOG PS</InlineHighlight>, <InlineHighlight>Prior Therapy Lines</InlineHighlight>, <InlineHighlight>PD-L1 Status</InlineHighlight></span>
+                            </li>
+                            <li className="t-body text-text-primary text-[12px]">
+                              <span>Model: <InlineHighlight>Unstratified Cox PH Model</InlineHighlight> (HR &amp; 95% Wald CI)</span>
+                            </li>
+                          </ul>
+                        </div>
+
+                        {/* AI Inferred / Conflict notice */}
+                        <div className="rounded-[6px] bg-[#FFF8E6] border border-[#FFE58F] p-[8px] mb-[10px] flex flex-col gap-[4px]">
+                          <div className="flex items-center gap-[6px]">
+                            <span className="text-[11px] font-semibold text-[#B06000]">⚠️ AI Inferences &amp; Potential Discrepancies</span>
+                          </div>
+                          <p className="text-[11px] leading-[16px] text-[#656969] m-0">
+                            • Subgroup age cutoff (<span className="font-mono text-text-primary">65 yrs</span>) and prior therapy line thresholds were inferred from SAP Section 4.2.<br />
+                            • Population filter shows a potential conflict between <span className="font-mono text-text-primary">Safety Analysis Set</span> (Shell header) and <span className="font-mono text-text-primary">ITT Analysis Set</span> (Footnotes).
+                          </p>
+                        </div>
+
+                        {/* To be Reviewed Block */}
+                        <div className="rounded-[6px] bg-bg-panel border border-graphite-10 p-[10px] mb-[10px]">
+                          <span className="text-[12px] font-bold text-text-primary block mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
+                            To be Reviewed
+                          </span>
+                          <div className="flex flex-col gap-[5px]">
+                            <button
+                              onClick={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
+                              className="text-left text-[11.5px] text-[#830051] hover:underline flex items-center gap-[4px]"
+                            >
+                              <span>•</span>
+                              <span>General Population Filter (Safety Set vs. ITT Set)</span>
+                            </button>
+                            <button
+                              onClick={() => onJumpToMetadata?.('subgroupForest', 'sourceVariable3')}
+                              className="text-left text-[11.5px] text-[#830051] hover:underline flex items-center gap-[4px]"
+                            >
+                              <span>•</span>
+                              <span>Subgroup Classification &amp; Variable Mapping (Age, PD-L1)</span>
+                            </button>
+                            <button
+                              onClick={() => onJumpToMetadata?.('subgroupForest', 'filter3')}
+                              className="text-left text-[11.5px] text-[#830051] hover:underline flex items-center gap-[4px]"
+                            >
+                              <span>•</span>
+                              <span>Hazard Ratio Calculation Model (Stratified vs. Unstratified)</span>
+                            </button>
+                            <button
+                              onClick={() => onJumpToMetadata?.('riskTable', 'sourceVariable2')}
+                              className="text-left text-[11.5px] text-[#830051] hover:underline flex items-center gap-[4px]"
+                            >
+                              <span>•</span>
+                              <span>Treatment Variable Mapping (<span className="font-mono">TRTA</span> vs. <span className="font-mono">TRT01P</span>)</span>
+                            </button>
+                          </div>
                         </div>
 
                         <MetadataEntryBlock
@@ -2332,7 +2404,7 @@ function WorkspaceDivider({
 
   return (
     <div
-      className={`relative z-30 w-0 shrink-0 cursor-col-resize bg-transparent -mx-[3px] ${className}`}
+      className={`relative z-30 w-[2px] shrink-0 cursor-col-resize bg-bg-panel ${className}`}
       onMouseDown={(event) => {
         event.preventDefault();
         setIsDragging(true);
@@ -2344,8 +2416,8 @@ function WorkspaceDivider({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="absolute inset-y-0 -left-[3px] -right-[3px]" />
-      <div className={`absolute inset-y-0 left-[-1px] w-[3px] bg-brand-1 transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
+      <div className="absolute inset-y-0 -left-[4px] -right-[4px] z-10" />
+      <div className={`absolute inset-0 w-full bg-brand-1 transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
 }
@@ -2515,7 +2587,7 @@ function HorizontalWorkspaceDivider({
 
   return (
     <div
-      className={`relative z-10 h-0 shrink-0 cursor-row-resize bg-transparent -my-[3px] ${className}`}
+      className={`relative z-20 w-full h-[2px] shrink-0 cursor-row-resize bg-bg-panel ${className}`}
       onMouseDown={(event) => {
         event.preventDefault();
         setIsDragging(true);
@@ -2527,8 +2599,8 @@ function HorizontalWorkspaceDivider({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="absolute inset-x-0 -top-[3px] -bottom-[3px]" />
-      {(isHovered || isDragging) && <div className="absolute inset-x-0 top-[-1px] h-[3px] bg-brand-1" />}
+      <div className="absolute inset-x-0 -top-[4px] -bottom-[4px] z-10" />
+      <div className={`absolute inset-0 h-full bg-brand-1 transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
 }
@@ -4082,22 +4154,23 @@ interface ShellTableData {
 const shellTableData: Record<string, ShellTableData> = {
   'Figure 15.1.1': {
     tableNumber: 'Figure 15.1.1',
-    tableTitle: 'Kaplan-Meier plot of progression-free survival by treatment group',
-    studyInfo: 'AstraZeneca Page [X]\nStudy number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, <<Data cut-off ddmmmyyyy>>',
+    tableTitle: 'Kaplan-Meier Plot of Progression-Free Survival (PFS) with Subgroup Analysis',
+    studyInfo: 'AstraZeneca Page 1 of 1\nStudy number D9802C00001 Clarity Gastric 01 - Double-Blind, Randomized Phase III Study, <<Data cut-off 15OCT2025>>',
     pageInfo: '',
-    population: '(Safety analysis set)',
+    population: '(Safety Analysis Set / Intent-to-Treat Population)',
     subHeader: [
-      'Page by: TRTA (Planned Treatment Group: <<AZD999>>)',
+      'Treatment Comparison: AZD999 1 mg/kg vs. Placebo (Stratification Factors: ECOG PS, Prior Systemic Lines)',
     ],
     footnotes: [
-      '[a] ITT Population: All randomized subjects. Subjects are summarised in the arm to which they were randomised.',
-      '[b] Kaplan-Meier estimates are used for survival curves. Median survival time and 95% CI are calculated.',
-      '[c] Cross marks indicate censored observations (e.g., lost to follow-up or administrative censoring).',
-      'Source: eTMF Data snapshot <<Data cut-off ddmmmyyyy>>.',
-      'Program: /study/D9802C00001/csr/prod/figures/f_kmplot.sas',
+      '[a] ITT Population: All randomized subjects. Safety Analysis Set includes all subjects who received at least one dose of study medication.',
+      '[b] Kaplan-Meier product-limit estimates are used for PFS curves. Two-sided 95% confidence intervals are calculated using the log-log transformation method.',
+      '[c] Cross marks (+) indicate censored observations (e.g., ongoing progression-free follow-up or administrative data cut-off).',
+      '[d] Unstratified Hazard Ratio (HR) and 95% Wald confidence intervals for subgroups are estimated using Cox proportional hazards regression models.',
+      '[e] P for interaction (P-int) is obtained from the likelihood ratio test of the treatment-by-subgroup interaction term.',
+      'Source: eTMF Data Snapshot <<15OCT2025>>. ADaM datasets: adam.adtte, adam.adsl.',
+      'Program: /study/D9802C00001/csr/prod/figures/f_kmplot_subgroup.sas',
       'Output: /study/D9802C00001/csr/prod/output/f_15_1_1.rtf',
-      'Generated on: <<ddmmmyyyy hh:mm>>',
-      'This figure was produced in compliance with AZ Global Standard for Statistical Programming v3.2. SAS® version 9.4 was used.'
+      'Generated on: 15OCT2025 14:32  |  AZ Global Standard for Statistical Programming v3.2 (SAS® 9.4).'
     ],
     columnGroups: [],
     columns: [],
@@ -6133,73 +6206,85 @@ interface MetadataPanelProps {
 
 const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
   {
-    id: '022048b0-9ce1-4e72-8707-402317684986',
-    name: 'Confirmed objective response rate forest plot',
+    id: 'kmCurve',
+    name: 'Kaplan-Meier Survival Curves',
     state: 'ready' as const,
     deprecated: false,
     fields: [
-      { id: 'compLabel1', label: 'Component Label', value: 'Confirmed objective response rate forest plot', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+      { id: 'compLabel1', label: 'Component Label', value: 'Kaplan-Meier Survival Curves', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
       { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-      { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADRESP, ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-      { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'ADRESP.FASFL, ADRESP.COHORT, ADRESP.OCCRVRFL, ADRESP.OCPRVRFL, ADRESP.PARQUAL, ADSL.SEX', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on forest plot requirements.', inputType: 'multiselect' as const, options: [{label: 'FASFL', value: 'FASFL'}, {label: 'COHORT', value: 'COHORT'}, {label: 'OCCRVRFL', value: 'OCCRVRFL'}, {label: 'OCPRVRFL', value: 'OCPRVRFL'}, {label: 'PARQUAL', value: 'PARQUAL'}, {label: 'SEX', value: 'SEX'}] },
-      { id: 'filter1', label: 'Filter', value: "ADSL.FASFL='Y'; ADRESP.PARAMCD='TRVROV' and ADRESP.PARQUAL='INDEPENDENT ASSESSOR'.", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+      { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE, ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+      { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'ADTTTE.AVAL, ADTTTE.CNSR, ADTTTE.PARAMCD, ADTTTE.TRT01P', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on KM Plot requirements.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRT01P', value: 'TRT01P'}, {label: 'TRTA', value: 'TRTA'}] },
+      { id: 'filter1', label: 'Filter', value: "ADTTTE.PARAMCD = 'PFS' and ADTTTE.SAFFL = 'Y';", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
     ],
     display_facts: [
       {
-        section: "Pages",
-        label: "Cancer type pages",
-        value: "Eight sequential pages",
+        section: "Time and censoring",
+        label: "Time scale and units",
+        value: "Months from randomization (0 to 36 months, ticks every 3-6 mo)",
         details: [
-          "Biliary Tract Cancer",
-          "Colorectal Cancer",
-          "Cervical Cancer",
-          "Endometrial Cancer",
-          "Ovarian Cancer",
-          "Non-Small-Cell Lung Cancer",
-          "Other",
-          "Total"
+          "X-axis range: 0-36 months",
+          "Vertical cross (+) denotes censored observation",
+          "Two-sided 95% CI bands (log-log transformation)"
         ]
       },
       {
-        section: "Estimate",
-        label: "Response estimate and interval",
-        value: "Confirmed objective response rate with 95% Clopper-Pearson confidence interval",
+        section: "Statistics & Reference",
+        label: "Median survival lines",
+        value: "Horizontal/vertical dashed reference lines at 50% survival probability",
         details: [
-          "Fixed 0-100% x-axis",
-          "Filled diamond marker",
-          "Marker size responds directly to response-event count"
-        ]
-      },
-      {
-        section: "Reference",
-        label: "Grey band",
-        value: "All patients 95% confidence interval for the current page",
-        details: [
-          "Vertical band spans the plot area"
+          "AZD999: 26.4 months (95% CI: 21.8, NE)",
+          "Placebo: 11.2 months (95% CI: 8.9, 14.6)",
+          "Stratified Log-rank test p < 0.0001"
         ]
       }
     ]
   },
   {
-    id: 'dd894e2d-0855-4e36-bc8a-362ffc38306b',
-    name: 'Subgroup Statistics Table',
+    id: 'riskTable',
+    name: 'Number at Risk Table',
     state: 'ready' as const,
     deprecated: false,
     fields: [
-      { id: 'compLabel2', label: 'Component Label', value: 'Subgroup Statistics Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+      { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
       { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-      { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-      { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'ADSL.PRSYSG1, ADSL.AGEGR2, ADSL.ASEX, ADSL.ECOBLG1N, ADSL.PRHER2FL, ADSL.PRTOPOFL, ADSL.PRIMMFL', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Subgroup variables verification required.', inputType: 'multiselect' as const, options: [{label: 'PRSYSG1', value: 'PRSYSG1'}, {label: 'AGEGR2', value: 'AGEGR2'}, {label: 'ASEX', value: 'ASEX'}, {label: 'ECOBLG1N', value: 'ECOBLG1N'}, {label: 'PRHER2FL', value: 'PRHER2FL'}, {label: 'PRTOPOFL', value: 'PRTOPOFL'}, {label: 'PRIMMFL', value: 'PRIMMFL'}] },
-      { id: 'filter2', label: 'Filter', value: "Subgroup rows are expanded from FAS subjects by the fixed page and category order; Male is excluded for Cervical Cancer, Endometrial Cancer, and Ovarian Cancer pages.", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+      { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+      { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'ADTTTE.TRTA, ADTTTE.AVAL', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting treatment variable: TRTA used instead of TRT01P.', inputType: 'multiselect' as const, options: [{label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}, {label: 'AVAL', value: 'AVAL'}] },
+      { id: 'filter2', label: 'Filter', value: "ADTTTE.PARAMCD = 'PFS' and ADTTTE.SAFFL = 'Y';", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
     ],
     display_facts: [
       {
-        section: "Row statistics",
-        label: "Displayed statistic",
-        value: "n/N Response (%) [95% CI]",
+        section: "Intervals",
+        label: "Risk table columns",
+        value: "Aligned with X-axis major ticks: 0, 3, 6, 9, 12, 18, 24, 30, 36",
         details: [
-          "95% CI uses the Clopper-Pearson method",
-          "NC is shown for a displayed data row with no denominator"
+          "Counts of subjects remaining at risk at interval start",
+          "Separate rows for AZD999 1 mg/kg and Placebo"
+        ]
+      }
+    ]
+  },
+  {
+    id: 'subgroupForest',
+    name: 'Subgroup Analysis Forest Plot',
+    state: 'ready' as const,
+    deprecated: false,
+    fields: [
+      { id: 'compLabel3', label: 'Component Label', value: 'Subgroup Analysis (Forest Plot)', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
+      { id: 'compType3', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
+      { id: 'sourceDataset3', label: 'Source Dataset(s)', value: 'ADTTTE, ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE and Demographics datasets.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+      { id: 'sourceVariable3', label: 'Source Variable(s)', value: 'ADSL.AGEGR1, ADSL.SEX, ADSL.ECOGGR1, ADSL.PRIORL, ADSL.PDL1FL, ADTTTE.AVAL, ADTTTE.CNSR', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Subgroup variables derived from ADSL.', inputType: 'multiselect' as const, options: [{label: 'AGEGR1', value: 'AGEGR1'}, {label: 'SEX', value: 'SEX'}, {label: 'ECOGGR1', value: 'ECOGGR1'}, {label: 'PRIORL', value: 'PRIORL'}, {label: 'PDL1FL', value: 'PDL1FL'}] },
+      { id: 'filter3', label: 'Filter / Model', value: "Unstratified Cox Proportional Hazards regression by subgroup with treatment-by-subgroup interaction test.", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Verify whether stratified Cox model is required.', inputType: 'input' as const },
+    ],
+    display_facts: [
+      {
+        section: "Subgroups",
+        label: "Stratification Factors",
+        value: "Overall, Age (<65 vs ≥65), Sex (M vs F), ECOG PS (0 vs 1), Prior Lines (1 vs ≥2), PD-L1 (CPS ≥1 vs <1)",
+        details: [
+          "Log-scale X-axis (0.2 to 2.0) with reference line at HR = 1.0",
+          "Point estimate square size proportional to subgroup sample size",
+          "Overall treatment effect represented as diamond marker with 95% CI"
         ]
       }
     ]
@@ -7155,8 +7240,9 @@ function MetadataPanel({
       const match = figureComponents.find((c: any) => 
         c.name === targetBlockName || 
         c.id === targetBlockName ||
-        (targetBlockName === 'KM Plot Chart' && (c.id === 'kmCurve' || c.name === 'KM Plot Chart')) ||
-        (targetBlockName === 'Number at Risk Table' && (c.id === 'riskTable' || c.name === 'Number at Risk Table'))
+        ((targetBlockName.includes('KM Plot') || targetBlockName.includes('Kaplan-Meier')) && (c.id === 'kmCurve' || c.name.includes('Kaplan-Meier'))) ||
+        (targetBlockName.includes('Risk Table') && (c.id === 'riskTable' || c.name.includes('Risk Table'))) ||
+        ((targetBlockName.includes('Subgroup') || targetBlockName.includes('Forest')) && (c.id === 'subgroupForest' || c.name.includes('Subgroup')))
       );
       if (match) {
         targetId = match.id;
@@ -8443,35 +8529,97 @@ title2 "Demographic and Baseline Characteristics (ITT Population)";
 footnote1 "Note: Age is calculated relative to birth date. Day is relative to first dose date.";
 footnote2 "Program Name: l_demog.sas";`;
 
-  const programCodeContent = `/* Setup figure options */
-options nodate nonumber orientation=landscape;
-title1 "Figure 15.1.1";
-title2 "Kaplan-Meier Plot of Time to Dermatologic Event (ITT Population)";
+  const programCodeContent = `/* ========================================================================= */
+/* Study: D9802C00001 Clarity Gastric 01                                     */
+/* Output: Figure 15.1.1 - Kaplan-Meier Plot of PFS with Subgroup Analysis   */
+/* Population: Safety Analysis Set / Intent-to-Treat Population              */
+/* SAS Version: 9.4 | Standard: AZ Global Statistical Programming v3.2       */
+/* ========================================================================= */
 
-/* Prepare data for Kaplan-Meier analysis */
+options nodate nonumber orientation=landscape linesize=133 pagesize=60;
+ods graphics on / reset=all width=9.5in height=6.2in imagename="f_15_1_1" imagefmt=png;
+
+/* Step 1: Extract Primary Time-to-Event and Demographics Data */
 data km_prep;
-    set adam.adtte;
-    where paramcd = "TTDE" and saffl = "Y";
+    merge adam.adtte(where=(paramcd="PFS" and saffl="Y") in=a)
+          adam.adsl(keep=usubjid age agegr1 sex ecoggr1 priorl pdl1fl in=b);
+    by usubjid;
+    if a and b;
+    /* Format time from days to months */
+    time_months = aval / 30.4375;
 run;
 
-/* Compute survival statistics and generate at-risk numbers */
-proc lifetest data=km_prep method=km plots=survival(atrisk);
-    time aval * cnsr(1);
-    strata trtan;
-    ods output ProductLimitEstimates=km_est;
+/* Step 2: Compute Kaplan-Meier Survival Estimates and Risk Counts */
+ods output ProductLimitEstimates = km_est
+           HomTests              = km_logrank
+           Quartiles             = km_quartiles;
+
+proc lifetest data=km_prep method=km conftype=loglog plots=survival(atrisk=0 to 36 by 6);
+    time time_months * cnsr(1);
+    strata trt01p / test=logrank;
 run;
 
-/* ODS Graphics settings for premium rendering */
-ods graphics on / width=640px height=480px imagename="km_plot";
-ods rtf file="figure_15_1_1.rtf" style=HTMLBlue;
+/* Step 3: Compute Subgroup Hazard Ratios via Cox Proportional Hazards Model */
+%macro calc_subgroup_hr(var=, label=);
+    proc phreg data=km_prep;
+        class trt01p(ref="Placebo") &var;
+        model time_months * cnsr(1) = trt01p;
+        by &var;
+        hazardratio trt01p / diff=ref;
+        ods output HazardRatios = hr_&var;
+    run;
+%mend calc_subgroup_hr;
 
-/* Render the Kaplan-Meier Plot using standard template */
-proc sgrender data=km_est template=Kaplan_Meier_Plot;
-    dynamic title="Kaplan-Meier Plot of Time to Dermatologic Event"
-            show_ci=${showCI ? "Y" : "N"}
-            show_censor=${showCensorMarks ? "Y" : "N"}
-            show_median=${showMedianLines ? "Y" : "N"}
-            show_risk=${showRiskTable ? "Y" : "N"};
+%calc_subgroup_hr(var=agegr1,  label=Age Category);
+%calc_subgroup_hr(var=sex,     label=Sex);
+%calc_subgroup_hr(var=ecoggr1, label=ECOG Performance Status);
+%calc_subgroup_hr(var=priorl,  label=Prior Systemic Lines);
+%calc_subgroup_hr(var=pdl1fl,  label=PD-L1 Expression CPS);
+
+/* Step 4: GTL Template Definition for Composite Layout */
+proc template;
+    define statgraph KM_Subgroup_Layout;
+        dynamic _TITLE _SUBTITLE _SHOWCI _SHOWRISK _SHOWFOREST;
+        begingraph / designwidth=9.5in designheight=6.2in;
+            entrytitle "Figure 15.1.1: " _TITLE;
+            entrytitle "Progression-Free Survival and Subgroup Forest Plot (ITT Set)" / textattrs=(size=9pt);
+            
+            layout lattice / rows=3 columns=1 rowweights=(0.52 0.16 0.32) columngutter=8px;
+                /* Cell 1: Kaplan-Meier Step Curves */
+                layout overlay / xaxisopts=(label="Time from Randomization (Months)" linearopts=(viewmin=0 viewmax=36 tickvaluelist=(0 3 6 9 12 18 24 30 36)))
+                                yaxisopts=(label="Progression-Free Survival Probability" linearopts=(viewmin=0 viewmax=1.0 tickvaluesequence=(start=0 end=1.0 increment=0.2)));
+                    stepplot x=time_months y=survival / group=trt01p name="km" lineattrs=(thickness=2);
+                    censorplot x=time_months y=survival / group=trt01p name="cens" markerattrs=(symbol=plus size=7);
+                    discretelegend "km" / location=inside halign=right valign=top across=1;
+                endlayout;
+
+                /* Cell 2: Number at Risk Table */
+                layout overlay / pad=(top=2px bottom=2px);
+                    axistable x=tatrisk value=atrisk / class=trt01p title="Number at Risk" position=bottom;
+                endlayout;
+
+                /* Cell 3: Subgroup Analysis Forest Plot */
+                layout overlay / xaxisopts=(type=log label="Hazard Ratio (95% CI) [Log scale]" linearopts=(viewmin=0.2 viewmax=2.5))
+                                yaxisopts=(type=discrete reverse=true display=(tickvalues));
+                    referenceline x=1.0 / lineattrs=(pattern=dash color=graphite);
+                    highlowplot y=subgroup low=ci_low high=ci_high / type=line lineattrs=(color=cx3C4242 thickness=1.2);
+                    scatterplot y=subgroup x=hr / markerattrs=(symbol=squarefilled size=8) sizegroup=weight;
+                endlayout;
+            endlayout;
+
+            entryfootnote halign=left "Program: /study/D9802C00001/csr/prod/figures/f_kmplot_subgroup.sas  |  Output: f_15_1_1.rtf" / textattrs=(size=7pt color=gray);
+        endgraph;
+    end;
+run;
+
+/* Step 5: Render Figure to RTF */
+ods rtf file="f_15_1_1.rtf" style=AZ_CSR_Figure;
+
+proc sgrender data=km_est template=KM_Subgroup_Layout;
+    dynamic _TITLE="Kaplan-Meier Plot of Progression-Free Survival (PFS) with Subgroup Analysis"
+            _SHOWCI="${showCI ? 'Y' : 'N'}"
+            _SHOWRISK="${showRiskTable ? 'Y' : 'N'}"
+            _SHOWFOREST="Y";
 run;
 
 ods rtf close;
@@ -9414,7 +9562,7 @@ function WorkspaceContent({
         )}
 
         {/* Middle Column: (视图切换行 + Code&Shell卡 + Group Code浮层) */}
-        <div ref={contentAreaRef} className="relative flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden p-[4px]">
+        <div ref={contentAreaRef} className="relative flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden px-[4px] pt-[4px] pb-[8px]">
           {/* 视图切换行 (Top bar) */}
           <div className="shrink-0 w-full overflow-hidden mb-[4px]">
             <ViewToggleBar
@@ -9437,13 +9585,13 @@ function WorkspaceContent({
             />
           </div>
 
-          {/* Below ViewToggleBar: Container for Code&Shell card and floating GroupCodePanel */}
-          <div className="relative min-w-0 min-h-0 flex-1 overflow-hidden">
-            {/* Code & Shell 统一白卡 (不受 Group View 影响，不被挤压) */}
+          {/* Below ViewToggleBar: Container for Shell, Code, AI Copilot cards and floating GroupCodePanel */}
+          <div className="relative min-w-0 min-h-0 flex-1 overflow-visible">
+            {/* 3 Separate In-Card panels with 8px radius, white bg, Mulberry-tinted soft shadow, and 2px gap */}
             {docType === 'listing' ? (
-              <div className="flex min-w-0 min-h-0 h-full w-full overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]" style={{ flexDirection: 'row' }}>
+              <div className="flex min-w-0 min-h-0 h-full w-full overflow-visible" style={{ flexDirection: 'row' }}>
                 <div
-                  className="flex-1 flex min-w-0 min-h-0 h-full overflow-hidden"
+                  className="flex-1 flex min-w-0 min-h-0 h-full overflow-visible"
                   style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}
                 >
                   {panelView !== 'code' && (
@@ -9452,7 +9600,7 @@ function WorkspaceContent({
                         ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
                         : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
                       }
-                      className={`h-full flex flex-col min-w-0 overflow-hidden bg-white ${panelView === 'both' ? (panelLayout === 'vertical' ? 'border-b border-graphite-10 shrink-0' : 'border-r border-graphite-10 shrink-0') : 'flex-1'}`}
+                      className={`${panelLayout === 'vertical' ? 'w-full' : 'h-full'} flex flex-col min-w-0 overflow-hidden bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry ${panelView === 'both' ? 'shrink-0' : 'flex-1'}`}
                     >
                       <ListingShellPreview
                         selectedItemName={getSelectedItemName()}
@@ -9519,11 +9667,7 @@ function WorkspaceContent({
 
                   {panelView !== 'shell' && (
                     <div
-                      className={`min-w-0 flex-1 overflow-hidden flex flex-col bg-white ${
-                        panelView === 'both'
-                          ? (panelLayout === 'vertical' ? 'border-t border-solid border-graphite-10' : 'border-l border-solid border-graphite-10')
-                          : ''
-                      }`}
+                      className={`min-w-0 min-h-0 flex-1 overflow-hidden flex flex-col bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry ${panelLayout === 'vertical' ? 'w-full' : 'h-full'}`}
                       style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
                     >
                       <CodePanel
@@ -9546,7 +9690,7 @@ function WorkspaceContent({
                     />
                     <div
                       style={{ width: `${aiCopilotWidth}px` }}
-                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 border-l border-graphite-15"
+                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 rounded-[8px] border border-graphite-10 shadow-card-mulberry"
                     >
                       {renderAICopilotComponent('incard')}
                     </div>
@@ -9555,19 +9699,17 @@ function WorkspaceContent({
               </div>
             ) : (
               <div
-                className="flex min-w-0 min-h-0 h-full w-full overflow-hidden rounded-[8px] border border-graphite-15 bg-white shadow-[0_1px_2px_0_rgba(0,0,0,0.03),0_4px_12px_-2px_rgba(63,68,68,0.05)]"
+                className="flex min-w-0 min-h-0 h-full w-full overflow-visible"
                 style={{ flexDirection: 'row' }}
               >
                 <div
-                  className="flex-1 flex min-w-0 min-h-0 h-full overflow-hidden"
+                  className="flex-1 flex min-w-0 min-h-0 h-full overflow-visible"
                   style={{ flexDirection: panelLayout === 'vertical' ? 'column' : 'row' }}
                 >
                   {shellPreviewOpen && (
                     <div
-                      className={`h-full flex flex-col min-w-0 overflow-hidden bg-white ${
-                        panelView === 'both'
-                          ? (panelLayout === 'vertical' ? 'border-b border-graphite-10 shrink-0' : 'border-r border-graphite-10 shrink-0')
-                          : 'flex-1'
+                      className={`${panelLayout === 'vertical' ? 'w-full' : 'h-full'} flex flex-col min-w-0 overflow-hidden bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry ${
+                        panelView === 'both' ? 'shrink-0' : 'flex-1'
                       }`}
                       style={panelLayout === 'vertical'
                         ? { height: panelView === 'shell' ? undefined : `${shellHeight}px`, minHeight: '240px' }
@@ -9658,11 +9800,7 @@ function WorkspaceContent({
 
                   {codeOpen && (
                     <div
-                      className={`min-w-0 flex-1 overflow-hidden flex flex-col bg-white ${
-                        panelView === 'both'
-                          ? (panelLayout === 'vertical' ? 'border-t border-solid border-graphite-10' : 'border-l border-solid border-graphite-10')
-                          : ''
-                      }`}
+                      className={`min-w-0 min-h-0 flex-1 overflow-hidden flex flex-col bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry ${panelLayout === 'vertical' ? 'w-full' : 'h-full'}`}
                       style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
                     >
                       <CodePanel
@@ -9689,7 +9827,7 @@ function WorkspaceContent({
                     />
                     <div
                       style={{ width: `${aiCopilotWidth}px` }}
-                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 border-l border-graphite-15"
+                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 rounded-[8px] border border-graphite-10 shadow-card-mulberry"
                     >
                       {renderAICopilotComponent('incard')}
                     </div>

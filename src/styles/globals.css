@@ -1,3 +1,9 @@
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 /* Fade transition for Ask User */
 .q-fade {
   transition: opacity 0.25s ease, transform 0.25s ease;
@@ -249,8 +255,11 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.shadow-elevation-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+.shadow-elevation-card,
+.shadow-card-mulberry {
+  box-shadow: 
+    0 2px 4px -2px rgba(63, 68, 68, 0.06),
+    0 4px 8px -3px rgba(131, 0, 81, 0.06);
 }
 
 .shadow-elevation-overlay {
