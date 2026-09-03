@@ -4753,6 +4753,7 @@ function ShellPreview({
   return (
     <div className="flex h-full flex-col min-w-0 overflow-hidden bg-white">
       <PanelHeader
+        noBorder
         title={
           <div className="flex items-center gap-[12px]">
             <span className="t-small text-text-primary truncate">{selectedItemName || "Shell preview"}</span>
@@ -4787,7 +4788,7 @@ function ShellPreview({
           </div>
         }
       />
-      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-white">
+      <div className="flex min-h-0 flex-1 min-w-0 overflow-hidden bg-white [mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_100%)]">
         {docType === 'figure' ? (
           <div className="flex-1 min-w-0 h-full flex">
             <div className={`flex-1 min-w-0 h-full overflow-auto ${metadataOpen && !rtfOpen ? 'border-r border-graphite-10' : ''}`}>
@@ -8877,12 +8878,13 @@ ods graphics off;`;
         }
       `}} />
       <PanelHeader
+        noBorder
         title={
           <LocalIcon src={codeSlashIconUrl} className="w-[16px] h-[16px]" color="#888E8E" />
         }
         actions={toolbarButtons}
       />
-      <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container scrollbar-code">
+      <div className="min-h-0 flex-1 overflow-auto bg-white code-panel-scroll-container scrollbar-code [mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0px,black_16px,black_100%)]">
         {docType === 'figure' ? (
           <div className="flex flex-1 min-w-max font-mono text-[12px] leading-[18px]">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
