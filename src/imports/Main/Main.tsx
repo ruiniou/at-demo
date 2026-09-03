@@ -2022,53 +2022,62 @@ function ViewToggleBar({
 
 
   const rightControls = (
-    <div className="flex items-center gap-[8px]">
-      {onToggleGroupView && (
-        <TooltipText label={groupViewOpen ? "Close Group Code" : "Open Group Code"}>
-          <button
-            type="button"
-            onClick={onToggleGroupView}
-            className={`relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] border border-graphite-10 transition-colors active:scale-[0.96] ${
-              groupViewOpen ? "bg-az-secondary border-[#830051]/30" : "bg-white hover:bg-black/5"
-            }`}
-            aria-label="Toggle group code"
-          >
-            <LocalIcon src={groupIconUrl} className="h-[16px] w-[16px]" color={groupViewOpen ? "#830051" : "#888E8E"} />
-          </button>
-        </TooltipText>
-      )}
-      {onOpenDownloadModal && (
-        <TooltipText label="Download SAS Programs">
-          <button
-            type="button"
-            onClick={onOpenDownloadModal}
-            className="relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] border border-graphite-10 bg-white hover:bg-black/5 transition-colors active:scale-[0.96]"
-            aria-label="Download SAS Programs"
-          >
-            <LocalIcon src={downloadIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-          </button>
-        </TooltipText>
-      )}
+    <div className="flex items-center">
+      {/* 1. Left Icon Buttons: Group Code & Download (gap: 4px) */}
+      <div className="flex items-center gap-[4px]">
+        {onToggleGroupView && (
+          <TooltipText label={groupViewOpen ? "Close Group Code" : "Open Group Code"}>
+            <button
+              type="button"
+              onClick={onToggleGroupView}
+              className={`relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] border border-graphite-10 transition-colors active:scale-[0.96] ${
+                groupViewOpen ? "bg-az-secondary border-[#830051]/30" : "bg-white hover:bg-black/5"
+              }`}
+              aria-label="Toggle group code"
+            >
+              <LocalIcon src={groupIconUrl} className="h-[16px] w-[16px]" color={groupViewOpen ? "#830051" : "#888E8E"} />
+            </button>
+          </TooltipText>
+        )}
+        {onOpenDownloadModal && (
+          <TooltipText label="Download SAS Programs">
+            <button
+              type="button"
+              onClick={onOpenDownloadModal}
+              className="relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] border border-graphite-10 bg-white hover:bg-black/5 transition-colors active:scale-[0.96]"
+              aria-label="Download SAS Programs"
+            >
+              <LocalIcon src={downloadIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+            </button>
+          </TooltipText>
+        )}
+      </div>
+
+      {/* 2. Vertical Divider: Graphite-20, h-18px, w-1.2px, rounded-full, 12px margin on left & right */}
       {(onToggleGroupView || onOpenDownloadModal) && (
-        <div className="w-[1.2px] h-[24px] bg-graphite-10 rounded-full shrink-0 mx-[2px]" aria-hidden="true" />
+        <div className="w-[1.2px] h-[18px] bg-graphite-20 rounded-full shrink-0 mx-[12px]" aria-hidden="true" />
       )}
-      <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
-      {onOpenAICopilot && (
-        <TooltipText label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}>
-          <button
-            type="button"
-            onClick={onOpenAICopilot}
-            className={`relative flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] transition-colors active:scale-[0.96] ${
-              aiCopilotOpen
-                ? "bg-az-secondary text-brand-1 border border-[#830051]/30 hover:bg-az-secondary-hover"
-                : "bg-brand-1 text-white hover:bg-az-warning shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-            }`}
-            aria-label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}
-          >
-            <AtlasLogoIcon className="h-[16px] w-[16px] shrink-0" color={aiCopilotOpen ? "var(--color-brand-1)" : "white"} />
-          </button>
-        </TooltipText>
-      )}
+
+      {/* 3. Panel View Toggle & AI Button (gap: 8px) */}
+      <div className="flex items-center gap-[8px]">
+        <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
+        {onOpenAICopilot && (
+          <TooltipText label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}>
+            <button
+              type="button"
+              onClick={onOpenAICopilot}
+              className={`relative flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] transition-colors active:scale-[0.96] ${
+                aiCopilotOpen
+                  ? "bg-az-secondary text-brand-1 border border-[#830051]/30 hover:bg-az-secondary-hover"
+                  : "bg-brand-1 text-white hover:bg-az-warning shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+              }`}
+              aria-label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}
+            >
+              <AtlasLogoIcon className="h-[16px] w-[16px] shrink-0" color={aiCopilotOpen ? "var(--color-brand-1)" : "white"} />
+            </button>
+          </TooltipText>
+        )}
+      </div>
     </div>
   );
 
