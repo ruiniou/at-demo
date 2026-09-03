@@ -8481,23 +8481,23 @@ function highlightSAS(code: string): React.ReactNode {
   return <>{parts}</>;
 }
 
-function renderCodeLineWithIndentGuides(line: string): React.ReactNode {
-  if (!line) {
-    return <code>{' '}</code>;
-  }
+function renderCodeLineWithIndentGuides(
+  line: string,
+  lineIndex: number,
+  effectiveIndents?: number[]
+): React.ReactNode {
+  const isEmpty = !line || line.trim() === '';
+  const match = line ? line.match(/^( +)/) : null;
+  const leadingSpaces = match ? match[1].length : 0;
 
-  const match = line.match(/^( +)/);
-  if (!match) {
-    return <code>{highlightSAS(line)}</code>;
-  }
-
-  const leadingSpaces = match[1].length;
-  // 现代 IDE 标准：以 2 空格为紧凑缩进单位 (2ch Indent Guides)
-  const indentCount = Math.floor(leadingSpaces / 2);
-  const remainder = leadingSpaces % 2;
+  // 如果行内有代码，使用自身缩进；如果是空行，使用 Monaco 算法计算的跨空行连续缩进
+  const indentCount = isEmpty
+    ? (effectiveIndents ? (effectiveIndents[lineIndex] ?? 0) : 0)
+    : Math.floor(leadingSpaces / 2);
+  const remainder = isEmpty ? 0 : leadingSpaces % 2;
 
   if (indentCount === 0) {
-    return <code>{highlightSAS(line)}</code>;
+    return <code>{isEmpty ? '\u00A0' : highlightSAS(line)}</code>;
   }
 
   const guides: React.ReactNode[] = [];
@@ -8517,7 +8517,7 @@ function renderCodeLineWithIndentGuides(line: string): React.ReactNode {
     <code>
       {guides}
       {remainder > 0 ? ' '.repeat(remainder) : null}
-      {highlightSAS(line.slice(leadingSpaces))}
+      {isEmpty ? '\u00A0' : highlightSAS(line.slice(leadingSpaces))}
     </code>
   );
 }
@@ -8673,8 +8673,6 @@ ods graphics off;`;
 
   const [userCode, setUserCode] = useState(codeContent);
   const [lastRunCode, setLastRunCode] = useState(codeContent);
-  const [savedCode, setSavedCode] = useState(codeContent);
-
   useEffect(() => {
     setUserCode(codeContent);
     setLastRunCode(codeContent);
@@ -8683,7 +8681,34 @@ ods graphics off;`;
 
   const codeLines = userCode.split('\n');
 
-  const [logExpanded, setLogExpanded] = useState(true);
+  // Compute Monaco-style continuous indentation levels across empty lines
+  const effectiveIndents = useMemo(() => {
+    const raw = codeLines.map((line) => {
+      if (!line || line.trim() === '') return -1;
+      const match = line.match(/^( +)/);
+      const leadingSpaces = match ? match[1].length : 0;
+      return Math.floor(leadingSpaces / 2);
+    });
+
+    return raw.map((indent, i) => {
+      if (indent !== -1) return indent;
+      let prevIndent = 0;
+      for (let p = i - 1; p >= 0; p--) {
+        if (raw[p] !== -1) {
+          prevIndent = raw[p];
+          break;
+        }
+      }
+      let nextIndent = 0;
+      for (let n = i + 1; n < raw.length; n++) {
+        if (raw[n] !== -1) {
+          nextIndent = raw[n];
+          break;
+        }
+      }
+      return Math.min(prevIndent, nextIndent);
+    });
+  }, [codeLines]);
   const codeTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const [selectedCodeLine, setSelectedCodeLine] = useState<number | null>(null);
@@ -8883,7 +8908,7 @@ ods graphics off;`;
                         isSelected ? 'bg-[#FBF4F7]' : ''
                       }`}
                     >
-                      {renderCodeLineWithIndentGuides(line || ' ')}
+                      {renderCodeLineWithIndentGuides(line || '', index, effectiveIndents)}
                     </div>
                   );
                 })}
@@ -8904,7 +8929,7 @@ ods graphics off;`;
                           isSelected ? 'bg-[#FBF4F7]' : ''
                         }`}
                       >
-                        {renderCodeLineWithIndentGuides(line || ' ')}
+                        {renderCodeLineWithIndentGuides(line || '', index, effectiveIndents)}
                       </div>
                     );
                   })}
@@ -8964,7 +8989,7 @@ ods graphics off;`;
                       isSelected ? 'bg-[#FBF4F7]' : ''
                     }`}
                   >
-                    {renderCodeLineWithIndentGuides(line || ' ')}
+                    {renderCodeLineWithIndentGuides(line || '', index, effectiveIndents)}
                   </div>
                 );
               })}
