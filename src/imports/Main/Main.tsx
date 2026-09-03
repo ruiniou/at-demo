@@ -8481,6 +8481,46 @@ function highlightSAS(code: string): React.ReactNode {
   return <>{parts}</>;
 }
 
+function renderCodeLineWithIndentGuides(line: string): React.ReactNode {
+  if (!line) {
+    return <code>{' '}</code>;
+  }
+
+  const match = line.match(/^( +)/);
+  if (!match) {
+    return <code>{highlightSAS(line)}</code>;
+  }
+
+  const leadingSpaces = match[1].length;
+  const indentCount = Math.floor(leadingSpaces / 4);
+  const remainder = leadingSpaces % 4;
+
+  if (indentCount === 0) {
+    return <code>{highlightSAS(line)}</code>;
+  }
+
+  const guides: React.ReactNode[] = [];
+  for (let i = 0; i < indentCount; i++) {
+    guides.push(
+      <span
+        key={`guide-${i}`}
+        className="inline-block relative select-none pointer-events-none align-top h-[18px]"
+        style={{ width: '4ch' }}
+      >
+        <span className="absolute left-0 top-0 bottom-0 w-[1px] bg-graphite-15" />
+      </span>
+    );
+  }
+
+  return (
+    <code>
+      {guides}
+      {remainder > 0 ? ' '.repeat(remainder) : null}
+      {highlightSAS(line.slice(leadingSpaces))}
+    </code>
+  );
+}
+
 function CodePanel({
   selectedItem,
   docType,
@@ -8839,7 +8879,7 @@ ods graphics off;`;
                         isSelected ? 'bg-[#FBF4F7]' : ''
                       }`}
                     >
-                      <code>{highlightSAS(line || ' ')}</code>
+                      {renderCodeLineWithIndentGuides(line || ' ')}
                     </div>
                   );
                 })}
@@ -8860,7 +8900,7 @@ ods graphics off;`;
                           isSelected ? 'bg-[#FBF4F7]' : ''
                         }`}
                       >
-                        <code>{highlightSAS(line || ' ')}</code>
+                        {renderCodeLineWithIndentGuides(line || ' ')}
                       </div>
                     );
                   })}
@@ -8920,7 +8960,7 @@ ods graphics off;`;
                       isSelected ? 'bg-[#FBF4F7]' : ''
                     }`}
                   >
-                    <code>{highlightSAS(line || ' ')}</code>
+                    {renderCodeLineWithIndentGuides(line || ' ')}
                   </div>
                 );
               })}
