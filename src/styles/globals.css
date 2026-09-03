@@ -147,7 +147,7 @@ html, body {
   line-height: 1.5;
 }
 
-/* ── Scrollbar: Default (Panel级, 12px容器 / 8px thumb) ── */
+/* ── Scrollbar: Unified Standard (12px 容器 / 8px Thumb 圆角胶囊) ── */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
@@ -155,7 +155,6 @@ html, body {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
@@ -169,22 +168,25 @@ html, body {
   background-color: var(--color-graphite-40);
 }
 
-/* ── Scrollbar: Code Editor (16px容器 / 12px圆角 thumb, Hover才显示) ── */
+/* ── Scrollbar: Code Editor (与 Shell Preview 保持 100% 一致的 12px 容器 / 8px Thumb) ── */
 .scrollbar-code {
-  --scrollbar-thumb-color: transparent;
-}
-.scrollbar-code:hover {
   --scrollbar-thumb-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent);
 }
+.scrollbar-code:hover {
+  --scrollbar-thumb-color: var(--color-graphite-40);
+}
 .scrollbar-code::-webkit-scrollbar {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 .scrollbar-code::-webkit-scrollbar-track {
   background: transparent;
 }
+.scrollbar-code::-webkit-scrollbar-corner {
+  background: transparent;
+}
 .scrollbar-code::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb-color);
+  background-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
@@ -211,11 +213,11 @@ html, body {
     scrollbar-color: var(--color-graphite-40) transparent;
   }
   .scrollbar-code {
-    scrollbar-color: transparent transparent;
-    scrollbar-width: auto;
+    scrollbar-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent) transparent;
+    scrollbar-width: thin;
   }
   .scrollbar-code:hover {
-    scrollbar-color: color-mix(in srgb, var(--color-graphite-20) 75%, transparent) transparent;
+    scrollbar-color: var(--color-graphite-40) transparent;
   }
   .scrollbar-colored {
     scrollbar-color: #E6CCDC transparent;
