@@ -2034,15 +2034,15 @@ function ViewToggleBar({
 
   const rightControls = (
     <div className="flex items-center">
-      {/* 1. Left Icon Buttons: Group Code & Download (gap: 4px) */}
+      {/* 1. Left Icon Buttons: Group Code & Download (gap: 4px, borderless & transparent in default) */}
       <div className="flex items-center gap-[4px]">
         {onToggleGroupView && (
           <TooltipText label={groupViewOpen ? "Close Group Code" : "Open Group Code"}>
             <button
               type="button"
               onClick={onToggleGroupView}
-              className={`relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] border border-graphite-10 transition-colors active:scale-[0.96] ${
-                groupViewOpen ? "bg-az-secondary border-[#830051]/30" : "bg-white hover:bg-black/5"
+              className={`relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] transition-colors active:scale-[0.96] ${
+                groupViewOpen ? "bg-az-secondary" : "bg-transparent hover:bg-black/5"
               }`}
               aria-label="Toggle group code"
             >
@@ -2055,7 +2055,7 @@ function ViewToggleBar({
             <button
               type="button"
               onClick={onOpenDownloadModal}
-              className="relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] border border-graphite-10 bg-white hover:bg-black/5 transition-colors active:scale-[0.96]"
+              className="relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] bg-transparent hover:bg-black/5 transition-colors active:scale-[0.96]"
               aria-label="Download SAS Programs"
             >
               <LocalIcon src={downloadIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
@@ -2079,7 +2079,7 @@ function ViewToggleBar({
               onClick={onOpenAICopilot}
               className={`relative flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] transition-colors active:scale-[0.96] ${
                 aiCopilotOpen
-                  ? "bg-az-secondary text-brand-1 border border-[#830051]/30 hover:bg-az-secondary-hover"
+                  ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover"
                   : "bg-brand-1 text-white hover:bg-az-warning shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
               }`}
               aria-label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}
@@ -2440,7 +2440,7 @@ function WorkspaceDivider({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="absolute inset-y-0 -left-[4px] -right-[4px] z-10" />
+      <div className="absolute inset-y-0 -left-[4px] -right-[4px] z-10 cursor-col-resize" />
       <div className={`absolute inset-0 w-full bg-brand-1 transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
@@ -9667,7 +9667,7 @@ function WorkspaceContent({
         )}
 
         {/* Middle Column: (视图切换行 + Code&Shell卡 + Group Code浮层) */}
-        <div ref={contentAreaRef} className="relative flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden px-[4px] pt-[4px] pb-[8px]">
+        <div ref={contentAreaRef} className={`relative flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden pl-[4px] pt-[4px] pb-[8px] ${aiLayoutVariant === 'drawer' && aiCopilotOpen ? 'pr-[4px]' : 'pr-[8px]'}`}>
           {/* 视图切换行 (Top bar) */}
           <div className="shrink-0 w-full overflow-hidden mb-[4px]">
             <ViewToggleBar
@@ -9968,7 +9968,7 @@ function WorkspaceContent({
               />
             )}
             <div
-              className="shrink-0 overflow-hidden bg-transparent p-[4px]"
+              className="shrink-0 overflow-hidden bg-transparent pl-[4px] pr-[8px] pt-[4px] pb-[8px]"
               style={{
                 width: aiCopilotOpen ? `${aiCopilotWidth}px` : "0px",
                 opacity: aiCopilotOpen ? 1 : 0,
@@ -10495,7 +10495,7 @@ function HomePage({
         )}
 
         {/* Main Container */}
-        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-elevation-panel my-[4px] mr-[4px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
+        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry mt-[4px] mb-[8px] mr-[8px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
           {/* Expand tree list button when collapsed */}
           {!treeListOpen && (
             <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-border-default">
