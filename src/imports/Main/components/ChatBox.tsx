@@ -939,12 +939,8 @@ export default function ChatBox({
         {/* --- Inputbox Container (non-pending) --- */}
         {isNotPendingAndIsDefaultOrFocusedOrTypedOrMaxHeight && (
           <div
-            className={`bg-white border-solid flex flex-col items-start justify-start p-[8px] relative shrink-0 w-full transition-all duration-200 ${
-              isMaxHeightAndNotPending
-                ? "border border-graphite-10 rounded-[6px]"
-                : isFocusedAndNotPending
-                ? "border border-brand-1 drop-shadow-[0px_0px_3px_rgba(131,0,81,0.2)] rounded-[8px]"
-                : "border border-graphite-10 rounded-[8px]"
+            className={`bg-white border-solid flex flex-col items-start justify-start p-[8px] relative shrink-0 w-full transition-all duration-200 border border-graphite-10 ${
+              isMaxHeightAndNotPending ? "rounded-[6px]" : "rounded-[8px]"
             }`}
           >
             {/* ---- Attachment Preview Strip (Top) ---- */}
