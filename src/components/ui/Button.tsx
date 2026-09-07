@@ -1,7 +1,7 @@
 import React, { ButtonHTMLAttributes, forwardRef } from "react";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "icon" | "danger";
+  variant?: "primary" | "secondary" | "ghost" | "icon" | "danger" | "secondary-danger";
   size?: "default" | "sm" | "lg" | "icon";
 }
 
@@ -15,7 +15,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       primary: "bg-brand-1 hover:bg-az-warning disabled:bg-brand-1-disabled",
       secondary: "bg-graphite-20 hover:bg-graphite-40 disabled:bg-white",
       ghost: "bg-transparent text-text-secondary hover:bg-black/5 hover:text-text-primary",
-      danger: "bg-status-error text-white hover:opacity-90",
+      danger: "bg-status-error text-white hover:bg-[#B3202F] active:bg-[#991523] disabled:bg-graphite-10 disabled:cursor-not-allowed",
+      "secondary-danger": "bg-status-error-bg hover:bg-status-error-border active:bg-[#EE808F] disabled:bg-white disabled:cursor-not-allowed",
       icon: "bg-transparent hover:bg-black/5 text-text-secondary hover:text-text-primary",
     };
 
@@ -32,7 +33,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       primary: "#FFFFFF",
       secondary: disabled ? "#B2B4B4" : "#3F4444",
       ghost: "",
-      danger: "#FFFFFF",
+      danger: disabled ? "#B2B4B4" : "#FFFFFF",
+      "secondary-danger": disabled ? "#B2B4B4" : "#CC2C3C",
       icon: "",
     };
     const fontSizes: Record<string, number> = { default: 14, sm: 12, lg: 14, icon: 14 };

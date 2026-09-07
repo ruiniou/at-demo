@@ -226,13 +226,13 @@ export function GroupCodePanel({
             </div>
 
             <div className="flex-1 overflow-hidden rounded-[4px] border border-border-default bg-[#FAFBFB]">
-              <div className="h-full overflow-auto p-[8px] font-mono text-[11px] leading-[18px] text-text-primary scrollbar-code">
+              <div className="h-full overflow-auto p-[8px] font-mono text-[13px] leading-[20px] text-text-primary scrollbar-code">
                 {currentGroup.lines.map((line, lineIdx) => {
                   const isComment = line.trim().startsWith("/*") || line.trim().startsWith("*");
                   const isKeyword = /^(proc format|value|quit|run|data|merge|by|set|keep|length|if|then|else|%m_u_popn|%let)\b/i.test(line.trim());
                   return (
                     <div key={lineIdx} className="flex min-w-max hover:bg-black/[0.02]">
-                      <span className="w-[28px] select-none text-right pr-[8px] text-[#A0A5A5] text-[10px]">
+                      <span className="w-[28px] select-none text-right pr-[8px] text-[#A0A5A5] text-[13px] leading-[20px]">
                         {lineIdx + 1}
                       </span>
                       <span

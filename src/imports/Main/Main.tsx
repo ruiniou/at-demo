@@ -58,6 +58,7 @@ import barChartBoxAiIconUrl from "../../icons/bar-chart-box-ai-line.svg";
 import imageAiLineIconUrl from "../../icons/image-ai-line.svg";
 import CreateEventModal from "./components/CreateEventModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
+import DeleteEventModal from "./components/DeleteEventModal";
 import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal";
 import { KMPlot } from "./components/KMPlot";
 import { Button } from "../../components/ui/Button";
@@ -648,14 +649,12 @@ function SpatialViewCard({ onClick }: { onClick?: () => void }) {
 export type ReviewItem = { type: 'ai-infer' | 'conflict', fieldName: string, tooltip: string, blockId: string, fieldId: string };
 
 export const DEFAULT_FIGURE_REVIEW_ITEMS: ReviewItem[] = [
-  { type: 'ai-infer', fieldName: 'Input Dataset(s)', tooltip: 'Inferred from standard TTE dataset naming convention (ADTTTE, ADSL).', blockId: 'figBasic', fieldId: 'inputDataset' },
-  { type: 'conflict', fieldName: 'General Filter', tooltip: 'Conflicting population filter: Safety Analysis Set vs ITT Analysis Set.', blockId: 'figBasic', fieldId: 'generalFilter' },
+  { type: 'ai-infer', fieldName: 'Input Dataset(s)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'figBasic', fieldId: 'inputDataset' },
+  { type: 'conflict', fieldName: 'General Filter', tooltip: 'Conflicting value detected with SAP specification.', blockId: 'figBasic', fieldId: 'generalFilter' },
   { type: 'ai-infer', fieldName: 'Source Dataset(s) (KM Plot Chart)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'kmCurve', fieldId: 'sourceDataset1' },
-  { type: 'ai-infer', fieldName: 'Source Variable(s) (KM Plot Chart)', tooltip: 'Inferred based on typical KM Plot requirements (AVAL, CNSR, PARAMCD).', blockId: 'kmCurve', fieldId: 'sourceVariable1' },
+  { type: 'ai-infer', fieldName: 'Source Variable(s) (KM Plot Chart)', tooltip: 'Inferred based on typical KM Plot requirements.', blockId: 'kmCurve', fieldId: 'sourceVariable1' },
   { type: 'ai-infer', fieldName: 'Source Dataset(s) (Number at Risk Table)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'riskTable', fieldId: 'sourceDataset2' },
-  { type: 'conflict', fieldName: 'Source Variable(s) (Number at Risk Table)', tooltip: 'Conflicting treatment variable: TRTA used instead of TRT01P.', blockId: 'riskTable', fieldId: 'sourceVariable2' },
-  { type: 'ai-infer', fieldName: 'Source Variable(s) (Subgroup Forest Plot)', tooltip: 'Inferred baseline subgroup variables from ADSL (AGEGR1, SEX, ECOGGR1, PRIORL, PDL1FL).', blockId: 'subgroupForest', fieldId: 'sourceVariable3' },
-  { type: 'conflict', fieldName: 'Subgroup Model Method (Forest Plot)', tooltip: 'Unstratified Cox PH model inferred; verify if stratified analysis is required by SAP.', blockId: 'subgroupForest', fieldId: 'filter3' }
+  { type: 'conflict', fieldName: 'Source Variable(s) (Number at Risk Table)', tooltip: 'Conflicting variable: TRTA used instead of TRT01P.', blockId: 'riskTable', fieldId: 'sourceVariable2' }
 ];
 
 // ── Reusable Metadata entry bar ──────────────────────────────────────────────
@@ -1029,119 +1028,49 @@ function ChatConversation({
                   {docType === 'figure' ? (
                     <>
                       <div className="flex flex-col w-full px-[10px]">
-                        <div className="flex flex-col gap-[6px] mb-[10px]">
+                        <div className="flex flex-col gap-[8px] mb-[8px]">
                           <p className="t-body text-text-primary leading-relaxed">
-                            I have parsed the uploaded Shell and SAP specifications, and successfully synthesized the multi-component structure for SAS Figure generation:
+                            I have parsed the uploaded Shell file and successfully inferred the structure for SAS Code generation.
                           </p>
                         </div>
 
-                        {/* Component 1 */}
-                        <div className="flex flex-col mb-[6px]">
-                          <div className="flex items-center justify-between">
-                            <h1 className="text-[13px] font-semibold text-text-primary mb-[4px]" style={{ fontFamily: 'var(--font-body)' }}>
-                              Component 1: Kaplan-Meier PFS Curves
-                            </h1>
-                            <span className="text-[10px] text-text-secondary font-mono">Chart</span>
-                          </div>
-                          <ul className="list-disc pl-[20px] flex flex-col gap-[3px]">
-                            <li className="t-body text-text-primary text-[12px]">
-                              <span>Source: <InlineHighlight>adam.adtte</InlineHighlight> (<InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>CNSR</InlineHighlight>, <InlineHighlight>PARAMCD='PFS'</InlineHighlight>)</span>
+                        <div className="flex flex-col">
+                          <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 1: KM Plot Chart</h1>
+                          <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
+                            <li className="t-body text-text-primary">
+                              <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
                             </li>
-                            <li className="t-body text-text-primary text-[12px]">
-                              <span>Axes: Time in <InlineHighlight>Months</InlineHighlight> (0-36 mo) | Probability (0.0-1.0) | <InlineHighlight>Log-log 95% CI</InlineHighlight></span>
+                            <li className="t-body text-text-primary">
+                              <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>CNSR</InlineHighlight>, <InlineHighlight>PARAMCD</InlineHighlight></span>
+                            </li>
+                          </ul>
+                          <div style={{ borderTop: '1px dashed var(--color-border-subtle)', width: '100%', margin: '8px 0' }}></div>
+                          <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Axis Setup</h1>
+                          <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
+                            <li className="t-body text-text-primary">
+                              <span>X-Axis: <InlineHighlight>Months</InlineHighlight> | Ticks <InlineHighlight>0, 3, 6, 9, 12</InlineHighlight></span>
+                            </li>
+                            <li className="t-body text-text-primary">
+                              <span>Y-Axis: <InlineHighlight>Probability</InlineHighlight> | Range <InlineHighlight>0.0 - 1.0</InlineHighlight></span>
+                            </li>
+                            <li className="t-body text-text-primary">
+                              <span>Reference: Contains <InlineHighlight>Median</InlineHighlight> line</span>
                             </li>
                           </ul>
                         </div>
 
-                        <Divider className="!my-[6px]" />
+                        <Divider className="!my-[8px]" />
 
-                        {/* Component 2 */}
-                        <div className="flex flex-col mb-[6px]">
-                          <div className="flex items-center justify-between">
-                            <h1 className="text-[13px] font-semibold text-text-primary mb-[4px]" style={{ fontFamily: 'var(--font-body)' }}>
-                              Component 2: Number at Risk Table
-                            </h1>
-                            <span className="text-[10px] text-text-secondary font-mono">Table</span>
-                          </div>
-                          <ul className="list-disc pl-[20px] flex flex-col gap-[3px]">
-                            <li className="t-body text-text-primary text-[12px]">
-                              <span>Source: <InlineHighlight>adam.adtte</InlineHighlight> (<InlineHighlight>TRTA</InlineHighlight>, <InlineHighlight>AVAL</InlineHighlight>)</span>
+                        <div className="flex flex-col">
+                          <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 2: Number at Risk Table</h1>
+                          <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
+                            <li className="t-body text-text-primary">
+                              <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
                             </li>
-                            <li className="t-body text-text-primary text-[12px]">
-                              <span>Intervals: <InlineHighlight>0, 3, 6, 9, 12, 18, 24, 30, 36 Months</InlineHighlight></span>
+                            <li className="t-body text-text-primary">
+                              <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>TRTA</InlineHighlight></span>
                             </li>
                           </ul>
-                        </div>
-
-                        <Divider className="!my-[6px]" />
-
-                        {/* Component 3 */}
-                        <div className="flex flex-col mb-[8px]">
-                          <div className="flex items-center justify-between">
-                            <h1 className="text-[13px] font-semibold text-text-primary mb-[4px]" style={{ fontFamily: 'var(--font-body)' }}>
-                              Component 3: Subgroup Analysis (Forest Plot)
-                            </h1>
-                            <span className="text-[10px] text-text-secondary font-mono">Chart + Table</span>
-                          </div>
-                          <ul className="list-disc pl-[20px] flex flex-col gap-[3px]">
-                            <li className="t-body text-text-primary text-[12px]">
-                              <span>Sources: <InlineHighlight>adam.adtte</InlineHighlight> + <InlineHighlight>adam.adsl</InlineHighlight></span>
-                            </li>
-                            <li className="t-body text-text-primary text-[12px]">
-                              <span>Subgroups: <InlineHighlight>Age</InlineHighlight>, <InlineHighlight>Sex</InlineHighlight>, <InlineHighlight>ECOG PS</InlineHighlight>, <InlineHighlight>Prior Therapy Lines</InlineHighlight>, <InlineHighlight>PD-L1 Status</InlineHighlight></span>
-                            </li>
-                            <li className="t-body text-text-primary text-[12px]">
-                              <span>Model: <InlineHighlight>Unstratified Cox PH Model</InlineHighlight> (HR &amp; 95% Wald CI)</span>
-                            </li>
-                          </ul>
-                        </div>
-
-                        {/* AI Inferred / Conflict notice */}
-                        <div className="rounded-[6px] bg-[#FFF8E6] border border-[#FFE58F] p-[8px] mb-[10px] flex flex-col gap-[4px]">
-                          <div className="flex items-center gap-[6px]">
-                            <span className="text-[11px] font-semibold text-[#B06000]">⚠️ AI Inferences &amp; Potential Discrepancies</span>
-                          </div>
-                          <p className="text-[11px] leading-[16px] text-[#656969] m-0">
-                            • Subgroup age cutoff (<span className="font-mono text-text-primary">65 yrs</span>) and prior therapy line thresholds were inferred from SAP Section 4.2.<br />
-                            • Population filter shows a potential conflict between <span className="font-mono text-text-primary">Safety Analysis Set</span> (Shell header) and <span className="font-mono text-text-primary">ITT Analysis Set</span> (Footnotes).
-                          </p>
-                        </div>
-
-                        {/* To be Reviewed Block */}
-                        <div className="rounded-[6px] bg-bg-panel border border-graphite-10 p-[10px] mb-[10px]">
-                          <span className="text-[12px] font-bold text-text-primary block mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
-                            To be Reviewed
-                          </span>
-                          <div className="flex flex-col gap-[5px]">
-                            <button
-                              onClick={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
-                              className="text-left text-[11.5px] text-[#830051] hover:underline flex items-center gap-[4px]"
-                            >
-                              <span>•</span>
-                              <span>General Population Filter (Safety Set vs. ITT Set)</span>
-                            </button>
-                            <button
-                              onClick={() => onJumpToMetadata?.('subgroupForest', 'sourceVariable3')}
-                              className="text-left text-[11.5px] text-[#830051] hover:underline flex items-center gap-[4px]"
-                            >
-                              <span>•</span>
-                              <span>Subgroup Classification &amp; Variable Mapping (Age, PD-L1)</span>
-                            </button>
-                            <button
-                              onClick={() => onJumpToMetadata?.('subgroupForest', 'filter3')}
-                              className="text-left text-[11.5px] text-[#830051] hover:underline flex items-center gap-[4px]"
-                            >
-                              <span>•</span>
-                              <span>Hazard Ratio Calculation Model (Stratified vs. Unstratified)</span>
-                            </button>
-                            <button
-                              onClick={() => onJumpToMetadata?.('riskTable', 'sourceVariable2')}
-                              className="text-left text-[11.5px] text-[#830051] hover:underline flex items-center gap-[4px]"
-                            >
-                              <span>•</span>
-                              <span>Treatment Variable Mapping (<span className="font-mono">TRTA</span> vs. <span className="font-mono">TRT01P</span>)</span>
-                            </button>
-                          </div>
                         </div>
 
                         <MetadataEntryBlock
@@ -8533,10 +8462,10 @@ function renderCodeLineWithIndentGuides(
     guides.push(
       <span
         key={`guide-${i}`}
-        className="inline-block relative select-none pointer-events-none align-top h-[18px]"
+        className="inline-block relative select-none pointer-events-none align-top h-[20px]"
         style={{ width: '2ch' }}
       >
-        <span className="absolute left-0 top-0 bottom-0 w-[1px] bg-graphite-15" />
+        <span className="absolute left-0 top-0 bottom-0 w-[1px] bg-graphite-10" />
       </span>
     );
   }
@@ -8789,7 +8718,7 @@ ods graphics off;`;
         }
         codeTextAreaRef.current.focus();
         codeTextAreaRef.current.setSelectionRange(charCount, charCount + (lines[programLine - 1]?.length || 0));
-        const lineHeight = 18;
+        const lineHeight = 20;
         const parentContainer = codeTextAreaRef.current.closest('.code-panel-scroll-container');
         if (parentContainer) {
           parentContainer.scrollTop = (programLine - 1) * lineHeight;
@@ -8901,7 +8830,7 @@ ods graphics off;`;
 
         <div className="h-full w-full overflow-auto bg-white code-panel-scroll-container scrollbar-code">
         {docType === 'figure' ? (
-          <div className="flex flex-1 min-w-max font-mono text-[12px] leading-[18px]">
+          <div className="flex flex-1 min-w-max font-mono text-[13px] leading-[20px]">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
                 const lineNum = index + 1;
@@ -8914,9 +8843,9 @@ ods graphics off;`;
                     onMouseEnter={() => setHoveredLineNumber(lineNum)}
                     onMouseLeave={() => setHoveredLineNumber(null)}
                     onClick={() => handleLineClick(lineNum)}
-                    className="h-[18px] flex items-center justify-end pl-[8px] pr-[4px] gap-[2px] cursor-pointer select-none"
+                    className="h-[20px] flex items-center justify-end pl-[8px] pr-[4px] gap-[2px] cursor-pointer select-none"
                   >
-                    <span className={`text-[12px] font-mono text-right w-[28px] leading-[18px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
+                    <span className={`text-[13px] font-mono text-right w-[28px] leading-[20px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
                       {lineNum}
                     </span>
                     <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
@@ -8939,7 +8868,7 @@ ods graphics off;`;
                     <div
                       key={index}
                       onClick={() => handleLineClick(lineNum)}
-                      className={`h-[18px] pl-[8px] pr-[16px] whitespace-pre font-mono text-[12px] leading-[18px] cursor-pointer ${
+                      className={`h-[20px] pl-[4px] pr-[16px] whitespace-pre font-mono text-[13px] leading-[20px] cursor-pointer ${
                         isSelected ? 'bg-[#FBF4F7]' : ''
                       }`}
                     >
@@ -8951,16 +8880,16 @@ ods graphics off;`;
             ) : (
               <div
                 className="relative flex-1 bg-white"
-                style={{ height: `${codeLines.length * 18 + 32}px` }}
+                style={{ height: `${codeLines.length * 20 + 32}px` }}
               >
-                <pre className="absolute inset-0 pt-[16px] pb-[16px] m-0 pointer-events-none font-mono text-[12px] leading-[18px] overflow-hidden">
+                <pre className="absolute inset-0 pt-[16px] pb-[16px] m-0 pointer-events-none font-mono text-[13px] leading-[20px] overflow-hidden">
                   {codeLines.map((line, index) => {
                     const lineNum = index + 1;
                     const isSelected = selectedCodeLine === lineNum;
                     return (
                       <div
                         key={index}
-                        className={`h-[18px] pl-[8px] pr-[16px] whitespace-pre ${
+                        className={`h-[20px] pl-[4px] pr-[16px] whitespace-pre ${
                           isSelected ? 'bg-[#FBF4F7]' : ''
                         }`}
                       >
@@ -8976,14 +8905,14 @@ ods graphics off;`;
                   onSelect={handleTextareaSelectionChange}
                   onKeyUp={handleTextareaSelectionChange}
                   onMouseUp={handleTextareaSelectionChange}
-                  className="absolute inset-0 w-full h-full pt-[16px] pb-[16px] pl-[8px] pr-[16px] font-mono text-[12px] leading-[18px] text-transparent bg-transparent outline-none resize-none border-none caret-text-primary whitespace-pre overflow-hidden"
+                  className="absolute inset-0 w-full h-full pt-[16px] pb-[16px] pl-[4px] pr-[16px] font-mono text-[13px] leading-[20px] text-transparent bg-transparent outline-none resize-none border-none caret-text-primary whitespace-pre overflow-hidden"
                   style={{ caretColor: 'var(--color-text-primary)' }}
                 />
               </div>
             )}
           </div>
         ) : (
-          <div className="flex min-w-max min-h-full font-mono text-[12px] leading-[18px]">
+          <div className="flex min-w-max min-h-full font-mono text-[13px] leading-[20px]">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
                 const lineNum = index + 1;
@@ -8996,9 +8925,9 @@ ods graphics off;`;
                     onMouseEnter={() => setHoveredLineNumber(lineNum)}
                     onMouseLeave={() => setHoveredLineNumber(null)}
                     onClick={() => handleLineClick(lineNum)}
-                    className="h-[18px] flex items-center justify-end pl-[8px] pr-[4px] gap-[2px] cursor-pointer select-none"
+                    className="h-[20px] flex items-center justify-end pl-[8px] pr-[4px] gap-[2px] cursor-pointer select-none"
                   >
-                    <span className={`text-[12px] font-mono text-right w-[28px] leading-[18px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
+                    <span className={`text-[13px] font-mono text-right w-[28px] leading-[20px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
                       {lineNum}
                     </span>
                     <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
@@ -9020,7 +8949,7 @@ ods graphics off;`;
                   <div
                     key={index}
                     onClick={() => handleLineClick(lineNum)}
-                    className={`h-[18px] pl-[8px] pr-[16px] whitespace-pre font-mono text-[12px] leading-[18px] cursor-pointer ${
+                    className={`h-[20px] pl-[4px] pr-[16px] whitespace-pre font-mono text-[13px] leading-[20px] cursor-pointer ${
                       isSelected ? 'bg-[#FBF4F7]' : ''
                     }`}
                   >
@@ -10229,9 +10158,10 @@ interface EventCardProps {
   onEventClick: () => void;
   onUpdateStatus: (id: string, status: EventStatus) => void;
   onOpenDownload?: () => void;
+  onDelete?: () => void;
 }
 
-function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload }: EventCardProps) {
+function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDelete }: EventCardProps) {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const isError = event.status === 'error';
   const isUploading = event.status === ('uploading' as any);
@@ -10256,7 +10186,7 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload }: Even
     { icon: teamIconUrl, label: 'Team' },
     { icon: barChartIconUrl, label: 'View charts' },
     { icon: downloadIconUrl, label: 'Download', onClick: onOpenDownload },
-    { icon: deleteBinIconUrl, label: 'Delete' },
+    { icon: deleteBinIconUrl, label: 'Delete', onClick: onDelete },
   ];
 
   return (
@@ -10321,6 +10251,7 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload }: Even
             <button
               onClick={(e) => {
                 e.stopPropagation();
+                onDelete?.();
               }}
               className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
               aria-label="Delete"
@@ -10416,6 +10347,7 @@ function HomePage({
   treeListWidth,
   setTreeListWidth,
   onOpenDownloadModal,
+  onOpenDeleteModal,
 }: {
   onEventClick: () => void;
   onCreateEvent: () => void;
@@ -10426,6 +10358,7 @@ function HomePage({
   treeListWidth: number;
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
   onOpenDownloadModal?: (event: EventCardData) => void;
+  onOpenDeleteModal?: (event: EventCardData) => void;
 }) {
   const [searchValue, setSearchValue] = useState('');
   const [isResizing, setIsResizing] = useState(false);
@@ -10494,78 +10427,81 @@ function HomePage({
           />
         )}
 
-        {/* Main Container */}
-        <div className={`flex min-w-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry mt-[4px] mb-[8px] mr-[8px] ${!treeListOpen ? "ml-[4px]" : ""}`}>
-          {/* Expand tree list button when collapsed */}
-          {!treeListOpen && (
-            <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-border-default">
-              <TooltipText label="Expand tree list">
-                <button
-                  onClick={() => setTreeListOpen(true)}
-                  className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                  aria-label="Expand tree list"
-                >
-                  <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-                </button>
-              </TooltipText>
-            </div>
-          )}
-          {/* Top section: Overview + metrics */}
-          <div className="flex flex-col justify-center gap-[12px] px-[16px] sm:px-[28px] py-[12px]">
-            <h2 className="t-heading text-text-primary">Overview</h2>
-            <div className="grid grid-cols-2 gap-[12px] sm:grid-cols-3 lg:grid-cols-6 md:gap-[16px] lg:gap-[20px]">
-              {homeMetrics.map((m) => (
-                <div
-                  key={m.label}
-                  className="flex flex-col gap-[4px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[16px] py-[8px]"
-                >
-                  <span className="text-[14px] font-medium leading-[20px] text-text-secondary truncate" title={m.label}>{m.label}</span>
-                  <span className="text-[28px] sm:text-[32px] md:text-[36px] font-semibold leading-[1] text-text-primary">{m.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Event list */}
-          <div className="flex min-h-0 flex-1 flex-col gap-[12px] px-[16px] sm:px-[28px] pt-[20px] sm:pt-[28px]">
-            {/* Event list header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-[12px]">
-              <SearchBar
-                value={searchValue}
-                onChange={setSearchValue}
-                placeholder="Search..."
-                background="light"
-                className="w-full sm:w-[320px] shrink-0"
-              />
-              <div className="flex items-center justify-between sm:justify-end gap-[16px] w-full sm:w-auto">
-                <button className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] hover:bg-black/5 active:scale-[0.96]">
-                  <LocalIcon src={filterIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-primary)" />
-                  <span className="text-[14px] leading-[20px] text-text-primary">Filter</span>
-                </button>
-                <button
-                  onClick={onCreateEvent}
-                  className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96] whitespace-nowrap shrink-0"
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
-                  <span className="text-[14px] leading-[20px] text-white">New Event</span>
-                </button>
+        {/* Main Container Wrapper (与详情页结构、图层层级和裁剪规则完全保持一致) */}
+        <div className="relative flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden pl-[4px] pt-[4px] pb-[8px] pr-[8px]">
+          <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry">
+            {/* Expand tree list button when collapsed */}
+            {!treeListOpen && (
+              <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-border-default">
+                <TooltipText label="Expand tree list">
+                  <button
+                    onClick={() => setTreeListOpen(true)}
+                    className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                    aria-label="Expand tree list"
+                  >
+                    <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+                  </button>
+                </TooltipText>
+              </div>
+            )}
+            {/* Top section: Overview + metrics */}
+            <div className="flex flex-col justify-center gap-[12px] px-[16px] sm:px-[28px] py-[12px]">
+              <h2 className="t-heading text-text-primary">Overview</h2>
+              <div className="grid grid-cols-2 gap-[12px] sm:grid-cols-3 lg:grid-cols-6 md:gap-[16px] lg:gap-[20px]">
+                {homeMetrics.map((m) => (
+                  <div
+                    key={m.label}
+                    className="flex flex-col gap-[4px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[16px] py-[8px]"
+                  >
+                    <span className="text-[14px] font-medium leading-[20px] text-text-secondary truncate" title={m.label}>{m.label}</span>
+                    <span className="text-[28px] sm:text-[32px] md:text-[36px] font-semibold leading-[1] text-text-primary">{m.value}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Event cards */}
-            <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-auto pb-[16px]">
-              {events
-                .filter((event) => event.name.toLowerCase().includes(searchValue.toLowerCase()) || event.project.toLowerCase().includes(searchValue.toLowerCase()) || event.study.toLowerCase().includes(searchValue.toLowerCase()))
-                .map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    onEventClick={onEventClick}
-                    onUpdateStatus={onUpdateStatus}
-                    onOpenDownload={() => onOpenDownloadModal?.(event)}
-                  />
-                ))}
+            {/* Event list */}
+            <div className="flex min-h-0 flex-1 flex-col gap-[12px] px-[16px] sm:px-[28px] pt-[20px] sm:pt-[28px]">
+              {/* Event list header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-[12px]">
+                <SearchBar
+                  value={searchValue}
+                  onChange={setSearchValue}
+                  placeholder="Search..."
+                  background="light"
+                  className="w-full sm:w-[320px] shrink-0"
+                />
+                <div className="flex items-center justify-between sm:justify-end gap-[16px] w-full sm:w-auto">
+                  <button className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] hover:bg-black/5 active:scale-[0.96]">
+                    <LocalIcon src={filterIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-primary)" />
+                    <span className="text-[14px] leading-[20px] text-text-primary">Filter</span>
+                  </button>
+                  <button
+                    onClick={onCreateEvent}
+                    className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96] whitespace-nowrap shrink-0"
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
+                    <span className="text-[14px] leading-[20px] text-white">New Event</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Event cards */}
+              <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-auto pb-[16px]">
+                {events
+                  .filter((event) => event.name.toLowerCase().includes(searchValue.toLowerCase()) || event.project.toLowerCase().includes(searchValue.toLowerCase()) || event.study.toLowerCase().includes(searchValue.toLowerCase()))
+                  .map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onEventClick={onEventClick}
+                      onUpdateStatus={onUpdateStatus}
+                      onOpenDownload={() => onOpenDownloadModal?.(event)}
+                      onDelete={() => onOpenDeleteModal?.(event)}
+                    />
+                  ))}
+              </div>
             </div>
           </div>
         </div>
@@ -10581,11 +10517,22 @@ export default function Main() {
   const [createEventModalOpen, setCreateEventModalOpen] = useState(false);
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedDownloadEvent, setSelectedDownloadEvent] = useState<string | undefined>(undefined);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedDeleteEvent, setSelectedDeleteEvent] = useState<EventCardData | null>(null);
   const [events, setEvents] = useState<EventCardData[]>(homeEvents);
 
   const handleOpenDownload = (event?: EventCardData) => {
     setSelectedDownloadEvent(event ? event.name : undefined);
     setDownloadModalOpen(true);
+  };
+
+  const handleOpenDelete = (event: EventCardData) => {
+    setSelectedDeleteEvent(event);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = (eventId: string) => {
+    setEvents(prev => prev.filter(e => e.id !== eventId));
   };
 
   const handleCreateEvent = (eventData: { name: string; project: string; study: string }) => {
@@ -10619,6 +10566,7 @@ export default function Main() {
           treeListWidth={treeListWidth}
           setTreeListWidth={setTreeListWidth}
           onOpenDownloadModal={handleOpenDownload}
+          onOpenDeleteModal={handleOpenDelete}
         />
       ) : (
         <WorkspaceContent
@@ -10638,6 +10586,12 @@ export default function Main() {
       <DownloadSasProgramsModal
         isOpen={downloadModalOpen}
         onClose={() => setDownloadModalOpen(false)}
+      />
+      <DeleteEventModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirmDelete={handleConfirmDelete}
+        event={selectedDeleteEvent}
       />
     </div>
   );

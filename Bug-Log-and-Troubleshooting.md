@@ -190,3 +190,20 @@
 * **经验教训 (Takeaways)**：
   1. **严格对照 Props 接口与形参解构**：在为通用 UI 组件扩展属性时，必须确保 Interface 与函数签名解构字段 100% 对应，避免由于 `...props` 收集而导致内部访问未声明变量。
   2. **避免容器 Button 嵌套交互元素**：当列表整行可点击且内部包含 Checkbox、Switch 或子按钮时，行容器应使用 `<div role="button">` 并补充键盘事件响应，防止浏览器与 React 的 `<button>` 嵌套校验异常。
+
+---
+
+### [2026-09-04] Figure AI 对话流被非预期混入原型期 Warning 卡片及生硬 To be Reviewed 框导致样式异常
+
+* **现象 (Symptom)**：
+  用户发现 AI Copilot 在 Figure 视图下的首条完整推理对话流中，突兀出现了未曾见过的黄色警示卡片（`⚠️ AI Inferences & Potential Discrepancies`）、手写的灰色 `To be Reviewed` 卡片（内含 4 个带紫色圆点的按钮链接）、以及组件标题右侧未遵循系统规范的 `Chart`、`Table` 标签，严重破坏了原有对话流的干净一致性。
+* **根本原因 (Root Cause)**：
+  在 commit `8140b8f`（`fix(ui): decouple in-card panels into 3 discrete rounded cards...`）中，在重构 In-Card 离散面板的同时，顺带将历史草案文档中未定稿的 3 组件原型文本与实验性卡片硬编码写入了 `Main.tsx`（行 1029-1153），包含写死的非法 Token 颜色（`#FFF8E6`, `#FFE58F`）、原生 Emoji 及与系统 `MetadataEntryBlock` 严重重叠的手写跳转列表。
+* **解决方案 (Solution)**：
+  1. 精确回滚 `Main.tsx` 中 `docType === 'figure'` 对应的 `ai_complete` 消息体，完全剔除新增的 Warning 卡片、手写 To be Reviewed 框以及右侧未规范的 Chart/Table 标记。
+  2. 恢复最初清晰规范的 Component 1 / Component 2 结构与统一的 `<MetadataEntryBlock>` 入口。
+  3. 同步将 `DEFAULT_FIGURE_REVIEW_ITEMS` 恢复为对应的 6 项标准检查项。
+* **经验教训 (Takeaways)**：
+  1. **禁止在无关提交中混入原型级业务内容**：架构与容器层重构（如面板解耦、滚动遮罩等）必须保持改动原子性，严禁顺手掺杂未确认的原型期 UI 文本或临时样式。
+  2. **对话流组件化统一约束**：对话消息内需强化语义层级规范，严禁直接手写硬编码十六进制色值的临时外挂卡片，所有辅助提示统一通过标准卡片组件呈现。
+
