@@ -6,10 +6,10 @@
 
 ## 一、全局布局与容器规范 (Panel Layout & Canvas Specs)
 
-### 1.1 面板容器 (Shell & Code Panel Card)
-* **圆角 (Border Radius)**：`rounded-[8px]` (`border-radius: 8px`)
-* **边框 (Border)**：`border border-graphite-15` (`1px solid #E6E8E8`)
-* **阴影 (Elevation 1 Shadow)**：`box-shadow: 0 1px 2px 0 rgba(0,0,0,0.03), 0 4px 12px -2px rgba(63,68,68,0.05)`
+### 1.1 面板容器 (Shell, Code & AI Copilot Panel Cards)
+* **圆角 (Border Radius)**：`rounded-[12px]` (`border-radius: 12px`)
+* **边框 (Border)**：`border border-graphite-10` (`1px solid #ECECEC`)
+* **阴影 (Mulberry Soft Shadow)**：`shadow-card-mulberry` (`box-shadow: 0 1px 3px 0 rgba(0,0,0,0.04), 0 4px 16px -2px rgba(131,0,81,0.06)`)
 * **阴影裁剪保护**：所有外层 Flex/Grid 父级容器禁止使用 `overflow-hidden`，确保面板四周 Shadow 完整自然绽放，不被视窗边缘切断。
 
 ### 1.2 视窗与网格间距 (Viewport Margins & Panel Gap)
@@ -20,7 +20,12 @@
 * Paper 纸张预览下方与四周的背景底色统一设定为 **`#F5F5F5`**。
 
 ### 1.4 缩放/视角控制 (Zoom & Scale Control)
-* **缩放控制位置**：Shell Preview 右上角 `PanelHeader` 的 Action 区域包含一个固定宽度的 Dropdown 控件（`w-[76px]`）。
+* **缩放控制位置**：Shell Preview 右上角 `PanelHeader` 的 Action 区域，采用三位一体的复合缩放控件（`ZoomControl`）。
+* **形态与布局**：
+  * **外层胶囊容器**：`h-[26px] rounded-[6px] border border-graphite-15 bg-white p-[2px]`。
+  * **缩小按钮 `[-]`**：左侧步进按钮（`20px x 20px`），采用本地图标库 `src/icons/subtract-line.svg`，到达最小档位（`75%`）时置灰禁用（`disabled`）。
+  * **百分比触发按钮**：中间圆角文字按钮（`min-w-[46px] h-[20px] px-[8px]`），**默认态无填充（No fill）**，**Hover 态呈现浅灰底色（`bg-graphite-10/80`）**。展示当前缩放比例（如 `100%`）；点击展开原生比例下拉选择列表（提供 `75%`、`100%`、`150%`、`200%`，选中的项高亮并带本地 `check-line.svg` 标记）；支持点击外部及 `Esc` 键收起。
+  * **放大按钮 `[+]`**：右侧步进按钮（`20px x 20px`），采用本地图标库 `src/icons/add-line.svg`，到达最大档位（`200%`）时置灰禁用（`disabled`）。
 * **支持缩放比例**：提供 `75%`、`100%`（默认）、`150%`、`200%` 四档预设比例。
 * **实现原理**：选中的比例缩放因子传递给 `ZoomContainer`，通过 CSS `transform: scale(scale)` 针对画布内容区进行平滑无损放缩，且不撑破/遮挡外部 Flex 布局。
 

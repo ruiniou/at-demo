@@ -34,11 +34,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       secondary: disabled ? "#B2B4B4" : "#3F4444",
       ghost: "",
       danger: disabled ? "#B2B4B4" : "#FFFFFF",
-      "secondary-danger": disabled ? "#B2B4B4" : "#CC2C3C",
+      "secondary-danger": disabled ? "#B2B4B4" : "#B3202F",
       icon: "",
     };
     const fontSizes: Record<string, number> = { default: 14, sm: 12, lg: 14, icon: 14 };
-    const useTextStyle = variant === "primary" || variant === "secondary" || variant === "danger";
+    const useTextStyle = variant === "primary" || variant === "secondary" || variant === "danger" || variant === "secondary-danger";
     const textStyle = useTextStyle
       ? { fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: fontSizes[size], lineHeight: "20px", color: textColors[variant] }
       : undefined;

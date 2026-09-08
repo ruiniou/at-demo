@@ -19,10 +19,10 @@ export default function MarkdownTable() {
   ];
 
   return (
-    <div className="overflow-x-auto mb-[10px] border-[0.6px] border-border-default rounded-[4px]">
+    <div className="overflow-x-auto mb-[10px] border border-graphite-15 rounded-[8px]">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="border-b-[0.5px] border-border-default bg-bg-panel">
+          <tr className="border-b border-graphite-15 bg-bg-panel">
             <th className="text-left t-table py-[8px] px-[12px] whitespace-nowrap">Parameter Detail with Long Header Name</th>
             <th className="text-left t-table py-[8px] px-[12px] whitespace-nowrap">Value</th>
             <th className="text-left t-table py-[8px] px-[12px] whitespace-nowrap">ID</th>
@@ -31,7 +31,7 @@ export default function MarkdownTable() {
         </thead>
         <tbody>
           {data.map((row, idx) => (
-            <tr key={idx} className="border-b-[0.5px] border-border-default last:border-0">
+            <tr key={idx} className="border-b border-graphite-15 last:border-0">
               <td style={{ fontWeight: 400 }} className={`t-table py-[8px] px-[12px] ${shouldNoWrap(row.param) ? 'whitespace-nowrap' : 'whitespace-normal'}`}>{row.param}</td>
               <td style={{ fontWeight: 400 }} className={`t-table py-[8px] px-[12px] ${shouldNoWrap(row.value) ? 'whitespace-nowrap' : 'whitespace-normal'}`}>{row.value}</td>
               <td style={{ fontWeight: 400 }} className={`t-table py-[8px] px-[12px] ${shouldNoWrap(row.id) ? 'whitespace-nowrap' : 'whitespace-normal'}`}>{row.id}</td>

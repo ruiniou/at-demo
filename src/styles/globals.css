@@ -79,10 +79,10 @@ html, body {
   line-height: 24px;
 }
 .t-code {
-  font-family: 'Menlo', 'Courier New', Courier, monospace;
-  font-size: 12px;
+  font-family: var(--font-mono, 'Menlo', 'Courier New', Courier, monospace);
+  font-size: var(--text-sm, 12px);
   font-weight: 400;
-  line-height: 1.25;
+  line-height: 1.5;
 }
 
 /* ---- General UI Typography Extensions ---- */
@@ -139,12 +139,6 @@ html, body {
   font-size: var(--text-base, 13px);
   font-weight: var(--font-weight-normal, 400);
   line-height: 20px;
-}
-.t-code-shell {
-  font-family: var(--font-mono, 'Menlo', 'Courier New', Courier, monospace);
-  font-size: var(--text-sm, 12px);
-  font-weight: var(--font-weight-normal, 400);
-  line-height: 1.5;
 }
 
 /* ── Scrollbar: Unified Standard (12px 容器 / 8px Thumb 圆角胶囊) ── */

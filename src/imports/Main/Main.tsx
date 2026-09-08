@@ -65,6 +65,7 @@ import { Button } from "../../components/ui/Button";
 import { Tooltip } from "../../components/ui/Tooltip";
 import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
+import { ZoomControl } from "../../components/ui/ZoomControl";
 import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
 import { FilterChip } from "../../components/ui/FilterChip";
 import { BrowseVariablesField } from "./components/BrowseVariablesModal";
@@ -847,7 +848,7 @@ function ErrorMessageWithRetry() {
 
 function InlineHighlight({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-block px-[4px] py-[2px] rounded-[4px] bg-graphite-20 text-[13px] font-mono text-brand-1 leading-none mx-[2px]">
+    <span className="inline-block px-[4px] py-[2px] rounded-[4px] bg-graphite-10 text-[13px] font-mono text-brand-1 leading-none mx-[2px]">
       {children}
     </span>
   );
@@ -864,11 +865,210 @@ function Hyperlink({ children, href = "#", onClick }: { children: React.ReactNod
 function Blockquote({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative w-full">
-      <blockquote className="border-l-[3px] border-border-default bg-[#FAFAFA] pl-[12px] py-[8px] mb-[10px] rounded-r-[4px]">
-        <div className="t-heading text-text-primary">
+      <blockquote className="border-l-[3px] border-brand-1 bg-bg-panel pl-[12px] pr-[12px] py-[8px] mb-[10px] rounded-r-[8px]">
+        <p className="t-body text-text-primary leading-relaxed">
           {children}
-        </div>
+        </p>
       </blockquote>
+    </div>
+  );
+}
+
+type CalloutType = 'note' | 'tip' | 'warning' | 'caution';
+
+function Callout({ 
+  type = 'note', 
+  title, 
+  children 
+}: { 
+  type?: CalloutType; 
+  title?: string; 
+  children: React.ReactNode 
+}) {
+  const configs = {
+    note: {
+      accentBorder: 'border-l-[#888E8E]',
+      bg: 'bg-bg-panel',
+      titleColor: 'text-text-primary',
+      iconUrl: fileInfoIconUrl,
+      iconColor: '#888E8E',
+      defaultTitle: 'Note',
+    },
+    tip: {
+      accentBorder: 'border-l-[#1E7E34]',
+      bg: 'bg-[#F0F9F2]',
+      titleColor: 'text-[#1E7E34]',
+      iconUrl: checkIconUrl,
+      iconColor: '#1E7E34',
+      defaultTitle: 'Tip',
+    },
+    warning: {
+      accentBorder: 'border-l-[#F0AB00]',
+      bg: 'bg-status-warning-bg',
+      titleColor: 'text-[#3F4444]',
+      iconUrl: alertIconUrl,
+      iconColor: '#F0AB00',
+      defaultTitle: 'Warning',
+    },
+    caution: {
+      accentBorder: 'border-l-status-error',
+      bg: 'bg-status-error-bg',
+      titleColor: 'text-status-error',
+      iconUrl: closeCircleIconUrl,
+      iconColor: '#CC2C3C',
+      defaultTitle: 'Caution',
+    },
+  };
+  const cfg = configs[type];
+  return (
+    <div className={`border border-graphite-15 ${cfg.accentBorder} border-l-[3px] ${cfg.bg} px-[12px] py-[10px] mb-[10px]`}>
+      <div className="flex items-center gap-[6px] mb-[4px]">
+        <LocalIcon src={cfg.iconUrl} className="w-[14px] h-[14px] shrink-0" color={cfg.iconColor} />
+        <span className={`text-[13px] font-semibold ${cfg.titleColor}`}>{title || cfg.defaultTitle}</span>
+      </div>
+      <div className="t-body text-text-primary text-[13px] leading-[20px]">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function highlightSAS(code: string): React.ReactNode {
+  const regex = /(\/\*[\s\S]*?\*\/)|("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')|(\b(?:proc sql|proc|sql|quit|data|run|create table|select|from|where|left join|group by|on|and|not|options|title\d|footnote\d|as|in)\b)|(%[a-zA-Z_0-9]+)|(\b(?:inds|inda|cols|col_labels|freeze_cols|page_cols|page_num|orientation|out_rtf)\b)|(\b\d+\b)/gi;
+
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(code)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(code.substring(lastIndex, match.index));
+    }
+
+    const [
+      full,
+      comment,
+      doubleQuoteStr,
+      singleQuoteStr,
+      keyword,
+      macroCall,
+      param,
+      number
+    ] = match;
+
+    const key = `${match.index}-${full}`;
+
+    if (comment) {
+      parts.push(<span key={key} className="text-[#008000] italic">{full}</span>);
+    } else if (doubleQuoteStr || singleQuoteStr) {
+      parts.push(<span key={key} className="text-[#A31515]">{full}</span>);
+    } else if (keyword) {
+      parts.push(<span key={key} className="text-[#005CC5]">{full}</span>);
+    } else if (macroCall) {
+      parts.push(<span key={key} className="text-[#830051]">{full}</span>);
+    } else if (param) {
+      parts.push(<span key={key} className="text-[#7952B3]">{full}</span>);
+    } else if (number) {
+      parts.push(<span key={key} className="text-[#098658]">{full}</span>);
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < code.length) {
+    parts.push(code.substring(lastIndex));
+  }
+
+  return <>{parts}</>;
+}
+
+const LANGUAGE_DISPLAY_MAP: Record<string, string> = {
+  sas: "SAS",
+  tsx: "TSX",
+  ts: "TypeScript",
+  typescript: "TypeScript",
+  jsx: "JSX",
+  js: "JavaScript",
+  javascript: "JavaScript",
+  python: "Python",
+  py: "Python",
+  r: "R",
+  sql: "SQL",
+  markdown: "Markdown",
+  md: "Markdown",
+  json: "JSON",
+  html: "HTML",
+  css: "CSS",
+  bash: "Bash",
+  sh: "Shell",
+  yaml: "YAML",
+  yml: "YAML",
+  xml: "XML",
+};
+
+function getLanguageLabel(lang?: string): string {
+  if (!lang || lang.trim() === "") return "Code";
+  const normalized = lang.trim().toLowerCase();
+  return LANGUAGE_DISPLAY_MAP[normalized] || lang.toUpperCase();
+}
+
+function CodeBlock({ code, language = "sas", showCopy = false }: { code: string; language?: string; showCopy?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const lines = code.split('\n');
+  const isSas = language?.trim().toLowerCase() === 'sas';
+
+  return (
+    <div className="relative w-full mb-[10px] rounded-[8px] border border-graphite-15 bg-bg-panel overflow-hidden">
+      {/* Header bar: Code Icon + Dynamic Language Tag */}
+      <div className="flex h-[32px] items-center justify-between px-[12px] border-b border-graphite-15 bg-[#F0EFEF]">
+        <div className="flex items-center gap-[6px]">
+          <LocalIcon 
+            src={codeSlashIconUrl} 
+            className="h-[14px] w-[14px] shrink-0" 
+            color="var(--color-text-secondary)" 
+          />
+          <span className="t-small-medium font-mono uppercase tracking-wider text-text-secondary">
+            {getLanguageLabel(language)}
+          </span>
+        </div>
+        {showCopy && (
+          <button
+            type="button"
+            onClick={handleCopy}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors cursor-pointer"
+            title={copied ? "Copied!" : "Copy Code"}
+            aria-label="Copy Code"
+          >
+            <LocalIcon 
+              src={copyIconUrl} 
+              className="h-[14px] w-[14px]" 
+              color={copied ? "#830051" : isHovered ? "var(--color-text-primary)" : "var(--color-text-secondary)"} 
+            />
+          </button>
+        )}
+      </div>
+
+      {/* Code body with Syntax Highlighting bound to project typography tokens */}
+      <div 
+        style={{ fontFamily: 'var(--font-mono)' }}
+        className="t-code-editor p-[10px] text-text-primary overflow-x-auto scrollbar-code"
+      >
+        {lines.map((line, idx) => (
+          <div key={idx} className="whitespace-pre">
+            {line.trim() === '' ? '\u00A0' : (isSas ? highlightSAS(line) : line)}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1094,33 +1294,142 @@ function ChatConversation({
                   ) : (
                     <>
                       <div className="flex flex-col w-full px-[10px]">
+                        {/* H1 Title */}
                         <div className="relative w-full">
-                          <h1 className="text-[16px] font-bold text-text-primary mb-[10px]" style={{ fontFamily: 'var(--font-body)' }}>Analysis Results Summary</h1>
+                          <h1 className="text-[16px] font-bold text-text-primary mb-[10px]" style={{ fontFamily: 'var(--font-body)' }}>
+                            Markdown Typography & Element Specification (Review)
+                          </h1>
                         </div>
-                        <div className="relative w-full">
-                          <p className="t-body text-text-primary p-[4px] mb-[8px] leading-relaxed">
-                            Generated Kaplan-Meier survival plot for <InlineHighlight>OS (Overall Survival)</InlineHighlight> using the ITT population. 
-                            Reference the <Hyperlink>Analysis Plan v1.2</Hyperlink> for further details.
+
+                        {/* Intro Paragraph */}
+                        <div className="relative w-full mb-[10px]">
+                          <p className="t-body text-text-primary leading-relaxed">
+                            This message demonstrates all supported Markdown typography and component styles in the AI Copilot stream. It covers headings, paragraph formatting, inline highlights (code/variable tags), hyperlinks, list types, blockquotes, semantic callouts, data tables, and syntax code blocks.
                           </p>
                         </div>
-                        <div className="relative w-full mb-[10px]">
-                          <Suspense fallback={<div className="h-20 animate-pulse bg-gray-100 rounded mb-2" />}>
-                            <MarkdownTable />
-                          </Suspense>
+
+                        {/* H2 Section 1 */}
+                        <div className="relative w-full mb-[8px]">
+                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
+                            1. Inline Text & Highlighting
+                          </h2>
+                          <p className="t-body text-text-primary leading-relaxed mb-[6px]">
+                            Body text supports standard paragraphs with comfortable line-height, along with <strong className="font-semibold text-text-primary">bold emphasis (Strong)</strong>, <em className="italic">italic citations (Emphasis)</em>, and <del className="line-through text-text-secondary">superseded draft parameters (Strikethrough)</del>.
+                          </p>
+                          <p className="t-body text-text-primary leading-relaxed mb-[6px]">
+                            Inline code and parameter tags use the unified highlight component for clinical data attributes, such as source dataset <InlineHighlight>ADTTTE</InlineHighlight> and primary variables <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>PARAMCD = "OS"</InlineHighlight>, and censoring flag <InlineHighlight>CNSR = 0</InlineHighlight>.
+                          </p>
+                          <p className="t-body text-text-primary leading-relaxed">
+                            Cross-references and links render with interactive hover states: <Hyperlink href="#">Statistical Analysis Plan (SAP) v2.1 Section 4.3</Hyperlink>.
+                          </p>
                         </div>
-                        <div className="relative w-full">
-                          <ul className="list-disc pl-[24px] mb-[10px] flex flex-col gap-[4px]">
+
+                        <Divider className="!my-[10px]" />
+
+                        {/* H2 Section 2: Lists */}
+                        <div className="relative w-full mb-[8px]">
+                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
+                            2. List Structures (Lists)
+                          </h2>
+                          
+                          <p className="text-[13px] font-semibold text-text-secondary mb-[4px]">Unordered List:</p>
+                          <ul className="list-disc pl-[20px] mb-[10px] flex flex-col gap-[4px]">
                             <li className="t-body text-text-primary">
-                              <strong className="font-semibold text-text-primary">High survival rate</strong> in early stages.
+                              <strong className="font-semibold">ITT Population</strong>: All randomized subjects analyzed according to assigned treatment group.
                             </li>
                             <li className="t-body text-text-primary">
-                              <strong className="font-semibold text-text-primary">Significant variance</strong> in treatment line 3.
+                              <strong className="font-semibold">Safety Population</strong>: All subjects who received at least one dose of investigational product.
+                            </li>
+                          </ul>
+
+                          <p className="text-[13px] font-semibold text-text-secondary mb-[4px]">Ordered List:</p>
+                          <ol className="list-decimal pl-[20px] mb-[10px] flex flex-col gap-[4px]">
+                            <li className="t-body text-text-primary">Ingest and validate primary source dataset <InlineHighlight>ADTTTE</InlineHighlight></li>
+                            <li className="t-body text-text-primary">Compute Kaplan-Meier survival estimates and 95% Confidence Intervals</li>
+                            <li className="t-body text-text-primary">Generate regulatory-grade TFL summary table and survival figure</li>
+                          </ol>
+
+                          <p className="text-[13px] font-semibold text-text-secondary mb-[4px]">Task Checklist:</p>
+                          <ul className="mb-[10px] flex flex-col gap-[4px] pl-[2px]">
+                            <li className="flex items-center gap-[8px] t-body text-text-primary">
+                              <span className="w-[14px] h-[14px] rounded-[3px] bg-brand-1 flex items-center justify-center shrink-0">
+                                <LocalIcon src={checkIconUrl} className="w-[10px] h-[10px]" color="white" />
+                              </span>
+                              <span className="line-through text-text-secondary">Complete initial ADTTTE dataset integrity check (Approved)</span>
+                            </li>
+                            <li className="flex items-center gap-[8px] t-body text-text-primary">
+                              <span className="w-[14px] h-[14px] rounded-[3px] border border-border-default bg-white flex items-center justify-center shrink-0" />
+                              <span>Perform independent double-programming reconciliation (Pending Review)</span>
                             </li>
                           </ul>
                         </div>
-                        <Blockquote>
-                          "The integration of survival data confirms the hypothesis proposed in the preliminary report."
-                        </Blockquote>
+
+                        <Divider className="!my-[10px]" />
+
+                        {/* H2 Section 3: Quotes & Callouts */}
+                        <div className="relative w-full mb-[8px]">
+                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
+                            3. Blockquote & Semantic Callouts
+                          </h2>
+                          
+                          <p className="text-[13px] font-semibold text-text-secondary mb-[4px]">Standard Blockquote:</p>
+                          <Blockquote>
+                            "All statistical summaries, hazard ratios, and survival estimators strictly conform to CDISC ADaM standards and AstraZeneca core reporting conventions."
+                          </Blockquote>
+
+                          <p className="text-[13px] font-semibold text-text-secondary mb-[6px]">Semantic Callouts:</p>
+                          <Callout type="note" title="Note: Baseline Reference Standard">
+                            Summary metrics are calculated using the ITT population (N=245), with time variable AVAL normalized to Months.
+                          </Callout>
+
+                          <Callout type="tip" title="Tip: Metadata Auto-Synchronization">
+                            You can synchronize Axis Range and stratification variables directly in the Metadata Panel without writing custom SAS macro invocations.
+                          </Callout>
+
+                          <Callout type="warning" title="Warning: Handling Missing Baseline Covariates">
+                            Three subjects have missing Baseline BMI entries. Per SAP guidelines, these records have been automatically excluded from the multivariate Cox model.
+                          </Callout>
+
+                          <Callout type="caution" title="Caution: 21 CFR Part 11 Audit Lock">
+                            This study event has undergone final electronic signature verification. Re-triggering code generation will invalidate prior signatures and create an Audit Trail log entry.
+                          </Callout>
+                        </div>
+
+                        <Divider className="!my-[10px]" />
+
+                        {/* H2 Section 4: Table */}
+                        <div className="relative w-full mb-[8px]">
+                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
+                            4. Tabular Data Presentation (Table)
+                          </h2>
+                          <div className="relative w-full mb-[10px]">
+                            <Suspense fallback={<div className="h-20 animate-pulse bg-gray-100 rounded mb-2" />}>
+                              <MarkdownTable />
+                            </Suspense>
+                          </div>
+                        </div>
+
+                        <Divider className="!my-[10px]" />
+
+                        {/* H2 Section 5: Code Block */}
+                        <div className="relative w-full mb-[8px]">
+                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
+                            5. Multi-line Code Block (Code Block)
+                          </h2>
+                          <div className="flex flex-col gap-[6px]">
+                            <p className="text-[13px] font-semibold text-text-secondary">SAS Macro Program:</p>
+                            <CodeBlock 
+                              language="sas" 
+                              code={`%macro run_km_analysis(inds=ADTTTE, endpoint=OS);\n  proc lifetest data=&inds plots=survival(cb=hw);\n    time AVAL * CNSR(1);\n    strata TRTA;\n  run;\n%mend run_km_analysis;`} 
+                            />
+                            <p className="text-[13px] font-semibold text-text-secondary mt-[4px]">Python Script:</p>
+                            <CodeBlock 
+                              language="python" 
+                              code={`import pandas as pd\n\ndef compute_summary_stats(df: pd.DataFrame) -> dict:\n    return {\n        "n_eval": len(df),\n        "median_os": df["AVAL"].median(),\n        "status": "APPROVED"\n    }`} 
+                            />
+                          </div>
+                        </div>
+
                         <Divider />
                       </div>
                       
@@ -1224,7 +1533,7 @@ function AICopilotPanel({
   const [messages, setMessages] = useState<Message[]>(() => {
     if (docType === 'figure') return [{ type: 'ai_complete' }];
     return [
-      { type: 'user', content: 'Generate Kaplan-Meier survival plot for OS.' },
+      { type: 'user', content: 'Review and showcase all supported Markdown typography, elements, and styles in this conversation stream.' },
       { type: 'ai_complete' }
     ];
   });
@@ -2357,7 +2666,7 @@ function WorkspaceDivider({
 
   return (
     <div
-      className={`relative z-30 w-[2px] shrink-0 cursor-col-resize bg-bg-panel ${className}`}
+      className={`relative ${isHovered || isDragging ? 'z-30' : 'z-10'} w-[2px] shrink-0 cursor-col-resize bg-transparent ${className}`}
       onMouseDown={(event) => {
         event.preventDefault();
         setIsDragging(true);
@@ -2370,7 +2679,9 @@ function WorkspaceDivider({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="absolute inset-y-0 -left-[4px] -right-[4px] z-10 cursor-col-resize" />
-      <div className={`absolute inset-0 w-full bg-brand-1 transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
+      {/* 缝隙填充底线：扣掉 8px 长度（上下各缩进 4px，带圆角柔化），避免卡片圆角转角处露亮线 */}
+      <div className="absolute inset-x-0 top-[4px] bottom-[4px] w-full bg-bg-panel rounded-full" />
+      <div className={`absolute inset-x-0 top-[4px] bottom-[4px] w-full bg-brand-1 rounded-full transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
 }
@@ -2540,7 +2851,7 @@ function HorizontalWorkspaceDivider({
 
   return (
     <div
-      className={`relative z-20 w-full h-[2px] shrink-0 cursor-row-resize bg-bg-panel ${className}`}
+      className={`relative z-20 w-full h-[2px] shrink-0 cursor-row-resize bg-transparent ${className}`}
       onMouseDown={(event) => {
         event.preventDefault();
         setIsDragging(true);
@@ -2553,7 +2864,9 @@ function HorizontalWorkspaceDivider({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="absolute inset-x-0 -top-[4px] -bottom-[4px] z-10" />
-      <div className={`absolute inset-0 h-full bg-brand-1 transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
+      {/* 缝隙填充底线：扣掉 8px 长度（左右各缩进 4px，带圆角柔化），避免卡片圆角转角处露亮线 */}
+      <div className="absolute inset-y-0 left-[4px] right-[4px] h-full bg-bg-panel rounded-full" />
+      <div className={`absolute inset-y-0 left-[4px] right-[4px] h-full bg-brand-1 rounded-full transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
 }
@@ -3596,16 +3909,11 @@ function ListingShellPreview({
         <p className="t-small truncate text-text-primary">{selectedItemName || 'Shell preview'}</p>
         <div className="flex items-center gap-[10px]">
           <div className="flex items-center gap-[8px]">
-            <div className="w-[76px]">
-              <Dropdown
-                options={zoomOptions}
-                value={zoomLevel}
-                onChange={setZoomLevel}
-                triggerClassName="h-[24px] rounded-[4px] pl-[8px] pr-[4px]"
-                customBoxClass="border border-form-border bg-white hover:border-graphite-50 rounded-[4px]"
-                customTextStyle={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: '20px', color: 'var(--color-text-primary)' }}
-              />
-            </div>
+            <ZoomControl
+              options={zoomOptions}
+              value={zoomLevel}
+              onChange={setZoomLevel}
+            />
             {/* Page separator / Preview button */}
             <TooltipText label="Print Preview">
               <button
@@ -4698,16 +5006,11 @@ function ShellPreview({
         }
         actions={
           <div className="flex items-center gap-[8px]">
-            <div className="w-[76px]">
-              <Dropdown
-                options={zoomOptions}
-                value={zoomLevel}
-                onChange={setZoomLevel}
-                triggerClassName="h-[24px] rounded-[4px] pl-[8px] pr-[4px]"
-                customBoxClass="border border-form-border bg-white hover:border-graphite-50 rounded-[4px]"
-                customTextStyle={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: '20px', color: 'var(--color-text-primary)' }}
-              />
-            </div>
+            <ZoomControl
+              options={zoomOptions}
+              value={zoomLevel}
+              onChange={setZoomLevel}
+            />
             <TooltipText label="Open Metadata">
               <button
                 onClick={onMetadataClick}
@@ -8389,55 +8692,6 @@ function MetadataPanel({
   );
 }
 
-function highlightSAS(code: string): React.ReactNode {
-  const regex = /(\/\*[\s\S]*?\*\/)|("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')|(\b(?:proc sql|proc|sql|quit|data|run|create table|select|from|where|left join|group by|on|and|not|options|title\d|footnote\d|as|in)\b)|(%[a-zA-Z_0-9]+)|(\b(?:inds|inda|cols|col_labels|freeze_cols|page_cols|page_num|orientation|out_rtf)\b)|(\b\d+\b)/gi;
-
-  const parts: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
-
-  while ((match = regex.exec(code)) !== null) {
-    if (match.index > lastIndex) {
-      parts.push(code.substring(lastIndex, match.index));
-    }
-
-    const [
-      full,
-      comment,
-      doubleQuoteStr,
-      singleQuoteStr,
-      keyword,
-      macroCall,
-      param,
-      number
-    ] = match;
-
-    const key = `${match.index}-${full}`;
-
-    if (comment) {
-      parts.push(<span key={key} className="text-[#008000] italic">{full}</span>);
-    } else if (doubleQuoteStr || singleQuoteStr) {
-      parts.push(<span key={key} className="text-[#A31515]">{full}</span>);
-    } else if (keyword) {
-      parts.push(<span key={key} className="text-[#005CC5]">{full}</span>);
-    } else if (macroCall) {
-      parts.push(<span key={key} className="text-[#830051]">{full}</span>);
-    } else if (param) {
-      parts.push(<span key={key} className="text-[#7952B3]">{full}</span>);
-    } else if (number) {
-      parts.push(<span key={key} className="text-[#098658]">{full}</span>);
-    }
-
-    lastIndex = regex.lastIndex;
-  }
-
-  if (lastIndex < code.length) {
-    parts.push(code.substring(lastIndex));
-  }
-
-  return <>{parts}</>;
-}
-
 function renderCodeLineWithIndentGuides(
   line: string,
   lineIndex: number,
@@ -8830,7 +9084,7 @@ ods graphics off;`;
 
         <div className="h-full w-full overflow-auto bg-white code-panel-scroll-container scrollbar-code">
         {docType === 'figure' ? (
-          <div className="flex flex-1 min-w-max font-mono text-[13px] leading-[20px]">
+          <div className="flex flex-1 min-w-max t-code-editor">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
                 const lineNum = index + 1;
@@ -8845,7 +9099,7 @@ ods graphics off;`;
                     onClick={() => handleLineClick(lineNum)}
                     className="h-[20px] flex items-center justify-end pl-[8px] pr-[4px] gap-[2px] cursor-pointer select-none"
                   >
-                    <span className={`text-[13px] font-mono text-right w-[28px] leading-[20px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
+                    <span className={`t-code-editor text-right w-[28px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
                       {lineNum}
                     </span>
                     <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
@@ -8868,7 +9122,7 @@ ods graphics off;`;
                     <div
                       key={index}
                       onClick={() => handleLineClick(lineNum)}
-                      className={`h-[20px] pl-[4px] pr-[16px] whitespace-pre font-mono text-[13px] leading-[20px] cursor-pointer ${
+                      className={`h-[20px] pl-[4px] pr-[16px] whitespace-pre t-code-editor cursor-pointer ${
                         isSelected ? 'bg-[#FBF4F7]' : ''
                       }`}
                     >
@@ -8882,7 +9136,7 @@ ods graphics off;`;
                 className="relative flex-1 bg-white"
                 style={{ height: `${codeLines.length * 20 + 32}px` }}
               >
-                <pre className="absolute inset-0 pt-[16px] pb-[16px] m-0 pointer-events-none font-mono text-[13px] leading-[20px] overflow-hidden">
+                <pre className="absolute inset-0 pt-[16px] pb-[16px] m-0 pointer-events-none t-code-editor overflow-hidden">
                   {codeLines.map((line, index) => {
                     const lineNum = index + 1;
                     const isSelected = selectedCodeLine === lineNum;
@@ -8905,14 +9159,14 @@ ods graphics off;`;
                   onSelect={handleTextareaSelectionChange}
                   onKeyUp={handleTextareaSelectionChange}
                   onMouseUp={handleTextareaSelectionChange}
-                  className="absolute inset-0 w-full h-full pt-[16px] pb-[16px] pl-[4px] pr-[16px] font-mono text-[13px] leading-[20px] text-transparent bg-transparent outline-none resize-none border-none caret-text-primary whitespace-pre overflow-hidden"
+                  className="absolute inset-0 w-full h-full pt-[16px] pb-[16px] pl-[4px] pr-[16px] t-code-editor text-transparent bg-transparent outline-none resize-none border-none caret-text-primary whitespace-pre overflow-hidden"
                   style={{ caretColor: 'var(--color-text-primary)' }}
                 />
               </div>
             )}
           </div>
         ) : (
-          <div className="flex min-w-max min-h-full font-mono text-[13px] leading-[20px]">
+          <div className="flex min-w-max min-h-full t-code-editor">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
                 const lineNum = index + 1;
@@ -8927,7 +9181,7 @@ ods graphics off;`;
                     onClick={() => handleLineClick(lineNum)}
                     className="h-[20px] flex items-center justify-end pl-[8px] pr-[4px] gap-[2px] cursor-pointer select-none"
                   >
-                    <span className={`text-[13px] font-mono text-right w-[28px] leading-[20px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
+                    <span className={`t-code-editor text-right w-[28px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
                       {lineNum}
                     </span>
                     <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
@@ -8949,7 +9203,7 @@ ods graphics off;`;
                   <div
                     key={index}
                     onClick={() => handleLineClick(lineNum)}
-                    className={`h-[20px] pl-[4px] pr-[16px] whitespace-pre font-mono text-[13px] leading-[20px] cursor-pointer ${
+                    className={`h-[20px] pl-[4px] pr-[16px] whitespace-pre t-code-editor cursor-pointer ${
                       isSelected ? 'bg-[#FBF4F7]' : ''
                     }`}
                   >
@@ -9032,7 +9286,7 @@ function WorkspaceContent({
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [groupViewOpen, setGroupViewOpen] = useState(false);
   const [rtfOpen, setRtfOpen] = useState(true);
-  const [aiCopilotOpen, setAiCopilotOpen] = useState(false);
+  const [aiCopilotOpen, setAiCopilotOpen] = useState(true);
   const [isResizing, setIsResizing] = useState(false);
   const [shellPreviewWidth, setShellPreviewWidth] = useState(560);
   const [metadataWidth, setMetadataWidth] = useState(440);
@@ -9596,9 +9850,9 @@ function WorkspaceContent({
         )}
 
         {/* Middle Column: (视图切换行 + Code&Shell卡 + Group Code浮层) */}
-        <div ref={contentAreaRef} className={`relative flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden pl-[4px] pt-[4px] pb-[8px] ${aiLayoutVariant === 'drawer' && aiCopilotOpen ? 'pr-[4px]' : 'pr-[8px]'}`}>
+        <div ref={contentAreaRef} className={`relative z-20 flex min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pt-[4px] pb-[8px] ${aiLayoutVariant === 'drawer' && aiCopilotOpen ? 'pr-[4px]' : 'pr-[8px]'}`}>
           {/* 视图切换行 (Top bar) */}
-          <div className="shrink-0 w-full overflow-hidden mb-[4px]">
+          <div className="shrink-0 w-full overflow-hidden mb-[4px] pointer-events-auto">
             <ViewToggleBar
               treeListOpen={treeListOpen}
               onToggleTreeList={() => setTreeListOpen(true)}
@@ -9620,8 +9874,8 @@ function WorkspaceContent({
           </div>
 
           {/* Below ViewToggleBar: Container for Shell, Code, AI Copilot cards and floating GroupCodePanel */}
-          <div className="relative min-w-0 min-h-0 flex-1 overflow-visible">
-            {/* 3 Separate In-Card panels with 8px radius, white bg, Mulberry-tinted soft shadow, and 2px gap */}
+          <div className="relative min-w-0 min-h-0 flex-1 overflow-visible pointer-events-auto">
+            {/* 3 Separate In-Card panels with 12px radius, white bg, Mulberry-tinted soft shadow, and 2px gap */}
             {docType === 'listing' ? (
               <div className="flex min-w-0 min-h-0 h-full w-full overflow-visible" style={{ flexDirection: 'row' }}>
                 <div
@@ -9634,7 +9888,7 @@ function WorkspaceContent({
                         ? (panelView === 'shell' ? { height: '100%', minHeight: '240px' } : { height: `${shellHeight}px`, minHeight: '240px' })
                         : (panelView === 'shell' ? { width: '100%', minWidth: '320px' } : { width: `${shellPreviewWidth}px`, minWidth: '320px' })
                       }
-                      className={`${panelLayout === 'vertical' ? 'w-full' : 'h-full'} flex flex-col min-w-0 overflow-hidden bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry ${panelView === 'both' ? 'shrink-0' : 'flex-1'}`}
+                      className={`${panelLayout === 'vertical' ? 'w-full' : 'h-full'} flex flex-col min-w-0 overflow-hidden bg-white rounded-[12px] border border-graphite-10 shadow-card-mulberry ${panelView === 'both' ? 'shrink-0' : 'flex-1'}`}
                     >
                       <ListingShellPreview
                         selectedItemName={getSelectedItemName()}
@@ -9701,7 +9955,7 @@ function WorkspaceContent({
 
                   {panelView !== 'shell' && (
                     <div
-                      className={`min-w-0 min-h-0 flex-1 overflow-hidden flex flex-col bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry ${panelLayout === 'vertical' ? 'w-full' : 'h-full'}`}
+                      className={`min-w-0 min-h-0 flex-1 overflow-hidden flex flex-col bg-white rounded-[12px] border border-graphite-10 shadow-card-mulberry ${panelLayout === 'vertical' ? 'w-full' : 'h-full'}`}
                       style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
                     >
                       <CodePanel
@@ -9724,7 +9978,7 @@ function WorkspaceContent({
                     />
                     <div
                       style={{ width: `${aiCopilotWidth}px` }}
-                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 rounded-[8px] border border-graphite-10 shadow-card-mulberry"
+                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 rounded-[12px] border border-graphite-10 shadow-card-mulberry"
                     >
                       {renderAICopilotComponent('incard')}
                     </div>
@@ -9742,7 +9996,7 @@ function WorkspaceContent({
                 >
                   {shellPreviewOpen && (
                     <div
-                      className={`${panelLayout === 'vertical' ? 'w-full' : 'h-full'} flex flex-col min-w-0 overflow-hidden bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry ${
+                      className={`${panelLayout === 'vertical' ? 'w-full' : 'h-full'} flex flex-col min-w-0 overflow-hidden bg-white rounded-[12px] border border-graphite-10 shadow-card-mulberry ${
                         panelView === 'both' ? 'shrink-0' : 'flex-1'
                       }`}
                       style={panelLayout === 'vertical'
@@ -9834,7 +10088,7 @@ function WorkspaceContent({
 
                   {codeOpen && (
                     <div
-                      className={`min-w-0 min-h-0 flex-1 overflow-hidden flex flex-col bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry ${panelLayout === 'vertical' ? 'w-full' : 'h-full'}`}
+                      className={`min-w-0 min-h-0 flex-1 overflow-hidden flex flex-col bg-white rounded-[12px] border border-graphite-10 shadow-card-mulberry ${panelLayout === 'vertical' ? 'w-full' : 'h-full'}`}
                       style={panelLayout === 'vertical' ? { minHeight: '240px' } : undefined}
                     >
                       <CodePanel
@@ -9861,7 +10115,7 @@ function WorkspaceContent({
                     />
                     <div
                       style={{ width: `${aiCopilotWidth}px` }}
-                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 rounded-[8px] border border-graphite-10 shadow-card-mulberry"
+                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 rounded-[12px] border border-graphite-10 shadow-card-mulberry"
                     >
                       {renderAICopilotComponent('incard')}
                     </div>
@@ -9904,7 +10158,9 @@ function WorkspaceContent({
                 transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
               }}
             >
-              {renderAICopilotComponent('drawer')}
+              <div className="h-full w-full flex flex-col overflow-hidden bg-white rounded-[12px] border border-graphite-10 shadow-card-mulberry">
+                {renderAICopilotComponent('drawer')}
+              </div>
             </div>
           </>
         )}
@@ -10428,8 +10684,8 @@ function HomePage({
         )}
 
         {/* Main Container Wrapper (与详情页结构、图层层级和裁剪规则完全保持一致) */}
-        <div className="relative flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden pl-[4px] pt-[4px] pb-[8px] pr-[8px]">
-          <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry">
+        <div className="relative z-20 flex min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pt-[4px] pb-[8px] pr-[8px]">
+          <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry pointer-events-auto">
             {/* Expand tree list button when collapsed */}
             {!treeListOpen && (
               <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-border-default">
