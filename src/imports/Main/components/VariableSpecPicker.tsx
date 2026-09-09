@@ -16,6 +16,39 @@ export interface VariableSpecPickerProps {
   onDatasetsExpand?: (newDatasets: string[]) => void;
 }
 
+function DerivationCell({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!text) return <span className="t-small text-text-secondary">-</span>;
+
+  const lines = text.split("\n").filter(Boolean);
+  const isMultiLine = lines.length > 1;
+  const isLongText = text.length > 50;
+  const shouldTruncate = isMultiLine || isLongText;
+
+  const firstLine = lines[0] || "";
+  const previewText = firstLine.length > 50 ? `${firstLine.slice(0, 50)}...` : firstLine;
+
+  return (
+    <div className="flex flex-col items-start gap-[2px]">
+      <span className="t-small text-text-primary whitespace-normal">
+        {expanded || !shouldTruncate ? text : `${previewText}${isMultiLine && firstLine.length <= 50 ? "..." : ""}`}
+      </span>
+      {shouldTruncate && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setExpanded(!expanded);
+          }}
+          className="t-footnote text-brand-1 hover:underline cursor-pointer font-medium"
+        >
+          {expanded ? "Show less" : "Show more"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function VariableSpecPicker({
   isOpen,
   onClose,
@@ -539,13 +572,13 @@ export function VariableSpecPicker({
             )}
           </div>
 
-          {/* ----- Column 2: Middle Variable Table ----- */}
+          {/* ----- Column 2: Middle Variable Table (Pilot Single-line Row Style) ----- */}
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-white">
-            <div className="flex-1 overflow-y-auto">
-              <table className="w-full border-collapse">
+            <div className="flex-1 overflow-y-auto overflow-x-auto">
+              <table className="w-full min-w-[700px] border-collapse">
                 <thead className="sticky top-0 z-10 bg-bg-panel border-b border-graphite-10">
                   <tr>
-                    <th className="w-[36px] px-[10px] py-[8px] text-left">
+                    <th className="w-[36px] px-[12px] py-[8px] text-left">
                       <div className="flex items-center justify-center">
                         <Checkbox
                           checked={
@@ -572,7 +605,7 @@ export function VariableSpecPicker({
                         />
                       </div>
                     </th>
-                    <th className="w-[76px] px-[8px] py-[8px] text-left">
+                    <th className="w-[80px] px-[8px] py-[8px] text-left">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Dataset</span>
                     </th>
                     <th className="w-[120px] px-[8px] py-[8px] text-left">
@@ -581,18 +614,21 @@ export function VariableSpecPicker({
                     <th className="px-[8px] py-[8px] text-left">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Label</span>
                     </th>
-                    <th className="w-[130px] px-[8px] py-[8px] text-left">
-                      <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Context</span>
+                    <th className="w-[80px] px-[8px] py-[8px] text-left">
+                      <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Type/Len</span>
                     </th>
-                    <th className="w-[40px] px-[8px] py-[8px] text-center">
-                      <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Info</span>
+                    <th className="w-[80px] px-[8px] py-[8px] text-left">
+                      <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Format</span>
+                    </th>
+                    <th className="w-[200px] px-[8px] py-[8px] text-left">
+                      <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Derivation</span>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredVariables.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-[20px] py-[48px] text-center">
+                      <td colSpan={7} className="px-[20px] py-[48px] text-center">
                         <p className="t-small text-text-secondary">No matching variables found</p>
                         {hasActiveFilters && (
                           <button
@@ -617,7 +653,7 @@ export function VariableSpecPicker({
                           onClick={() => handleRowClick(v)}
                           className={`border-b border-graphite-10 transition-colors cursor-pointer select-none group ${
                             isInspecting
-                              ? "bg-[#F4E8EE]/50 border-l-[3px] border-l-[#830051]"
+                              ? "bg-[#F4E8EE]/40 border-l-[3px] border-l-[#830051]"
                               : isChecked
                               ? "bg-bg-panel/40 hover:bg-bg-panel"
                               : "hover:bg-bg-panel"
@@ -625,7 +661,7 @@ export function VariableSpecPicker({
                         >
                           {/* Checkbox Cell */}
                           <td
-                            className="w-[36px] px-[10px] py-[7px]"
+                            className="w-[36px] px-[12px] py-[6px]"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleVariable(itemKey);
@@ -640,61 +676,58 @@ export function VariableSpecPicker({
                           </td>
 
                           {/* Dataset */}
-                          <td className="px-[8px] py-[7px]">
+                          <td className="px-[8px] py-[6px]">
                             <span className="t-small whitespace-nowrap text-text-primary font-mono">{v.datasetName}</span>
                           </td>
 
-                          {/* Variable Name */}
-                          <td className="px-[8px] py-[7px]">
-                            <span className="t-small font-medium whitespace-nowrap text-text-primary font-mono">
-                              {v.variable}
-                            </span>
+                          {/* Variable Name + VLM Badge */}
+                          <td className="px-[8px] py-[6px]">
+                            <div className="flex items-center gap-[6px]">
+                              <span className="t-small font-medium whitespace-nowrap text-text-primary font-mono">
+                                {v.variable}
+                              </span>
+                              {v.hasVlm && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveVariable(v);
+                                    setIsRightPanelOpen(true);
+                                    setRightPanelTab("vlm");
+                                  }}
+                                  className="inline-flex h-[18px] items-center gap-[1px] rounded-[4px] bg-[#F4E8EE] px-[4px] hover:bg-[#EEDFE7] transition-colors cursor-pointer"
+                                  title="Inspect Value Level Metadata"
+                                >
+                                  <span className="text-[10px] font-medium whitespace-nowrap text-[#830051]">VLM ↗</span>
+                                </button>
+                              )}
+                            </div>
                           </td>
 
                           {/* Label */}
-                          <td className="px-[8px] py-[7px]">
-                            <span className="t-small text-text-primary whitespace-normal line-clamp-1" title={v.label}>
+                          <td className="px-[8px] py-[6px]">
+                            <span className="t-small text-text-primary whitespace-normal line-clamp-2" title={v.label}>
                               {v.label}
                             </span>
                           </td>
 
-                          {/* Indicators (VLM, Codelist, Predecessor) */}
-                          <td className="px-[8px] py-[7px]">
-                            <div className="flex items-center gap-[4px] whitespace-nowrap">
-                              {v.hasVlm && (
-                                <span className="t-footnote px-[4px] py-[1px] rounded-[2px] bg-graphite-10 text-text-secondary font-mono" title="Value Level Metadata available">
-                                  VLM
-                                </span>
-                              )}
-                              {v.hasCodelist && (
-                                <span className="t-footnote px-[4px] py-[1px] rounded-[2px] bg-graphite-10 text-text-secondary font-mono" title="Controlled Terminology / Codelist available">
-                                  Codelist
-                                </span>
-                              )}
-                              {v.origin === "Predecessor" && (
-                                <span className="t-footnote px-[4px] py-[1px] rounded-[2px] bg-graphite-10 text-text-secondary font-mono" title="Derived from SDTM Predecessor">
-                                  Predec
-                                </span>
-                              )}
-                            </div>
+                          {/* Type/Length */}
+                          <td className="px-[8px] py-[6px]">
+                            <span className="t-small whitespace-nowrap text-text-primary font-mono">
+                              {v.type}/{v.length}
+                            </span>
                           </td>
 
-                          {/* Inspect Info Button */}
-                          <td className="px-[8px] py-[7px] text-center">
-                            <div
-                              className={`size-[20px] rounded-full inline-flex items-center justify-center transition-colors ${
-                                isInspecting
-                                  ? "bg-[#830051] text-white"
-                                  : "text-text-secondary group-hover:text-text-primary group-hover:bg-bg-panel"
-                              }`}
-                              title="Inspect variable details"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="10" />
-                                <line x1="12" y1="16" x2="12" y2="12" />
-                                <line x1="12" y1="8" x2="12.01" y2="8" />
-                              </svg>
-                            </div>
+                          {/* Display Format */}
+                          <td className="px-[8px] py-[6px]">
+                            <span className="t-small whitespace-nowrap text-text-primary font-mono">
+                              {v.displayFormat || "-"}
+                            </span>
+                          </td>
+
+                          {/* Derivation */}
+                          <td className="px-[8px] py-[6px]">
+                            <DerivationCell text={v.derivation} />
                           </td>
                         </tr>
                       );
