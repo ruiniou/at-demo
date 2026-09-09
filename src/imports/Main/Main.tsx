@@ -2912,9 +2912,91 @@ const LISTING_COLUMN_METADATA: Record<string, { dataset: string; variable: strin
   lesionLoc: { dataset: 'ADTR', variable: 'TRLOC', rule: 'Mapped from TR.TRLOC' },
   locSpec: { dataset: 'ADTR', variable: 'TRLOCSP', rule: 'Direct copy from ADTR.TRLOCSP' },
   method: { dataset: 'ADTR', variable: 'TRMETHOD', rule: 'RECIST 1.1 assessment method' },
-  diameter: { dataset: 'ADTR', variable: 'AVAL', additionalVariables: ['ADTR.BASE', 'ADTR.CHG', 'ADTR.PCHG', 'ADTR.ANL01FL'], filter: "PARAMCD = 'DIAMETER'", rule: 'Non-nodal longest diameter or nodal short axis, in mm' },
+  diameter: { dataset: 'ADTR', variable: 'AVAL', additionalVariables: ['ADTR.BASE', 'ADTR.CHG', 'ADSL.SAFFL', 'ADSL.AGE'], filter: "PARAMCD = 'DIAMETER'", rule: 'RECIST 1.1 non-nodal longest diameter from ADTR; demographic age and safety population flag merged from ADSL' },
   sum: { dataset: 'ADTR', variable: 'AVAL', additionalVariables: ['ADTR.PARAMCD', 'ADTR.AVALC'], filter: "PARAMCD = 'SUMDIAM'", rule: 'Sum of non-nodal longest diameters and nodal short axis diameters where PARAMCD=SUMDIAM' },
 };
+
+function ListingAiRowContent({
+  meta,
+}: {
+  meta: { dataset: string; variable: string; additionalVariables?: string[] } | undefined;
+}) {
+  if (!meta) return <div className="h-[14px]" />;
+
+  const primaryDs = meta.dataset;
+  const allRawVars = [`${primaryDs}.${meta.variable}`, ...(meta.additionalVariables || [])];
+  const datasetMap: Record<string, string[]> = {};
+  allRawVars.forEach((raw) => {
+    const parts = raw.split('.');
+    if (parts.length === 2) {
+      const [ds, v] = parts;
+      if (!datasetMap[ds]) datasetMap[ds] = [];
+      if (!datasetMap[ds].includes(v)) datasetMap[ds].push(v);
+    } else {
+      if (!datasetMap[primaryDs]) datasetMap[primaryDs] = [];
+      if (!datasetMap[primaryDs].includes(raw)) datasetMap[primaryDs].push(raw);
+    }
+  });
+
+  const datasets = Object.keys(datasetMap);
+
+  // Case 1: Multiple Datasets (多对多 / 多Dataset单Variable)
+  if (datasets.length > 1) {
+    const allSingleVar = datasets.every((ds) => datasetMap[ds].length === 1);
+
+    if (allSingleVar) {
+      // Multiple datasets with 1 variable each: e.g. "ADTR, ADSL"
+      return (
+        <div className="flex items-center gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px] min-w-0">
+          <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0" color="var(--color-brand-1)" />
+          <span className="truncate font-mono text-[10px]">
+            {datasets.join(', ')}
+          </span>
+        </div>
+      );
+    }
+
+    // Many-to-Many: datasetA [+N], datasetB [+N]
+    return (
+      <div className="flex items-center gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px] min-w-0">
+        <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0" color="var(--color-brand-1)" />
+        <div className="flex items-center gap-[4px] min-w-0 truncate">
+          {datasets.map((ds, idx) => (
+            <span key={ds} className="inline-flex items-center gap-[2px] whitespace-nowrap">
+              <span className="font-mono text-[10px] text-text-secondary">{ds}</span>
+              <span className="inline-flex items-center justify-center px-[3px] py-0 h-[14px] rounded-[2px] bg-graphite-15 text-text-secondary text-[10px] font-medium shrink-0 font-mono">
+                +{datasetMap[ds].length}
+              </span>
+              {idx < datasets.length - 1 && <span className="text-text-secondary mr-[1px]">,</span>}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Case 2: Single Dataset, Multiple Variables (一对多)
+  const extraCount = datasetMap[primaryDs].length - 1;
+  if (extraCount > 0) {
+    return (
+      <div className="flex items-center gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px] min-w-0">
+        <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0" color="var(--color-brand-1)" />
+        <span className="truncate font-mono text-[10px]">{meta.dataset}.{meta.variable}</span>
+        <span className="inline-flex items-center justify-center px-[3px] py-0 h-[14px] rounded-[2px] bg-graphite-15 text-text-secondary text-[10px] font-medium shrink-0 font-mono">
+          +{extraCount}
+        </span>
+      </div>
+    );
+  }
+
+  // Case 3: Single Dataset, Single Variable (一对一)
+  return (
+    <div className="flex items-center gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px] min-w-0">
+      <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0" color="var(--color-brand-1)" />
+      <span className="truncate font-mono text-[10px]">{meta.dataset}.{meta.variable}</span>
+    </div>
+  );
+}
 
 function buildListingColumnTooltipSections(meta: { dataset: string; variable: string; additionalVariables?: string[]; filter?: string; rule?: string } | undefined): TooltipMetadataSection[] {
   if (!meta) return [];
@@ -4003,19 +4085,7 @@ function ListingShellPreview({
                                       <div className="flex flex-col items-start w-full">
                                         <span className="flex items-start leading-[18px]">{column.label}</span>
                                         <div className="border-t border-graphite-10 -mx-[8px] my-[3px] w-[calc(100%+16px)]" />
-                                        {meta ? (
-                                          <div className="flex items-center gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
-                                            <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0" color="var(--color-brand-1)" />
-                                            <span className="truncate">{meta.dataset}.{meta.variable}</span>
-                                            {meta.additionalVariables && meta.additionalVariables.length > 0 && (
-                                              <span className="inline-flex items-center justify-center px-[3px] py-0 h-[14px] rounded-[2px] bg-graphite-15 text-text-secondary text-[10px] font-medium shrink-0">
-                                                +{meta.additionalVariables.length}
-                                              </span>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <div className="h-[14px]" />
-                                        )}
+                                        <ListingAiRowContent meta={meta} />
                                       </div>
                                     </th>
                                   );
@@ -4149,19 +4219,7 @@ function ListingShellPreview({
                                 onMouseLeave={() => setHoveredColumnKey(null)}
                                 onClick={(event) => { event.preventDefault(); event.stopPropagation(); onBlockClick(); }}
                               >
-                                {meta ? (
-                                  <div className="flex items-center gap-[4px] t-footnote text-text-secondary whitespace-normal break-words leading-[14px]">
-                                    <LocalIcon src={toolCallIconUrl} className="w-[12px] h-[12px] shrink-0" color="var(--color-brand-1)" />
-                                    <span className="truncate">{meta.dataset}.{meta.variable}</span>
-                                    {meta.additionalVariables && meta.additionalVariables.length > 0 && (
-                                      <span className="inline-flex items-center justify-center px-[3px] py-0 h-[14px] rounded-[2px] bg-graphite-15 text-text-secondary text-[10px] font-medium shrink-0">
-                                        +{meta.additionalVariables.length}
-                                      </span>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="h-[14px]" />
-                                )}
+                                <ListingAiRowContent meta={meta} />
                               </div>
 
                               {sections.length > 0 && (
@@ -6008,6 +6066,7 @@ function BlocksTabContent({
               }))}
               value={selectedBlockId}
               onChange={handleSelectNavChange}
+              dropdownMaxWidth={480}
               className="max-w-full"
             />
           ) : (

@@ -330,19 +330,41 @@ export const AIMarkdown: React.FC<{ content: string }> = ({ content }) => {
           li: ({ children }) => <li className="t-body text-text-primary leading-relaxed">{children}</li>,
           hr: () => <div className="h-[0.5px] bg-border-default w-full my-[10px]" />,
 
-          // 代码：自动区分 Inline Highlight 与多行代码块
-          code: ({ inline, className, children, ...props }: any) => {
+          // 代码：兼容 react-markdown v8/v9 的行内高亮与多行代码块
+          code: ({ node, inline, className, children, ...props }: any) => {
             const match = /language-(\w+)/.exec(className || '');
             const lang = match ? match[1] : undefined;
-            if (inline) {
+            // v9 中 inline 属性可能缺省，通过是否存在换行及语言类名精准判定是否为行内代码
+            const isInline = inline ?? (!match && !String(children).includes('\n'));
+            if (isInline) {
               return (
-                <span className="inline-block px-[4px] py-[2px] rounded-[4px] bg-graphite-10 text-[13px] font-mono text-brand-1 leading-none mx-[2px]">
+                <code className="inline-block px-[4px] py-[2px] rounded-[4px] bg-[#ECECEC] text-[13px] font-mono text-[#830051] leading-none mx-[2px]">
                   {children}
-                </span>
+                </code>
               );
             }
             return <CodeBlock code={String(children).replace(/\n$/, '')} language={lang} />;
           },
+
+          // 表格映射：防止 Tailwind Preflight 将表格样式全部清空重置
+          table: ({ children }) => (
+            <div className="overflow-x-auto mb-[10px] rounded-[8px] border border-graphite-15">
+              <table className="w-full border-collapse text-left">{children}</table>
+            </div>
+          ),
+          thead: ({ children }) => <thead className="bg-bg-panel border-b border-graphite-15">{children}</thead>,
+          tbody: ({ children }) => <tbody className="divide-y divide-graphite-15">{children}</tbody>,
+          tr: ({ children }) => <tr className="border-b border-graphite-15 last:border-0">{children}</tr>,
+          th: ({ children }) => (
+            <th className="px-[12px] py-[8px] text-[13px] font-medium text-text-primary whitespace-nowrap bg-bg-panel">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-[12px] py-[8px] text-[13px] text-text-primary align-top">
+              {children}
+            </td>
+          ),
         }}
       >
         {content}

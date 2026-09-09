@@ -35,6 +35,8 @@ export interface FilterChipProps extends Omit<React.ButtonHTMLAttributes<HTMLBut
   values?: string[];
   /** Callback when values change in multi-select mode */
   onChangeMulti?: (values: string[]) => void;
+  /** Maximum width for the dropdown menu in px (defaults to 440px). Can be overridden for longer label navigation */
+  dropdownMaxWidth?: number;
   /** Optional custom class for the label span */
   labelClassName?: string;
   className?: string;
@@ -95,6 +97,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
       multiSelect,
       values,
       onChangeMulti,
+      dropdownMaxWidth = 440,
       labelClassName = "font-normal",
       disabled = false,
       onClick,
@@ -173,14 +176,12 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
       };
     }
 
-    const paddingClasses = isDropdown ? "pl-[8px] pr-[6px]" : "px-[8px]";
-
-    // Floating position for options menu
+    const paddingClasses = isDropdown ? "pl-[8px] pr-[6px]" : "px-[8px]";    // Floating position for options menu
     const updateDropdownPos = () => {
       if (!buttonRef.current) return;
       const rect = buttonRef.current.getBoundingClientRect();
       let left = rect.left;
-      const menuWidth = Math.max(140, rect.width);
+      const menuWidth = menuRef.current?.offsetWidth || Math.min(dropdownMaxWidth, Math.max(140, rect.width));
       if (left + menuWidth > window.innerWidth - 8) {
         left = Math.max(8, window.innerWidth - menuWidth - 8);
       }
@@ -247,6 +248,8 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
       }
       onClick?.(e);
     };
+
+
 
     // Determine display label if bound to options
     let displayLabel = label;
@@ -315,7 +318,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
               top: dropdownPos.top,
               left: dropdownPos.left,
               minWidth: Math.max(140, buttonRef.current?.offsetWidth || 140),
-              maxWidth: Math.min(360, window.innerWidth - 16),
+              maxWidth: Math.min(dropdownMaxWidth, window.innerWidth - 16),
               maxHeight: 260,
               overflowY: "auto",
               zIndex: 10050,
