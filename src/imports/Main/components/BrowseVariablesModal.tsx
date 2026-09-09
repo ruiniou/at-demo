@@ -7,6 +7,9 @@ import { Tooltip } from "../../../components/ui/Tooltip";
 import { FilterChip } from "../../../components/ui/FilterChip";
 import { Checkbox } from "../../../components/ui/Checkbox";
 import arrowIconUrl from "../../../icons/arrow-down-s-line.svg";
+import { VariableSpecPicker } from "./VariableSpecPicker";
+
+export { VariableSpecPicker };
 
 // ==================== Types ====================
 
@@ -21,6 +24,23 @@ export type Variable = {
   derivation: string;
   hasVlm: boolean;
   standard?: "ADaM" | "SDTM";
+  // Sprint 7 extensions for Variable Spec Picker
+  origin?: string;
+  role?: string;
+  core?: string;
+  predecessor?: {
+    dataset: string;
+    variable: string;
+    label?: string;
+    type?: string;
+    length?: number;
+    derivation?: string;
+    codelist?: string;
+  };
+  hasCodelist?: boolean;
+  codelistRef?: string;
+  codelistValues?: { value: string; label: string }[];
+  vlmParameters?: { param: string; condition: string; derivation: string }[];
 };
 
 export type VlmRow = {
@@ -102,38 +122,161 @@ export type InlineVariableListProps = {
 
 export const mockVariables: Variable[] = [
   // --- ADaM Variables ---
-  { id: "v1", standard: "ADaM", datasetName: "ADSL", variable: "AAGE", label: "Analysis Age", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to integer part of (Randomization Date - Date of Birth + 1) / 365.25.", hasVlm: false },
-  { id: "v2", standard: "ADaM", datasetName: "ADSL", variable: "AAGEU", label: "Analysis Age Unit", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Set to "YEARS" if ADSL.AAGE is not missing.', hasVlm: false },
-  { id: "v3", standard: "ADaM", datasetName: "ADSL", variable: "ACTARM", label: "Description of Actual Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ACTARM", hasVlm: false },
-  { id: "v4", standard: "ADaM", datasetName: "ADSL", variable: "ACTARMCD", label: "Actual Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "DM.ACTARMCD", hasVlm: false },
-  { id: "v5", standard: "ADaM", datasetName: "ADSL", variable: "ACTARMUD", label: "Description of Unplanned Actual Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ACTARMUD", hasVlm: false },
-  { id: "v6", standard: "ADaM", datasetName: "ADSL", variable: "ADAFL", label: "Anti-Drug Antibody Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if SAFFL='Y' and patient has non-missing post-baseline ADA sample assessment.", hasVlm: false },
-  { id: "v7", standard: "ADaM", datasetName: "ADSL", variable: "AGE", label: "Age at Enrollment", type: "Num", length: 8, displayFormat: "8.1", derivation: "Derived from informed consent date and date of birth.", hasVlm: false },
-  { id: "v8", standard: "ADaM", datasetName: "ADSL", variable: "AGEGR1", label: "Age Group (years)", type: "Char", length: 8, displayFormat: "$8.", derivation: "Categorized: <65, 65-74, ≥75", hasVlm: false },
-  { id: "v9", standard: "ADaM", datasetName: "ADSL", variable: "AGEGR2", label: "Age Group 2 (<65, >=65)", type: "Char", length: 8, displayFormat: "$8.", derivation: "Categorized: <65, >=65", hasVlm: false },
-  { id: "v_agesexra", standard: "ADaM", datasetName: "ADSL", variable: "AGESEXRA", label: "Age/Sex/Race concatenated", type: "Char", length: 60, displayFormat: "$60.", derivation: 'Concatenate ADSL.AAGE, ADSL.SEX and ADSL.ARACE using "/" as separators.', hasVlm: false },
-  { id: "v_ageu", standard: "ADaM", datasetName: "ADSL", variable: "AGEU", label: "Age Units", type: "Char", length: 10, displayFormat: "$10.", derivation: "DM.AGEU", hasVlm: false },
-  { id: "v10", standard: "ADaM", datasetName: "ADSL", variable: "ALCSTAT", label: "Alcohol Consumption Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Direct copy from Medical History (MH) domain.", hasVlm: false },
-  { id: "v11", standard: "ADaM", datasetName: "ADSL", variable: "ALCSTT", label: "Alcohol Status", type: "Char", length: 20, displayFormat: "$20.", derivation: 'Subset the data with SU.SUTRT = "ALCOHOL" If SUENRTPT="BEFORE" then ALCSTT="Former" else if SUENRTPT="ONGOING" then ALCSTT="Current" else if SUENRTPT="" and SUOCCUR="N" then ALCSTT="Never".', hasVlm: false },
-  { id: "v12", standard: "ADaM", datasetName: "ADLB", variable: "ANRLO", label: "Analysis Normal Range Lower Limit", type: "Num", length: 8, displayFormat: "8.2", derivation: "Lower limit of normal range for the lab parameter.", hasVlm: false },
-  { id: "v13", standard: "ADaM", datasetName: "ADLB", variable: "ANRHI", label: "Analysis Normal Range Upper Limit", type: "Num", length: 8, displayFormat: "8.2", derivation: "Upper limit of normal range for the lab parameter.", hasVlm: false },
-  { id: "v_arace", standard: "ADaM", datasetName: "ADSL", variable: "ARACE", label: "Analysis Race", type: "Char", length: 50, displayFormat: "$50.", derivation: 'Set to "American Indian or Alaska Native" if ADSL.RACE="AMERICAN INDIAN OR ALASKA NATIVE". else "Asian" if ADSL.RACE="ASIAN". else "Black or African American" if ADSL.RACE="BLACK OR AFRICAN AMERICAN". else "Native Hawaiian or Other Pacific Islander" if ADSL.RACE="NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER". else "White" if ADSL.RACE="WHITE". else "Multiple" if ADSL.RACE="MULTIPLE". else "Other" if ADSL.RACE="OTHER".', hasVlm: false },
-  { id: "v_aracen", standard: "ADaM", datasetName: "ADSL", variable: "ARACEN", label: "Analysis Race (N)", type: "Num", length: 8, displayFormat: "8.", derivation: 'Set to 1 if ADSL.ARACE="American Indian or Alaska Native". else set to 2 if ADSL.ARACE="Asian". else set to 3 if ADSL.ARACE="Black or African American". else set to 4 if ADSL.ARACE="Native Hawaiian or Other Pacific Islander". else set to 5 if ADSL.ARACE="White". else set to 6 if ADSL.ARACE="Multiple". else set to 7 if ADSL.ARACE="Other".', hasVlm: false },
-  { id: "v14", standard: "ADaM", datasetName: "ADAE", variable: "AREL", label: "AE Relationship to Study Drug", type: "Char", length: 8, displayFormat: "$8.", derivation: "Related / Not Related / Possibly Related.", hasVlm: false },
-  { id: "v_arm", standard: "ADaM", datasetName: "ADSL", variable: "ARM", label: "Description of Planned Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ARM", hasVlm: false },
-  { id: "v_armcd", standard: "ADaM", datasetName: "ADSL", variable: "ARMCD", label: "Planned Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "DM.ARMCD", hasVlm: false },
-  { id: "v_armnrs", standard: "ADaM", datasetName: "ADSL", variable: "ARMNRS", label: "Reason Arm and/or Actual Arm is Null", type: "Char", length: 60, displayFormat: "$60.", derivation: "DM.ARMNRS", hasVlm: false },
-  { id: "v15", standard: "ADaM", datasetName: "ADSL", variable: "ASEX", label: "Analysis Sex", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Set to "Male" if ADSL.SEX="M". else "Female" if ADSL.SEX="F".', hasVlm: false },
-  { id: "v_asexn", standard: "ADaM", datasetName: "ADSL", variable: "ASEXN", label: "Analysis Sex (N)", type: "Num", length: 8, displayFormat: "8.", derivation: 'Set to 1 if ADSL.ASEX="Male". else set to 2 if ADSL.ASEX="Female".', hasVlm: false },
-  { id: "v16", standard: "ADaM", datasetName: "ADEXSUM", variable: "ATOXGR", label: "Analysis Toxicity Grade", type: "Char", length: 4, displayFormat: "$4.", derivation: "Toxicity grade applied to AVAL.", hasVlm: false },
-  { id: "v17", standard: "ADaM", datasetName: "ADEXSUM", variable: "AVAL", label: "Analysis Value", type: "Num", length: 8, displayFormat: "8.2", derivation: "Varies by PARAM; see VLM for conditional logic.", hasVlm: true },
-  { id: "v18", standard: "ADaM", datasetName: "ADLB", variable: "AVAL", label: "Analysis Value (Lab)", type: "Num", length: 8, displayFormat: "8.3", derivation: "Lab result in standard units. VLM defines per-PARAM logic.", hasVlm: true },
-  { id: "v19", standard: "ADaM", datasetName: "ADTTE", variable: "AVAL", label: "Analysis Value (Time)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Time to event in days/months. VLM defines per-PARAM logic.", hasVlm: true },
-  { id: "v20", standard: "ADaM", datasetName: "ADSL", variable: "BMIBL", label: "Baseline Body Mass Index (kg/m2)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to ADSL.WEIGHTBL / ((ADSL.HEIGHTBL / 100)**2) rounded to 1 decimal place.", hasVlm: false },
-  { id: "v21", standard: "ADaM", datasetName: "ADSL", variable: "BMIGR1", label: "Baseline BMI Group (<25, 25-<30, >=30)", type: "Char", length: 12, displayFormat: "$12.", derivation: 'Set to "<25" if BMIBL<25; "25-<30" if 25<=BMIBL<30; ">=30" if BMIBL>=30.', hasVlm: false },
-  { id: "v22", standard: "ADaM", datasetName: "ADSL", variable: "CIGPKYR", label: "Cigarette Pack Years", type: "Num", length: 8, displayFormat: "8.1", derivation: "Calculated from (Cigarettes per day / 20) * Years smoked.", hasVlm: false },
-  { id: "v23", standard: "ADaM", datasetName: "ADTTE", variable: "CNSR", label: "Censor Indicator", type: "Num", length: 8, displayFormat: "1.", derivation: "0 = Event, 1 = Censored.", hasVlm: true },
-  { id: "v24", standard: "ADaM", datasetName: "ADRESP", variable: "COHORT", label: "Study Cohort", type: "Char", length: 20, displayFormat: "$20.", derivation: "Dose expansion / escalation cohort identifier.", hasVlm: false },
+  { id: "v1", standard: "ADaM", datasetName: "ADSL", variable: "AAGE", label: "Analysis Age", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to integer part of (Randomization Date - Date of Birth + 1) / 365.25.", hasVlm: false, origin: "Derived", role: "Record Qualifier", core: "Required" },
+  { id: "v2", standard: "ADaM", datasetName: "ADSL", variable: "AAGEU", label: "Analysis Age Unit", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Set to "YEARS" if ADSL.AAGE is not missing.', hasVlm: false, origin: "Derived", role: "Record Qualifier", core: "Required" },
+  { 
+    id: "v3", 
+    standard: "ADaM", 
+    datasetName: "ADSL", 
+    variable: "ACTARM", 
+    label: "Description of Actual Arm", 
+    type: "Char", 
+    length: 40, 
+    displayFormat: "$40.", 
+    derivation: "DM.ACTARM", 
+    hasVlm: false,
+    origin: "Predecessor",
+    role: "Record Qualifier",
+    core: "Required",
+    predecessor: {
+      dataset: "DM",
+      variable: "ACTARM",
+      label: "Description of Actual Arm",
+      type: "Char",
+      length: 40,
+      derivation: "CRF: Treatment Page",
+      codelist: "ARM",
+    },
+  },
+  { id: "v4", standard: "ADaM", datasetName: "ADSL", variable: "ACTARMCD", label: "Actual Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "DM.ACTARMCD", hasVlm: false, origin: "Predecessor", core: "Required", predecessor: { dataset: "DM", variable: "ACTARMCD", label: "Actual Arm Code", type: "Char", length: 20, derivation: "CRF: Treatment Page" } },
+  { id: "v5", standard: "ADaM", datasetName: "ADSL", variable: "ACTARMUD", label: "Description of Unplanned Actual Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ACTARMUD", hasVlm: false, origin: "Predecessor", core: "Permissible" },
+  { id: "v6", standard: "ADaM", datasetName: "ADSL", variable: "ADAFL", label: "Anti-Drug Antibody Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if SAFFL='Y' and patient has non-missing post-baseline ADA sample assessment.", hasVlm: false, origin: "Derived", core: "Expected" },
+  { id: "v7", standard: "ADaM", datasetName: "ADSL", variable: "AGE", label: "Age at Enrollment", type: "Num", length: 8, displayFormat: "8.1", derivation: "Derived from informed consent date and date of birth.", hasVlm: false, origin: "Predecessor", core: "Required", predecessor: { dataset: "DM", variable: "AGE", label: "Age", type: "Num", length: 8, derivation: "CRF: Demographics Page" } },
+  { 
+    id: "v8", 
+    standard: "ADaM", 
+    datasetName: "ADSL", 
+    variable: "AGEGR1", 
+    label: "Age Group (years)", 
+    type: "Char", 
+    length: 8, 
+    displayFormat: "$8.", 
+    derivation: "Categorized: <65, 65-74, ≥75", 
+    hasVlm: false,
+    origin: "Derived",
+    core: "Expected",
+    hasCodelist: true,
+    codelistRef: "AGEGR1",
+    codelistValues: [
+      { value: "<65", label: "Under 65 years" },
+      { value: "65-74", label: "65 to 74 years" },
+      { value: ">=75", label: "75 years and older" },
+    ],
+  },
+  { id: "v9", standard: "ADaM", datasetName: "ADSL", variable: "AGEGR2", label: "Age Group 2 (<65, >=65)", type: "Char", length: 8, displayFormat: "$8.", derivation: "Categorized: <65, >=65", hasVlm: false, origin: "Derived", core: "Expected" },
+  { id: "v_agesexra", standard: "ADaM", datasetName: "ADSL", variable: "AGESEXRA", label: "Age/Sex/Race concatenated", type: "Char", length: 60, displayFormat: "$60.", derivation: 'Concatenate ADSL.AAGE, ADSL.SEX and ADSL.ARACE using "/" as separators.', hasVlm: false, origin: "Derived" },
+  { id: "v_ageu", standard: "ADaM", datasetName: "ADSL", variable: "AGEU", label: "Age Units", type: "Char", length: 10, displayFormat: "$10.", derivation: "DM.AGEU", hasVlm: false, origin: "Predecessor" },
+  { id: "v10", standard: "ADaM", datasetName: "ADSL", variable: "ALCSTAT", label: "Alcohol Consumption Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Direct copy from Medical History (MH) domain.", hasVlm: false, origin: "Assigned" },
+  { id: "v11", standard: "ADaM", datasetName: "ADSL", variable: "ALCSTT", label: "Alcohol Status", type: "Char", length: 20, displayFormat: "$20.", derivation: 'Subset the data with SU.SUTRT = "ALCOHOL" If SUENRTPT="BEFORE" then ALCSTT="Former" else if SUENRTPT="ONGOING" then ALCSTT="Current" else if SUENRTPT="" and SUOCCUR="N" then ALCSTT="Never".', hasVlm: false, origin: "Derived" },
+  { id: "v12", standard: "ADaM", datasetName: "ADLB", variable: "ANRLO", label: "Analysis Normal Range Lower Limit", type: "Num", length: 8, displayFormat: "8.2", derivation: "Lower limit of normal range for the lab parameter.", hasVlm: false, origin: "Assigned" },
+  { id: "v13", standard: "ADaM", datasetName: "ADLB", variable: "ANRHI", label: "Analysis Normal Range Upper Limit", type: "Num", length: 8, displayFormat: "8.2", derivation: "Upper limit of normal range for the lab parameter.", hasVlm: false, origin: "Assigned" },
+  { id: "v_arace", standard: "ADaM", datasetName: "ADSL", variable: "ARACE", label: "Analysis Race", type: "Char", length: 50, displayFormat: "$50.", derivation: 'Set to "American Indian or Alaska Native" if ADSL.RACE="AMERICAN INDIAN OR ALASKA NATIVE". else "Asian" if ADSL.RACE="ASIAN". else "Black or African American" if ADSL.RACE="BLACK OR AFRICAN AMERICAN". else "Native Hawaiian or Other Pacific Islander" if ADSL.RACE="NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER". else "White" if ADSL.RACE="WHITE". else "Multiple" if ADSL.RACE="MULTIPLE". else "Other" if ADSL.RACE="OTHER".', hasVlm: false, origin: "Derived" },
+  { id: "v_aracen", standard: "ADaM", datasetName: "ADSL", variable: "ARACEN", label: "Analysis Race (N)", type: "Num", length: 8, displayFormat: "8.", derivation: 'Set to 1 if ADSL.ARACE="American Indian or Alaska Native". else set to 2 if ADSL.ARACE="Asian". else set to 3 if ADSL.ARACE="Black or African American". else set to 4 if ADSL.ARACE="Native Hawaiian or Other Pacific Islander". else set to 5 if ADSL.ARACE="White". else set to 6 if ADSL.ARACE="Multiple". else set to 7 if ADSL.ARACE="Other".', hasVlm: false, origin: "Derived" },
+  { 
+    id: "v14", 
+    standard: "ADaM", 
+    datasetName: "ADAE", 
+    variable: "AREL", 
+    label: "AE Relationship to Study Drug", 
+    type: "Char", 
+    length: 8, 
+    displayFormat: "$8.", 
+    derivation: "Related / Not Related / Possibly Related.", 
+    hasVlm: false,
+    origin: "Derived",
+    core: "Expected",
+    hasCodelist: true,
+    codelistRef: "AREL",
+    codelistValues: [
+      { value: "NOT RELATED", label: "Not Related to Study Drug" },
+      { value: "POSSIBLY RELATED", label: "Possibly Related to Study Drug" },
+      { value: "RELATED", label: "Related to Study Drug" },
+    ],
+  },
+  { id: "v_arm", standard: "ADaM", datasetName: "ADSL", variable: "ARM", label: "Description of Planned Arm", type: "Char", length: 40, displayFormat: "$40.", derivation: "DM.ARM", hasVlm: false, origin: "Predecessor" },
+  { id: "v_armcd", standard: "ADaM", datasetName: "ADSL", variable: "ARMCD", label: "Planned Arm Code", type: "Char", length: 20, displayFormat: "$20.", derivation: "DM.ARMCD", hasVlm: false, origin: "Predecessor" },
+  { id: "v_armnrs", standard: "ADaM", datasetName: "ADSL", variable: "ARMNRS", label: "Reason Arm and/or Actual Arm is Null", type: "Char", length: 60, displayFormat: "$60.", derivation: "DM.ARMNRS", hasVlm: false, origin: "Predecessor" },
+  { id: "v15", standard: "ADaM", datasetName: "ADSL", variable: "ASEX", label: "Analysis Sex", type: "Char", length: 10, displayFormat: "$10.", derivation: 'Set to "Male" if ADSL.SEX="M". else "Female" if ADSL.SEX="F".', hasVlm: false, origin: "Derived" },
+  { id: "v_asexn", standard: "ADaM", datasetName: "ADSL", variable: "ASEXN", label: "Analysis Sex (N)", type: "Num", length: 8, displayFormat: "8.", derivation: 'Set to 1 if ADSL.ASEX="Male". else set to 2 if ADSL.ASEX="Female".', hasVlm: false, origin: "Derived" },
+  { 
+    id: "v16", 
+    standard: "ADaM", 
+    datasetName: "ADEXSUM", 
+    variable: "ATOXGR", 
+    label: "Analysis Toxicity Grade", 
+    type: "Char", 
+    length: 4, 
+    displayFormat: "$4.", 
+    derivation: "Toxicity grade applied to AVAL according to NCI-CTCAE v5.0.", 
+    hasVlm: false,
+    origin: "Derived",
+    core: "Expected",
+    hasCodelist: true,
+    codelistRef: "ATOXGR",
+    codelistValues: [
+      { value: "0", label: "Grade 0 (Normal)" },
+      { value: "1", label: "Grade 1 (Mild)" },
+      { value: "2", label: "Grade 2 (Moderate)" },
+      { value: "3", label: "Grade 3 (Severe)" },
+      { value: "4", label: "Grade 4 (Life-threatening)" },
+    ],
+  },
+  { 
+    id: "v17", 
+    standard: "ADaM", 
+    datasetName: "ADEXSUM", 
+    variable: "AVAL", 
+    label: "Analysis Value", 
+    type: "Num", 
+    length: 8, 
+    displayFormat: "8.2", 
+    derivation: "Varies by PARAM; see Value Level Metadata for parameter-specific conditional derivation logic.", 
+    hasVlm: true,
+    origin: "Derived",
+    core: "Required",
+    vlmParameters: [
+      { param: "DOSE", condition: "PARAMCD == 'DOSE'", derivation: "Cumulative dose administered in mg" },
+      { param: "DURATION", condition: "PARAMCD == 'DURATION'", derivation: "Duration of treatment exposure in days" },
+      { param: "DI", condition: "PARAMCD == 'DI'", derivation: "Dose Intensity (mg/day)" },
+      { param: "RDI", condition: "PARAMCD == 'RDI'", derivation: "Relative Dose Intensity (%)" },
+    ],
+  },
+  { 
+    id: "v18", 
+    standard: "ADaM", 
+    datasetName: "ADLB", 
+    variable: "AVAL", 
+    label: "Analysis Value (Lab)", 
+    type: "Num", 
+    length: 8, 
+    displayFormat: "8.3", 
+    derivation: "Lab result in standard units. VLM defines per-PARAM logic.", 
+    hasVlm: true,
+    origin: "Derived",
+    core: "Required",
+    vlmParameters: [
+      { param: "ALT", condition: "PARAMCD == 'ALT'", derivation: "Alanine Aminotransferase in U/L" },
+      { param: "AST", condition: "PARAMCD == 'AST'", derivation: "Aspartate Aminotransferase in U/L" },
+      { param: "BILI", condition: "PARAMCD == 'BILI'", derivation: "Total Bilirubin in umol/L" },
+      { param: "CREAT", condition: "PARAMCD == 'CREAT'", derivation: "Serum Creatinine in umol/L" },
+    ],
+  },
+  { id: "v19", standard: "ADaM", datasetName: "ADTTE", variable: "AVAL", label: "Analysis Value (Time)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Time to event in days/months. VLM defines per-PARAM logic.", hasVlm: true, origin: "Derived", core: "Required" },
+  { id: "v20", standard: "ADaM", datasetName: "ADSL", variable: "BMIBL", label: "Baseline Body Mass Index (kg/m2)", type: "Num", length: 8, displayFormat: "8.1", derivation: "Set to ADSL.WEIGHTBL / ((ADSL.HEIGHTBL / 100)**2) rounded to 1 decimal place.", hasVlm: false, origin: "Derived", core: "Expected" },
+  { id: "v21", standard: "ADaM", datasetName: "ADSL", variable: "BMIGR1", label: "Baseline BMI Group (<25, 25-<30, >=30)", type: "Char", length: 12, displayFormat: "$12.", derivation: 'Set to "<25" if BMIBL<25; "25-<30" if 25<=BMIBL<30; ">=30" if BMIBL>=30.', hasVlm: false, origin: "Derived" },
+  { id: "v22", standard: "ADaM", datasetName: "ADSL", variable: "CIGPKYR", label: "Cigarette Pack Years", type: "Num", length: 8, displayFormat: "8.1", derivation: "Calculated from (Cigarettes per day / 20) * Years smoked.", hasVlm: false, origin: "Derived" },
+  { id: "v23", standard: "ADaM", datasetName: "ADTTE", variable: "CNSR", label: "Censor Indicator", type: "Num", length: 8, displayFormat: "1.", derivation: "0 = Event, 1 = Censored.", hasVlm: true, origin: "Derived", core: "Required" },
+  { id: "v24", standard: "ADaM", datasetName: "ADRESP", variable: "COHORT", label: "Study Cohort", type: "Char", length: 20, displayFormat: "$20.", derivation: "Dose expansion / escalation cohort identifier.", hasVlm: false, origin: "Assigned" },
   { id: "v25", standard: "ADaM", datasetName: "ADSL", variable: "ECOBLG1N", label: "Baseline ECOG Performance Score Numeric", type: "Num", length: 8, displayFormat: "8.", derivation: "Numeric value of baseline ECOG Performance Status (0, 1, 2, 3).", hasVlm: false },
   { id: "v26", standard: "ADaM", datasetName: "ADSL", variable: "ECOGBL", label: "Baseline ECOG Performance Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Baseline ECOG score collected at Day 1 / Screening.", hasVlm: false },
   { id: "v27", standard: "ADaM", datasetName: "ADSL", variable: "ECOGBLN", label: "Baseline ECOG Status Code", type: "Num", length: 8, displayFormat: "8.", derivation: "Numeric code for ECOG status (0, 1, 2, 3, 4).", hasVlm: false },
@@ -154,9 +297,55 @@ export const mockVariables: Variable[] = [
   { id: "v42", standard: "ADaM", datasetName: "ADSL", variable: "PRIMMFL", label: "Prior Immunotherapy Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if prior checkpoint inhibitor or immuno-oncology treatment documented.", hasVlm: false },
   { id: "v43", standard: "ADaM", datasetName: "ADSL", variable: "PRSYSG1", label: "Prior Systemic Therapy Regimen Group 1", type: "Char", length: 30, displayFormat: "$30.", derivation: "Categorized: 1 line, 2 lines, >=3 lines of prior systemic anticancer therapy.", hasVlm: false },
   { id: "v44", standard: "ADaM", datasetName: "ADSL", variable: "PRTOPOFL", label: "Prior Topoisomerase Inhibitor Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Set to 'Y' if prior topoisomerase I/II inhibitor therapy received.", hasVlm: false },
-  { id: "v45", standard: "ADaM", datasetName: "ADSL", variable: "RACE", label: "Race", type: "Char", length: 32, displayFormat: "$32.", derivation: "As collected from site records.", hasVlm: false },
-  { id: "v46", standard: "ADaM", datasetName: "ADSL", variable: "SAFFL", label: "Safety Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if subject received at least 1 dose of study drug.", hasVlm: false },
-  { id: "v47", standard: "ADaM", datasetName: "ADSL", variable: "SEX", label: "Sex", type: "Char", length: 1, displayFormat: "$1.", derivation: "M = Male, F = Female", hasVlm: false },
+  { 
+    id: "v45", 
+    standard: "ADaM", 
+    datasetName: "ADSL", 
+    variable: "RACE", 
+    label: "Race", 
+    type: "Char", 
+    length: 32, 
+    displayFormat: "$32.", 
+    derivation: "DM.RACE", 
+    hasVlm: false,
+    origin: "Predecessor",
+    core: "Required",
+    hasCodelist: true,
+    codelistRef: "RACE",
+    codelistValues: [
+      { value: "WHITE", label: "White" },
+      { value: "BLACK OR AFRICAN AMERICAN", label: "Black or African American" },
+      { value: "ASIAN", label: "Asian" },
+      { value: "AMERICAN INDIAN OR ALASKA NATIVE", label: "American Indian or Alaska Native" },
+      { value: "MULTIPLE", label: "Multiple" },
+      { value: "OTHER", label: "Other" },
+    ],
+    predecessor: { dataset: "DM", variable: "RACE", label: "Race", type: "Char", length: 40, derivation: "CRF: Demographics Page", codelist: "RACE" }
+  },
+  { id: "v46", standard: "ADaM", datasetName: "ADSL", variable: "SAFFL", label: "Safety Population Flag", type: "Char", length: 1, displayFormat: "$1.", derivation: "Y if subject received at least 1 dose of study drug.", hasVlm: false, origin: "Derived", core: "Required" },
+  { 
+    id: "v47", 
+    standard: "ADaM", 
+    datasetName: "ADSL", 
+    variable: "SEX", 
+    label: "Sex", 
+    type: "Char", 
+    length: 1, 
+    displayFormat: "$1.", 
+    derivation: "DM.SEX", 
+    hasVlm: false,
+    origin: "Predecessor",
+    core: "Required",
+    hasCodelist: true,
+    codelistRef: "SEX",
+    codelistValues: [
+      { value: "M", label: "Male" },
+      { value: "F", label: "Female" },
+      { value: "U", label: "Unknown" },
+      { value: "UNDIFFERENTIATED", label: "Undifferentiated" },
+    ],
+    predecessor: { dataset: "DM", variable: "SEX", label: "Sex", type: "Char", length: 1, derivation: "CRF: Demographics Page", codelist: "SEX" }
+  },
   { id: "v48", standard: "ADaM", datasetName: "ADSL", variable: "SMOKSTAT", label: "Smoking Status", type: "Char", length: 20, displayFormat: "$20.", derivation: "Direct copy from Medical History (MH) domain.", hasVlm: false },
   { id: "v49", standard: "ADaM", datasetName: "ADSL", variable: "STRATA1", label: "Stratification Factor 1", type: "Char", length: 16, displayFormat: "$16.", derivation: "Region (Asia / Non-Asia).", hasVlm: false },
   { id: "v50", standard: "ADaM", datasetName: "ADSL", variable: "STUDYID", label: "Study Identifier", type: "Char", length: 20, displayFormat: "$20.", derivation: "Copied from SDTM DM.STUDYID", hasVlm: false },
@@ -2085,7 +2274,7 @@ export function BrowseVariablesField({
         onRemove={handleRemove}
         onBrowseAll={() => setModalOpen(true)}
       />
-      <BrowseVariablesModal
+      <VariableSpecPicker
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onConfirm={handleConfirm}
