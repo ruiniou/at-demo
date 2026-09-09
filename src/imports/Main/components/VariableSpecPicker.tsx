@@ -214,6 +214,10 @@ export function VariableSpecPicker({
     getVarStandard,
   ]);
 
+  // --- Tree List Expand/Collapse State ---
+  const [isAdamExpanded, setIsAdamExpanded] = useState(true);
+  const [isSdtmExpanded, setIsSdtmExpanded] = useState(true);
+
   // Toggle variable selection
   const toggleVariable = useCallback((itemKey: string) => {
     setSelected((prev) => {
@@ -290,25 +294,20 @@ export function VariableSpecPicker({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 backdrop-blur-[1px] p-[16px]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-[1px] p-[16px]">
       <div
-        className="flex flex-col w-[1180px] max-w-[96vw] h-[680px] max-h-[92vh] rounded-[8px] bg-white border border-[#D8DADA] shadow-[0px_16px_40px_rgba(0,0,0,0.18)] overflow-hidden"
+        className="flex flex-col w-[1180px] max-w-[96vw] h-[680px] max-h-[92vh] rounded-[8px] bg-white border border-graphite-10 shadow-[0px_16px_40px_rgba(0,0,0,0.18)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ================= 1. Top Header ================= */}
-        <div className="flex shrink-0 items-center justify-between border-b border-[#D8DADA] px-[20px] py-[12px] bg-white">
-          <div className="flex flex-col">
-            <h2 className="t-body font-semibold text-text-primary leading-tight">
-              Find &amp; select variables
-            </h2>
-            <p className="t-footnote text-text-secondary mt-[2px]">
-              Search and inspect variables across ADaM and SDTM specifications.
-            </p>
-          </div>
+        {/* ================= 1. Top Header (Clean, Standard Single-line) ================= */}
+        <div className="flex shrink-0 items-center justify-between border-b border-graphite-10 px-[20px] py-[14px] bg-white">
+          <h2 className="t-body font-semibold text-text-primary">
+            Find &amp; select variables
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="flex size-[28px] items-center justify-center rounded-[4px] text-text-secondary hover:bg-bg-panel hover:text-text-primary transition-colors cursor-pointer"
+            className="flex size-[24px] items-center justify-center rounded-[4px] text-text-secondary hover:bg-bg-panel hover:text-text-primary transition-colors cursor-pointer"
             title="Close (Esc)"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -319,7 +318,7 @@ export function VariableSpecPicker({
         </div>
 
         {/* ================= 2. Filter Bar ================= */}
-        <div className="flex shrink-0 items-center justify-between gap-[12px] border-b border-[#D8DADA] px-[20px] py-[8px] bg-bg-panel/40">
+        <div className="flex shrink-0 items-center justify-between gap-[12px] border-b border-graphite-10 px-[20px] py-[8px] bg-bg-panel/40">
           <div className="flex items-center gap-[10px] flex-1 min-w-0">
             {/* Omni Search Input */}
             <div className="relative w-[280px] shrink-0">
@@ -340,7 +339,7 @@ export function VariableSpecPicker({
                 placeholder="Search variables, labels, datasets…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-[28px] rounded-[4px] border border-[#D8DADA] bg-white pl-[28px] pr-[24px] t-small text-text-primary placeholder:text-[#888E8E] focus:border-[#830051] focus:outline-none transition-colors"
+                className="w-full h-[28px] rounded-[4px] border border-graphite-10 bg-white pl-[28px] pr-[24px] t-small text-text-primary placeholder:text-text-secondary focus:border-[#830051] focus:outline-none transition-colors"
               />
               {search && (
                 <button
@@ -357,7 +356,7 @@ export function VariableSpecPicker({
               )}
             </div>
 
-            <div className="h-[16px] w-[1px] bg-[#D8DADA] shrink-0" />
+            <div className="h-[16px] w-[1px] bg-graphite-10 shrink-0" />
 
             {/* Standard Dropdown FilterChip (showIcon = false, clean pure text) */}
             <FilterChip
@@ -420,79 +419,122 @@ export function VariableSpecPicker({
 
         {/* ================= 3. Main 3-Column Area ================= */}
         <div className="flex flex-1 min-h-0 overflow-hidden bg-white">
-          {/* ----- Column 1: Left Dataset Navigation Tree ----- */}
-          <div className="w-[190px] shrink-0 border-r border-graphite-10 bg-bg-panel/40 flex flex-col overflow-y-auto">
-            <div className="px-[12px] py-[8px]">
-              <span className="t-footnote font-semibold text-text-secondary uppercase tracking-wider">
-                Datasets
-              </span>
-            </div>
-
+          {/* ----- Column 1: Left Dataset Tree List ----- */}
+          <div className="w-[200px] shrink-0 border-r border-graphite-10 bg-bg-panel/40 flex flex-col overflow-y-auto py-[6px]">
             {/* "All datasets" root node */}
-            <button
-              type="button"
+            <div
               onClick={() => setSelectedNavDataset(null)}
-              className={`flex items-center justify-between px-[12px] py-[6px] text-left transition-colors cursor-pointer rounded-[2px] mx-[6px] ${
+              className={`flex items-center justify-between px-[12px] py-[6px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
                 selectedNavDataset === null
-                  ? "bg-white text-brand-1 font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
-                  : "text-text-primary hover:bg-white/60"
+                  ? "bg-[#F4E8EE] text-brand-1 font-medium"
+                  : "text-text-primary hover:bg-graphite-10"
               }`}
             >
               <span className="t-small truncate">All datasets</span>
               <span className="t-footnote text-text-secondary font-mono">{navDatasets.totalCount}</span>
-            </button>
+            </div>
 
-            {/* ADaM Group */}
+            {/* ADaM Tree Branch */}
             {standardFilter !== "SDTM" && navDatasets.adam.length > 0 && (
-              <div className="mt-[10px]">
-                <div className="px-[12px] py-[4px]">
-                  <span className="t-footnote font-semibold text-text-secondary">ADaM</span>
-                </div>
-                {navDatasets.adam.map((ds) => {
-                  const isNavActive = selectedNavDataset === ds.name;
-                  return (
-                    <button
-                      key={ds.name}
-                      type="button"
-                      onClick={() => setSelectedNavDataset(ds.name)}
-                      className={`flex w-[calc(100%-12px)] items-center justify-between px-[12px] py-[5px] text-left transition-colors cursor-pointer rounded-[2px] mx-[6px] ${
-                        isNavActive
-                          ? "bg-white text-brand-1 font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
-                          : "text-text-primary hover:bg-white/60"
+              <div className="mt-[6px]">
+                {/* Branch Header (Collapsible) */}
+                <div
+                  onClick={() => setIsAdamExpanded(!isAdamExpanded)}
+                  className="flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] hover:bg-graphite-10 transition-colors select-none text-text-secondary group"
+                >
+                  <div className="flex items-center gap-[4px] min-w-0">
+                    <svg
+                      className={`size-[14px] text-text-secondary transition-transform shrink-0 ${
+                        isAdamExpanded ? "rotate-90" : ""
                       }`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
                     >
-                      <span className="t-small truncate">{ds.name}</span>
-                      <span className="t-footnote text-text-secondary font-mono">{ds.count}</span>
-                    </button>
-                  );
-                })}
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    <span className="t-small font-medium text-text-primary">ADaM</span>
+                  </div>
+                  <span className="t-footnote text-text-secondary font-mono">
+                    {navDatasets.adam.reduce((acc, cur) => acc + cur.count, 0)}
+                  </span>
+                </div>
+
+                {/* Branch Children (Pure Text, Indented) */}
+                {isAdamExpanded && (
+                  <div className="flex flex-col gap-[1px]">
+                    {navDatasets.adam.map((ds) => {
+                      const isNavActive = selectedNavDataset === ds.name;
+                      return (
+                        <div
+                          key={ds.name}
+                          onClick={() => setSelectedNavDataset(ds.name)}
+                          className={`flex items-center justify-between pl-[26px] pr-[12px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
+                            isNavActive
+                              ? "bg-[#F4E8EE] text-brand-1 font-medium"
+                              : "text-text-primary hover:bg-graphite-10"
+                          }`}
+                        >
+                          <span className="t-small font-mono truncate">{ds.name}</span>
+                          <span className="t-footnote text-text-secondary font-mono">{ds.count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* SDTM Group */}
+            {/* SDTM Tree Branch */}
             {standardFilter !== "ADaM" && navDatasets.sdtm.length > 0 && (
-              <div className="mt-[10px]">
-                <div className="px-[12px] py-[4px]">
-                  <span className="t-footnote font-semibold text-text-secondary">SDTM</span>
-                </div>
-                {navDatasets.sdtm.map((ds) => {
-                  const isNavActive = selectedNavDataset === ds.name;
-                  return (
-                    <button
-                      key={ds.name}
-                      type="button"
-                      onClick={() => setSelectedNavDataset(ds.name)}
-                      className={`flex w-[calc(100%-12px)] items-center justify-between px-[12px] py-[5px] text-left transition-colors cursor-pointer rounded-[2px] mx-[6px] ${
-                        isNavActive
-                          ? "bg-white text-brand-1 font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
-                          : "text-text-primary hover:bg-white/60"
+              <div className="mt-[6px]">
+                {/* Branch Header (Collapsible) */}
+                <div
+                  onClick={() => setIsSdtmExpanded(!isSdtmExpanded)}
+                  className="flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] hover:bg-graphite-10 transition-colors select-none text-text-secondary group"
+                >
+                  <div className="flex items-center gap-[4px] min-w-0">
+                    <svg
+                      className={`size-[14px] text-text-secondary transition-transform shrink-0 ${
+                        isSdtmExpanded ? "rotate-90" : ""
                       }`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
                     >
-                      <span className="t-small truncate">{ds.name}</span>
-                      <span className="t-footnote text-text-secondary font-mono">{ds.count}</span>
-                    </button>
-                  );
-                })}
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    <span className="t-small font-medium text-text-primary">SDTM</span>
+                  </div>
+                  <span className="t-footnote text-text-secondary font-mono">
+                    {navDatasets.sdtm.reduce((acc, cur) => acc + cur.count, 0)}
+                  </span>
+                </div>
+
+                {/* Branch Children (Pure Text, Indented) */}
+                {isSdtmExpanded && (
+                  <div className="flex flex-col gap-[1px]">
+                    {navDatasets.sdtm.map((ds) => {
+                      const isNavActive = selectedNavDataset === ds.name;
+                      return (
+                        <div
+                          key={ds.name}
+                          onClick={() => setSelectedNavDataset(ds.name)}
+                          className={`flex items-center justify-between pl-[26px] pr-[12px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
+                            isNavActive
+                              ? "bg-[#F4E8EE] text-brand-1 font-medium"
+                              : "text-text-primary hover:bg-graphite-10"
+                          }`}
+                        >
+                          <span className="t-small font-mono truncate">{ds.name}</span>
+                          <span className="t-footnote text-text-secondary font-mono">{ds.count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -501,7 +543,7 @@ export function VariableSpecPicker({
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-white">
             <div className="flex-1 overflow-y-auto">
               <table className="w-full border-collapse">
-                <thead className="sticky top-0 z-10 bg-bg-panel border-b border-[#D8DADA]">
+                <thead className="sticky top-0 z-10 bg-bg-panel border-b border-graphite-10">
                   <tr>
                     <th className="w-[36px] px-[10px] py-[8px] text-left">
                       <div className="flex items-center justify-center">
@@ -968,12 +1010,12 @@ export function VariableSpecPicker({
         </div>
 
         {/* ================= 4. Footer ================= */}
-        <div className="flex shrink-0 items-center justify-between border-t border-[#D8DADA] px-[20px] py-[10px] bg-white">
+        <div className="flex shrink-0 items-center justify-between border-t border-graphite-10 px-[20px] py-[14px] bg-white">
           {/* Left summary & quick toggle */}
           <div className="flex items-center gap-[12px]">
-            <span className="t-small text-text-primary">
-              <strong className="font-semibold">{selected.length}</strong> variable{selected.length === 1 ? "" : "s"} selected across{" "}
-              <strong className="font-semibold">{selectedDatasets.length}</strong> dataset{selectedDatasets.length === 1 ? "" : "s"}
+            <span className="t-small text-text-secondary">
+              <strong className="font-medium text-text-primary">{selected.length}</strong> variable{selected.length === 1 ? "" : "s"} selected across{" "}
+              <strong className="font-medium text-text-primary">{selectedDatasets.length}</strong> dataset{selectedDatasets.length === 1 ? "" : "s"}
             </span>
 
             {/* Show Selected Only Filter */}
@@ -998,18 +1040,18 @@ export function VariableSpecPicker({
           </div>
 
           {/* Right actions */}
-          <div className="flex items-center gap-[8px]">
+          <div className="flex items-center gap-[12px]">
             <button
               type="button"
               onClick={onClose}
-              className="h-[32px] px-[14px] rounded-[4px] border border-[#D8DADA] bg-white t-small font-medium text-text-primary hover:bg-bg-panel transition-colors cursor-pointer"
+              className="h-[32px] px-[16px] rounded-[4px] border border-graphite-10 bg-white t-small font-medium text-text-primary hover:bg-bg-panel active:scale-[0.98] transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleConfirm}
-              className="h-[32px] px-[16px] rounded-[4px] bg-[#830051] t-small font-medium text-white hover:bg-[#6e0044] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-[32px] px-[16px] rounded-[4px] bg-[#830051] t-small font-medium text-white hover:bg-[#6e0044] active:scale-[0.98] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={selected.length === 0}
             >
               Confirm ({selected.length})
