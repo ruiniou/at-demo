@@ -8738,7 +8738,7 @@ function CodePanel({
   docType,
   freezeCols,
   pageCols,
-  isLocked,
+  isLocked: isLockedProp = false,
   onToggleLock,
   showCI = true,
   showCensorMarks = true,
@@ -8751,8 +8751,8 @@ function CodePanel({
   docType?: DocumentType;
   freezeCols?: number;
   pageCols?: number;
-  isLocked: boolean;
-  onToggleLock: () => void;
+  isLocked?: boolean;
+  onToggleLock?: () => void;
   showCI?: boolean;
   showCensorMarks?: boolean;
   showMedianLines?: boolean;
@@ -8760,6 +8760,18 @@ function CodePanel({
   groupViewOpen?: boolean;
   onToggleGroupView?: () => void;
 }) {
+  const [isLockedLocal, setIsLockedLocal] = useState(Boolean(isLockedProp));
+
+  useEffect(() => {
+    setIsLockedLocal(Boolean(isLockedProp));
+  }, [isLockedProp]);
+
+  const effectiveIsLocked = isLockedLocal;
+
+  const handleToolbarToggleLock = () => {
+    setIsLockedLocal((prev) => !prev);
+    onToggleLock?.();
+  };
   const listingCodeContent = `/* Setup listing options */
 options nodate nonumber orientation=landscape;
 title1 "Listing 16.2.1";
@@ -8946,7 +8958,7 @@ ods graphics off;`;
 
   const handleLineClick = (lineNum: number) => {
     setSelectedCodeLine(lineNum);
-    if (docType === 'figure' && !isLocked && codeTextAreaRef.current) {
+    if (!effectiveIsLocked && codeTextAreaRef.current) {
       const lines = userCode.split('\n');
       let charCount = 0;
       for (let i = 0; i < lineNum - 1 && i < lines.length; i++) {
@@ -8979,6 +8991,11 @@ ods graphics off;`;
         } else {
           codeTextAreaRef.current.scrollTop = (programLine - 1) * lineHeight;
         }
+      } else {
+        const parentContainer = document.querySelector('.code-panel-scroll-container');
+        if (parentContainer) {
+          parentContainer.scrollTop = (programLine - 1) * 20;
+        }
       }
     }, 0);
   };
@@ -9007,7 +9024,7 @@ ods graphics off;`;
       {/* 1. Save (Secondary style, h-26px) */}
       <Button 
         variant="secondary" 
-        disabled={!isCodeUnsaved || isSaving} 
+        disabled={effectiveIsLocked || !isCodeUnsaved || isSaving} 
         onClick={handleSave}
         className="h-[26px] px-[8px] py-0 gap-[4px] rounded-[4px]"
       >
@@ -9015,7 +9032,7 @@ ods graphics off;`;
           {isSaving ? (
             <div className="w-[12px] h-[12px] rounded-full border-[2px] border-transparent border-t-[#B2B4B4] border-l-[#B2B4B4] animate-spin" />
           ) : (
-            <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color={!isCodeUnsaved ? "#B2B4B4" : "var(--color-text-primary)"} />
+            <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color={effectiveIsLocked || !isCodeUnsaved ? "#B2B4B4" : "var(--color-text-primary)"} />
           )}
           <span className="text-[12px] leading-[18px] font-normal">{isSaving ? "Saving" : isCodeUnsaved ? "Save" : "Saved"}</span>
         </div>
@@ -9033,18 +9050,18 @@ ods graphics off;`;
       </TooltipText>
 
       {/* 3. Lock */}
-      <TooltipText label={isLocked ? "Unlock Code" : "Lock Code"}>
+      <TooltipText label={effectiveIsLocked ? "Unlock Code" : "Lock Code"}>
         <button
-          onClick={onToggleLock}
+          onClick={handleToolbarToggleLock}
           className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] active:scale-[0.96] ${
-            isLocked ? "bg-az-secondary" : "hover:bg-black/5"
+            effectiveIsLocked ? "bg-az-secondary" : "hover:bg-black/5"
           }`}
-          aria-label={isLocked ? "Unlock Code" : "Lock Code"}
+          aria-label={effectiveIsLocked ? "Unlock Code" : "Lock Code"}
         >
           <LocalIcon
-            src={isLocked ? lockIconUrl : unlockIconUrl}
+            src={effectiveIsLocked ? lockIconUrl : unlockIconUrl}
             className="h-[16px] w-[16px]"
-            color={isLocked ? "#830051" : "var(--color-text-secondary)"}
+            color={effectiveIsLocked ? "#830051" : "var(--color-text-secondary)"}
           />
         </button>
       </TooltipText>
@@ -9078,13 +9095,25 @@ ods graphics off;`;
         }
         actions={toolbarButtons}
       />
+      {/* Read-only Locked Code Banner */}
+      {effectiveIsLocked && (
+        <div className="flex items-center gap-[8px] border-y border-[#F5E9C6] bg-[#FEF7E6] px-[12px] py-[6px] shrink-0">
+          <div className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[4px] bg-[#FCEECC]">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#F0AB00]">
+              <path fillRule="evenodd" clipRule="evenodd" d="M12 1C13.5912 1 15.117 1.63267 16.2422 2.75781C17.3673 3.88297 17.9999 5.40879 18 7V10H19C20.6568 10 21.9999 11.3433 22 13V20C22 21.6569 20.6569 23 19 23H5C3.34315 23 2 21.6569 2 20V13C2.00013 11.3433 3.34323 10 5 10H6V7C6.00006 5.40879 6.63265 3.88297 7.75781 2.75781C8.88302 1.63268 10.4088 1 12 1ZM5 12C4.4478 12 4.00013 12.4478 4 13V20C4 20.5523 4.44772 21 5 21H19C19.5523 21 20 20.5523 20 20V13C19.9999 12.4478 19.5522 12 19 12H5ZM12 3C10.9392 3 9.92201 3.42181 9.17188 4.17188C8.42179 4.92196 8.00006 5.93922 8 7V10H16V7C15.9999 5.93922 15.5782 4.92196 14.8281 4.17188C14.078 3.4218 13.0608 3 12 3Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <p className="text-[12px] leading-[18px] text-text-primary">
+            <strong className="font-semibold text-text-primary">Read-only:</strong> The code is locked and cannot be edited.
+          </p>
+        </div>
+      )}
       <div className="relative min-h-0 flex-1 overflow-hidden">
         {/* Top compact fade (8px, avoids 12px scrollbar on right) */}
         <div className="pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b from-white to-transparent z-20" />
 
         <div className="h-full w-full overflow-auto bg-white code-panel-scroll-container scrollbar-code">
-        {docType === 'figure' ? (
-          <div className="flex flex-1 min-w-max t-code-editor">
+          <div className="flex flex-1 min-w-max min-h-full t-code-editor">
             <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
               {codeLines.map((line, index) => {
                 const lineNum = index + 1;
@@ -9113,7 +9142,7 @@ ods graphics off;`;
                 );
               })}
             </div>
-            {isLocked ? (
+            {effectiveIsLocked ? (
               <div className="flex-1 py-[16px] bg-white">
                 {codeLines.map((line, index) => {
                   const lineNum = index + 1;
@@ -9165,55 +9194,6 @@ ods graphics off;`;
               </div>
             )}
           </div>
-        ) : (
-          <div className="flex min-w-max min-h-full t-code-editor">
-            <div className="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[58px] sticky left-0 z-10">
-              {codeLines.map((line, index) => {
-                const lineNum = index + 1;
-                const isHovered = hoveredLineNumber === lineNum;
-                const isFocused = selectedCodeLine === lineNum - 1;
-                const foldable = isFoldableLine(line);
-                return (
-                  <div
-                    key={index}
-                    onMouseEnter={() => setHoveredLineNumber(lineNum)}
-                    onMouseLeave={() => setHoveredLineNumber(null)}
-                    onClick={() => handleLineClick(lineNum)}
-                    className="h-[20px] flex items-center justify-end pl-[8px] pr-[4px] gap-[2px] cursor-pointer select-none"
-                  >
-                    <span className={`t-code-editor text-right w-[28px] tabular-nums ${isFocused ? 'text-text-primary font-semibold' : 'text-text-secondary'}`}>
-                      {lineNum}
-                    </span>
-                    <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
-                      {isHovered && foldable ? (
-                        <SvgIcon className="h-[16px] w-[16px] text-text-secondary" viewBox="0 0 24 24">
-                          <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </SvgIcon>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex-1 py-[16px] bg-white">
-              {codeLines.map((line, index) => {
-                const lineNum = index + 1;
-                const isSelected = selectedCodeLine === lineNum;
-                return (
-                  <div
-                    key={index}
-                    onClick={() => handleLineClick(lineNum)}
-                    className={`h-[20px] pl-[4px] pr-[16px] whitespace-pre t-code-editor cursor-pointer ${
-                      isSelected ? 'bg-[#FBF4F7]' : ''
-                    }`}
-                  >
-                    {renderCodeLineWithIndentGuides(line || '', index, effectiveIndents)}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
         </div>
       </div>
 
@@ -9267,6 +9247,7 @@ function WorkspaceContent({
       status: 'pending',
       isExpanded: true,
       tables: [
+        { id: 't4', name: 'Table 14.1.4', status: 'pending' },
         { id: 't2', name: 'Table 14.1.6.1', status: 'pending' },
         { id: 'l1', name: 'Listing 16.2.1', status: 'pending', docType: 'listing' },
         { id: 'f1', name: 'Figure 15.1.1', status: 'pending', docType: 'figure' },
@@ -9570,9 +9551,12 @@ function WorkspaceContent({
   };
 
   const getSelectedTable = () => {
-    return programs
-      .flatMap((program) => program.tables)
-      .find((table) => table.id === selectedId);
+    return (
+      programs
+        .flatMap((program) => program.tables)
+        .find((table) => table.id === selectedId) ||
+      programs[0]?.tables[0]
+    );
   };
   const selectedTable = getSelectedTable();
   const docType = selectedTable?.docType || 'table';
@@ -9597,12 +9581,21 @@ function WorkspaceContent({
     return t1 ? t1.status : 'pending';
   })();
   const selectedTableProgram = programs.find((program) =>
-    program.tables.some((table) => table.id === selectedId)
-  );
-  const selectedTableLocked = selectedTable?.status === 'locked';
+    program.tables.some((table) => table.id === (selectedTable?.id || selectedId))
+  ) || programs[0];
+  const selectedProgram = programs.find((program) => program.id === selectedId);
+  const isSelectedProgramLocked = selectedProgram?.status === 'locked';
+  const isParentProgramLocked = selectedTableProgram?.status === 'locked';
+  const selectedTableLocked = isSelectedProgramLocked || isParentProgramLocked || selectedTable?.status === 'locked';
   const handleCodePanelToggleLock = () => {
-    if (selectedTableProgram && selectedTable) {
-      handleToggleLock(selectedTableProgram.id, selectedTable.id);
+    const prog = selectedTableProgram || programs[0];
+    const table = selectedTable || prog?.tables[0];
+    if (prog && isParentProgramLocked) {
+      handleToggleLock(prog.id);
+    } else if (prog && table) {
+      handleToggleLock(prog.id, table.id);
+    } else if (selectedProgram) {
+      handleToggleLock(selectedProgram.id);
     }
   };
 
@@ -9634,7 +9627,18 @@ function WorkspaceContent({
   };
 
   const handleToggleLock = (programId: string, tableId?: string) => {
-    if (!tableId) return;
+    if (!tableId) {
+      setPrograms((prevPrograms) =>
+        prevPrograms.map((program) => {
+          if (program.id !== programId) return program;
+          return {
+            ...program,
+            status: program.status === 'locked' ? 'pending' : 'locked',
+          };
+        })
+      );
+      return;
+    }
     setPrograms((prevPrograms) =>
       prevPrograms.map((program) => {
         if (program.id !== programId) return program;

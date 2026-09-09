@@ -207,3 +207,21 @@
   1. **禁止在无关提交中混入原型级业务内容**：架构与容器层重构（如面板解耦、滚动遮罩等）必须保持改动原子性，严禁顺手掺杂未确认的原型期 UI 文本或临时样式。
   2. **对话流组件化统一约束**：对话消息内需强化语义层级规范，严禁直接手写硬编码十六进制色值的临时外挂卡片，所有辅助提示统一通过标准卡片组件呈现。
 
+---
+
+### [2026-09-09] Code Editor 工具栏 Lock Code 按钮点击无响应异常
+
+* **现象 (Symptom)**：
+  点击代码编辑器工具栏上的 Lock Code 图标按钮后，页面无任何响应，既没有展示只读警告 Banner，代码区域也没有被锁定，按钮状态未发生切换。
+* **根本原因 (Root Cause)**：
+  1. `WorkspaceContent` 中初始化的 `selectedId` 值为 `'t4'`，但 `programs.tables` 列表中缺失了 `{ id: 't4', name: 'Table 14.1.4' }`，导致初始状态下 `selectedTable` 和 `selectedTableProgram` 均为 `undefined`。
+  2. `handleCodePanelToggleLock` 仅在 `selectedTableProgram && selectedTable` 均存在时才触发 `handleToggleLock`，因未做空保护或默认回退，导致点击回调静默退出。
+  3. `CodePanel` 内部完全依赖上层异步传递的单一只读 prop `isLocked`，缺少即时本地响应与同步机制，在上层状态链路中断或空值时失去防抖兜底能力。
+* **解决方案 (Solution)**：
+  1. 在 `programs.tables` 中补齐初始条目 `t4`，并在 `getSelectedTable` 与 `selectedTableProgram` 中补充安全回退机制（兜底使用 `programs[0]?.tables[0]`）。
+  2. 在 `CodePanel` 内部引入即时同步的受控状态 `isLockedLocal` 与点击调度函数 `handleToolbarToggleLock`，点击时先做同步状态翻转，再向上分发 `onToggleLock`，确保按钮点击始终具备 100% 确定性响应。
+* **经验教训 (Takeaways)**：
+  1. **初始状态有效性校验**：组件内部维护的默认选择项 ID（如 `selectedId`）必须与 Mock 列表保持强一致，避免野指针状态。
+  2. **关键交互操作的双向防御**：对于高频切换的核心开关操作（如 Lock/Unlock），子组件应具备即时乐观更新（Optimistic UI）能力，并配合父级健全的回退容错逻辑。
+
+
