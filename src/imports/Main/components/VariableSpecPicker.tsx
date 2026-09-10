@@ -575,7 +575,7 @@ export function VariableSpecPicker({
           {/* ----- Column 2: Middle Variable Table (Pilot Single-line Row Style) ----- */}
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-white">
             <div className="flex-1 overflow-y-auto overflow-x-auto">
-              <table className="w-full min-w-[700px] border-collapse">
+              <table className="w-full min-w-[580px] border-collapse">
                 <thead className="sticky top-0 z-10 bg-bg-panel border-b border-graphite-10">
                   <tr>
                     <th className="w-[36px] px-[12px] py-[8px] text-left">
@@ -608,19 +608,16 @@ export function VariableSpecPicker({
                     <th className="w-[80px] px-[8px] py-[8px] text-left">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Dataset</span>
                     </th>
-                    <th className="w-[120px] px-[8px] py-[8px] text-left">
+                    <th className="w-[110px] px-[8px] py-[8px] text-left">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Variable</span>
                     </th>
                     <th className="px-[8px] py-[8px] text-left">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Label</span>
                     </th>
-                    <th className="w-[80px] px-[8px] py-[8px] text-left">
-                      <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Type/Len</span>
+                    <th className="w-[64px] px-[8px] py-[8px] text-left">
+                      <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Type</span>
                     </th>
-                    <th className="w-[80px] px-[8px] py-[8px] text-left">
-                      <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Format</span>
-                    </th>
-                    <th className="w-[200px] px-[8px] py-[8px] text-left">
+                    <th className="w-[220px] px-[8px] py-[8px] text-left">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Derivation</span>
                     </th>
                   </tr>
@@ -628,7 +625,7 @@ export function VariableSpecPicker({
                 <tbody>
                   {filteredVariables.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-[20px] py-[48px] text-center">
+                      <td colSpan={6} className="px-[20px] py-[48px] text-center">
                         <p className="t-small text-text-secondary">No matching variables found</p>
                         {hasActiveFilters && (
                           <button
@@ -653,7 +650,7 @@ export function VariableSpecPicker({
                           onClick={() => handleRowClick(v)}
                           className={`border-b border-graphite-10 transition-colors cursor-pointer select-none group ${
                             isInspecting
-                              ? "bg-[#F4E8EE]/40 border-l-[3px] border-l-[#830051]"
+                              ? "bg-[#F4E8EE]/40 hover:bg-[#F4E8EE]/60"
                               : isChecked
                               ? "bg-bg-panel/40 hover:bg-bg-panel"
                               : "hover:bg-bg-panel"
@@ -680,28 +677,11 @@ export function VariableSpecPicker({
                             <span className="t-small whitespace-nowrap text-text-primary font-mono">{v.datasetName}</span>
                           </td>
 
-                          {/* Variable Name + VLM Badge */}
+                          {/* Variable Name */}
                           <td className="px-[8px] py-[6px]">
-                            <div className="flex items-center gap-[6px]">
-                              <span className="t-small font-medium whitespace-nowrap text-text-primary font-mono">
-                                {v.variable}
-                              </span>
-                              {v.hasVlm && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveVariable(v);
-                                    setIsRightPanelOpen(true);
-                                    setRightPanelTab("vlm");
-                                  }}
-                                  className="inline-flex h-[18px] items-center gap-[1px] rounded-[4px] bg-[#F4E8EE] px-[4px] hover:bg-[#EEDFE7] transition-colors cursor-pointer"
-                                  title="Inspect Value Level Metadata"
-                                >
-                                  <span className="text-[10px] font-medium whitespace-nowrap text-[#830051]">VLM ↗</span>
-                                </button>
-                              )}
-                            </div>
+                            <span className="t-small font-medium whitespace-nowrap text-text-primary font-mono">
+                              {v.variable}
+                            </span>
                           </td>
 
                           {/* Label */}
@@ -711,17 +691,10 @@ export function VariableSpecPicker({
                             </span>
                           </td>
 
-                          {/* Type/Length */}
+                          {/* Type */}
                           <td className="px-[8px] py-[6px]">
                             <span className="t-small whitespace-nowrap text-text-primary font-mono">
-                              {v.type}/{v.length}
-                            </span>
-                          </td>
-
-                          {/* Display Format */}
-                          <td className="px-[8px] py-[6px]">
-                            <span className="t-small whitespace-nowrap text-text-primary font-mono">
-                              {v.displayFormat || "-"}
+                              {v.type || "-"}
                             </span>
                           </td>
 
@@ -780,14 +753,18 @@ export function VariableSpecPicker({
                     <span className="t-footnote text-text-primary font-mono">{activeVariable.length || "-"}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="t-footnote text-text-secondary">Origin</span>
-                    <span className="t-footnote text-text-primary">
-                      {activeVariable.origin || (activeVariable.derivation ? "Derived" : "Assigned")}
-                    </span>
+                    <span className="t-footnote text-text-secondary">Format</span>
+                    <span className="t-footnote text-text-primary font-mono">{activeVariable.displayFormat || "-"}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="t-footnote text-text-secondary">Core</span>
                     <span className="t-footnote text-text-primary">{activeVariable.core || "Required"}</span>
+                  </div>
+                  <div className="flex items-center justify-between col-span-2">
+                    <span className="t-footnote text-text-secondary">Origin</span>
+                    <span className="t-footnote text-text-primary">
+                      {activeVariable.origin || (activeVariable.derivation ? "Derived" : "Assigned")}
+                    </span>
                   </div>
                 </div>
               </div>
