@@ -4,6 +4,13 @@ import closeIconUrl from "../../icons/close-line.svg";
 export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
   /** Callback when close icon is clicked. If omitted, close icon is hidden. */
   onClose?: () => void;
+  /**
+   * Visual variant:
+   * - "default": bg graphite-10 (#EBECEC), text text-primary (#3C4242)
+   * - "brand" | "filter": bg #F4E8EE, text #830051, border #830051/25.
+   *   Used when the Tag's container/field has the same default background (e.g. graphite-10 search bar).
+   */
+  variant?: "default" | "brand" | "filter";
 }
 
 /**
@@ -16,11 +23,19 @@ export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
  * Close icon: 12×12 close-line
  */
 const Tag = forwardRef<HTMLSpanElement, TagProps>(
-  ({ children, onClose, className = "", ...props }, ref) => {
+  ({ children, onClose, variant = "default", className = "", ...props }, ref) => {
+    const isBrand = variant === "brand" || variant === "filter";
+
+    const baseClasses = isBrand
+      ? "bg-az-secondary hover:bg-az-secondary-hover text-brand-1"
+      : "bg-graphite-10 hover:bg-graphite-20 text-text-primary";
+
+    const textColor = isBrand ? "var(--color-brand-1, #830051)" : "var(--color-text-primary)";
+
     return (
       <span
         ref={ref}
-        className={`inline-flex items-center gap-[4px] rounded-[4px] bg-graphite-10 px-[6px] py-[2px] hover:bg-graphite-20 transition-colors min-w-0 ${className}`}
+        className={`inline-flex items-center gap-[4px] rounded-[4px] px-[6px] py-[2px] transition-colors min-w-0 ${baseClasses} ${className}`}
         {...props}
       >
         <span
@@ -29,7 +44,7 @@ const Tag = forwardRef<HTMLSpanElement, TagProps>(
             fontWeight: 400,
             fontSize: 12,
             lineHeight: "20px",
-            color: "var(--color-text-primary)",
+            color: textColor,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -43,11 +58,23 @@ const Tag = forwardRef<HTMLSpanElement, TagProps>(
           <button
             type="button"
             onClick={onClose}
-            className="flex shrink-0 items-center justify-center"
+            className="flex shrink-0 items-center justify-center cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
             style={{ width: 12, height: 12 }}
             aria-label="Remove tag"
           >
-            <img src={closeIconUrl} alt="" className="h-[12px] w-[12px]" />
+            <img
+              src={closeIconUrl}
+              alt=""
+              className="h-[12px] w-[12px]"
+              style={
+                isBrand
+                  ? {
+                      filter:
+                        "invert(13%) sepia(85%) saturate(3755%) hue-rotate(310deg) brightness(88%) contrast(106%)",
+                    }
+                  : undefined
+              }
+            />
           </button>
         )}
       </span>

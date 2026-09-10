@@ -59,6 +59,8 @@ import imageAiLineIconUrl from "../../icons/image-ai-line.svg";
 import CreateEventModal from "./components/CreateEventModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
+import { TreeFilterPopover, OwnerAvatar } from "./components/TreeFilterPopover";
+import { FacetedSearchBar } from "./components/FacetedSearchBar";
 import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal";
 import { KMPlot } from "./components/KMPlot";
 import { Button } from "../../components/ui/Button";
@@ -1889,7 +1891,7 @@ function AICopilotPanel({
 
 // ==================== Workspace Shell: Top Nav & Tree List ====================
 
-type ItemStatus = 'pending' | 'locked' | 'analyzing' | 'error' | 'modified';
+type ItemStatus = 'pending' | 'locked' | 'analyzing' | 'error' | 'modified' | 'completed';
 type DocumentType = 'table' | 'listing' | 'figure';
 
 
@@ -1900,6 +1902,7 @@ type TableItem = {
   docType?: DocumentType;
   errorMessage?: string;
   pendingChanges?: number;
+  assignee?: string;
 };
 
 type ProgramItem = {
@@ -2483,7 +2486,7 @@ function TreeStatusControl({
     );
   }
 
-  if (isHovered && item.status === 'pending' && !isProgram) {
+  if (isHovered && (item.status === 'pending' || item.status === 'completed') && !isProgram) {
     return (
       <TooltipText label="Lock Table Code">
         <button
@@ -9302,17 +9305,41 @@ function WorkspaceContent({
   const [programs, setPrograms] = useState<ProgramItem[]>([
     {
       id: 'p1',
-      name: 'Section A',
+      name: '14.1 Demographic Data',
       status: 'pending',
       isExpanded: true,
       tables: [
-        { id: 't4', name: 'Table 14.1.4', status: 'pending' },
-        { id: 't2', name: 'Table 14.1.6.1', status: 'pending' },
-        { id: 'l1', name: 'Listing 16.2.1', status: 'pending', docType: 'listing' },
-        { id: 'f1', name: 'Figure 15.1.1', status: 'pending', docType: 'figure' },
+        { id: 't1', name: '14.1.1 Disposition', status: 'completed', assignee: 'Sarah Chen' },
+        { id: 't2', name: '14.1.2 Important Protocol Deviations', status: 'analyzing', assignee: 'Sarah Chen' },
+        { id: 't3', name: '14.1.3 Analysis Sets', status: 'pending', assignee: 'Sarah Chen' },
+        { id: 't4', name: '14.1.4 Demographics (Full Analysis Set)', status: 'pending', assignee: 'James Park' },
+        { id: 't5', name: '14.1.5 Baseline Characteristics', status: 'completed', assignee: 'James Park' },
+        { id: 't6', name: '14.1.6 Prior Anti-cancer Therapy', status: 'pending', assignee: 'Priya Sharma' },
+        { id: 't8', name: '14.1.8 Medical History by SOC', status: 'locked', assignee: 'Tom' },
       ],
     },
-
+    {
+      id: 'p2',
+      name: '14.2 Efficacy Data',
+      status: 'pending',
+      isExpanded: true,
+      tables: [
+        { id: 't9', name: '14.2.1.1.1 Objective Response Rate', status: 'locked', assignee: 'Priya Sharma' },
+        { id: 't10', name: '14.2.1.1.2 Objective Response in Subgroups', status: 'completed', assignee: 'Sarah Chen' },
+        { id: 'f1', name: '14.2.1.2 Forest Plot for Objective Response', status: 'pending', docType: 'figure', assignee: 'Priya Sharma' },
+      ],
+    },
+    {
+      id: 'p3',
+      name: '16.2 Patient Listings',
+      status: 'pending',
+      isExpanded: true,
+      tables: [
+        { id: 'l1', name: '16.2.1 Subject Enrolment Listing', status: 'completed', docType: 'listing', assignee: 'Sarah Chen' },
+        { id: 'l2', name: '16.2.4 Discontinuation Listing', status: 'error', errorMessage: 'SAS macro execution failed: syntax error', docType: 'listing', assignee: 'Tom' },
+        { id: 'l3', name: '16.2.7 Adverse Events Listing', status: 'locked', docType: 'listing', assignee: 'Sarah Chen' },
+      ],
+    },
   ]);
   const [selectedId, setSelectedId] = useState<string | null>('t4');
   const [currentEvent] = useState('CSR Interim Analysis');
@@ -9725,19 +9752,141 @@ function WorkspaceContent({
     );
   };
 
+  const [filterStyleVariant, setFilterStyleVariant] = useState<'in-search' | 'split'>('in-search');
   const [treeSearchQuery, setTreeSearchQuery] = useState('');
+  const [treeFilterOpen, setTreeFilterOpen] = useState(false);
+  const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set());
+  const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
+  const [selectedSection, setSelectedSection] = useState<string>('all');
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
 
-  const filteredPrograms = programs.map((program) => {
-    const filteredTables = program.tables.filter((table) => {
-      const matchesCategory = categoryFilter === "all" ||
-        (categoryFilter === "table" && (table.docType === "table" || !table.docType)) ||
-        (categoryFilter === "listing" && table.docType === "listing") ||
-        (categoryFilter === "figure" && table.docType === "figure");
-      const matchesSearch = table.name.toLowerCase().includes(treeSearchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+  const handleToggleStatus = (status: string) => {
+    setSelectedStatuses((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
+      return next;
     });
-    return { ...program, tables: filteredTables };
-  });
+  };
+
+  const handleRemoveStatus = (status: string) => {
+    setSelectedStatuses((prev) => {
+      const next = new Set(prev);
+      next.delete(status);
+      return next;
+    });
+  };
+
+  const handleToggleAssignee = (assignee: string) => {
+    setSelectedAssignees((prev) => {
+      const next = new Set(prev);
+      if (next.has(assignee)) next.delete(assignee);
+      else next.add(assignee);
+      return next;
+    });
+  };
+
+  const handleRemoveAssignee = (assignee: string) => {
+    setSelectedAssignees((prev) => {
+      const next = new Set(prev);
+      next.delete(assignee);
+      return next;
+    });
+  };
+
+  const handleClearAssignees = () => {
+    setSelectedAssignees(new Set());
+  };
+
+  const handleResetAllFilters = () => {
+    setSelectedStatuses(new Set());
+    setSelectedAssignees(new Set());
+    setSelectedSection('all');
+  };
+
+  const activeFilterCount =
+    selectedStatuses.size +
+    selectedAssignees.size +
+    (selectedSection !== 'all' ? 1 : 0);
+  const isFilterActive = activeFilterCount > 0;
+
+  const allSections = useMemo(() => {
+    return programs.map((p) => ({ id: p.id, name: p.name }));
+  }, [programs]);
+
+  const allAssignees = useMemo(() => {
+    const set = new Set<string>();
+    programs.forEach((p) => {
+      p.tables.forEach((t) => {
+        if (t.assignee) set.add(t.assignee);
+      });
+    });
+    ["Sarah Chen", "James Park", "Priya Sharma", "Tom"].forEach((name) => set.add(name));
+    return Array.from(set);
+  }, [programs]);
+
+  const filteredPrograms = useMemo(() => {
+    return programs
+      .map((program) => {
+        if (selectedSection !== 'all' && program.id !== selectedSection && program.name !== selectedSection) {
+          return null;
+        }
+
+        const filteredTables = program.tables.filter((table) => {
+          const matchesCategory = categoryFilter === "all" ||
+            (categoryFilter === "table" && (table.docType === "table" || !table.docType)) ||
+            (categoryFilter === "listing" && table.docType === "listing") ||
+            (categoryFilter === "figure" && table.docType === "figure");
+
+          const q = treeSearchQuery.toLowerCase().trim();
+          const matchesSearch = !q || table.name.toLowerCase().includes(q);
+
+          let matchesStatus = true;
+          if (selectedStatuses.size > 0) {
+            matchesStatus = Array.from(selectedStatuses).some((s) => {
+              if (s === 'locked') return table.status === 'locked';
+              if (s === 'to-do') return table.status === 'pending' || (table.status as string) === 'to-do';
+              if (s === 'analyzing') return table.status === 'analyzing';
+              if (s === 'in-progress') return table.status === 'in-progress' || table.status === 'modified';
+              if (s === 'completed') return table.status === 'completed';
+              if (s === 'error') return table.status === 'error';
+              return table.status === s;
+            });
+          }
+
+          let matchesAssignee = true;
+          if (selectedAssignees.size > 0) {
+            matchesAssignee = Boolean(table.assignee && selectedAssignees.has(table.assignee));
+          }
+
+          return matchesCategory && matchesSearch && matchesStatus && matchesAssignee;
+        });
+
+        const shouldAutoExpand = isFilterActive || Boolean(treeSearchQuery.trim());
+        const isExpanded = shouldAutoExpand ? true : program.isExpanded;
+
+        return {
+          ...program,
+          isExpanded,
+          tables: filteredTables,
+        };
+      })
+      .filter((program): program is ProgramItem => {
+        if (!program) return false;
+        if (isFilterActive || Boolean(treeSearchQuery.trim())) {
+          return program.tables.length > 0;
+        }
+        return true;
+      });
+  }, [programs, categoryFilter, treeSearchQuery, selectedStatuses, selectedAssignees, selectedSection, isFilterActive]);
+
+  const totalMatchingTables = useMemo(() => {
+    return filteredPrograms.reduce((acc, p) => acc + p.tables.length, 0);
+  }, [filteredPrograms]);
+
+  const totalTablesCount = useMemo(() => {
+    return programs.reduce((acc, p) => acc + p.tables.length, 0);
+  }, [programs]);
 
 
 
@@ -9863,42 +10012,154 @@ function WorkspaceContent({
                 </button>
               </TooltipText>
             </div>
-            <SearchBar
-              value={treeSearchQuery}
-              onChange={setTreeSearchQuery}
-              placeholder="Search..."
-              background="dark"
-              className="mx-[8px] my-[2px] shrink-0"
-            />
+            {/* Search Bar / Filter Area based on filterStyleVariant */}
+            {filterStyleVariant === 'in-search' ? (
+              <FacetedSearchBar
+                searchQuery={treeSearchQuery}
+                onSearchQueryChange={setTreeSearchQuery}
+                selectedStatuses={selectedStatuses}
+                onToggleStatus={handleToggleStatus}
+                onRemoveStatus={handleRemoveStatus}
+                selectedAssignees={selectedAssignees}
+                onToggleAssignee={handleToggleAssignee}
+                onRemoveAssignee={handleRemoveAssignee}
+                selectedSection={selectedSection}
+                onSelectSection={setSelectedSection}
+                onResetAll={handleResetAllFilters}
+                allAssignees={allAssignees}
+                allSections={allSections}
+                className="mx-[8px] my-[2px]"
+              />
+            ) : (
+              <>
+                {/* Search Bar & Filter Button Row */}
+                <div className="mx-[8px] my-[2px] flex items-center gap-[6px] shrink-0">
+                  <SearchBar
+                    value={treeSearchQuery}
+                    onChange={setTreeSearchQuery}
+                    placeholder="Search..."
+                    background="dark"
+                    className="flex-1 min-w-0"
+                  />
+                  <TooltipText label={isFilterActive ? `Filters (${activeFilterCount} active)` : "Filters"}>
+                    <button
+                      ref={filterButtonRef}
+                      type="button"
+                      onClick={() => setTreeFilterOpen((v) => !v)}
+                      className={`relative flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-[8px] border-[0.6px] transition-all cursor-pointer ${
+                        isFilterActive || treeFilterOpen
+                          ? "bg-[#F4E8EE] border-brand-1 text-brand-1 shadow-sm"
+                          : "bg-graphite-10 border-transparent hover:bg-black/5 text-[#3F4444]"
+                      }`}
+                      aria-label="Open filters"
+                    >
+                      <img
+                        src={filterIconUrl}
+                        alt="Filter"
+                        className="size-[16px]"
+                        style={{
+                          filter:
+                            isFilterActive || treeFilterOpen
+                              ? "invert(13%) sepia(85%) saturate(3755%) hue-rotate(310deg) brightness(88%) contrast(106%)"
+                              : undefined,
+                        }}
+                      />
+                      {activeFilterCount > 0 && (
+                        <span className="absolute -top-[2px] -right-[2px] flex h-[16px] min-w-[16px] px-[3px] items-center justify-center rounded-full bg-brand-1 text-[10px] font-semibold text-white leading-none shadow-sm">
+                          {activeFilterCount}
+                        </span>
+                      )}
+                    </button>
+                  </TooltipText>
+                </div>
+
+                <TreeFilterPopover
+                  buttonRef={filterButtonRef}
+                  isOpen={treeFilterOpen}
+                  onClose={() => setTreeFilterOpen(false)}
+                  selectedStatuses={selectedStatuses}
+                  onToggleStatus={handleToggleStatus}
+                  selectedAssignees={selectedAssignees}
+                  onToggleAssignee={handleToggleAssignee}
+                  onClearAssignees={handleClearAssignees}
+                  selectedSection={selectedSection}
+                  onSelectSection={setSelectedSection}
+                  allAssignees={allAssignees}
+                  allSections={allSections}
+                  onResetAll={handleResetAllFilters}
+                  matchingCount={totalMatchingTables}
+                  totalCount={totalTablesCount}
+                />
+              </>
+            )}
+
             <div className="min-h-0 flex-1 overflow-auto">
               <div className="flex flex-col gap-[4px] py-[4px] pr-[4px]">
-
-                {filteredPrograms.map((program) => (
-                  <TreeItem
-                    key={program.id}
-                    program={program}
-                    selectedId={selectedId}
-                    onSelect={handleSelect}
-                    onToggleLock={handleToggleLock}
-                    onToggleExpand={handleToggleExpand}
-                    onShowLockedModal={(programName) => setModalState({ type: 'locked-by-parent', programName })}
-                  />
-                ))}
+                {filteredPrograms.length > 0 ? (
+                  filteredPrograms.map((program) => (
+                    <TreeItem
+                      key={program.id}
+                      program={program}
+                      selectedId={selectedId}
+                      onSelect={handleSelect}
+                      onToggleLock={handleToggleLock}
+                      onToggleExpand={handleToggleExpand}
+                      onShowLockedModal={(programName) => setModalState({ type: 'locked-by-parent', programName })}
+                    />
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-[32px] px-[16px] text-center gap-[8px]">
+                    <div className="flex size-[32px] items-center justify-center rounded-full bg-graphite-10 text-text-secondary">
+                      <img src={filterIconUrl} alt="" className="size-[16px] opacity-60" />
+                    </div>
+                    <div className="flex flex-col gap-[2px]">
+                      <p className="t-small font-medium text-text-primary">No matching deliverables</p>
+                      <p className="text-[11px] text-text-secondary">Try adjusting your filters or search query</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTreeSearchQuery('');
+                        handleResetAllFilters();
+                      }}
+                      className="mt-[4px] inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-[4px] bg-brand-1 text-white text-[11px] font-medium hover:bg-brand-1/90 cursor-pointer transition-all"
+                    >
+                      Reset all filters
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Tree List Bottom-Left: AI Layout Switcher */}
-            <div className="shrink-0 flex items-center justify-between px-[10px] py-[8px] border-t border-graphite-10 bg-bg-panel gap-[8px]">
-              <span className="text-[11px] text-text-secondary whitespace-nowrap">AI Layout</span>
-              <SegmentedControl
-                size="sm"
-                value={aiLayoutVariant}
-                onChange={(val) => setAiLayoutVariant(val as 'drawer' | 'incard')}
-                options={[
-                  { label: "Drawer", value: "drawer" },
-                  { label: "In-Card", value: "incard" },
-                ]}
-              />
+            {/* Tree List Bottom-Left Controls */}
+            <div className="shrink-0 flex flex-col border-t border-graphite-10 bg-bg-panel">
+              {/* Filter UI Switcher */}
+              <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
+                <span className="text-[11px] text-text-secondary whitespace-nowrap">Filter UI</span>
+                <SegmentedControl
+                  size="sm"
+                  value={filterStyleVariant}
+                  onChange={(val) => setFilterStyleVariant(val as 'in-search' | 'split')}
+                  options={[
+                    { label: "In-Search", value: "in-search" },
+                    { label: "Split", value: "split" },
+                  ]}
+                />
+              </div>
+
+              {/* AI Layout Switcher */}
+              <div className="flex items-center justify-between px-[10px] py-[6px] gap-[8px]">
+                <span className="text-[11px] text-text-secondary whitespace-nowrap">AI Layout</span>
+                <SegmentedControl
+                  size="sm"
+                  value={aiLayoutVariant}
+                  onChange={(val) => setAiLayoutVariant(val as 'drawer' | 'incard')}
+                  options={[
+                    { label: "Drawer", value: "drawer" },
+                    { label: "In-Card", value: "incard" },
+                  ]}
+                />
+              </div>
             </div>
           </div>
         </div>
