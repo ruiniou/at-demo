@@ -417,15 +417,6 @@ export function VariableSpecPicker({
               onClick={() => setHasCodelistFilter(!hasCodelistFilter)}
             />
 
-            <FilterChip
-              type="Toggle"
-              variant="filter"
-              showIcon={false}
-              label={`Selected${selected.length > 0 ? ` (${selected.length})` : ""}`}
-              active={showSelectedOnly}
-              onClick={() => setShowSelectedOnly(!showSelectedOnly)}
-            />
-
             {/* Clear Filters Link */}
             {hasActiveFilters && (
               <button
