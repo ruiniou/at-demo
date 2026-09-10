@@ -144,23 +144,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </aside>
       )}
 
-      {/* Top right direct Home entry shortcut button */}
-      <button
-        type="button"
-        onClick={() => onLoginSuccess?.(email.trim() || "ruini.ou@taimei.com")}
-        className="absolute top-4 right-4 z-50 flex items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-medium text-text-primary shadow-sm border border-graphite-20 hover:border-brand-1 hover:text-brand-1 hover:shadow transition-all group backdrop-blur-sm"
-        title="快捷直接进入主系统"
-      >
-        <svg className="w-3.5 h-3.5 text-text-secondary group-hover:text-brand-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-          <polyline points="9 22 9 12 15 12 15 22" />
-        </svg>
-        <span>快捷进入 Home</span>
-        <svg className="w-3 h-3 text-text-secondary group-hover:text-brand-1 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      </button>
-
       {/* LEFT HALF (50% on desktop, 100% on mobile): Form Area */}
       <main className="flex h-full w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-[400px]">
@@ -231,18 +214,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               >
                 {isLoading ? "Opening..." : "Continue"}
               </Button>
-            </div>
-
-            {/* Direct Bypass Shortcut */}
-            <div className="pt-2 text-center">
-              <button
-                type="button"
-                onClick={() => onLoginSuccess?.(email.trim() || "ruini.ou@taimei.com")}
-                className="text-[13px] text-text-secondary hover:text-brand-1 transition-colors underline-offset-4 hover:underline inline-flex items-center gap-1 cursor-pointer"
-              >
-                <span>直接进入 Home</span>
-                <span>→</span>
-              </button>
             </div>
           </form>
         </div>
