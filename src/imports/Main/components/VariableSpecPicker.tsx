@@ -14,6 +14,7 @@ export interface VariableSpecPickerProps {
   sdtmCodeListData?: SdtmCodeListRow[];
   sourceDatasets?: string[];
   onDatasetsExpand?: (newDatasets: string[]) => void;
+  mode?: "table" | "listing";
 }
 
 function DerivationCell({ text }: { text: string }) {
@@ -60,15 +61,24 @@ export function VariableSpecPicker({
   sdtmCodeListData = [],
   sourceDatasets = [],
   onDatasetsExpand,
+  mode = "table",
 }: VariableSpecPickerProps) {
-  // --- Selection State ---
+  const isTableMode = mode !== "listing";
+
+  // --- Selection & Filter State ---
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
-  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("All");
+  const [selectedNavStandard, setSelectedNavStandard] = useState<"ADaM" | "SDTM" | null>(
+    isTableMode ? "ADaM" : null
+  );
   const [selectedNavDataset, setSelectedNavDataset] = useState<string | null>(null);
   const [hasVlmFilter, setHasVlmFilter] = useState(false);
   const [hasCodelistFilter, setHasCodelistFilter] = useState(false);
   const [showSelectedOnly, setShowSelectedOnly] = useState(false);
+
+  // --- Tree List Expand/Collapse State ---
+  const [isAdamExpanded, setIsAdamExpanded] = useState(true);
+  const [isSdtmExpanded, setIsSdtmExpanded] = useState(!isTableMode);
 
   // --- Right Panel (Collapsible Inspector) State ---
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
@@ -91,30 +101,34 @@ export function VariableSpecPicker({
       setActiveVariable(null);
       setShowSdtmDetail(false);
 
-      // Intelligent Standard Filter Initialization:
-      if (sourceDatasets && sourceDatasets.length > 0) {
-        const hasAdam = sourceDatasets.some((d) => d.startsWith("AD"));
-        const hasSdtm = sourceDatasets.some((d) => !d.startsWith("AD"));
-        if (hasAdam && !hasSdtm) {
-          setStandardFilter("ADaM");
-        } else if (hasSdtm && !hasAdam) {
-          setStandardFilter("SDTM");
+      // Initialize navigation scope based on mode and sourceDatasets
+      if (sourceDatasets && sourceDatasets.length === 1) {
+        const singleDs = sourceDatasets[0];
+        setSelectedNavDataset(singleDs);
+        const std = singleDs.startsWith("AD") ? "ADaM" : "SDTM";
+        setSelectedNavStandard(std);
+        if (std === "ADaM") {
+          setIsAdamExpanded(true);
+          setIsSdtmExpanded(false);
         } else {
-          setStandardFilter("All");
+          setIsAdamExpanded(false);
+          setIsSdtmExpanded(true);
         }
-        // If single dataset in sourceDatasets, focus on it in nav tree
-        if (sourceDatasets.length === 1) {
-          setSelectedNavDataset(sourceDatasets[0]);
-        } else {
-          setSelectedNavDataset(null);
-        }
-      } else {
-        setStandardFilter("All");
+      } else if (isTableMode) {
+        setSelectedNavStandard("ADaM");
         setSelectedNavDataset(null);
+        setIsAdamExpanded(true);
+        setIsSdtmExpanded(false); // Collapsed by default in Table mode to prevent accidental selection
+      } else {
+        // Listing mode: cross-domain all datasets
+        setSelectedNavStandard(null);
+        setSelectedNavDataset(null);
+        setIsAdamExpanded(true);
+        setIsSdtmExpanded(true);
       }
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen, initialSelected, sourceDatasets]);
+  }, [isOpen, initialSelected, sourceDatasets, isTableMode]);
 
   // Handle ESC key to close
   useEffect(() => {
@@ -147,25 +161,25 @@ export function VariableSpecPicker({
     return variables.filter((v) => {
       const vStd = getVarStandard(v);
 
-      // 1. Standard Filter
-      if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
-      if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
+      // 1. Navigation Scope Filter (Dataset or Standard level)
+      if (selectedNavDataset) {
+        if (v.datasetName !== selectedNavDataset) return false;
+      } else if (selectedNavStandard) {
+        if (vStd !== selectedNavStandard) return false;
+      }
 
-      // 2. Left Dataset Nav Filter
-      if (selectedNavDataset && v.datasetName !== selectedNavDataset) return false;
-
-      // 3. Has VLM Filter
+      // 2. Has VLM Filter
       if (hasVlmFilter && !v.hasVlm) return false;
 
-      // 4. Has Codelist Filter
+      // 3. Has Codelist Filter
       if (hasCodelistFilter && !v.hasCodelist) return false;
 
-      // 5. Selected Only Filter
+      // 4. Selected Only Filter
       const itemKey = `${v.datasetName}.${v.variable}`;
       const isSelected = selected.includes(itemKey) || selected.includes(v.variable);
       if (showSelectedOnly && !isSelected) return false;
 
-      // 6. Keyword Search (Variable, Label, Dataset, Derivation)
+      // 5. Global Keyword Search (Variable Name, Label, Dataset, Derivation)
       if (q) {
         const matchVar = v.variable.toLowerCase().includes(q);
         const matchLabel = v.label.toLowerCase().includes(q);
@@ -179,7 +193,7 @@ export function VariableSpecPicker({
   }, [
     variables,
     search,
-    standardFilter,
+    selectedNavStandard,
     selectedNavDataset,
     hasVlmFilter,
     hasCodelistFilter,
@@ -188,13 +202,10 @@ export function VariableSpecPicker({
     getVarStandard,
   ]);
 
-  // Compute Dataset Nav list grouped by Standard with counts
+  // Compute Dataset Nav list grouped by Standard with matching counts (Faceted Navigation)
   const navDatasets = useMemo(() => {
     const q = search.toLowerCase().trim();
     const candidatePool = variables.filter((v) => {
-      const vStd = getVarStandard(v);
-      if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
-      if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
       if (hasVlmFilter && !v.hasVlm) return false;
       if (hasCodelistFilter && !v.hasCodelist) return false;
       if (showSelectedOnly) {
@@ -239,17 +250,12 @@ export function VariableSpecPicker({
   }, [
     variables,
     search,
-    standardFilter,
     hasVlmFilter,
     hasCodelistFilter,
     showSelectedOnly,
     selected,
     getVarStandard,
   ]);
-
-  // --- Tree List Expand/Collapse State ---
-  const [isAdamExpanded, setIsAdamExpanded] = useState(true);
-  const [isSdtmExpanded, setIsSdtmExpanded] = useState(true);
 
   // Toggle variable selection
   const toggleVariable = useCallback((itemKey: string) => {
@@ -307,8 +313,9 @@ export function VariableSpecPicker({
   };
 
   // Reset/Clear all filters
+  const defaultNavStandard = isTableMode ? "ADaM" : null;
   const hasActiveFilters =
-    standardFilter !== "All" ||
+    selectedNavStandard !== defaultNavStandard ||
     selectedNavDataset !== null ||
     hasVlmFilter ||
     hasCodelistFilter ||
@@ -316,7 +323,7 @@ export function VariableSpecPicker({
     search.trim().length > 0;
 
   const handleClearFilters = () => {
-    setStandardFilter("All");
+    setSelectedNavStandard(defaultNavStandard);
     setSelectedNavDataset(null);
     setHasVlmFilter(false);
     setHasCodelistFilter(false);
@@ -353,8 +360,8 @@ export function VariableSpecPicker({
         {/* ================= 2. Filter Bar ================= */}
         <div className="flex shrink-0 items-center justify-between gap-[12px] border-b border-graphite-10 px-[20px] py-[8px] bg-bg-panel/40">
           <div className="flex items-center gap-[10px] flex-1 min-w-0">
-            {/* Omni Search Input */}
-            <div className="relative w-[280px] shrink-0">
+            {/* Global Omni Search Input */}
+            <div className="relative w-[340px] shrink-0">
               <svg
                 className="absolute left-[8px] top-1/2 -translate-y-1/2 size-[14px] text-text-secondary pointer-events-none"
                 viewBox="0 0 24 24"
@@ -369,7 +376,7 @@ export function VariableSpecPicker({
               </svg>
               <input
                 type="text"
-                placeholder="Search variables, labels, datasets…"
+                placeholder="Search variable, label, dataset, derivation…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full h-[28px] rounded-[4px] border border-graphite-10 bg-white pl-[28px] pr-[24px] t-small text-text-primary placeholder:text-text-secondary focus:border-[#830051] focus:outline-none transition-colors"
@@ -391,28 +398,6 @@ export function VariableSpecPicker({
 
             <div className="h-[16px] w-[1px] bg-graphite-10 shrink-0" />
 
-            {/* Standard Dropdown FilterChip (showIcon = false, clean pure text) */}
-            <FilterChip
-              type="Dropdown"
-              variant="filter"
-              showIcon={false}
-              label={standardFilter === "All" ? "All Standards" : `${standardFilter} only`}
-              value={standardFilter}
-              options={[
-                { label: "All Standards", value: "All" },
-                { label: "ADaM only", value: "ADaM" },
-                { label: "SDTM only", value: "SDTM" },
-              ]}
-              onChange={(val) => {
-                setStandardFilter(val as any);
-                if (val === "ADaM" && selectedNavDataset && !selectedNavDataset.startsWith("AD")) {
-                  setSelectedNavDataset(null);
-                } else if (val === "SDTM" && selectedNavDataset && selectedNavDataset.startsWith("AD")) {
-                  setSelectedNavDataset(null);
-                }
-              }}
-            />
-
             {/* Quick Property Filters */}
             <FilterChip
               type="Toggle"
@@ -430,6 +415,15 @@ export function VariableSpecPicker({
               label="Has Codelist"
               active={hasCodelistFilter}
               onClick={() => setHasCodelistFilter(!hasCodelistFilter)}
+            />
+
+            <FilterChip
+              type="Toggle"
+              variant="filter"
+              showIcon={false}
+              label={`Selected${selected.length > 0 ? ` (${selected.length})` : ""}`}
+              active={showSelectedOnly}
+              onClick={() => setShowSelectedOnly(!showSelectedOnly)}
             />
 
             {/* Clear Filters Link */}
@@ -452,49 +446,55 @@ export function VariableSpecPicker({
 
         {/* ================= 3. Main 3-Column Area ================= */}
         <div className="flex flex-1 min-h-0 overflow-hidden bg-white">
-          {/* ----- Column 1: Left Dataset Tree List ----- */}
+          {/* ----- Column 1: Left Dataset Tree List (Pure 2-level Standard -> Dataset Tree) ----- */}
           <div className="w-[200px] shrink-0 border-r border-graphite-10 bg-bg-panel/40 flex flex-col overflow-y-auto py-[6px]">
-            {/* "All datasets" root node */}
-            <div
-              onClick={() => setSelectedNavDataset(null)}
-              className={`flex items-center justify-between px-[12px] py-[6px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
-                selectedNavDataset === null
-                  ? "bg-[#F4E8EE] text-brand-1 font-medium"
-                  : "text-text-primary hover:bg-graphite-10"
-              }`}
-            >
-              <span className="t-small truncate">All datasets</span>
-              <span className="t-footnote text-text-secondary font-mono">{navDatasets.totalCount}</span>
-            </div>
-
             {/* ADaM Tree Branch */}
-            {standardFilter !== "SDTM" && navDatasets.adam.length > 0 && (
-              <div className="mt-[6px]">
-                {/* Branch Header (Collapsible) */}
+            {navDatasets.adam.length > 0 && (
+              <div>
+                {/* Branch Header (Click text: toggle ADaM scope; Click arrow: toggle expand) */}
                 <div
-                  onClick={() => setIsAdamExpanded(!isAdamExpanded)}
-                  className="flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] hover:bg-graphite-10 transition-colors select-none text-text-secondary group"
+                  className={`flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none group ${
+                    selectedNavStandard === "ADaM" && selectedNavDataset === null
+                      ? "bg-[#F4E8EE] text-brand-1 font-medium"
+                      : "text-text-primary hover:bg-graphite-10"
+                  }`}
+                  onClick={() => {
+                    if (selectedNavStandard === "ADaM" && selectedNavDataset === null) {
+                      setSelectedNavStandard(null);
+                    } else {
+                      setSelectedNavStandard("ADaM");
+                      setSelectedNavDataset(null);
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-[4px] min-w-0">
-                    <svg
-                      className={`size-[14px] text-text-secondary transition-transform shrink-0 ${
-                        isAdamExpanded ? "rotate-90" : ""
-                      }`}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAdamExpanded(!isAdamExpanded);
+                      }}
+                      className="size-[18px] flex items-center justify-center rounded hover:bg-black/5 text-text-secondary hover:text-text-primary transition-colors cursor-pointer shrink-0"
+                      title={isAdamExpanded ? "Collapse ADaM" : "Expand ADaM"}
                     >
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                    <span className="t-small font-medium text-text-primary">ADaM</span>
+                      <svg
+                        className={`size-[12px] transition-transform ${isAdamExpanded ? "rotate-90" : ""}`}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                    <span className="t-small font-medium truncate">ADaM</span>
                   </div>
                   <span className="t-footnote text-text-secondary font-mono">
                     {navDatasets.adam.reduce((acc, cur) => acc + cur.count, 0)}
                   </span>
                 </div>
 
-                {/* Branch Children (Pure Text, Indented) */}
+                {/* Branch Children (Pure Text, Indented pl-[28px]) */}
                 {isAdamExpanded && (
                   <div className="flex flex-col gap-[1px]">
                     {navDatasets.adam.map((ds) => {
@@ -502,8 +502,16 @@ export function VariableSpecPicker({
                       return (
                         <div
                           key={ds.name}
-                          onClick={() => setSelectedNavDataset(ds.name)}
-                          className={`flex items-center justify-between pl-[26px] pr-[12px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
+                          onClick={() => {
+                            if (isNavActive) {
+                              setSelectedNavDataset(null);
+                              setSelectedNavStandard("ADaM");
+                            } else {
+                              setSelectedNavDataset(ds.name);
+                              setSelectedNavStandard("ADaM");
+                            }
+                          }}
+                          className={`flex items-center justify-between pl-[28px] pr-[12px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
                             isNavActive
                               ? "bg-[#F4E8EE] text-brand-1 font-medium"
                               : "text-text-primary hover:bg-graphite-10"
@@ -520,33 +528,52 @@ export function VariableSpecPicker({
             )}
 
             {/* SDTM Tree Branch */}
-            {standardFilter !== "ADaM" && navDatasets.sdtm.length > 0 && (
-              <div className="mt-[6px]">
-                {/* Branch Header (Collapsible) */}
+            {navDatasets.sdtm.length > 0 && (
+              <div className="mt-[4px]">
+                {/* Branch Header (Click text: toggle SDTM scope; Click arrow: toggle expand) */}
                 <div
-                  onClick={() => setIsSdtmExpanded(!isSdtmExpanded)}
-                  className="flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] hover:bg-graphite-10 transition-colors select-none text-text-secondary group"
+                  className={`flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none group ${
+                    selectedNavStandard === "SDTM" && selectedNavDataset === null
+                      ? "bg-[#F4E8EE] text-brand-1 font-medium"
+                      : "text-text-primary hover:bg-graphite-10"
+                  }`}
+                  onClick={() => {
+                    if (selectedNavStandard === "SDTM" && selectedNavDataset === null) {
+                      setSelectedNavStandard(null);
+                    } else {
+                      setSelectedNavStandard("SDTM");
+                      setSelectedNavDataset(null);
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-[4px] min-w-0">
-                    <svg
-                      className={`size-[14px] text-text-secondary transition-transform shrink-0 ${
-                        isSdtmExpanded ? "rotate-90" : ""
-                      }`}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsSdtmExpanded(!isSdtmExpanded);
+                      }}
+                      className="size-[18px] flex items-center justify-center rounded hover:bg-black/5 text-text-secondary hover:text-text-primary transition-colors cursor-pointer shrink-0"
+                      title={isSdtmExpanded ? "Collapse SDTM" : "Expand SDTM"}
                     >
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                    <span className="t-small font-medium text-text-primary">SDTM</span>
+                      <svg
+                        className={`size-[12px] transition-transform ${isSdtmExpanded ? "rotate-90" : ""}`}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
+                    <span className="t-small font-medium truncate">SDTM</span>
                   </div>
                   <span className="t-footnote text-text-secondary font-mono">
                     {navDatasets.sdtm.reduce((acc, cur) => acc + cur.count, 0)}
                   </span>
                 </div>
 
-                {/* Branch Children (Pure Text, Indented) */}
+                {/* Branch Children (Pure Text, Indented pl-[28px]) */}
                 {isSdtmExpanded && (
                   <div className="flex flex-col gap-[1px]">
                     {navDatasets.sdtm.map((ds) => {
@@ -554,8 +581,16 @@ export function VariableSpecPicker({
                       return (
                         <div
                           key={ds.name}
-                          onClick={() => setSelectedNavDataset(ds.name)}
-                          className={`flex items-center justify-between pl-[26px] pr-[12px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
+                          onClick={() => {
+                            if (isNavActive) {
+                              setSelectedNavDataset(null);
+                              setSelectedNavStandard("SDTM");
+                            } else {
+                              setSelectedNavDataset(ds.name);
+                              setSelectedNavStandard("SDTM");
+                            }
+                          }}
+                          className={`flex items-center justify-between pl-[28px] pr-[12px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
                             isNavActive
                               ? "bg-[#F4E8EE] text-brand-1 font-medium"
                               : "text-text-primary hover:bg-graphite-10"

@@ -2188,6 +2188,7 @@ export interface BrowseVariablesFieldProps {
   vlmData?: VlmRow[];
   adamCodeListData?: AdamCodeListRow[];
   sdtmCodeListData?: SdtmCodeListRow[];
+  mode?: "table" | "listing";
 }
 
 export function BrowseVariablesField({
@@ -2207,6 +2208,7 @@ export function BrowseVariablesField({
   vlmData = mockVlmData,
   adamCodeListData = mockAdamCodeListData,
   sdtmCodeListData = mockSdtmCodeListData,
+  mode = "table",
 }: BrowseVariablesFieldProps) {
   const [internalSelected, setInternalSelected] = useState<string[]>(initialSelected);
   const [modalOpen, setModalOpen] = useState(false);
@@ -2285,6 +2287,7 @@ export function BrowseVariablesField({
         vlmData={vlmData}
         adamCodeListData={adamCodeListData}
         sdtmCodeListData={sdtmCodeListData}
+        mode={mode}
       />
     </>
   );
