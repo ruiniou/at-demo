@@ -4,6 +4,7 @@ import { Tag } from "./Tag";
 import fileInfoLineUrl from "../../icons/file-info-line.svg";
 import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 import type { AttachmentItem } from "../../imports/Main/components/ChatBox";
+import { ImagePreviewModal } from "./ImagePreviewModal";
 
 export type MetaChangeType = 'modified' | 'added' | 'removed';
 
@@ -66,6 +67,7 @@ export function AIUserPrompt({
   const isSingleTotal = (toBeUpdatedCount === 1) || (metaDiffItems?.length === 1);
   const [metaTagExpanded, setMetaTagExpanded] = useState<boolean>(() => isSingleTotal);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentItem | null>(null);
 
   const toggleGroup = (blockId: string) => {
     setExpandedGroups(prev => ({
@@ -292,9 +294,9 @@ export function AIUserPrompt({
             <button
               key={att.id}
               type="button"
-              title={att.name}
-              aria-label={`Attachment ${att.order}: ${att.name} — click to view`}
-              onClick={() => window.open(att.previewUrl, "_blank")}
+              title={`${att.name} (Click for full screen preview)`}
+              aria-label={`Attachment ${att.order}: ${att.name} — click for full screen preview`}
+              onClick={() => setPreviewAttachment(att)}
               className={[
                 "relative shrink-0 rounded-[4px] overflow-hidden cursor-pointer",
                 "hover:opacity-90 active:scale-[0.97] transition-all duration-100",
@@ -325,6 +327,14 @@ export function AIUserPrompt({
           ))}
         </div>
       )}
+
+      {/* Full screen Image Lightbox Preview Modal */}
+      <ImagePreviewModal
+        isOpen={!!previewAttachment}
+        onClose={() => setPreviewAttachment(null)}
+        imageUrl={previewAttachment?.previewUrl || ""}
+        title={previewAttachment ? `Attachment ${previewAttachment.order}: ${previewAttachment.name}` : undefined}
+      />
 
       {/* User prompt text (below images) */}
       <div className="flex flex-col gap-[4px] t-body text-text-secondary break-words whitespace-pre-wrap w-full">

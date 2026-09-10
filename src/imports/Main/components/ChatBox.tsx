@@ -4,6 +4,7 @@ import aiSubmitIconUrl from "../../../icons/AI-submit.svg";
 import fileInfoLineUrl from "../../../icons/file-info-line.svg";
 import doubleQuotesLUrl from "../../../icons/double-quotes-l.svg";
 import { Tooltip } from "../../../components/ui/Tooltip";
+import { ImagePreviewModal } from "../../../components/ui/ImagePreviewModal";
 
 // ==================== SVGs from Figma ====================
 
@@ -170,25 +171,28 @@ export interface AttachmentItem {
 function AttachmentThumbnail({
   attachment,
   onRemove,
+  onPreview,
 }: {
   attachment: AttachmentItem;
   onRemove: () => void;
+  onPreview?: (attachment: AttachmentItem) => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const isUploading = attachment.status === "uploading";
 
   return (
     <div
-      className="relative shrink-0 select-none group"
+      className="relative shrink-0 select-none group cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onPreview?.(attachment)}
+      title={`${attachment.name} (Click for full screen preview)`}
     >
       {/* Thumbnail image */}
       <img
         src={attachment.previewUrl}
         alt={attachment.name}
-        title={attachment.name}
-        className="w-[48px] h-[48px] object-cover rounded-[4px] border border-graphite-10 block"
+        className="w-[48px] h-[48px] object-cover rounded-[4px] border border-graphite-10 block transition-all duration-100 group-hover:opacity-90 group-active:scale-[0.98]"
         style={{
           opacity: isUploading ? 0.55 : 1,
           transition: "opacity 150ms ease",
@@ -330,6 +334,7 @@ export default function ChatBox({
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentItem | null>(null);
 
   // Keep a stable ref so handleSend can read current attachments without dep-array churn
   const attachmentsRef = useRef<AttachmentItem[]>([]);
@@ -714,6 +719,14 @@ export default function ChatBox({
           document.body
         )}
 
+      {/* Full screen Image Lightbox Preview Modal */}
+      <ImagePreviewModal
+        isOpen={!!previewAttachment}
+        onClose={() => setPreviewAttachment(null)}
+        imageUrl={previewAttachment?.previewUrl || ""}
+        title={previewAttachment ? `Attachment ${previewAttachment.order}: ${previewAttachment.name}` : undefined}
+      />
+
       {/* Drag-over visual feedback ring */}
       {isDragOver && (
         <div
@@ -951,6 +964,7 @@ export default function ChatBox({
                     key={att.id}
                     attachment={att}
                     onRemove={() => removeAttachment(att.id)}
+                    onPreview={(a) => setPreviewAttachment(a)}
                   />
                 ))}
               </div>
