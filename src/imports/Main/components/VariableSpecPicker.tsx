@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { Button } from "../../../components/ui/Button";
 import { Checkbox } from "../../../components/ui/Checkbox";
 import { FilterChip } from "../../../components/ui/FilterChip";
 import { Variable, VlmRow, AdamCodeListRow, SdtmCodeListRow } from "./BrowseVariablesModal";
@@ -74,7 +75,6 @@ export function VariableSpecPicker({
   const [selectedNavDataset, setSelectedNavDataset] = useState<string | null>(null);
   const [hasVlmFilter, setHasVlmFilter] = useState(false);
   const [hasCodelistFilter, setHasCodelistFilter] = useState(false);
-  const [showSelectedOnly, setShowSelectedOnly] = useState(false);
 
   // --- Tree List Expand/Collapse State ---
   const [isAdamExpanded, setIsAdamExpanded] = useState(true);
@@ -94,7 +94,6 @@ export function VariableSpecPicker({
     if (isOpen && !prevIsOpenRef.current) {
       setSelected([...initialSelected]);
       setSearch("");
-      setShowSelectedOnly(false);
       setHasVlmFilter(false);
       setHasCodelistFilter(false);
       setIsRightPanelOpen(false);
@@ -174,12 +173,7 @@ export function VariableSpecPicker({
       // 3. Has Codelist Filter
       if (hasCodelistFilter && !v.hasCodelist) return false;
 
-      // 4. Selected Only Filter
-      const itemKey = `${v.datasetName}.${v.variable}`;
-      const isSelected = selected.includes(itemKey) || selected.includes(v.variable);
-      if (showSelectedOnly && !isSelected) return false;
-
-      // 5. Global Keyword Search (Variable Name, Label, Dataset, Derivation)
+      // 4. Global Keyword Search (Variable Name, Label, Dataset, Derivation)
       if (q) {
         const matchVar = v.variable.toLowerCase().includes(q);
         const matchLabel = v.label.toLowerCase().includes(q);
@@ -197,7 +191,6 @@ export function VariableSpecPicker({
     selectedNavDataset,
     hasVlmFilter,
     hasCodelistFilter,
-    showSelectedOnly,
     selected,
     getVarStandard,
   ]);
@@ -208,10 +201,6 @@ export function VariableSpecPicker({
     const candidatePool = variables.filter((v) => {
       if (hasVlmFilter && !v.hasVlm) return false;
       if (hasCodelistFilter && !v.hasCodelist) return false;
-      if (showSelectedOnly) {
-        const itemKey = `${v.datasetName}.${v.variable}`;
-        if (!selected.includes(itemKey) && !selected.includes(v.variable)) return false;
-      }
       if (q) {
         const matchVar = v.variable.toLowerCase().includes(q);
         const matchLabel = v.label.toLowerCase().includes(q);
@@ -319,7 +308,6 @@ export function VariableSpecPicker({
     selectedNavDataset !== null ||
     hasVlmFilter ||
     hasCodelistFilter ||
-    showSelectedOnly ||
     search.trim().length > 0;
 
   const handleClearFilters = () => {
@@ -327,7 +315,6 @@ export function VariableSpecPicker({
     setSelectedNavDataset(null);
     setHasVlmFilter(false);
     setHasCodelistFilter(false);
-    setShowSelectedOnly(false);
     setSearch("");
   };
 
@@ -576,11 +563,19 @@ export function VariableSpecPicker({
 
           {/* ----- Column 2: Middle Variable Table (Pilot Single-line Row Style) ----- */}
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-white">
-            <div className="flex-1 overflow-y-auto overflow-x-auto">
+            <div
+              className="flex-1 overflow-y-auto overflow-x-auto"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to bottom, var(--color-bg-panel, #F8F7F7) 35px, var(--color-graphite-10, #ECECEC) 35px, var(--color-graphite-10, #ECECEC) 36px, #ffffff 36px)",
+                backgroundSize: "100% 100%",
+                backgroundRepeat: "no-repeat",
+              }}
+            >
               <table className="w-full min-w-[580px] border-collapse">
-                <thead className="sticky top-0 z-10 bg-bg-panel border-b border-graphite-10">
-                  <tr>
-                    <th className="w-[36px] px-[12px] py-[8px] text-left">
+                <thead className="sticky top-0 z-10 bg-bg-panel">
+                  <tr className="h-[36px]">
+                    <th className="w-[36px] h-[36px] px-[12px] py-0 align-middle text-left bg-bg-panel shadow-[inset_0_-1px_0_var(--color-graphite-10,#ECECEC)]">
                       <div className="flex items-center justify-center">
                         <Checkbox
                           checked={
@@ -607,19 +602,19 @@ export function VariableSpecPicker({
                         />
                       </div>
                     </th>
-                    <th className="w-[80px] px-[8px] py-[8px] text-left">
+                    <th className="w-[80px] h-[36px] px-[8px] py-0 align-middle text-left bg-bg-panel shadow-[inset_0_-1px_0_var(--color-graphite-10,#ECECEC)]">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Dataset</span>
                     </th>
-                    <th className="w-[110px] px-[8px] py-[8px] text-left">
+                    <th className="w-[110px] h-[36px] px-[8px] py-0 align-middle text-left bg-bg-panel shadow-[inset_0_-1px_0_var(--color-graphite-10,#ECECEC)]">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Variable</span>
                     </th>
-                    <th className="px-[8px] py-[8px] text-left">
+                    <th className="h-[36px] px-[8px] py-0 align-middle text-left bg-bg-panel shadow-[inset_0_-1px_0_var(--color-graphite-10,#ECECEC)]">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Label</span>
                     </th>
-                    <th className="w-[64px] px-[8px] py-[8px] text-left">
+                    <th className="w-[64px] h-[36px] px-[8px] py-0 align-middle text-left bg-bg-panel shadow-[inset_0_-1px_0_var(--color-graphite-10,#ECECEC)]">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Type</span>
                     </th>
-                    <th className="w-[220px] px-[8px] py-[8px] text-left">
+                    <th className="w-[220px] h-[36px] px-[8px] py-0 align-middle text-left bg-bg-panel shadow-[inset_0_-1px_0_var(--color-graphite-10,#ECECEC)]">
                       <span className="t-small font-medium text-[#888E8E] whitespace-nowrap">Derivation</span>
                     </th>
                   </tr>
@@ -1023,22 +1018,12 @@ export function VariableSpecPicker({
 
         {/* ================= 4. Footer ================= */}
         <div className="flex shrink-0 items-center justify-between border-t border-graphite-10 px-[20px] py-[14px] bg-white">
-          {/* Left summary & quick toggle */}
+          {/* Left summary */}
           <div className="flex items-center gap-[12px]">
             <span className="t-small text-text-secondary">
               <strong className="font-medium text-text-primary">{selected.length}</strong> variable{selected.length === 1 ? "" : "s"} selected across{" "}
               <strong className="font-medium text-text-primary">{selectedDatasets.length}</strong> dataset{selectedDatasets.length === 1 ? "" : "s"}
             </span>
-
-            {/* Show Selected Only Filter */}
-            <FilterChip
-              type="Toggle"
-              variant="filter"
-              showIcon={false}
-              label="Selected only"
-              active={showSelectedOnly}
-              onClick={() => setShowSelectedOnly(!showSelectedOnly)}
-            />
 
             {/* New datasets addition alert */}
             {newlyAddedDatasets.length > 0 && (
@@ -1052,22 +1037,22 @@ export function VariableSpecPicker({
           </div>
 
           {/* Right actions */}
-          <div className="flex items-center gap-[12px]">
-            <button
-              type="button"
+          <div className="flex items-center gap-[10px]">
+            <Button
+              variant="ghost"
+              size="default"
               onClick={onClose}
-              className="h-[32px] px-[16px] rounded-[4px] border border-graphite-10 bg-white t-small font-medium text-text-primary hover:bg-bg-panel active:scale-[0.98] transition-colors cursor-pointer"
             >
               Cancel
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="primary"
+              size="default"
               onClick={handleConfirm}
-              className="h-[32px] px-[16px] rounded-[4px] bg-[#830051] t-small font-medium text-white hover:bg-[#6e0044] active:scale-[0.98] transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={selected.length === 0}
             >
               Confirm ({selected.length})
-            </button>
+            </Button>
           </div>
         </div>
       </div>
