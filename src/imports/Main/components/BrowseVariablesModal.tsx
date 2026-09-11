@@ -116,6 +116,7 @@ export type InlineVariableListProps = {
   placeholder?: string;
   error?: string;
   className?: string;
+  mode?: "table" | "listing";
 };
 
 // ==================== Mock Data ====================
@@ -1041,10 +1042,11 @@ function InlineVariableList({
   placeholder = "Select variables…",
   error,
   className = "",
+  mode = "table",
 }: InlineVariableListProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("All");
+  const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("ADaM");
   const [isExpandedTags, setIsExpandedTags] = useState(false);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1074,6 +1076,9 @@ function InlineVariableList({
 
   useEffect(() => {
     if (!isOpen) return;
+    // Reset to default ADaM only and clear search on dropdown open
+    setStandardFilter("ADaM");
+    setSearch("");
     updatePos();
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -1108,12 +1113,35 @@ function InlineVariableList({
     const q = search.toLowerCase().trim();
     const items = variables.filter((v) => {
       const vStd = v.standard || (v.datasetName.startsWith("AD") ? "ADaM" : "SDTM");
-      // Hard filter by sourceDatasets if defined and not empty
-      if (sourceDatasets && sourceDatasets.length > 0 && !sourceDatasets.includes(v.datasetName)) {
-        return false;
-      }
+
+      // Filter by standard
       if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
       if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
+
+      // Intelligent scoping by sourceDatasets:
+      // - In ADaM mode: constrain to sourceDatasets that are ADaM (if defined)
+      // - In SDTM mode: constrain to sourceDatasets that are SDTM; if sourceDatasets contains NO SDTM datasets
+      //   (e.g. Table block only has ADSL), do NOT block with 0 results — allow exploring SDTM variables,
+      //   and selecting one will auto-expand sourceDatasets via onDatasetsExpand.
+      // - In All mode: prioritize sourceDatasets when no query is typed; allow cross-dataset search if user types.
+      if (sourceDatasets && sourceDatasets.length > 0) {
+        if (standardFilter === "ADaM") {
+          const adamSources = sourceDatasets.filter((d) => d.startsWith("AD"));
+          if (adamSources.length > 0 && !adamSources.includes(v.datasetName)) {
+            return false;
+          }
+        } else if (standardFilter === "SDTM") {
+          const sdtmSources = sourceDatasets.filter((d) => !d.startsWith("AD"));
+          if (sdtmSources.length > 0 && !sdtmSources.includes(v.datasetName)) {
+            return false;
+          }
+        } else if (standardFilter === "All") {
+          if (!q && !sourceDatasets.includes(v.datasetName)) {
+            return false;
+          }
+        }
+      }
+
       if (!q) return true;
       return (
         v.variable.toLowerCase().includes(q) ||
@@ -1196,9 +1224,9 @@ function InlineVariableList({
           value={standardFilter}
           onChange={(val) => setStandardFilter(val as "All" | "ADaM" | "SDTM")}
           options={[
-            { label: "All", value: "All" },
             { label: "ADaM only", value: "ADaM" },
             { label: "SDTM only", value: "SDTM" },
+            { label: "All", value: "All" },
           ]}
         />
       </div>
@@ -2275,6 +2303,7 @@ export function BrowseVariablesField({
         onToggle={handleToggle}
         onRemove={handleRemove}
         onBrowseAll={() => setModalOpen(true)}
+        mode={mode}
       />
       <VariableSpecPicker
         isOpen={modalOpen}
