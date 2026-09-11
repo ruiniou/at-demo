@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/Button";
 import { Checkbox } from "../../../components/ui/Checkbox";
 import { FilterChip } from "../../../components/ui/FilterChip";
@@ -451,10 +452,18 @@ export function VariableSpecPicker({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-[1px] p-[16px]">
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center pointer-events-auto p-[16px]">
+      {/* Backdrop: Clean solid black/40 without backdrop-blur to eliminate halo/gradient artifacts */}
       <div
-        className="flex flex-col w-[1180px] max-w-[96vw] h-[680px] max-h-[92vh] rounded-[8px] bg-white border border-graphite-10 shadow-[0px_16px_40px_rgba(0,0,0,0.18)] overflow-hidden"
+        className="fixed inset-0 bg-black/40 pointer-events-auto cursor-pointer"
+        onClick={onClose}
+        aria-label="Close modal"
+      />
+
+      {/* Modal Container */}
+      <div
+        className="relative z-10 flex flex-col w-[1180px] max-w-[96vw] h-[680px] max-h-[92vh] rounded-[8px] bg-white border border-graphite-10 shadow-[0px_16px_40px_rgba(0,0,0,0.18)] overflow-hidden pointer-events-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ================= 1. Top Header (Clean, Standard Single-line) ================= */}
@@ -1217,7 +1226,8 @@ export function VariableSpecPicker({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
