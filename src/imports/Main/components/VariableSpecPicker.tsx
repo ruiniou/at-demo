@@ -51,6 +51,21 @@ function DerivationCell({ text }: { text: string }) {
   );
 }
 
+function ChevronRightTreeIcon({ isExpanded, color = "#888E8E" }: { isExpanded: boolean; color?: string }) {
+  return (
+    <svg
+      className={`size-[16px] transition-transform duration-150 ${isExpanded ? "rotate-90" : ""}`}
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z"
+        fill={color}
+      />
+    </svg>
+  );
+}
+
 export function VariableSpecPicker({
   isOpen,
   onClose,
@@ -251,40 +266,6 @@ export function VariableSpecPicker({
     getVarStandard,
   ]);
 
-  // Map of datasetName -> number of selected variables
-  const datasetSelectedCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    selected.forEach((itemKey) => {
-      const parts = itemKey.split(".");
-      if (parts.length > 1) {
-        const ds = parts[0];
-        counts.set(ds, (counts.get(ds) || 0) + 1);
-      } else {
-        const v = variables.find((item) => item.variable === itemKey);
-        if (v) {
-          counts.set(v.datasetName, (counts.get(v.datasetName) || 0) + 1);
-        }
-      }
-    });
-    return counts;
-  }, [selected, variables]);
-
-  const adamSelectedCount = useMemo(() => {
-    let sum = 0;
-    navDatasets.adam.forEach((ds) => {
-      sum += datasetSelectedCounts.get(ds.name) || 0;
-    });
-    return sum;
-  }, [navDatasets.adam, datasetSelectedCounts]);
-
-  const sdtmSelectedCount = useMemo(() => {
-    let sum = 0;
-    navDatasets.sdtm.forEach((ds) => {
-      sum += datasetSelectedCounts.get(ds.name) || 0;
-    });
-    return sum;
-  }, [navDatasets.sdtm, datasetSelectedCounts]);
-
   // Toggle variable selection
   const toggleVariable = useCallback((itemKey: string) => {
     setSelected((prev) => {
@@ -449,59 +430,63 @@ export function VariableSpecPicker({
 
         {/* ================= 3. Main 3-Column Area ================= */}
         <div className="flex flex-1 min-h-0 overflow-hidden bg-white">
-          {/* ----- Column 1: Left Dataset Tree List (Pure 2-level Standard -> Dataset Tree) ----- */}
-          <div className="w-[200px] shrink-0 border-r border-graphite-10 bg-bg-panel/40 flex flex-col overflow-y-auto py-[6px]">
-            {/* Top Quick View: Selected only */}
+          {/* ----- Column 1: Left Dataset Tree List (Aligned with Detail Page Tree List) ----- */}
+          <div className="w-[200px] shrink-0 border-r border-graphite-10 bg-bg-panel/40 flex flex-col overflow-y-auto p-[6px]">
+            {/* Top Quick Control: Selected only switch */}
             <div
-              onClick={() => {
-                if (isShowingSelectedOnly) {
-                  setIsShowingSelectedOnly(false);
-                  setSelectedNavStandard(isTableMode ? "ADaM" : null);
-                } else {
-                  setIsShowingSelectedOnly(true);
-                  setSelectedNavStandard(null);
-                  setSelectedNavDataset(null);
-                }
-              }}
-              className={`flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] mb-[4px] transition-colors select-none ${
+              onClick={() => setIsShowingSelectedOnly(!isShowingSelectedOnly)}
+              className={`flex h-[28px] items-center justify-between px-[10px] cursor-pointer rounded-[4px] transition-colors select-none ${
                 isShowingSelectedOnly
-                  ? "bg-[#F4E8EE] text-brand-1 font-medium"
-                  : "text-text-primary hover:bg-graphite-10"
+                  ? "bg-[#F4E8EE]/70"
+                  : "hover:bg-graphite-10"
               }`}
             >
               <div className="flex items-center gap-[6px] min-w-0">
-                <svg
-                  className={`size-[14px] shrink-0 ${isShowingSelectedOnly ? "text-brand-1" : "text-text-secondary"}`}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <span className="t-small truncate">Selected only</span>
-              </div>
-              {selected.length > 0 && (
-                <span
-                  className={`t-footnote font-mono ${
-                    isShowingSelectedOnly ? "text-brand-1 font-medium" : "text-text-secondary"
-                  }`}
-                >
-                  {selected.length}
+                <span className={`t-small truncate ${isShowingSelectedOnly ? "text-brand-1 font-medium" : "text-text-primary"}`}>
+                  Selected only
                 </span>
-              )}
+                {selected.length > 0 && (
+                  <span
+                    className={`inline-flex items-center justify-center min-w-[18px] h-[16px] px-[5px] rounded-full text-[11px] font-medium leading-none ${
+                      isShowingSelectedOnly
+                        ? "bg-brand-1 text-white"
+                        : "bg-graphite-20 text-text-secondary"
+                    }`}
+                  >
+                    {selected.length > 99 ? "99+" : selected.length}
+                  </span>
+                )}
+              </div>
+
+              {/* Toggle Switch */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isShowingSelectedOnly}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsShowingSelectedOnly(!isShowingSelectedOnly);
+                }}
+                className={`relative inline-flex h-[16px] w-[28px] shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
+                  isShowingSelectedOnly ? "bg-brand-1" : "bg-[#CBCED4]"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block size-[12px] m-[2px] transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${
+                    isShowingSelectedOnly ? "translate-x-[12px]" : "translate-x-0"
+                  }`}
+                />
+              </button>
             </div>
 
-            <div className="h-[1px] bg-graphite-10 mx-[8px] mb-[6px]" />
+            <div className="h-[1px] bg-graphite-10 mx-[4px] my-[6px]" />
 
             {/* ADaM Tree Branch */}
             {navDatasets.adam.length > 0 && (
               <div>
-                {/* Branch Header (Click text: toggle ADaM scope; Click arrow: toggle expand) */}
+                {/* Branch Header */}
                 <div
-                  className={`flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none group ${
+                  className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors select-none ${
                     selectedNavStandard === "ADaM" && selectedNavDataset === null && !isShowingSelectedOnly
                       ? "bg-[#F4E8EE] text-brand-1 font-medium"
                       : "text-text-primary hover:bg-graphite-10"
@@ -516,47 +501,36 @@ export function VariableSpecPicker({
                     }
                   }}
                 >
-                  <div className="flex items-center gap-[4px] min-w-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsAdamExpanded(!isAdamExpanded);
-                      }}
-                      className="size-[18px] flex items-center justify-center rounded hover:bg-black/5 text-text-secondary hover:text-text-primary transition-colors cursor-pointer shrink-0"
-                      title={isAdamExpanded ? "Collapse ADaM" : "Expand ADaM"}
-                    >
-                      <svg
-                        className={`size-[12px] transition-transform ${isAdamExpanded ? "rotate-90" : ""}`}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                  <div className="flex h-full items-center justify-between px-[10px]">
+                    <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[6px]">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsAdamExpanded(!isAdamExpanded);
+                        }}
+                        className="flex h-[16px] w-[16px] shrink-0 items-center justify-center active:scale-[0.96] cursor-pointer"
+                        title={isAdamExpanded ? "Collapse ADaM" : "Expand ADaM"}
                       >
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </button>
-                    <span className="t-small font-medium truncate">ADaM</span>
+                        <ChevronRightTreeIcon
+                          isExpanded={isAdamExpanded}
+                          color={
+                            selectedNavStandard === "ADaM" && selectedNavDataset === null && !isShowingSelectedOnly
+                              ? "#830051"
+                              : "#888E8E"
+                          }
+                        />
+                      </button>
+                      <span className="t-small font-medium truncate">ADaM</span>
+                    </div>
                   </div>
-                  {adamSelectedCount > 0 && (
-                    <span
-                      className={`t-footnote font-mono ${
-                        selectedNavStandard === "ADaM" && selectedNavDataset === null && !isShowingSelectedOnly
-                          ? "text-brand-1 font-medium"
-                          : "text-text-secondary"
-                      }`}
-                    >
-                      {adamSelectedCount}
-                    </span>
-                  )}
                 </div>
 
-                {/* Branch Children (Pure Text, Indented pl-[28px]) */}
+                {/* Branch Children (Indent pl-[32px] to align perfectly with ADaM label text) */}
                 {isAdamExpanded && (
                   <div className="flex flex-col gap-[1px]">
                     {navDatasets.adam.map((ds) => {
                       const isNavActive = selectedNavDataset === ds.name && !isShowingSelectedOnly;
-                      const dsSelectedCount = datasetSelectedCounts.get(ds.name) || 0;
                       return (
                         <div
                           key={ds.name}
@@ -570,22 +544,15 @@ export function VariableSpecPicker({
                               setSelectedNavStandard("ADaM");
                             }
                           }}
-                          className={`flex items-center justify-between pl-[28px] pr-[12px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
+                          className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors select-none ${
                             isNavActive
                               ? "bg-[#F4E8EE] text-brand-1 font-medium"
                               : "text-text-primary hover:bg-graphite-10"
                           }`}
                         >
-                          <span className="t-small font-mono truncate">{ds.name}</span>
-                          {dsSelectedCount > 0 && (
-                            <span
-                              className={`t-footnote font-mono ${
-                                isNavActive ? "text-brand-1 font-medium" : "text-text-secondary"
-                              }`}
-                            >
-                              {dsSelectedCount}
-                            </span>
-                          )}
+                          <div className="flex h-full items-center justify-between pl-[32px] pr-[10px]">
+                            <span className="t-small truncate">{ds.name}</span>
+                          </div>
                         </div>
                       );
                     })}
@@ -596,10 +563,10 @@ export function VariableSpecPicker({
 
             {/* SDTM Tree Branch */}
             {navDatasets.sdtm.length > 0 && (
-              <div className="mt-[4px]">
-                {/* Branch Header (Click text: toggle SDTM scope; Click arrow: toggle expand) */}
+              <div className="mt-[2px]">
+                {/* Branch Header */}
                 <div
-                  className={`flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none group ${
+                  className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors select-none ${
                     selectedNavStandard === "SDTM" && selectedNavDataset === null && !isShowingSelectedOnly
                       ? "bg-[#F4E8EE] text-brand-1 font-medium"
                       : "text-text-primary hover:bg-graphite-10"
@@ -614,47 +581,36 @@ export function VariableSpecPicker({
                     }
                   }}
                 >
-                  <div className="flex items-center gap-[4px] min-w-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsSdtmExpanded(!isSdtmExpanded);
-                      }}
-                      className="size-[18px] flex items-center justify-center rounded hover:bg-black/5 text-text-secondary hover:text-text-primary transition-colors cursor-pointer shrink-0"
-                      title={isSdtmExpanded ? "Collapse SDTM" : "Expand SDTM"}
-                    >
-                      <svg
-                        className={`size-[12px] transition-transform ${isSdtmExpanded ? "rotate-90" : ""}`}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
+                  <div className="flex h-full items-center justify-between px-[10px]">
+                    <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[6px]">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsSdtmExpanded(!isSdtmExpanded);
+                        }}
+                        className="flex h-[16px] w-[16px] shrink-0 items-center justify-center active:scale-[0.96] cursor-pointer"
+                        title={isSdtmExpanded ? "Collapse SDTM" : "Expand SDTM"}
                       >
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </button>
-                    <span className="t-small font-medium truncate">SDTM</span>
+                        <ChevronRightTreeIcon
+                          isExpanded={isSdtmExpanded}
+                          color={
+                            selectedNavStandard === "SDTM" && selectedNavDataset === null && !isShowingSelectedOnly
+                              ? "#830051"
+                              : "#888E8E"
+                          }
+                        />
+                      </button>
+                      <span className="t-small font-medium truncate">SDTM</span>
+                    </div>
                   </div>
-                  {sdtmSelectedCount > 0 && (
-                    <span
-                      className={`t-footnote font-mono ${
-                        selectedNavStandard === "SDTM" && selectedNavDataset === null && !isShowingSelectedOnly
-                          ? "text-brand-1 font-medium"
-                          : "text-text-secondary"
-                      }`}
-                    >
-                      {sdtmSelectedCount}
-                    </span>
-                  )}
                 </div>
 
-                {/* Branch Children (Pure Text, Indented pl-[28px]) */}
+                {/* Branch Children (Indent pl-[32px] to align perfectly with SDTM label text) */}
                 {isSdtmExpanded && (
                   <div className="flex flex-col gap-[1px]">
                     {navDatasets.sdtm.map((ds) => {
                       const isNavActive = selectedNavDataset === ds.name && !isShowingSelectedOnly;
-                      const dsSelectedCount = datasetSelectedCounts.get(ds.name) || 0;
                       return (
                         <div
                           key={ds.name}
@@ -668,22 +624,15 @@ export function VariableSpecPicker({
                               setSelectedNavStandard("SDTM");
                             }
                           }}
-                          className={`flex items-center justify-between pl-[28px] pr-[12px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none ${
+                          className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors select-none ${
                             isNavActive
                               ? "bg-[#F4E8EE] text-brand-1 font-medium"
                               : "text-text-primary hover:bg-graphite-10"
                           }`}
                         >
-                          <span className="t-small font-mono truncate">{ds.name}</span>
-                          {dsSelectedCount > 0 && (
-                            <span
-                              className={`t-footnote font-mono ${
-                                isNavActive ? "text-brand-1 font-medium" : "text-text-secondary"
-                              }`}
-                            >
-                              {dsSelectedCount}
-                            </span>
-                          )}
+                          <div className="flex h-full items-center justify-between pl-[32px] pr-[10px]">
+                            <span className="t-small truncate">{ds.name}</span>
+                          </div>
                         </div>
                       );
                     })}
