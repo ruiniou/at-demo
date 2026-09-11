@@ -416,23 +416,7 @@ export function VariableSpecPicker({
               active={hasCodelistFilter}
               onClick={() => setHasCodelistFilter(!hasCodelistFilter)}
             />
-
-            {/* Clear Filters Link */}
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={handleClearFilters}
-                className="t-footnote text-brand-1 hover:underline cursor-pointer font-medium ml-[4px]"
-              >
-                Clear filters
-              </button>
-            )}
           </div>
-
-          {/* Matches Count */}
-          <span className="t-footnote text-text-secondary shrink-0">
-            {filteredVariables.length} variable{filteredVariables.length === 1 ? "" : "s"} found
-          </span>
         </div>
 
         {/* ================= 3. Main 3-Column Area ================= */}
@@ -480,9 +464,6 @@ export function VariableSpecPicker({
                     </button>
                     <span className="t-small font-medium truncate">ADaM</span>
                   </div>
-                  <span className="t-footnote text-text-secondary font-mono">
-                    {navDatasets.adam.reduce((acc, cur) => acc + cur.count, 0)}
-                  </span>
                 </div>
 
                 {/* Branch Children (Pure Text, Indented pl-[28px]) */}
@@ -509,7 +490,6 @@ export function VariableSpecPicker({
                           }`}
                         >
                           <span className="t-small font-mono truncate">{ds.name}</span>
-                          <span className="t-footnote text-text-secondary font-mono">{ds.count}</span>
                         </div>
                       );
                     })}
@@ -559,9 +539,6 @@ export function VariableSpecPicker({
                     </button>
                     <span className="t-small font-medium truncate">SDTM</span>
                   </div>
-                  <span className="t-footnote text-text-secondary font-mono">
-                    {navDatasets.sdtm.reduce((acc, cur) => acc + cur.count, 0)}
-                  </span>
                 </div>
 
                 {/* Branch Children (Pure Text, Indented pl-[28px]) */}
@@ -588,7 +565,6 @@ export function VariableSpecPicker({
                           }`}
                         >
                           <span className="t-small font-mono truncate">{ds.name}</span>
-                          <span className="t-footnote text-text-secondary font-mono">{ds.count}</span>
                         </div>
                       );
                     })}
