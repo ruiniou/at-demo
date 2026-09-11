@@ -241,8 +241,6 @@ export function VariableSpecPicker({
     search,
     hasVlmFilter,
     hasCodelistFilter,
-    showSelectedOnly,
-    selected,
     getVarStandard,
   ]);
 
