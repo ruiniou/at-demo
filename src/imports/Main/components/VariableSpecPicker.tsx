@@ -75,6 +75,7 @@ export function VariableSpecPicker({
   const [selectedNavDataset, setSelectedNavDataset] = useState<string | null>(null);
   const [hasVlmFilter, setHasVlmFilter] = useState(false);
   const [hasCodelistFilter, setHasCodelistFilter] = useState(false);
+  const [isShowingSelectedOnly, setIsShowingSelectedOnly] = useState(false);
 
   // --- Tree List Expand/Collapse State ---
   const [isAdamExpanded, setIsAdamExpanded] = useState(true);
@@ -96,6 +97,7 @@ export function VariableSpecPicker({
       setSearch("");
       setHasVlmFilter(false);
       setHasCodelistFilter(false);
+      setIsShowingSelectedOnly(false);
       setIsRightPanelOpen(false);
       setActiveVariable(null);
       setShowSdtmDetail(false);
@@ -160,8 +162,12 @@ export function VariableSpecPicker({
     return variables.filter((v) => {
       const vStd = getVarStandard(v);
 
-      // 1. Navigation Scope Filter (Dataset or Standard level)
-      if (selectedNavDataset) {
+      // 1. Navigation Scope Filter (Selected only, Dataset, or Standard level)
+      if (isShowingSelectedOnly) {
+        const itemKey = `${v.datasetName}.${v.variable}`;
+        const isSelected = selected.includes(itemKey) || selected.includes(v.variable);
+        if (!isSelected) return false;
+      } else if (selectedNavDataset) {
         if (v.datasetName !== selectedNavDataset) return false;
       } else if (selectedNavStandard) {
         if (vStd !== selectedNavStandard) return false;
@@ -187,6 +193,7 @@ export function VariableSpecPicker({
   }, [
     variables,
     search,
+    isShowingSelectedOnly,
     selectedNavStandard,
     selectedNavDataset,
     hasVlmFilter,
@@ -243,6 +250,40 @@ export function VariableSpecPicker({
     hasCodelistFilter,
     getVarStandard,
   ]);
+
+  // Map of datasetName -> number of selected variables
+  const datasetSelectedCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    selected.forEach((itemKey) => {
+      const parts = itemKey.split(".");
+      if (parts.length > 1) {
+        const ds = parts[0];
+        counts.set(ds, (counts.get(ds) || 0) + 1);
+      } else {
+        const v = variables.find((item) => item.variable === itemKey);
+        if (v) {
+          counts.set(v.datasetName, (counts.get(v.datasetName) || 0) + 1);
+        }
+      }
+    });
+    return counts;
+  }, [selected, variables]);
+
+  const adamSelectedCount = useMemo(() => {
+    let sum = 0;
+    navDatasets.adam.forEach((ds) => {
+      sum += datasetSelectedCounts.get(ds.name) || 0;
+    });
+    return sum;
+  }, [navDatasets.adam, datasetSelectedCounts]);
+
+  const sdtmSelectedCount = useMemo(() => {
+    let sum = 0;
+    navDatasets.sdtm.forEach((ds) => {
+      sum += datasetSelectedCounts.get(ds.name) || 0;
+    });
+    return sum;
+  }, [navDatasets.sdtm, datasetSelectedCounts]);
 
   // Toggle variable selection
   const toggleVariable = useCallback((itemKey: string) => {
@@ -302,6 +343,7 @@ export function VariableSpecPicker({
   // Reset/Clear all filters
   const defaultNavStandard = isTableMode ? "ADaM" : null;
   const hasActiveFilters =
+    isShowingSelectedOnly ||
     selectedNavStandard !== defaultNavStandard ||
     selectedNavDataset !== null ||
     hasVlmFilter ||
@@ -309,6 +351,7 @@ export function VariableSpecPicker({
     search.trim().length > 0;
 
   const handleClearFilters = () => {
+    setIsShowingSelectedOnly(false);
     setSelectedNavStandard(defaultNavStandard);
     setSelectedNavDataset(null);
     setHasVlmFilter(false);
@@ -408,17 +451,63 @@ export function VariableSpecPicker({
         <div className="flex flex-1 min-h-0 overflow-hidden bg-white">
           {/* ----- Column 1: Left Dataset Tree List (Pure 2-level Standard -> Dataset Tree) ----- */}
           <div className="w-[200px] shrink-0 border-r border-graphite-10 bg-bg-panel/40 flex flex-col overflow-y-auto py-[6px]">
+            {/* Top Quick View: Selected only */}
+            <div
+              onClick={() => {
+                if (isShowingSelectedOnly) {
+                  setIsShowingSelectedOnly(false);
+                  setSelectedNavStandard(isTableMode ? "ADaM" : null);
+                } else {
+                  setIsShowingSelectedOnly(true);
+                  setSelectedNavStandard(null);
+                  setSelectedNavDataset(null);
+                }
+              }}
+              className={`flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] mb-[4px] transition-colors select-none ${
+                isShowingSelectedOnly
+                  ? "bg-[#F4E8EE] text-brand-1 font-medium"
+                  : "text-text-primary hover:bg-graphite-10"
+              }`}
+            >
+              <div className="flex items-center gap-[6px] min-w-0">
+                <svg
+                  className={`size-[14px] shrink-0 ${isShowingSelectedOnly ? "text-brand-1" : "text-text-secondary"}`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span className="t-small truncate">Selected only</span>
+              </div>
+              {selected.length > 0 && (
+                <span
+                  className={`t-footnote font-mono ${
+                    isShowingSelectedOnly ? "text-brand-1 font-medium" : "text-text-secondary"
+                  }`}
+                >
+                  {selected.length}
+                </span>
+              )}
+            </div>
+
+            <div className="h-[1px] bg-graphite-10 mx-[8px] mb-[6px]" />
+
             {/* ADaM Tree Branch */}
             {navDatasets.adam.length > 0 && (
               <div>
                 {/* Branch Header (Click text: toggle ADaM scope; Click arrow: toggle expand) */}
                 <div
                   className={`flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none group ${
-                    selectedNavStandard === "ADaM" && selectedNavDataset === null
+                    selectedNavStandard === "ADaM" && selectedNavDataset === null && !isShowingSelectedOnly
                       ? "bg-[#F4E8EE] text-brand-1 font-medium"
                       : "text-text-primary hover:bg-graphite-10"
                   }`}
                   onClick={() => {
+                    setIsShowingSelectedOnly(false);
                     if (selectedNavStandard === "ADaM" && selectedNavDataset === null) {
                       setSelectedNavStandard(null);
                     } else {
@@ -449,17 +538,30 @@ export function VariableSpecPicker({
                     </button>
                     <span className="t-small font-medium truncate">ADaM</span>
                   </div>
+                  {adamSelectedCount > 0 && (
+                    <span
+                      className={`t-footnote font-mono ${
+                        selectedNavStandard === "ADaM" && selectedNavDataset === null && !isShowingSelectedOnly
+                          ? "text-brand-1 font-medium"
+                          : "text-text-secondary"
+                      }`}
+                    >
+                      {adamSelectedCount}
+                    </span>
+                  )}
                 </div>
 
                 {/* Branch Children (Pure Text, Indented pl-[28px]) */}
                 {isAdamExpanded && (
                   <div className="flex flex-col gap-[1px]">
                     {navDatasets.adam.map((ds) => {
-                      const isNavActive = selectedNavDataset === ds.name;
+                      const isNavActive = selectedNavDataset === ds.name && !isShowingSelectedOnly;
+                      const dsSelectedCount = datasetSelectedCounts.get(ds.name) || 0;
                       return (
                         <div
                           key={ds.name}
                           onClick={() => {
+                            setIsShowingSelectedOnly(false);
                             if (isNavActive) {
                               setSelectedNavDataset(null);
                               setSelectedNavStandard("ADaM");
@@ -475,6 +577,15 @@ export function VariableSpecPicker({
                           }`}
                         >
                           <span className="t-small font-mono truncate">{ds.name}</span>
+                          {dsSelectedCount > 0 && (
+                            <span
+                              className={`t-footnote font-mono ${
+                                isNavActive ? "text-brand-1 font-medium" : "text-text-secondary"
+                              }`}
+                            >
+                              {dsSelectedCount}
+                            </span>
+                          )}
                         </div>
                       );
                     })}
@@ -489,11 +600,12 @@ export function VariableSpecPicker({
                 {/* Branch Header (Click text: toggle SDTM scope; Click arrow: toggle expand) */}
                 <div
                   className={`flex items-center justify-between px-[10px] py-[5px] cursor-pointer rounded-[4px] mx-[6px] transition-colors select-none group ${
-                    selectedNavStandard === "SDTM" && selectedNavDataset === null
+                    selectedNavStandard === "SDTM" && selectedNavDataset === null && !isShowingSelectedOnly
                       ? "bg-[#F4E8EE] text-brand-1 font-medium"
                       : "text-text-primary hover:bg-graphite-10"
                   }`}
                   onClick={() => {
+                    setIsShowingSelectedOnly(false);
                     if (selectedNavStandard === "SDTM" && selectedNavDataset === null) {
                       setSelectedNavStandard(null);
                     } else {
@@ -524,17 +636,30 @@ export function VariableSpecPicker({
                     </button>
                     <span className="t-small font-medium truncate">SDTM</span>
                   </div>
+                  {sdtmSelectedCount > 0 && (
+                    <span
+                      className={`t-footnote font-mono ${
+                        selectedNavStandard === "SDTM" && selectedNavDataset === null && !isShowingSelectedOnly
+                          ? "text-brand-1 font-medium"
+                          : "text-text-secondary"
+                      }`}
+                    >
+                      {sdtmSelectedCount}
+                    </span>
+                  )}
                 </div>
 
                 {/* Branch Children (Pure Text, Indented pl-[28px]) */}
                 {isSdtmExpanded && (
                   <div className="flex flex-col gap-[1px]">
                     {navDatasets.sdtm.map((ds) => {
-                      const isNavActive = selectedNavDataset === ds.name;
+                      const isNavActive = selectedNavDataset === ds.name && !isShowingSelectedOnly;
+                      const dsSelectedCount = datasetSelectedCounts.get(ds.name) || 0;
                       return (
                         <div
                           key={ds.name}
                           onClick={() => {
+                            setIsShowingSelectedOnly(false);
                             if (isNavActive) {
                               setSelectedNavDataset(null);
                               setSelectedNavStandard("SDTM");
@@ -550,6 +675,15 @@ export function VariableSpecPicker({
                           }`}
                         >
                           <span className="t-small font-mono truncate">{ds.name}</span>
+                          {dsSelectedCount > 0 && (
+                            <span
+                              className={`t-footnote font-mono ${
+                                isNavActive ? "text-brand-1 font-medium" : "text-text-secondary"
+                              }`}
+                            >
+                              {dsSelectedCount}
+                            </span>
+                          )}
                         </div>
                       );
                     })}
@@ -621,8 +755,14 @@ export function VariableSpecPicker({
                   {filteredVariables.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-[20px] py-[48px] text-center">
-                        <p className="t-small text-text-secondary">No matching variables found</p>
-                        {hasActiveFilters && (
+                        <p className="t-small text-text-secondary">
+                          {isShowingSelectedOnly ? "No variables selected yet" : "No matching variables found"}
+                        </p>
+                        {isShowingSelectedOnly ? (
+                          <p className="t-footnote text-text-secondary mt-[4px]">
+                            Select variables from the datasets on the left to review them here.
+                          </p>
+                        ) : hasActiveFilters ? (
                           <button
                             type="button"
                             onClick={handleClearFilters}
@@ -630,7 +770,7 @@ export function VariableSpecPicker({
                           >
                             Reset filters
                           </button>
-                        )}
+                        ) : null}
                       </td>
                     </tr>
                   ) : (
@@ -1016,20 +1156,14 @@ export function VariableSpecPicker({
 
         {/* ================= 4. Footer ================= */}
         <div className="flex shrink-0 items-center justify-between border-t border-graphite-10 px-[20px] py-[14px] bg-white">
-          {/* Left summary */}
-          <div className="flex items-center gap-[12px]">
-            <span className="t-small text-text-secondary">
-              <strong className="font-medium text-text-primary">{selected.length}</strong> variable{selected.length === 1 ? "" : "s"} selected across{" "}
-              <strong className="font-medium text-text-primary">{selectedDatasets.length}</strong> dataset{selectedDatasets.length === 1 ? "" : "s"}
-            </span>
-
-            {/* New datasets addition alert */}
+          {/* Left: new datasets addition notice (if any) */}
+          <div className="flex items-center">
             {newlyAddedDatasets.length > 0 && (
               <span className="t-footnote text-text-secondary flex items-center gap-[4px]" title={`${newlyAddedDatasets.join(", ")} will be appended to Source Dataset(s)`}>
                 <span className="inline-flex size-[14px] items-center justify-center rounded-full bg-[#F4E8EE] text-[#830051] text-[10px] font-bold shrink-0">
                   i
                 </span>
-                <span>+{newlyAddedDatasets.length} dataset(s) will be added</span>
+                <span>+{newlyAddedDatasets.length} dataset(s) will be added to Source Dataset(s)</span>
               </span>
             )}
           </div>
