@@ -56,6 +56,9 @@ import linkUnlinkIconUrl from "../../icons/link-unlink-m.svg";
 import focusIconUrl from "../../icons/focus-3-line.svg";
 import barChartBoxAiIconUrl from "../../icons/bar-chart-box-ai-line.svg";
 import imageAiLineIconUrl from "../../icons/image-ai-line.svg";
+import chatAiFillIconUrl from "../../icons/chat-ai-4-fill.svg";
+import gitBranchIconUrl from "../../icons/git-branch-line.svg";
+import fileIconUrl from "../../icons/file-icon.svg";
 import CreateEventModal from "./components/CreateEventModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
@@ -79,7 +82,7 @@ import { AICodeDiff } from "../../components/ui/AI-CodeDiff";
 import { AIThinkingStatus } from "../../components/ui/AI-ThinkingStatus";
 import { AIUpdatedBlock } from "../../components/ui/AI-UpdatedBlock";
 import ChatBox from "./components/ChatBox";
-import type { AttachmentItem } from "./components/ChatBox";
+import type { AttachmentItem, MentionOption } from "./components/ChatBox";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { OptionLabel } from "../../components/ui/OptionLabel";
@@ -1086,8 +1089,43 @@ function Divider({ className }: { className?: string }) {
 
 // ==================== Chat Conversation & Main Panel ====================
 
+export type EventScopeItem = {
+  tflId: string;
+  name: string;
+  reason: string;
+  isExcluded?: boolean;
+};
+
+export type EventScopeCardData = {
+  title?: string;
+  items: EventScopeItem[];
+  status: 'pending' | 'confirmed' | 'cancelled';
+};
+
+export type EventProgressItem = {
+  tflId: string;
+  name: string;
+  status: 'queued' | 'running' | 'done' | 'failed';
+};
+
+export type EventProgressCardData = {
+  title?: string;
+  items: EventProgressItem[];
+  isCompleted?: boolean;
+};
+
+export type EventSummaryItem = {
+  tflId: string;
+  name: string;
+};
+
+export type EventSummaryCardData = {
+  title?: string;
+  items: EventSummaryItem[];
+};
+
 type Message = {
-  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete' | 'ai_update_complete' | 'ai_update_accepted' | 'meta_update_card';
+  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete' | 'ai_update_complete' | 'ai_update_accepted' | 'meta_update_card' | 'event_scope_card' | 'event_progress_card' | 'event_summary_card';
   content?: string;
   hasTag?: boolean;
   toBeUpdatedCount?: number;
@@ -1097,7 +1135,352 @@ type Message = {
   isProcessing?: boolean;
   /** Images submitted alongside the user message */
   attachments?: AttachmentItem[];
+  scopeCardData?: EventScopeCardData;
+  progressCardData?: EventProgressCardData;
+  summaryCardData?: EventSummaryCardData;
 };
+
+function EventScopeCard({
+  data,
+  onToggleExclude,
+  onConfirm,
+  onCancel,
+  onJumpToTfl,
+}: {
+  data: EventScopeCardData;
+  onToggleExclude: (tflId: string) => void;
+  onConfirm: () => void;
+  onCancel?: () => void;
+  onJumpToTfl?: (tflId: string) => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [headerHovered, setHeaderHovered] = useState(false);
+  const includedCount = data.items.filter((i) => !i.isExcluded).length;
+  const isConfirmed = data.status === "confirmed";
+  const isCancelled = data.status === "cancelled";
+  const isPending = !isConfirmed && !isCancelled;
+
+  return (
+    <div className={`flex flex-col bg-white border border-border-default rounded-[8px] overflow-hidden w-full shadow-sm my-[2px] transition-opacity ${
+      isCancelled ? "opacity-75" : ""
+    }`}>
+      {/* Header */}
+      <div
+        onClick={() => setIsExpanded((prev) => !prev)}
+        onMouseEnter={() => setHeaderHovered(true)}
+        onMouseLeave={() => setHeaderHovered(false)}
+        className={`flex items-center justify-between px-[12px] py-[9px] w-full transition-colors cursor-pointer select-none ${
+          headerHovered ? "bg-bg-panel" : "bg-transparent"
+        } ${isExpanded ? "border-b border-graphite-10" : ""}`}
+      >
+        <div className="flex items-center gap-[6px]">
+          <svg
+            className={`w-[14px] h-[14px] text-text-secondary transition-transform ${
+              isExpanded ? "rotate-0" : "-rotate-90"
+            }`}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12.0001 13.1714L16.9499 8.22168L18.3641 9.63589L12.0001 15.9999L5.63623 9.63589L7.05044 8.22168L12.0001 13.1714Z"
+              fill="currentColor"
+            />
+          </svg>
+          <span className="text-[13px] font-semibold text-text-primary">
+            {data.title || "Impacted Deliverables"}
+          </span>
+          <span className="flex items-center justify-center h-[16px] min-w-[16px] px-[5px] rounded-[10px] bg-graphite-10 text-[10px] font-medium text-text-secondary">
+            {includedCount}
+          </span>
+        </div>
+
+        {isConfirmed && (
+          <div className="flex items-center gap-[4px] text-[12px] text-emerald-600 font-medium">
+            <LocalIcon src={checkIconUrl} className="w-[12px] h-[12px]" color="#059669" />
+            <span>Applied</span>
+          </div>
+        )}
+
+        {isCancelled && (
+          <div className="flex items-center gap-[4px] text-[12px] text-text-secondary font-medium">
+            <span className="w-[6px] h-[6px] rounded-full bg-graphite-30" />
+            <span>Cancelled</span>
+          </div>
+        )}
+      </div>
+
+      {/* Body */}
+      {isExpanded && (
+        <div className="flex flex-col">
+          {isPending && (
+            <div className="px-[12px] pt-[8px] pb-[4px]">
+              <p className="t-small text-text-secondary">
+                Select tables to apply updates:
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-col max-h-[220px] overflow-y-auto divide-y divide-graphite-10">
+            {data.items.map((item) => {
+              const isSelected = !item.isExcluded;
+              return (
+                <div
+                  key={item.tflId}
+                  onClick={() => {
+                    if (isPending) onToggleExclude(item.tflId);
+                  }}
+                  className={`flex items-center justify-between gap-[10px] px-[12px] py-[8px] transition-colors ${
+                    isPending ? "cursor-pointer hover:bg-bg-panel" : ""
+                  } ${!isSelected || isCancelled ? "opacity-60 bg-graphite-5/50" : ""}`}
+                >
+                  <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                    {isPending ? (
+                      <span
+                        className={`w-[14px] h-[14px] rounded-[3px] flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected
+                            ? "bg-brand-1"
+                            : "border border-graphite-30 bg-white"
+                        }`}
+                      >
+                        {isSelected && (
+                          <LocalIcon src={checkIconUrl} className="w-[10px] h-[10px]" color="white" />
+                        )}
+                      </span>
+                    ) : (
+                      <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px] shrink-0 text-text-secondary" />
+                    )}
+
+                    <span
+                      className={`text-[13px] leading-[18px] truncate ${
+                        isCancelled
+                          ? "text-text-secondary line-through"
+                          : isSelected
+                          ? "text-text-primary font-medium"
+                          : "text-text-secondary line-through"
+                      }`}
+                    >
+                      {item.name}
+                    </span>
+                  </div>
+
+                  {item.reason && (
+                    <span className="shrink-0 px-[6px] py-[1px] rounded bg-graphite-10 text-[11px] text-text-secondary font-mono">
+                      {item.reason}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Footer CTA */}
+          {isPending && (
+            <div className="flex items-center justify-end gap-[8px] px-[12px] py-[8px] bg-bg-panel border-t border-graphite-10">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onCancel}
+                className="h-[28px] px-[12px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={onConfirm}
+                disabled={includedCount === 0}
+                className="h-[28px] px-[12px]"
+              >
+                {includedCount > 0 ? `Apply to ${includedCount} ${includedCount === 1 ? 'Table' : 'Tables'}` : "Select Tables"}
+              </Button>
+            </div>
+          )}
+
+          {isCancelled && (
+            <div className="flex items-center justify-between px-[12px] py-[6px] bg-bg-panel border-t border-graphite-10">
+              <span className="text-[12px] text-text-secondary italic">Selection cancelled</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EventProgressCard({
+  data,
+  onJumpToTfl,
+}: {
+  data: EventProgressCardData;
+  onJumpToTfl?: (tflId: string) => void;
+}) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [headerHovered, setHeaderHovered] = useState(false);
+  const totalCount = data.items.length;
+  const completedCount = data.items.filter((i) => i.status === "done").length;
+  const isAllDone = data.isCompleted || (totalCount > 0 && completedCount === totalCount);
+
+  return (
+    <div className="flex flex-col bg-white border border-border-default rounded-[8px] overflow-hidden w-full shadow-sm my-[2px]">
+      {/* Header */}
+      <div
+        onClick={() => setIsExpanded((prev) => !prev)}
+        onMouseEnter={() => setHeaderHovered(true)}
+        onMouseLeave={() => setHeaderHovered(false)}
+        className={`flex items-center justify-between px-[12px] py-[9px] w-full transition-colors cursor-pointer select-none ${
+          headerHovered ? "bg-bg-panel" : "bg-transparent"
+        } ${isExpanded ? "border-b border-graphite-10" : ""}`}
+        style={{ borderBottomWidth: isExpanded ? "0.6px" : "0px" }}
+      >
+        <div className="flex items-center gap-[6px]">
+          <svg
+            className={`w-[14px] h-[14px] text-text-secondary transition-transform ${
+              isExpanded ? "rotate-0" : "-rotate-90"
+            }`}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12.0001 13.1714L16.9499 8.22168L18.3641 9.63589L12.0001 15.9999L5.63623 9.63589L7.05044 8.22168L12.0001 13.1714Z"
+              fill="currentColor"
+            />
+          </svg>
+          {isAllDone ? (
+            <LocalIcon src={checkIconUrl} className="w-[14px] h-[14px]" color="#059669" />
+          ) : (
+            <img src={aiProcessingIconUrl} className="w-[14px] h-[14px]" alt="" />
+          )}
+          <span className="text-[13px] font-semibold text-text-primary">
+            {isAllDone ? "All Updates Applied" : (data.title || "Applying Updates")}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-[6px]">
+          <span className="text-[11px] font-medium text-text-secondary">
+            {completedCount} of {totalCount} completed
+          </span>
+        </div>
+      </div>
+
+      {/* Progress Items List */}
+      {isExpanded && (
+        <div className="flex flex-col p-[4px] divide-y divide-graphite-10 max-h-[240px] overflow-y-auto">
+          {data.items.map((item) => {
+            const isRunning = item.status === "running";
+            const isDone = item.status === "done";
+            const isQueued = item.status === "queued";
+
+            return (
+              <div
+                key={item.tflId}
+                onClick={() => onJumpToTfl?.(item.tflId)}
+                className="flex items-center justify-between gap-[10px] px-[8px] py-[7px] rounded-[6px] hover:bg-bg-panel cursor-pointer transition-colors group select-none"
+              >
+                <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                  <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
+                    {isRunning && (
+                      <img src={aiProcessingIconUrl} className="w-[14px] h-[14px] block" alt="Running" />
+                    )}
+                    {isDone && (
+                      <LocalIcon src={checkIconUrl} className="w-[12px] h-[12px]" color="#059669" />
+                    )}
+                    {isQueued && (
+                      <div className="w-[12px] h-[12px] rounded-full border border-graphite-30 flex items-center justify-center">
+                        <div className="w-[4px] h-[4px] rounded-full bg-graphite-30" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span
+                      className={`text-[13px] leading-[18px] truncate transition-colors ${
+                        isRunning
+                          ? "text-brand-1 font-medium"
+                          : isDone
+                          ? "text-text-primary font-medium"
+                          : "text-text-secondary"
+                      }`}
+                    >
+                      {item.name}
+                    </span>
+                    <span className="text-[11px] leading-[14px] text-text-secondary">
+                      {isRunning
+                        ? "Updating SAS code & metadata…"
+                        : isDone
+                        ? "Completed"
+                        : "Queued"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-[4px] shrink-0">
+                  <span className="text-[11px] font-mono text-text-secondary px-[5px] py-px rounded bg-graphite-10">
+                    {isRunning ? "Running" : isDone ? "Done" : "Queued"}
+                  </span>
+                  <LocalIcon
+                    src={arrowRightIconUrl}
+                    className="w-[14px] h-[14px] opacity-0 group-hover:opacity-100 transition-opacity"
+                    color="#888E8E"
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EventSummaryCard({
+  data,
+  onJumpToTfl,
+}: {
+  data: EventSummaryCardData;
+  onJumpToTfl?: (tflId: string) => void;
+}) {
+  return (
+    <div className="flex flex-col bg-white border border-border-default rounded-[8px] overflow-hidden w-full shadow-sm my-[2px]">
+      {/* Header matching user case */}
+      <div
+        className="flex items-center justify-between px-[12px] py-[9px] border-b border-graphite-10"
+        style={{ borderBottomWidth: "0.6px" }}
+      >
+        <span
+          className="text-[13px] font-semibold text-text-primary truncate"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          {data.title || `Updated ${data.items.length} ${data.items.length === 1 ? 'Deliverable' : 'Deliverables'}`}
+        </span>
+      </div>
+
+      {/* Deliverable list */}
+      <div className="p-[4px] flex flex-col gap-[2px] max-h-[220px] overflow-y-auto">
+        {data.items.map((item) => (
+          <div
+            key={item.tflId}
+            onClick={() => onJumpToTfl?.(item.tflId)}
+            className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[6px] hover:bg-bg-panel cursor-pointer transition-colors group select-none"
+          >
+            <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
+              <LocalIcon src={fileIconUrl} className="w-[16px] h-[16px]" />
+            </div>
+            <span className="text-[13px] text-text-primary truncate flex-1 group-hover:text-brand-1 transition-colors">
+              {item.name}
+            </span>
+            <LocalIcon
+              src={arrowRightIconUrl}
+              className="w-[14px] h-[14px] opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+              color="#888E8E"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function ChatConversation({ 
   messages, 
@@ -1111,6 +1494,10 @@ function ChatConversation({
   activeRenderVersionLabel,
   onRenderThumbnailClick,
   variant = 'incard',
+  onJumpToTfl,
+  onToggleScopeItem,
+  onConfirmScope,
+  onCancelScope,
 }: { 
   messages: Message[]; 
   isPending: boolean; 
@@ -1123,6 +1510,10 @@ function ChatConversation({
   activeRenderVersionLabel?: string;
   onRenderThumbnailClick?: (version: RenderVersion) => void;
   variant?: 'drawer' | 'incard';
+  onJumpToTfl?: (tflId: string) => void;
+  onToggleScopeItem?: (msgIndex: number, tflId: string) => void;
+  onConfirmScope?: (msgIndex: number) => void;
+  onCancelScope?: (msgIndex: number) => void;
 }) {
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
@@ -1223,12 +1614,47 @@ function ChatConversation({
               </div>
             )}
 
+            {msg.type === 'event_scope_card' && msg.scopeCardData && (
+              <div className="w-full relative">
+                <EventScopeCard
+                  data={msg.scopeCardData}
+                  onToggleExclude={(tflId) => onToggleScopeItem?.(currentFlatIdx, tflId)}
+                  onConfirm={() => onConfirmScope?.(currentFlatIdx)}
+                  onCancel={() => onCancelScope?.(currentFlatIdx)}
+                  onJumpToTfl={onJumpToTfl}
+                />
+              </div>
+            )}
+
+            {msg.type === 'event_progress_card' && msg.progressCardData && (
+              <div className="w-full relative">
+                <EventProgressCard
+                  data={msg.progressCardData}
+                  onJumpToTfl={onJumpToTfl}
+                />
+              </div>
+            )}
+
+            {msg.type === 'event_summary_card' && msg.summaryCardData && (
+              <div className="w-full relative">
+                <EventSummaryCard
+                  data={msg.summaryCardData}
+                  onJumpToTfl={onJumpToTfl}
+                />
+              </div>
+            )}
+
             {msg.type === 'ai_complete' && (
               <div className="flex flex-col gap-[12px] w-full relative">
                 <AIThinkingStatus status="completed" />
                 <div className="flex flex-col w-full relative gap-[12px]">
-                  
-                  {docType === 'figure' ? (
+                  {msg.content ? (
+                    <div className="flex flex-col w-full px-[10px]">
+                      <p className="t-body text-text-primary leading-relaxed whitespace-pre-wrap">
+                        {msg.content}
+                      </p>
+                    </div>
+                  ) : docType === 'figure' ? (
                     <>
                       <div className="flex flex-col w-full px-[10px]">
                         <div className="flex flex-col gap-[8px] mb-[8px]">
@@ -1507,6 +1933,21 @@ function AICopilotPanel({
   activeRenderVersionLabel,
   onRenderThumbnailClick,
   quoteInsertRef,
+  isEventCopilot = false,
+  activeEventSession,
+  onNewEventSession,
+  onUpdateEventSession,
+  onStartEventExecution,
+  onCompleteTflExecution,
+  onFinishEventExecution,
+  isExecutingInEventCopilot = false,
+  executingSessionTitle,
+  onJumpToTfl,
+  eventProgressData,
+  onCloseEventProgress,
+  programs,
+  currentTableId,
+  onHandoffToEventCopilot,
 }: {
   variant?: 'drawer' | 'incard';
   quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
@@ -1532,15 +1973,98 @@ function AICopilotPanel({
   renderPreviewOpen?: boolean;
   activeRenderVersionLabel?: string;
   onRenderThumbnailClick?: (version: RenderVersion) => void;
+  isEventCopilot?: boolean;
+  activeEventSession?: EventSession | null;
+  onNewEventSession?: () => void;
+  onUpdateEventSession?: (sessionId: string, updates: Partial<EventSession>) => void;
+  onStartEventExecution?: (sessionId: string, sessionTitle: string, tflIds: string[]) => void;
+  onCompleteTflExecution?: (completedTflId: string) => void;
+  onFinishEventExecution?: (sessionId: string, allTflIds: string[]) => void;
+  isExecutingInEventCopilot?: boolean;
+  executingSessionTitle?: string | null;
+  onJumpToTfl?: (tflId: string) => void;
+  eventProgressData?: EventProgressCardData | null;
+  onCloseEventProgress?: () => void;
+  programs?: ProgramItem[];
+  currentTableId?: string;
+  onHandoffToEventCopilot?: (userPrompt: string, targetTflIds: string[], sourceTflId: string) => void;
 }) {
+  const mapEventSessionMessage = (m: EventSessionMessage): Message => {
+    if (m.summaryCardData) {
+      return { type: 'event_summary_card', summaryCardData: m.summaryCardData, content: m.content };
+    }
+    if (m.scopeCardData) {
+      return { type: 'event_scope_card', scopeCardData: m.scopeCardData, content: m.content };
+    }
+    if (m.progressCardData) {
+      return { type: 'event_progress_card', progressCardData: m.progressCardData, content: m.content };
+    }
+    return {
+      type: m.role === 'user' ? ('user' as const) : ('ai_complete' as const),
+      content: m.content,
+      attachments: m.attachments,
+    };
+  };
+
+  const mapMessageToEventSessionMessage = (m: Message): EventSessionMessage | null => {
+    if (m.type === 'user') {
+      return { role: 'user', content: m.content, attachments: m.attachments };
+    }
+    if (m.type === 'event_summary_card' && m.summaryCardData) {
+      return { role: 'assistant', summaryCardData: m.summaryCardData, content: m.content };
+    }
+    if (m.type === 'event_scope_card' && m.scopeCardData) {
+      return { role: 'assistant', scopeCardData: m.scopeCardData, content: m.content };
+    }
+    if (m.type === 'event_progress_card' && m.progressCardData) {
+      return { role: 'assistant', progressCardData: m.progressCardData, content: m.content };
+    }
+    if (m.type === 'ai_complete') {
+      return { role: 'assistant', content: m.content };
+    }
+    return null;
+  };
+
+  const updateEventSessionMessages = (newMessages: Message[], extraUpdates?: Partial<EventSession>) => {
+    if (!isEventCopilot) return;
+    const sessionId = activeEventSession?.id || "event";
+    const sessionMessages = newMessages
+      .map(mapMessageToEventSessionMessage)
+      .filter((m): m is EventSessionMessage => m !== null);
+    onUpdateEventSession?.(sessionId, {
+      messages: sessionMessages,
+      ...extraUpdates,
+    });
+  };
+
   const [messages, setMessages] = useState<Message[]>(() => {
+    if (isEventCopilot) {
+      if (!activeEventSession || (activeEventSession.messages ?? []).length === 0) {
+        return [];
+      }
+      return (activeEventSession.messages ?? []).map(mapEventSessionMessage);
+    }
     if (docType === 'figure') return [{ type: 'ai_complete' }];
     return [
       { type: 'user', content: 'Review and showcase all supported Markdown typography, elements, and styles in this conversation stream.' },
       { type: 'ai_complete' }
     ];
   });
+
+  useEffect(() => {
+    if (isEventCopilot) {
+      setDockedProgressData(null);
+      if (!activeEventSession || (activeEventSession.messages ?? []).length === 0) {
+        setMessages([]);
+      } else {
+        setMessages((activeEventSession.messages ?? []).map(mapEventSessionMessage));
+      }
+    }
+  }, [isEventCopilot, activeEventSession?.id]);
+
   const [isPending, setIsPending] = useState(false);
+  const [dockedProgressData, setDockedProgressData] = useState<EventProgressCardData | null>(null);
+  const activeProgressData = eventProgressData !== undefined && eventProgressData !== null ? eventProgressData : dockedProgressData;
 
   const [sessionOptions] = useState([
     { label: "Session: Demographics", value: "session-1" },
@@ -1549,7 +2073,9 @@ function AICopilotPanel({
   ]);
   const [selectedSession, setSelectedSession] = useState("session-1");
 
-  const isSubmitDisabled = isPending || metaUpdateProcessing || (hasPendingCodeChanges && ((metaDiffItems?.length ?? 0) > 0));
+  const isSubmitDisabled = isEventCopilot
+    ? (isPending || (activeProgressData ? !activeProgressData.isCompleted : false))
+    : (isPending || isExecutingInEventCopilot || metaUpdateProcessing || (hasPendingCodeChanges && ((metaDiffItems?.length ?? 0) > 0)));
 
   const [localInput, setLocalInput] = useState("");
   const isControlled = inputValue !== undefined && onChangeInputValue !== undefined;
@@ -1565,6 +2091,39 @@ function AICopilotPanel({
   const inputRef = useRef<HTMLInputElement>(null);
   const chatAreaRef = useRef<HTMLDivElement>(null);
   const attachFilesRef = useRef<((files: File[]) => void) | null>(null);
+
+  const allTables = useMemo(() => {
+    if (!programs) return [];
+    return programs.flatMap((p) => p.tables);
+  }, [programs]);
+
+  const mentionOptions: MentionOption[] = useMemo(() => {
+    if (isEventCopilot) {
+      // In Event Copilot: global scope, can mention any specific TFL
+      return allTables.map((t) => ({
+        id: t.id,
+        label: t.name,
+        type: "tfl" as const,
+      }));
+    }
+
+    // In Single TFL Copilot: default context is the current TFL (所在的 TFL).
+    // The current table is ALREADY the default scope, so it is excluded from the @ list.
+    // The @ menu is strictly used to diffuse to @Event or other TFLs.
+    const list: MentionOption[] = [
+      { id: "event", label: "Event (Entire Study)", type: "event" as const },
+    ];
+    allTables.forEach((t) => {
+      if (t.id !== currentTableId) {
+        list.push({
+          id: t.id,
+          label: t.name,
+          type: "tfl" as const,
+        });
+      }
+    });
+    return list;
+  }, [allTables, currentTableId, isEventCopilot]);
 
   // --- Drag & Drop state for full AI Copilot panel ---
   const [isCopilotDragOver, setIsCopilotDragOver] = useState(false);
@@ -1616,7 +2175,7 @@ function AICopilotPanel({
 
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
-  const hasCodeDiff = messages.some(m => m.type === 'ai_update_complete' || (docType === 'listing' && m.type === 'ai_complete'));
+  const hasCodeDiff = !isEventCopilot && messages.some(m => m.type === 'ai_update_complete' || (docType === 'listing' && m.type === 'ai_complete'));
 
   useEffect(() => {
     onCodeDiffChange?.(hasCodeDiff);
@@ -1644,12 +2203,247 @@ function AICopilotPanel({
     }, 1500);
   };
 
+  const handleToggleScopeItem = (msgIndex: number, tflId: string) => {
+    const nextMessages = messages.map((msg, idx) => {
+      if (idx !== msgIndex || !msg.scopeCardData) return msg;
+      const newItems = msg.scopeCardData.items.map((item) =>
+        item.tflId === tflId ? { ...item, isExcluded: !item.isExcluded } : item
+      );
+      return {
+        ...msg,
+        scopeCardData: {
+          ...msg.scopeCardData,
+          items: newItems,
+        },
+      };
+    });
+    setMessages(nextMessages);
+    updateEventSessionMessages(nextMessages);
+  };
+
+  const handleCancelScope = (msgIndex: number) => {
+    const nextMessages = messages
+      .map((msg, idx) => {
+        if (idx !== msgIndex || !msg.scopeCardData) return msg;
+        return {
+          ...msg,
+          scopeCardData: {
+            ...msg.scopeCardData,
+            status: "cancelled" as const,
+          },
+        };
+      })
+      .concat([
+        {
+          type: "ai_complete" as const,
+          content: "Selection cancelled. You can continue our conversation or specify a new request.",
+        },
+      ]);
+    setMessages(nextMessages);
+    updateEventSessionMessages(nextMessages, {
+      status: "idle",
+    });
+  };
+
+  const handleConfirmScope = (msgIndex: number) => {
+    const scopeMsg = messages[msgIndex];
+    const targetItems = scopeMsg?.scopeCardData?.items?.filter((item) => !item.isExcluded) || [];
+
+    if (targetItems.length === 0) return;
+
+    const confirmedMessages = messages.map((msg, idx) => {
+      if (idx !== msgIndex || !msg.scopeCardData) return msg;
+      return {
+        ...msg,
+        scopeCardData: {
+          ...msg.scopeCardData,
+          status: "confirmed" as const,
+        },
+      };
+    });
+
+    setMessages(confirmedMessages);
+    updateEventSessionMessages(confirmedMessages, { status: "processing" });
+
+    const sessionId = activeEventSession?.id || "event";
+    const sessionTitle = activeEventSession?.name || "Variable Replacement";
+    const targetTflIds = targetItems.map((t) => t.tflId);
+
+    // 1. Notify parent that execution has started across target TFLs
+    onStartEventExecution?.(sessionId, sessionTitle, targetTflIds);
+
+    // 2. Set docked progress card above input box
+    const initialProgressItems: EventProgressItem[] = targetItems.map((t, idx) => ({
+      tflId: t.tflId,
+      name: t.name,
+      status: idx === 0 ? ("running" as const) : ("queued" as const),
+    }));
+
+    setDockedProgressData({
+      title: "Applying Updates",
+      items: initialProgressItems,
+      isCompleted: false,
+    });
+    setIsPending(true);
+
+    // 3. Sequentially process each TFL deliverable
+    let currentIdx = 0;
+    const stepDuration = 1800;
+
+    const executeStep = () => {
+      if (currentIdx < targetItems.length) {
+        const activeTflId = targetItems[currentIdx].tflId;
+
+        // Update docked progress card state
+        setDockedProgressData((prev) => {
+          if (!prev) return prev;
+          const updated = prev.items.map((it, idx) => {
+            if (idx < currentIdx) return { ...it, status: "done" as const };
+            if (idx === currentIdx) return { ...it, status: "running" as const };
+            return { ...it, status: "queued" as const };
+          });
+          return {
+            ...prev,
+            items: updated,
+          };
+        });
+
+        setTimeout(() => {
+          // Notify parent that activeTflId finished
+          onCompleteTflExecution?.(activeTflId);
+
+          currentIdx++;
+          if (currentIdx < targetItems.length) {
+            executeStep();
+          } else {
+            // All completed!
+            setIsPending(false);
+            onFinishEventExecution?.(sessionId, targetTflIds);
+
+            // Per user request:
+            // "2.当任务完成时候：进度卡片就可以移走了，因为对话流里已经出现了汇总卡片"
+            // Wait 600ms so user briefly sees the last item transition, then remove progress card and append summary card
+            setTimeout(() => {
+              setDockedProgressData(null);
+              onCloseEventProgress?.();
+              const summaryMsg: Message = {
+                type: "event_summary_card" as const,
+                summaryCardData: {
+                  title: `Updated ${targetItems.length} ${targetItems.length === 1 ? "Deliverable" : "Deliverables"}`,
+                  items: targetItems.map((t) => ({ tflId: t.tflId, name: t.name })),
+                },
+              };
+              const finalMessages = [...confirmedMessages, summaryMsg];
+              setMessages(finalMessages);
+              updateEventSessionMessages(finalMessages, { status: "completed" });
+            }, 600);
+          }
+        }, stepDuration);
+      }
+    };
+
+    setTimeout(executeStep, 400);
+  };
+
   const handleSubmit = (text: string, attachments?: AttachmentItem[]) => {
     const isUpdate = metaUpdateActive && metaDiffItems && metaDiffItems.length > 0;
     if (!text.trim() && !isUpdate && !attachments?.length) return;
     (document.activeElement as HTMLElement)?.blur();
 
     const userContent = text.trim() ? text : 'Update code based on the metadata changes above.';
+
+    if (isEventCopilot) {
+      const sessionId = activeEventSession?.id || "event";
+      const isInitialNewSession = !activeEventSession?.messages?.length || activeEventSession?.name === "New Session";
+
+      let newSessionTitle = activeEventSession?.name;
+      if (isInitialNewSession) {
+        if (/TRTA/i.test(userContent)) {
+          newSessionTitle = "Variable Update: TRTA → TRT01P";
+        } else {
+          const cleanText = userContent.replace(/[.,!?]+$/, '').trim();
+          newSessionTitle = cleanText.length > 28 ? cleanText.slice(0, 26) + "..." : cleanText;
+        }
+      }
+
+      const userMsg: Message = {
+        type: "user",
+        content: userContent,
+        attachments: attachments && attachments.length > 0 ? [...attachments] : undefined,
+      };
+      const msgsWithUser = [...messages, userMsg];
+
+      setMessages([...msgsWithUser, { type: "ai_thinking" }]);
+      setCurrentVal("");
+      setIsPending(true);
+
+      updateEventSessionMessages(msgsWithUser, {
+        name: newSessionTitle,
+        status: "processing",
+      });
+
+      setTimeout(() => {
+        const aiMsg: Message = {
+          type: "ai_complete" as const,
+          content:
+            "Identified 3 deliverables referencing TRTA in the demographic domain. Review and select deliverables to update:",
+        };
+        const scopeMsg: Message = {
+          type: "event_scope_card" as const,
+          scopeCardData: {
+            title: "Target Deliverables",
+            status: "pending",
+            items: [
+              {
+                tflId: "t1",
+                name: "14.1.1 Disposition",
+                reason: "Filter condition",
+                isExcluded: false,
+              },
+              {
+                tflId: "t4",
+                name: "14.1.4 Demographics (Full Analysis Set)",
+                reason: "Summary columns",
+                isExcluded: false,
+              },
+              {
+                tflId: "t5",
+                name: "14.1.5 Baseline Characteristics",
+                reason: "Stratification",
+                isExcluded: false,
+              },
+            ],
+          },
+        };
+        const finalMsgs = [...msgsWithUser, aiMsg, scopeMsg];
+        setMessages(finalMsgs);
+        setIsPending(false);
+        updateEventSessionMessages(finalMsgs, {
+          status: "idle",
+        });
+      }, 1200);
+      return;
+    }
+
+    // --- Single TFL Copilot: check if cross-table / Event handoff is requested via @mention ---
+    const isMentionEvent = /@\[mention:event:/.test(userContent);
+    const tflMatches = [...userContent.matchAll(/@\[mention:([^:]+):tfl:([^\]]+)\]/g)];
+    const mentionedTflIds = tflMatches.map((m) => m[1]);
+
+    // Rule 1: contains @Event
+    // Rule 2: contains any TFL where tflId !== currentTableId (or multiple TFLs)
+    const mentionsOtherTfls = mentionedTflIds.some((id) => id !== currentTableId);
+    const isCrossTableIntent = isMentionEvent || mentionsOtherTfls;
+
+    if (isCrossTableIntent) {
+      let targetIds = [...mentionedTflIds];
+      if (currentTableId && !targetIds.includes(currentTableId)) {
+        targetIds.unshift(currentTableId);
+      }
+      onHandoffToEventCopilot?.(userContent, targetIds, currentTableId || "t1");
+      setCurrentVal("");
+      return;
+    }
 
     // Only show metadata review card if the submission includes an 'add component' change
     const hasAddComponent = metaDiffItems?.some(d => d.changeType === 'added' || d.fieldId.startsWith('add_')) || /add|component|新增|添加|create|make|insert|new/i.test(text);
@@ -1734,9 +2528,12 @@ function AICopilotPanel({
                   variant="select"
                   showIcon={false}
                   labelClassName="t-small-medium font-medium"
-                  options={sessionOptions}
-                  value={selectedSession}
-                  onChange={setSelectedSession}
+                  options={isEventCopilot
+                    ? [{ label: activeEventSession?.name || "New Session", value: activeEventSession?.id || "event" }]
+                    : sessionOptions
+                  }
+                  value={isEventCopilot ? (activeEventSession?.id || "event") : selectedSession}
+                  onChange={isEventCopilot ? () => {} : setSelectedSession}
                   className="max-w-full"
                 />
               </div>
@@ -1746,6 +2543,7 @@ function AICopilotPanel({
                 <TooltipText label="New Session">
                   <button
                     type="button"
+                    onClick={isEventCopilot ? onNewEventSession : undefined}
                     aria-label="New Session"
                     className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
                   >
@@ -1774,9 +2572,12 @@ function AICopilotPanel({
               variant="select"
               showIcon={false}
               labelClassName="t-small-medium font-medium"
-              options={sessionOptions}
-              value={selectedSession}
-              onChange={setSelectedSession}
+              options={isEventCopilot
+                ? [{ label: activeEventSession?.name || "New Session", value: activeEventSession?.id || "event" }]
+                : sessionOptions
+              }
+              value={isEventCopilot ? (activeEventSession?.id || "event") : selectedSession}
+              onChange={isEventCopilot ? () => {} : setSelectedSession}
               className="max-w-full"
             />
           </div>
@@ -1784,6 +2585,7 @@ function AICopilotPanel({
             <TooltipText label="New Session">
               <button
                 type="button"
+                onClick={isEventCopilot ? onNewEventSession : undefined}
                 aria-label="New Session"
                 className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
               >
@@ -1813,10 +2615,21 @@ function AICopilotPanel({
           ref={chatAreaRef} 
           className="flex-1 min-h-0 overflow-y-auto scroll-smooth scrollbar-code"
         >
+          {isEventCopilot && activeEventSession?.parentId && (
+            <div className="flex items-center gap-[6px] px-[12px] py-[6px] mx-[8px] mt-[8px] mb-[4px] rounded-[6px] bg-graphite-5 border border-graphite-10 shrink-0">
+              <LocalIcon src={gitBranchIconUrl} className="h-[13px] w-[13px] shrink-0" color="var(--color-text-secondary)" />
+              <span className="text-[11px] text-text-secondary truncate">
+                Branched from <span className="font-medium text-text-primary">{activeEventSession.parentName}</span>
+              </span>
+            </div>
+          )}
+
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-[12px] pb-[40px]">
               <img src={atlasLogoFullUrl} alt="Atlas" className="h-[32px]" />
-              <span className="t-body text-text-secondary text-center">Automate TFLs. Accelerate Insights.</span>
+              <span className="t-body text-text-secondary text-center">
+                {isEventCopilot ? "Cross-table assistance. Accelerate event workflows." : "Automate TFLs. Accelerate Insights."}
+              </span>
             </div>
           ) : (
             <ChatConversation 
@@ -1831,6 +2644,10 @@ function AICopilotPanel({
               activeRenderVersionLabel={activeRenderVersionLabel}
               onRenderThumbnailClick={onRenderThumbnailClick}
               variant={variant}
+              onJumpToTfl={onJumpToTfl}
+              onToggleScopeItem={handleToggleScopeItem}
+              onConfirmScope={handleConfirmScope}
+              onCancelScope={handleCancelScope}
             />
           )}
         </div>
@@ -1842,6 +2659,19 @@ function AICopilotPanel({
       {/* Input Area */}
       <div className="shrink-0 p-[8px] flex flex-col gap-[4px] bg-transparent relative z-10">
         <div className="w-full flex flex-col gap-[4px] relative">
+          {!isEventCopilot && isExecutingInEventCopilot && (
+            <div className="mx-[2px] mb-[4px] p-[8px_10px] rounded-[6px] bg-[#FFF8E6] border border-[#E5A000]/30 flex items-center gap-[8px] shrink-0 select-none">
+              <img src={aiProcessingIconUrl} className="w-[14px] h-[14px] shrink-0" alt="" />
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[12px] font-medium text-text-primary leading-[16px] truncate">
+                  Updating via Event Copilot: {executingSessionTitle || "Cross-Table Update"}
+                </span>
+                <span className="text-[11px] text-text-secondary leading-[14px]">
+                  Waiting for task completion. Code editing is temporarily locked.
+                </span>
+              </div>
+            </div>
+          )}
           {showAskUser && (
             <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50 rounded" />}>
               <AskUserComponent 
@@ -1862,8 +2692,15 @@ function AICopilotPanel({
               onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
               quoteInsertRef={quoteInsertRef}
               attachFilesRef={attachFilesRef}
+              eventProgressData={isEventCopilot ? activeProgressData : null}
+              onCloseEventProgress={() => {
+                setDockedProgressData(null);
+                onCloseEventProgress?.();
+              }}
+              onJumpToTfl={onJumpToTfl}
+              mentionOptions={mentionOptions}
             />
-          ) : hasCodeDiff ? (
+          ) : (!isEventCopilot && hasCodeDiff) ? (
             <ChatBox 
               onSubmit={handleSubmit} 
               onSubmitWithAttachments={handleSubmit}
@@ -1873,6 +2710,10 @@ function AICopilotPanel({
               onRejectPending={handleRejectPending}
               quoteInsertRef={quoteInsertRef}
               attachFilesRef={attachFilesRef}
+              eventProgressData={null}
+              onCloseEventProgress={() => {}}
+              onJumpToTfl={onJumpToTfl}
+              mentionOptions={mentionOptions}
             />
           ) : (
             <ChatBox
@@ -1881,6 +2722,13 @@ function AICopilotPanel({
               submitDisabled={isSubmitDisabled}
               quoteInsertRef={quoteInsertRef}
               attachFilesRef={attachFilesRef}
+              eventProgressData={isEventCopilot ? activeProgressData : null}
+              onCloseEventProgress={() => {
+                setDockedProgressData(null);
+                onCloseEventProgress?.();
+              }}
+              onJumpToTfl={onJumpToTfl}
+              mentionOptions={mentionOptions}
             />
           )}
           {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
@@ -1913,6 +2761,121 @@ type ProgramItem = {
   isExpanded: boolean;
   tables: TableItem[];
 };
+
+// ==================== Event Copilot Types & Mock Data ====================
+
+type TreeListTab = 'tfl' | 'copilot';
+
+type EventSessionStatus = 'idle' | 'processing' | 'completed' | 'failed';
+
+type EventSessionMessage = {
+  role: 'user' | 'assistant';
+  content?: string;
+  attachments?: AttachmentItem[];
+  scopeCardData?: EventScopeCardData;
+  progressCardData?: EventProgressCardData;
+  summaryCardData?: EventSummaryCardData;
+};
+
+type EventSession = {
+  id: string;
+  name: string;
+  status: EventSessionStatus;
+  parentId?: string;       // set on branch sessions
+  parentName?: string;     // display name of the parent session
+  messages?: EventSessionMessage[];
+  branches?: EventSession[];
+};
+
+const MOCK_EVENT_SESSIONS: EventSession[] = [
+  {
+    id: 'es-1',
+    name: 'Variable Replacement: TRTA → TRT01P',
+    status: 'completed',
+    messages: [
+      { role: 'user', content: 'Replace variable TRTA with TRT01P across all demographic tables.' },
+      { role: 'assistant', content: 'Identified 3 deliverables referencing TRTA in the demographic domain. Review and select deliverables to update:' },
+      {
+        role: 'assistant',
+        scopeCardData: {
+          title: 'Target Deliverables',
+          status: 'confirmed',
+          items: [
+            { tflId: 't1', name: '14.1.1 Disposition', reason: 'Filter condition', isExcluded: false },
+            { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', reason: 'Summary columns', isExcluded: false },
+            { tflId: 't5', name: '14.1.5 Baseline Characteristics', reason: 'Stratification', isExcluded: false },
+          ],
+        },
+      },
+      {
+        role: 'assistant',
+        summaryCardData: {
+          title: 'Updated 3 Deliverables',
+          items: [
+            { tflId: 't1', name: '14.1.1 Disposition' },
+            { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)' },
+            { tflId: 't5', name: '14.1.5 Baseline Characteristics' },
+          ],
+        },
+      },
+    ],
+    branches: [
+      {
+        id: 'es-1-b1',
+        name: 'Safety Tables Only',
+        status: 'completed',
+        parentId: 'es-1',
+        parentName: 'Variable Replacement: TRTA → TRT01P',
+        messages: [
+          { role: 'user', content: 'Apply only to safety tables.' },
+          { role: 'assistant', content: 'Narrowed scope to 2 safety tables.' },
+          {
+            role: 'assistant',
+            summaryCardData: {
+              title: 'Updated 2 Deliverables',
+              items: [
+                { tflId: 't5', name: '14.1.5 Baseline Characteristics' },
+                { tflId: 't8', name: '14.1.8 Medical History by SOC' },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: 'es-1-b2',
+        name: 'Efficacy Tables Only',
+        status: 'idle',
+        parentId: 'es-1',
+        parentName: 'Variable Replacement: TRTA → TRT01P',
+        messages: [],
+      },
+    ],
+  },
+  {
+    id: 'es-2',
+    name: 'KM Plot Macro Update',
+    status: 'processing',
+    messages: [
+      { role: 'user', content: 'Update the KM plot macro to use the new %KMPLOT_V2 syntax.' },
+      { role: 'assistant', content: 'Scanning all figure outputs for %KMPLOT usage…' },
+    ],
+  },
+  {
+    id: 'es-3',
+    name: 'Shell Update Impact Check',
+    status: 'idle',
+    messages: [],
+  },
+  {
+    id: 'es-4',
+    name: 'Demographics Table Sync',
+    status: 'completed',
+    messages: [
+      { role: 'user', content: 'Sync the population filter across all demographics tables.' },
+      { role: 'assistant', content: 'All 3 demographics tables have been updated with consistent population filters.' },
+    ],
+  },
+];
 
 function ListingTreeIcon({ color = "#656969" }) {
   return <LocalIcon src={listingIconUrl} className="h-[16px] w-[16px]" color={color} />;
@@ -2624,7 +3587,151 @@ function TreeItem({
   );
 }
 
+// ==================== Event Copilot Components ====================
+
+/** Single row in the Copilot session list */
+function EventSessionRow({
+  session,
+  selectedId,
+  onSelect,
+  indent = false,
+}: {
+  session: EventSession;
+  selectedId: string | null;
+  onSelect: (session: EventSession) => void;
+  indent?: boolean;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isSelected = selectedId === session.id;
+
+  return (
+    <div
+      className={`relative flex h-[28px] w-full cursor-pointer items-center gap-[6px] rounded-[4px] px-[8px] transition-colors ${
+        indent ? 'pl-[20px]' : ''
+      } ${
+        isSelected
+          ? 'bg-az-secondary'
+          : isHovered
+          ? 'bg-graphite-10'
+          : ''
+      }`}
+      onClick={() => onSelect(session)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {indent && (
+        <LocalIcon
+          src={gitBranchIconUrl}
+          className="h-[14px] w-[14px] shrink-0"
+          color={isSelected ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'}
+        />
+      )}
+      <p
+        className={`t-small min-w-0 flex-1 truncate ${
+          isSelected ? 'text-brand-1 font-medium' : 'text-text-primary'
+        }`}
+      >
+        {session.name}
+      </p>
+      {session.status === 'processing' && (
+        <img
+          src={aiProcessingIconUrl}
+          alt=""
+          aria-hidden="true"
+          className="h-[16px] w-[16px] shrink-0"
+        />
+      )}
+    </div>
+  );
+}
+
+/** Left panel content when Copilot tab is active */
+function EventSessionList({
+  sessions,
+  selectedId,
+  onSelect,
+  onNewSession,
+  searchQuery,
+  onSearchChange,
+}: {
+  sessions: EventSession[];
+  selectedId: string | null;
+  onSelect: (session: EventSession) => void;
+  onNewSession: () => void;
+  searchQuery: string;
+  onSearchChange: (v: string) => void;
+}) {
+  // Flatten sessions including branches for search filtering
+  const allFlat = sessions.flatMap((s) => [s, ...(s.branches ?? [])]);
+  const q = searchQuery.toLowerCase().trim();
+  const filtered = q
+    ? sessions.filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          (s.branches ?? []).some((b) => b.name.toLowerCase().includes(q))
+      )
+    : sessions;
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Search */}
+      <div className="mx-[8px] my-[6px] shrink-0">
+        <SearchBar
+          value={searchQuery}
+          onChange={onSearchChange}
+          placeholder="Search sessions…"
+          background="dark"
+          className="w-full"
+        />
+      </div>
+
+      {/* + New Session button */}
+      <div className="mx-[8px] mb-[4px] shrink-0">
+        <button
+          type="button"
+          onClick={onNewSession}
+          className="flex h-[28px] w-full items-center gap-[6px] rounded-[4px] px-[8px] text-text-secondary hover:bg-graphite-10 transition-colors cursor-pointer"
+        >
+          <LocalIcon src={addLineIconUrl} className="h-[14px] w-[14px] shrink-0" color="var(--color-text-secondary)" />
+          <span className="t-small">New Session</span>
+        </button>
+      </div>
+
+      {/* Session list */}
+      <div className="min-h-0 flex-1 overflow-auto">
+        <div className="flex flex-col gap-[2px] py-[4px] pr-[4px] pl-[4px]">
+          {filtered.length === 0 ? (
+            <p className="t-small px-[8px] py-[16px] text-center text-text-secondary">
+              {q ? 'No matching sessions' : 'No sessions yet'}
+            </p>
+          ) : (
+            filtered.map((session) => (
+              <div key={session.id} className="flex flex-col gap-[2px]">
+                <EventSessionRow
+                  session={session}
+                  selectedId={selectedId}
+                  onSelect={onSelect}
+                />
+                {(session.branches ?? []).map((branch) => (
+                  <EventSessionRow
+                    key={branch.id}
+                    session={branch}
+                    selectedId={selectedId}
+                    onSelect={onSelect}
+                    indent
+                  />
+                ))}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WorkspaceDivider({
+
   onDrag,
   onDragStart,
   onDragEnd,
@@ -8802,6 +9909,7 @@ function CodePanel({
   freezeCols,
   pageCols,
   isLocked: isLockedProp = false,
+  isExecutingInEventCopilot = false,
   onToggleLock,
   showCI = true,
   showCensorMarks = true,
@@ -8815,6 +9923,7 @@ function CodePanel({
   freezeCols?: number;
   pageCols?: number;
   isLocked?: boolean;
+  isExecutingInEventCopilot?: boolean;
   onToggleLock?: () => void;
   showCI?: boolean;
   showCensorMarks?: boolean;
@@ -9167,7 +10276,10 @@ ods graphics off;`;
             </svg>
           </div>
           <p className="text-[12px] leading-[18px] text-text-primary">
-            <strong className="font-semibold text-text-primary">Read-only:</strong> The code is locked and cannot be edited.
+            <strong className="font-semibold text-text-primary">Read-only:</strong>{" "}
+            {isExecutingInEventCopilot
+              ? "This deliverable is currently being updated by Event Copilot. Code editing is locked."
+              : "The code is locked and cannot be edited."}
           </p>
         </div>
       )}
@@ -9363,6 +10475,15 @@ function WorkspaceContent({
   const [groupViewWidth, setGroupViewWidth] = useState(380);
   const [aiCopilotWidth, setAiCopilotWidth] = useState(360);
   const [treeListAutoCollapsed, setTreeListAutoCollapsed] = useState(false);
+
+  // Event Copilot state
+  const [treeListTab, setTreeListTab] = useState<TreeListTab>('tfl');
+  const [eventSessions, setEventSessions] = useState<EventSession[]>(MOCK_EVENT_SESSIONS);
+  const [selectedEventSession, setSelectedEventSession] = useState<EventSession | null>(null);
+  const [eventSessionSearch, setEventSessionSearch] = useState('');
+  const [executingTflIds, setExecutingTflIds] = useState<string[]>([]);
+  const [executingSessionTitle, setExecutingSessionTitle] = useState<string | null>(null);
+  const [eventProgressData, setEventProgressData] = useState<EventProgressCardData | null>(null);
 
   // If TreeList is opened (e.g. manually by the user), clear the auto-collapsed flag
   useEffect(() => {
@@ -9675,7 +10796,8 @@ function WorkspaceContent({
   const selectedProgram = programs.find((program) => program.id === selectedId);
   const isSelectedProgramLocked = selectedProgram?.status === 'locked';
   const isParentProgramLocked = selectedTableProgram?.status === 'locked';
-  const selectedTableLocked = isSelectedProgramLocked || isParentProgramLocked || selectedTable?.status === 'locked';
+  const isSelectedTflExecuting = executingTflIds.includes(selectedId ?? '');
+  const selectedTableLocked = isSelectedProgramLocked || isParentProgramLocked || selectedTable?.status === 'locked' || isSelectedTflExecuting;
   const handleCodePanelToggleLock = () => {
     const prog = selectedTableProgram || programs[0];
     const table = selectedTable || prog?.tables[0];
@@ -9921,12 +11043,233 @@ function WorkspaceContent({
     setPanelView(v);
   };
 
+  const handleUpdateEventSession = (sessionId: string, updates: Partial<EventSession>) => {
+    setEventSessions((prev) =>
+      prev.map((s) => {
+        if (s.id === sessionId) {
+          return { ...s, ...updates };
+        }
+        if (s.branches) {
+          return {
+            ...s,
+            branches: s.branches.map((b) => (b.id === sessionId ? { ...b, ...updates } : b)),
+          };
+        }
+        return s;
+      })
+    );
+    setSelectedEventSession((curr) => (curr && curr.id === sessionId ? { ...curr, ...updates } : curr));
+  };
+
+  const handleStartEventExecution = (sessionId: string, sessionTitle: string, tflIds: string[]) => {
+    setExecutingTflIds(tflIds);
+    setExecutingSessionTitle(sessionTitle);
+
+    // Update session status in eventSessions to 'processing'
+    handleUpdateEventSession(sessionId, { status: 'processing' });
+
+    // Update target tables in programs to 'analyzing'
+    setPrograms((prev) =>
+      prev.map((prog) => ({
+        ...prog,
+        tables: prog.tables.map((t) =>
+          tflIds.includes(t.id) ? { ...t, status: 'analyzing' as const } : t
+        ),
+      }))
+    );
+
+    const initialProgressItems: EventProgressItem[] = tflIds.map((id, idx) => {
+      let foundName = id;
+      for (const prog of programs) {
+        const found = prog.tables.find((t) => t.id === id);
+        if (found) {
+          foundName = found.name;
+          break;
+        }
+      }
+      return {
+        tflId: id,
+        name: foundName,
+        status: idx === 0 ? ('running' as const) : ('queued' as const),
+      };
+    });
+
+    setEventProgressData({
+      title: 'Applying Updates',
+      items: initialProgressItems,
+      isCompleted: false,
+    });
+  };
+
+  const handleCompleteTflExecution = (completedTflId: string) => {
+    // Update completed table status in programs to 'completed'
+    setPrograms((prev) =>
+      prev.map((prog) => ({
+        ...prog,
+        tables: prog.tables.map((t) =>
+          t.id === completedTflId ? { ...t, status: 'completed' as const } : t
+        ),
+      }))
+    );
+    setExecutingTflIds((prev) => prev.filter((id) => id !== completedTflId));
+
+    setEventProgressData((prev) => {
+      if (!prev) return prev;
+      const completedIdx = prev.items.findIndex((it) => it.tflId === completedTflId);
+      const nextIdx = completedIdx + 1;
+      return {
+        ...prev,
+        items: prev.items.map((it, idx) => {
+          if (it.tflId === completedTflId) return { ...it, status: 'done' as const };
+          if (idx === nextIdx) return { ...it, status: 'running' as const };
+          return it;
+        }),
+      };
+    });
+  };
+
+  const handleFinishEventExecution = (sessionId: string, allTflIds: string[]) => {
+    setExecutingTflIds([]);
+    setExecutingSessionTitle(null);
+    handleUpdateEventSession(sessionId, { status: 'completed' });
+    setEventProgressData(null);
+  };
+
+  const handleHandoffToEventCopilot = (userPrompt: string, targetTflIds: string[], sourceTflId: string) => {
+    // Find source table name
+    let sourceTableName = "Current Deliverable";
+    for (const prog of programs) {
+      const found = prog.tables.find((t) => t.id === sourceTflId);
+      if (found) {
+        sourceTableName = found.name;
+        break;
+      }
+    }
+
+    const cleanSnippet = userPrompt
+      .replace(/@\[mention:[^:]+:[^:]+:([^\]]+)\]/g, "@$1")
+      .replace(/[.,!?]+$/, "")
+      .trim();
+    const titleSnippet = cleanSnippet.length > 26 ? cleanSnippet.slice(0, 24) + "..." : cleanSnippet;
+    const sessionTitle = `Diffused: ${titleSnippet}`;
+
+    // Build candidate items for Scope Card
+    let candidateItems: EventScopeItem[] = [];
+    if (targetTflIds.length > 1) {
+      candidateItems = targetTflIds.map((id) => {
+        let name = id;
+        for (const prog of programs) {
+          const found = prog.tables.find((t) => t.id === id);
+          if (found) {
+            name = found.name;
+            break;
+          }
+        }
+        return {
+          tflId: id,
+          name,
+          reason: id === sourceTflId ? "Source deliverable" : "Mentioned target deliverable",
+          isExcluded: false,
+        };
+      });
+    } else {
+      // @Event mentioned: source deliverable + related demographic domain deliverables (excluding source)
+      const defaultDomainIds = ["t1", "t4", "t5"].filter((id) => id !== sourceTflId);
+      candidateItems = [
+        { tflId: sourceTflId, name: sourceTableName, reason: "Source deliverable", isExcluded: false },
+        ...defaultDomainIds.map((id) => {
+          let name = id;
+          for (const prog of programs) {
+            const found = prog.tables.find((t) => t.id === id);
+            if (found) {
+              name = found.name;
+              break;
+            }
+          }
+          return {
+            tflId: id,
+            name,
+            reason: "Related demographic domain deliverable",
+            isExcluded: false,
+          };
+        }),
+      ];
+    }
+
+    const newSession: EventSession = {
+      id: `es-diffuse-${Date.now()}`,
+      name: sessionTitle,
+      status: "idle",
+      parentId: sourceTflId,
+      parentName: sourceTableName,
+      messages: [
+        {
+          role: "user",
+          content: userPrompt,
+        },
+        {
+          role: "assistant",
+          content: `Received diffusion request from ${sourceTableName}. Review and select target deliverables to update:`,
+        },
+        {
+          role: "assistant",
+          scopeCardData: {
+            title: "Target Deliverables",
+            status: "pending",
+            items: candidateItems,
+          },
+        },
+      ],
+    };
+
+    setEventSessions((prev) => [newSession, ...prev]);
+    setSelectedEventSession(newSession);
+    setEventProgressData(null);
+    setTreeListTab("copilot");
+    setAiCopilotOpen(true);
+  };
+
   const renderAICopilotComponent = (variant: 'drawer' | 'incard') => {
     if (!aiCopilotOpen) return null;
+
+    const currentEventSession = selectedEventSession
+      ? (eventSessions.find((s) => s.id === selectedEventSession.id) ||
+         eventSessions.flatMap((s) => s.branches || []).find((b) => b.id === selectedEventSession.id) ||
+         selectedEventSession)
+      : null;
+
     return (
       <AICopilotPanel
-        key={`${docType}-${variant}`}
+        key={`${docType}-${variant}-${treeListTab === 'copilot' ? currentEventSession?.id || 'event' : 'tfl'}`}
         variant={variant}
+        isEventCopilot={treeListTab === 'copilot'}
+        activeEventSession={currentEventSession}
+        onNewEventSession={() => {
+          const newSession: EventSession = {
+            id: `es-new-${Date.now()}`,
+            name: 'New Session',
+            status: 'idle',
+            messages: [],
+          };
+          setEventSessions((prev) => [newSession, ...prev]);
+          setSelectedEventSession(newSession);
+          setEventProgressData(null);
+        }}
+        onUpdateEventSession={handleUpdateEventSession}
+        onStartEventExecution={handleStartEventExecution}
+        onCompleteTflExecution={handleCompleteTflExecution}
+        onFinishEventExecution={handleFinishEventExecution}
+        isExecutingInEventCopilot={isSelectedTflExecuting}
+        executingSessionTitle={executingSessionTitle}
+        eventProgressData={treeListTab === 'copilot' ? eventProgressData : null}
+        onCloseEventProgress={() => setEventProgressData(null)}
+        onJumpToTfl={(tflId) => {
+          setTreeListTab('tfl');
+          handleSelect(tflId);
+        }}
+        programs={programs}
+        currentTableId={selectedTable?.id || selectedId}
+        onHandoffToEventCopilot={handleHandoffToEventCopilot}
         quoteInsertRef={quoteInsertRef}
         panelWidth={aiCopilotWidth}
         onClose={handleCloseAICopilot}
@@ -10015,8 +11358,86 @@ function WorkspaceContent({
                 </button>
               </TooltipText>
             </div>
+
+            {/* TFL / Copilot Tab Switcher */}
+            <div className="flex shrink-0 items-center gap-[4px] px-[10px] pb-[6px]">
+              {/* TFL Tab */}
+              <button
+                type="button"
+                onClick={() => setTreeListTab('tfl')}
+                className={`flex h-[28px] items-center gap-[4px] rounded-[6px] transition-all cursor-pointer shrink-0 ${
+                  treeListTab === 'tfl'
+                    ? 'bg-[#F4E8EE] text-brand-1 px-[8px]'
+                    : 'w-[28px] justify-center text-text-secondary hover:bg-black/5'
+                }`}
+                aria-label="TFL list"
+              >
+                <LocalIcon
+                  src={tableIconUrl}
+                  className="h-[14px] w-[14px] shrink-0"
+                  color={treeListTab === 'tfl' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'}
+                />
+                {treeListTab === 'tfl' && (
+                  <span className="t-small font-medium whitespace-nowrap">TFL</span>
+                )}
+              </button>
+
+              {/* Copilot Tab */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTreeListTab('copilot');
+                  setAiCopilotOpen(true);
+                  if (!selectedEventSession && eventSessions.length > 0) {
+                    setSelectedEventSession(eventSessions[0]);
+                  }
+                }}
+                className={`flex h-[28px] items-center gap-[4px] rounded-[6px] transition-all cursor-pointer shrink-0 ${
+                  treeListTab === 'copilot'
+                    ? 'bg-[#F4E8EE] text-brand-1 px-[8px]'
+                    : 'w-[28px] justify-center text-text-secondary hover:bg-black/5'
+                }`}
+                aria-label="Event Copilot sessions"
+              >
+                <LocalIcon
+                  src={chatAiFillIconUrl}
+                  className="h-[14px] w-[14px] shrink-0"
+                  color={treeListTab === 'copilot' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'}
+                />
+                {treeListTab === 'copilot' && (
+                  <span className="t-small font-medium whitespace-nowrap">Copilot</span>
+                )}
+              </button>
+            </div>
+
+            {/* Copilot Tab: Session List */}
+            {treeListTab === 'copilot' ? (
+              <EventSessionList
+                sessions={eventSessions}
+                selectedId={selectedEventSession?.id ?? null}
+                onSelect={(s) => {
+                  setSelectedEventSession(s);
+                  setAiCopilotOpen(true);
+                }}
+                onNewSession={() => {
+                  const newSession: EventSession = {
+                    id: `es-new-${Date.now()}`,
+                    name: 'New Session',
+                    status: 'idle',
+                    messages: [],
+                  };
+                  setEventSessions((prev) => [newSession, ...prev]);
+                  setSelectedEventSession(newSession);
+                  setAiCopilotOpen(true);
+                }}
+                searchQuery={eventSessionSearch}
+                onSearchChange={setEventSessionSearch}
+              />
+            ) : (
+              <>
             {/* Search Bar / Filter Area based on filterStyleVariant */}
             {filterStyleVariant === 'in-search' ? (
+
               <FacetedSearchBar
                 searchQuery={treeSearchQuery}
                 onSearchQueryChange={setTreeSearchQuery}
@@ -10133,8 +11554,9 @@ function WorkspaceContent({
                 )}
               </div>
             </div>
+            </>) /* end TFL tab ternary */}
 
-            {/* Tree List Bottom-Left Controls */}
+            {/* Tree List Bottom-Left Controls — always visible */}
             <div className="shrink-0 flex flex-col border-t border-graphite-10 bg-bg-panel">
               {/* Filter UI Switcher */}
               <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
@@ -10294,6 +11716,7 @@ function WorkspaceContent({
                         selectedItem={getSelectedItemName()}
                         docType="listing"
                         isLocked={selectedTableLocked}
+                        isExecutingInEventCopilot={isSelectedTflExecuting}
                         onToggleLock={handleCodePanelToggleLock}
                       />
                     </div>
@@ -10427,6 +11850,7 @@ function WorkspaceContent({
                         selectedItem={getSelectedItemName()}
                         docType={docType}
                         isLocked={selectedTableLocked}
+                        isExecutingInEventCopilot={isSelectedTflExecuting}
                         onToggleLock={handleCodePanelToggleLock}
                         showCI={showCI}
                         showCensorMarks={showCensorMarks}

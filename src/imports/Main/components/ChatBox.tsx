@@ -1,10 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import aiSubmitIconUrl from "../../../icons/AI-submit.svg";
 import fileInfoLineUrl from "../../../icons/file-info-line.svg";
 import doubleQuotesLUrl from "../../../icons/double-quotes-l.svg";
+import aiProcessingIconUrl from "../../../icons/Status label/Status=AI Processing.svg";
+import checkIconUrl from "../../../icons/check-line.svg";
 import { Tooltip } from "../../../components/ui/Tooltip";
 import { ImagePreviewModal } from "../../../components/ui/ImagePreviewModal";
+import type { EventProgressCardData } from "../Main";
 
 // ==================== SVGs from Figma ====================
 
@@ -64,21 +67,43 @@ function CodeTag({ className = "", text = "Table.1(290-321)" }: { className?: st
   );
 }
 
-// ==================== Quote Tag helpers ====================
+import tableIconUrl from "../../../icons/Table.svg";
+
+function AtIcon({ className = "size-[14px]", color = "currentColor" }: { className?: string; color?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C14.4 22 16.6 21.15 18.33 19.73L16.92 18.32C15.56 19.38 13.86 20 12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12V13.5C20 14.33 19.33 15 18.5 15C17.67 15 17 14.33 17 13.5V12C17 9.24 14.76 7 12 7C9.24 7 7 9.24 7 12C7 14.76 9.24 17 12 17C13.38 17 14.63 16.44 15.54 15.54C16.27 16.43 17.32 17 18.5 17C20.43 17 22 15.43 22 13.5V12C22 6.48 17.52 2 12 2ZM12 15C10.34 15 9 13.66 9 12C9 10.34 10.34 9 12 9C13.66 9 15 10.34 15 12C15 13.66 13.66 15 12 15Z" fill={color} />
+    </svg>
+  );
+}
+
+// ==================== Quote & Mention Tag helpers ====================
+
+export interface MentionOption {
+  id: string; // 'event' or tflId (e.g. 't1', 't4')
+  label: string; // 'Event' or table name
+  type: 'event' | 'tfl';
+  isCurrent?: boolean;
+}
 
 /** Token stored in the Quote tag span dataset */
 const QUOTE_TAG_ATTR = "data-quote-tag";
+/** Token stored in the Mention tag span dataset */
+const MENTION_TAG_ATTR = "data-mention-tag";
 
-/** Serialize a contenteditable div to a plain string, turning quote tags into @[fieldId:label] tokens */
+/** Serialize a contenteditable div to a plain string, turning quote & mention tags into tokens */
 function serializeEditable(el: HTMLDivElement): string {
   let result = "";
   el.childNodes.forEach((node) => {
     if (node.nodeType === Node.TEXT_NODE) {
       result += node.textContent || "";
     } else if (node instanceof HTMLElement) {
-      const token = node.getAttribute(QUOTE_TAG_ATTR);
-      if (token) {
-        result += token;
+      const quoteToken = node.getAttribute(QUOTE_TAG_ATTR);
+      const mentionToken = node.getAttribute(MENTION_TAG_ATTR);
+      if (quoteToken) {
+        result += quoteToken;
+      } else if (mentionToken) {
+        result += mentionToken;
       } else {
         result += node.textContent || "";
       }
@@ -153,6 +178,123 @@ function insertQuoteTagAtCursor(
   el.appendChild(tagSpan);
   const after = document.createTextNode("\u00A0");
   el.appendChild(after);
+}
+
+/** Create a Mention tag DOM element matching Quote tag visual styling */
+function createMentionTagElement(
+  option: MentionOption,
+  onRemove: (span: HTMLElement) => void
+): HTMLSpanElement {
+  const tagSpan = document.createElement("span");
+  tagSpan.setAttribute("contenteditable", "false");
+  tagSpan.setAttribute(MENTION_TAG_ATTR, `@[mention:${option.id}:${option.type}:${option.label}]`);
+  tagSpan.setAttribute("data-mention-id", option.id);
+  tagSpan.setAttribute("data-mention-type", option.type);
+  tagSpan.style.cssText =
+    "display:inline-flex;align-items:center;gap:3px;background:var(--color-graphite-10);border-radius:4px;padding:1px 5px 1px 4px;margin:0 2px;font-size:12px;line-height:20px;color:var(--color-brand-1);vertical-align:middle;user-select:none;white-space:nowrap;cursor:default;";
+
+  // Icon
+  const iconSpan = document.createElement("span");
+  iconSpan.style.cssText = "display:flex;align-items:center;justify-content:center;width:12px;height:12px;flex-shrink:0;color:var(--color-brand-1);";
+  if (option.type === "event") {
+    iconSpan.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C14.4 22 16.6 21.15 18.33 19.73L16.92 18.32C15.56 19.38 13.86 20 12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12V13.5C20 14.33 19.33 15 18.5 15C17.67 15 17 14.33 17 13.5V12C17 9.24 14.76 7 12 7C9.24 7 7 9.24 7 12C7 14.76 9.24 17 12 17C13.38 17 14.63 16.44 15.54 15.54C16.27 16.43 17.32 17 18.5 17C20.43 17 22 15.43 22 13.5V12C22 6.48 17.52 2 12 2ZM12 15C10.34 15 9 13.66 9 12C9 10.34 10.34 9 12 9C13.66 9 15 10.34 15 12C15 13.66 13.66 15 12 15Z" fill="currentColor"/></svg>`;
+  } else {
+    iconSpan.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 3H20C20.5523 3 21 3.44772 21 4V20C21 20.5523 20.4477 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3ZM5 9V14H10V9H5ZM12 9V14H19V9H12ZM19 7V5H5V7H19ZM5 16V19H10V16H5ZM12 19H19V16H12V19Z" fill="currentColor"/></svg>`;
+  }
+
+  // Label text
+  const text = document.createElement("span");
+  text.textContent = option.type === "event" ? "@Event" : `@${option.label}`;
+  text.style.cssText = "font-family:Inter,sans-serif;font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;color:var(--color-brand-1);";
+
+  // Close button
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.setAttribute("contenteditable", "false");
+  closeBtn.setAttribute("aria-label", "Remove mention");
+  closeBtn.style.cssText =
+    "display:flex;align-items:center;justify-content:center;width:12px;height:12px;padding:0;border:none;background:none;cursor:pointer;flex-shrink:0;opacity:0.5;";
+  closeBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 10.586L16.95 5.636L18.364 7.05L13.414 12L18.364 16.95L16.95 18.364L12 13.414L7.05 18.364L5.636 16.95L10.586 12L5.636 7.05L7.05 5.636L12 10.586Z" fill="currentColor"/></svg>`;
+  closeBtn.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onRemove(tagSpan);
+  });
+
+  tagSpan.appendChild(iconSpan);
+  tagSpan.appendChild(text);
+  tagSpan.appendChild(closeBtn);
+  return tagSpan;
+}
+
+/** Insert a mention tag at current cursor */
+function insertMentionTagAtCursor(
+  el: HTMLDivElement,
+  option: MentionOption,
+  onRemove: (span: HTMLElement) => void
+) {
+  el.focus();
+  const tagSpan = createMentionTagElement(option, onRemove);
+
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    if (el.contains(range.commonAncestorContainer)) {
+      range.deleteContents();
+      range.insertNode(tagSpan);
+      const after = document.createTextNode("\u00A0");
+      tagSpan.after(after);
+      range.setStartAfter(after);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      return;
+    }
+  }
+
+  el.appendChild(tagSpan);
+  const after = document.createTextNode("\u00A0");
+  el.appendChild(after);
+}
+
+/** Replace the typed '@query' with the selected Mention tag */
+function replaceAtQueryWithMention(
+  el: HTMLDivElement,
+  option: MentionOption,
+  queryLength: number,
+  onRemove: (span: HTMLElement) => void
+) {
+  el.focus();
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    const node = range.startContainer;
+    if (node.nodeType === Node.TEXT_NODE && el.contains(node)) {
+      const text = node.textContent || "";
+      const caretPos = range.startOffset;
+      const atIndex = Math.max(0, caretPos - (queryLength + 1));
+      if (atIndex < caretPos && text.slice(atIndex, atIndex + 1) === "@") {
+        const beforeText = text.slice(0, atIndex);
+        const afterText = text.slice(caretPos);
+        node.textContent = beforeText;
+
+        const tagSpan = createMentionTagElement(option, onRemove);
+        const afterNode = document.createTextNode("\u00A0" + afterText);
+
+        node.after(tagSpan);
+        tagSpan.after(afterNode);
+
+        const newRange = document.createRange();
+        newRange.setStart(afterNode, 1);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+        return;
+      }
+    }
+  }
+
+  insertMentionTagAtCursor(el, option, onRemove);
 }
 
 // ==================== Attachment Types ====================
@@ -306,6 +448,10 @@ export interface ChatBoxProps {
   quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
   /** Ref callback to expose an imperative addFiles method to the parent */
   attachFilesRef?: React.MutableRefObject<((files: File[]) => void) | null>;
+  eventProgressData?: EventProgressCardData | null;
+  onCloseEventProgress?: () => void;
+  onJumpToTfl?: (tflId: string) => void;
+  mentionOptions?: MentionOption[];
   className?: string;
 }
 
@@ -322,12 +468,17 @@ export default function ChatBox({
   onRejectPending,
   quoteInsertRef,
   attachFilesRef,
+  eventProgressData,
+  onCloseEventProgress,
+  onJumpToTfl,
+  mentionOptions,
   className = "",
 }: ChatBoxProps) {
   // --- Core Functional States ---
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [pendingExpanded, setPendingExpanded] = useState<boolean>(false);
   const [metadataExpanded, setMetadataExpanded] = useState<boolean>(true);
+  const [eventProgressExpanded, setEventProgressExpanded] = useState<boolean>(true);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   // --- Attachment States ---
@@ -475,13 +626,108 @@ export default function ChatBox({
     const el = editableRef.current;
     if (!el) return;
     const text = el.textContent || "";
-    const hasTags = el.querySelector(`[${QUOTE_TAG_ATTR}]`) !== null;
+    const hasTags = el.querySelector(`[${QUOTE_TAG_ATTR}], [${MENTION_TAG_ATTR}]`) !== null;
     setHasContent(text.trim().length > 0 || hasTags);
 
     // Count newlines for multi-line detection
     const lines = el.innerHTML.split(/<br\s*\/?>/i).length + (text.match(/\n/g) || []).length;
     setIsMultiLine(lines >= 4);
   }, []);
+
+  // ==================== Mention States & Handlers ====================
+  const [showMentionMenu, setShowMentionMenu] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionSelectedIndex, setMentionSelectedIndex] = useState(0);
+
+  const DEFAULT_MENTION_OPTIONS: MentionOption[] = [
+    { id: "event", label: "Event (Entire Study)", type: "event" },
+    { id: "t1", label: "14.1.1 Disposition", type: "tfl" },
+    { id: "t2", label: "14.1.2 Important Protocol Deviations", type: "tfl" },
+    { id: "t3", label: "14.1.3 Analysis Sets", type: "tfl" },
+    { id: "t4", label: "14.1.4 Demographics (Full Analysis Set)", type: "tfl" },
+    { id: "t5", label: "14.1.5 Baseline Characteristics", type: "tfl" },
+    { id: "t6", label: "14.1.6 Prior Anti-cancer Therapy", type: "tfl" },
+    { id: "t8", label: "14.1.8 Medical History by SOC", type: "tfl" },
+  ];
+
+  const activeMentionOptions = mentionOptions && mentionOptions.length > 0 ? mentionOptions : DEFAULT_MENTION_OPTIONS;
+  const filteredMentionOptions = useMemo(() => {
+    if (!mentionQuery) return activeMentionOptions;
+    const q = mentionQuery.toLowerCase().trim();
+    return activeMentionOptions.filter(
+      (opt) => opt.label.toLowerCase().includes(q) || (opt.type === "event" && "event".includes(q))
+    );
+  }, [activeMentionOptions, mentionQuery]);
+
+  const handleSelectMention = useCallback(
+    (option: MentionOption) => {
+      const el = editableRef.current;
+      if (!el) return;
+      replaceAtQueryWithMention(el, option, mentionQuery.length, handleRemoveTag);
+      setShowMentionMenu(false);
+      setMentionQuery("");
+      syncHasContent();
+    },
+    [mentionQuery, handleRemoveTag, syncHasContent]
+  );
+
+  const checkMentionTrigger = useCallback(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+      setShowMentionMenu(false);
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    const node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE || !editableRef.current?.contains(node)) {
+      setShowMentionMenu(false);
+      return;
+    }
+
+    const text = node.textContent || "";
+    const offset = range.startOffset;
+    const textBeforeCaret = text.slice(0, offset);
+    const lastAtIndex = textBeforeCaret.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const query = textBeforeCaret.slice(lastAtIndex + 1);
+      if (!/\s/.test(query) && query.length <= 25) {
+        setMentionQuery(query);
+        setMentionSelectedIndex(0);
+        setShowMentionMenu(true);
+        return;
+      }
+    }
+
+    setShowMentionMenu(false);
+  }, []);
+
+  const handleToolbarMentionClick = useCallback(() => {
+    const el = editableRef.current;
+    if (!el) return;
+    el.focus();
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      if (el.contains(range.commonAncestorContainer)) {
+        const textNode = document.createTextNode("@");
+        range.deleteContents();
+        range.insertNode(textNode);
+        range.setStartAfter(textNode);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else {
+        el.appendChild(document.createTextNode("@"));
+      }
+    } else {
+      el.appendChild(document.createTextNode("@"));
+    }
+    syncHasContent();
+    setMentionQuery("");
+    setMentionSelectedIndex(0);
+    setShowMentionMenu(true);
+  }, [syncHasContent]);
 
   // ==================== Attachment Helpers ====================
 
@@ -616,6 +862,33 @@ export default function ChatBox({
 
   // ---- Keyboard handling inside contenteditable ----
   const handleEditableKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    // If mention menu is open, handle keyboard navigation
+    if (showMentionMenu && filteredMentionOptions.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionSelectedIndex((prev) => (prev + 1) % filteredMentionOptions.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionSelectedIndex((prev) => (prev - 1 + filteredMentionOptions.length) % filteredMentionOptions.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        const selected = filteredMentionOptions[mentionSelectedIndex];
+        if (selected) {
+          handleSelectMention(selected);
+        }
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowMentionMenu(false);
+        return;
+      }
+    }
+
     // Ctrl/Cmd+Enter → send
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -623,7 +896,7 @@ export default function ChatBox({
       return;
     }
 
-    // Backspace: if cursor is at position 0 of a text node and previous sibling is a quote tag, remove the tag
+    // Backspace: if cursor is at position 0 of a text node and previous sibling is a quote/mention tag, remove the tag
     if (e.key === "Backspace") {
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
@@ -639,10 +912,11 @@ export default function ChatBox({
           ? null
           : null;
 
-      if (prev instanceof HTMLElement && prev.hasAttribute(QUOTE_TAG_ATTR)) {
+      if (prev instanceof HTMLElement && (prev.hasAttribute(QUOTE_TAG_ATTR) || prev.hasAttribute(MENTION_TAG_ATTR))) {
         e.preventDefault();
         prev.remove();
         syncHasContent();
+        checkMentionTrigger();
         return;
       }
 
@@ -653,16 +927,17 @@ export default function ChatBox({
         startContainer.textContent === "\u00A0"
       ) {
         const prevSib = (startContainer as Text).previousSibling;
-        if (prevSib instanceof HTMLElement && prevSib.hasAttribute(QUOTE_TAG_ATTR)) {
+        if (prevSib instanceof HTMLElement && (prevSib.hasAttribute(QUOTE_TAG_ATTR) || prevSib.hasAttribute(MENTION_TAG_ATTR))) {
           e.preventDefault();
           prevSib.remove();
           (startContainer as Text).remove();
           syncHasContent();
+          checkMentionTrigger();
           return;
         }
       }
     }
-  }, [handleSend, syncHasContent]);
+  }, [showMentionMenu, filteredMentionOptions, mentionSelectedIndex, handleSelectMention, handleSend, syncHasContent, checkMentionTrigger]);
 
   // --- Dynamic status resolution ---
   const resolvedStatus: ChatBoxStatus = isFocused
@@ -673,7 +948,11 @@ export default function ChatBox({
       : "Typed"
     : "Default";
 
-  const placeholderText = metadataChangesCount > 0 ? "Add instructions or submit directly..." : "Ask Me Anything...";
+  const placeholderText = metadataChangesCount > 0 
+    ? "Add instructions or submit directly..." 
+    : (eventProgressData && !eventProgressData.isCompleted)
+    ? "Waiting for updates to complete..."
+    : "Ask Me Anything...";
 
   const isMaxHeightAndNotPending = resolvedStatus === "Max height" && !pending;
   const isFocusedAndNotPending = resolvedStatus === "Focused" && !pending;
@@ -740,7 +1019,7 @@ export default function ChatBox({
         className={`flex flex-col items-stretch justify-start px-[2px] relative rounded-[10px] w-full transition-all duration-200 ${
           pending
             ? "bg-az-secondary gap-[4px] pb-[2px] pt-[8px]"
-            : metadataChangesCount > 0
+            : (metadataChangesCount > 0 || eventProgressData)
             ? "bg-graphite-10 border border-border-default gap-[4px] pb-[2px] pt-[8px]"
             : ""
         }`}
@@ -947,6 +1226,122 @@ export default function ChatBox({
               </div>
             )}
           </div>
+        ) : eventProgressData ? (
+          // ---- Event Progress Panel (Docked above input) ----
+          <div className="flex flex-col gap-[0px] items-start relative shrink-0 w-full">
+            {/* Header row */}
+            <div
+              className="flex items-center justify-between px-[8px] py-[4px] relative shrink-0 w-full select-none cursor-pointer hover:bg-black/[0.06] active:bg-black/[0.09] rounded-[6px] transition-colors"
+              onClick={() => setEventProgressExpanded((v) => !v)}
+            >
+              <div className="flex gap-[8px] items-center min-w-0 flex-1">
+                {/* Chevron */}
+                <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
+                  {eventProgressExpanded ? (
+                    <ChevronDownIcon className="size-[13px]" color="var(--color-text-secondary)" />
+                  ) : (
+                    <ChevronRightIcon className="size-[13px]" color="var(--color-text-secondary)" />
+                  )}
+                </div>
+                {/* Status Icon */}
+                <div className="overflow-clip relative shrink-0 size-[16px] flex items-center justify-center">
+                  {eventProgressData.isCompleted ? (
+                    <img src={checkIconUrl} alt="" className="size-[14px]" />
+                  ) : (
+                    <img src={aiProcessingIconUrl} alt="" className="size-[16px]" />
+                  )}
+                </div>
+                {/* Label */}
+                <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-text-primary text-center whitespace-nowrap">
+                  <p className="leading-[24px]">
+                    {eventProgressData.isCompleted
+                      ? "All Updates Applied"
+                      : (eventProgressData.title || "Applying Updates")}
+                  </p>
+                </div>
+                {/* Count badge */}
+                <div className="bg-white border border-graphite-20 flex items-center justify-center px-[5px] py-px relative rounded-[16px] shrink-0 min-w-[16px] h-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+                  <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-text-secondary whitespace-nowrap">
+                    <p className="leading-[14px]">
+                      {eventProgressData.items.filter((i) => i.status === "done").length}/{eventProgressData.items.length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status text + Close × button */}
+              <div className="flex items-center gap-[6px] shrink-0">
+                <span className="text-[11px] text-text-secondary font-medium">
+                  {eventProgressData.items.filter((i) => i.status === "done").length} of {eventProgressData.items.length} completed
+                </span>
+                {onCloseEventProgress && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCloseEventProgress();
+                    }}
+                    className="w-[20px] h-[20px] rounded-[4px] flex items-center justify-center hover:bg-black/10 active:scale-[0.96] shrink-0 ml-[2px]"
+                    title="Dismiss progress"
+                    aria-label="Close progress"
+                  >
+                    <CloseIcon className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Expandable deliverable items list */}
+            {eventProgressExpanded && eventProgressData.items.length > 0 && (
+              <div className="flex flex-col gap-[2px] w-full px-[4px] pb-[4px] max-h-[180px] overflow-y-auto scrollbar-colored">
+                {eventProgressData.items.map((item) => {
+                  const isRunning = item.status === "running";
+                  const isDone = item.status === "done";
+                  const isQueued = item.status === "queued";
+
+                  return (
+                    <div
+                      key={item.tflId}
+                      onClick={() => onJumpToTfl?.(item.tflId)}
+                      className="flex items-center justify-between gap-[8px] px-[8px] py-[5px] rounded-[6px] hover:bg-white/80 active:bg-white cursor-pointer select-none transition-colors group"
+                    >
+                      <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                        <div className="w-[14px] h-[14px] shrink-0 flex items-center justify-center">
+                          {isRunning && (
+                            <img src={aiProcessingIconUrl} className="w-[14px] h-[14px] block" alt="" />
+                          )}
+                          {isDone && (
+                            <img src={checkIconUrl} className="w-[12px] h-[12px]" alt="" />
+                          )}
+                          {isQueued && (
+                            <div className="w-[8px] h-[8px] rounded-full bg-graphite-30/70" />
+                          )}
+                        </div>
+
+                        <span
+                          className={`text-[13px] leading-[18px] truncate transition-colors ${
+                            isRunning
+                              ? "text-brand-1 font-medium"
+                              : isDone
+                              ? "text-text-primary font-medium"
+                              : "text-text-secondary"
+                          }`}
+                        >
+                          {item.name}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-[6px] shrink-0">
+                        <span className="text-[11px] font-mono text-text-secondary px-[5px] py-px rounded bg-graphite-20/60">
+                          {isRunning ? "Running" : isDone ? "Done" : "Queued"}
+                        </span>
+                        <ChevronRightIcon className="size-[12px] opacity-0 group-hover:opacity-100 transition-opacity text-text-secondary" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         ) : null}
 
         {/* --- Inputbox Container (non-pending) --- */}
@@ -972,6 +1367,54 @@ export default function ChatBox({
 
             {/* ---- ContentEditable Input (Upper Body) ---- */}
             <div className="w-full relative min-w-0 pb-[4px]">
+              {/* Mention Dropdown */}
+              {showMentionMenu && filteredMentionOptions.length > 0 && (
+                <div
+                  className="absolute bottom-full left-0 mb-[8px] w-[310px] max-h-[260px] bg-white border border-border-default rounded-[8px] shadow-[0_6px_20px_rgba(0,0,0,0.12)] overflow-hidden z-50 flex flex-col select-none"
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  <div className="px-[10px] py-[6px] bg-graphite-5 border-b border-border-default flex items-center justify-between text-[11px] text-text-secondary font-medium uppercase tracking-wider">
+                    <span>Mention Scope or Table</span>
+                    <span className="text-[10px] font-normal lowercase opacity-70">↑↓ to navigate, ↵ to select</span>
+                  </div>
+                  <div className="overflow-y-auto max-h-[210px] p-[4px] flex flex-col gap-[1px]">
+                    {filteredMentionOptions.map((opt, idx) => {
+                      const isSelected = idx === mentionSelectedIndex;
+                      return (
+                        <div
+                          key={opt.id}
+                          onClick={() => handleSelectMention(opt)}
+                          onMouseEnter={() => setMentionSelectedIndex(idx)}
+                          className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[6px] cursor-pointer transition-colors text-[13px] ${
+                            isSelected ? "bg-az-secondary text-brand-1 font-medium" : "text-text-primary hover:bg-graphite-5"
+                          }`}
+                        >
+                          {opt.type === "event" ? (
+                            <span className="w-[20px] h-[20px] rounded-[4px] bg-brand-1/10 flex items-center justify-center shrink-0 text-brand-1">
+                              <AtIcon className="w-[12px] h-[12px]" color="var(--color-brand-1)" />
+                            </span>
+                          ) : (
+                            <span className="w-[20px] h-[20px] rounded-[4px] bg-graphite-10 flex items-center justify-center shrink-0 text-text-secondary">
+                              <img src={tableIconUrl} className="w-[12px] h-[12px]" alt="" />
+                            </span>
+                          )}
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center gap-[6px]">
+                              <span className="truncate">{opt.label}</span>
+                              {opt.isCurrent && (
+                                <span className="text-[10px] px-[4px] py-[0px] rounded bg-graphite-10 text-text-secondary shrink-0 font-normal">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Placeholder (CSS trick: show when empty and not focused) */}
               {!hasContent && (
                 <span
@@ -990,8 +1433,14 @@ export default function ChatBox({
                 aria-multiline="true"
                 aria-label={placeholderText}
                 onFocus={() => setIsFocused(true)}
-                onBlur={() => setTimeout(() => setIsFocused(false), 150)}
-                onInput={syncHasContent}
+                onBlur={() => setTimeout(() => {
+                  setIsFocused(false);
+                  setShowMentionMenu(false);
+                }, 180)}
+                onInput={() => {
+                  syncHasContent();
+                  checkMentionTrigger();
+                }}
                 onKeyDown={handleEditableKeyDown}
                 onPaste={handlePaste}
                 className={`w-full t-body text-text-primary bg-transparent outline-none text-[14px] leading-[22px] break-words whitespace-pre-wrap ${
@@ -1018,7 +1467,7 @@ export default function ChatBox({
 
             {/* ---- Bottom Toolbar: Tools on the left, CTA on the right ---- */}
             <div className="flex items-center justify-between w-full pt-[4px]">
-              {/* Left: Tool actions (Upload Image) */}
+              {/* Left: Tool actions (Upload Image, Mention) */}
               <div className="flex items-center gap-[6px]">
                 <Tooltip label={canAddMore ? "Upload Image" : "Maximum 5 images reached"}>
                   <button
@@ -1035,6 +1484,18 @@ export default function ChatBox({
                     ].join(" ")}
                   >
                     <AddIcon className="w-[16px] h-[16px]" color="currentColor" />
+                  </button>
+                </Tooltip>
+
+                {/* Mention @ button */}
+                <Tooltip label="Mention scope or table (@)">
+                  <button
+                    type="button"
+                    onClick={handleToolbarMentionClick}
+                    aria-label="Mention scope or table"
+                    className="relative shrink-0 w-[24px] h-[24px] flex items-center justify-center rounded-[4px] transition-colors duration-100 text-text-secondary hover:text-text-primary hover:bg-black/5 cursor-pointer active:scale-[0.92]"
+                  >
+                    <AtIcon className="w-[14px] h-[14px]" />
                   </button>
                 </Tooltip>
               </div>

@@ -224,4 +224,19 @@
   1. **初始状态有效性校验**：组件内部维护的默认选择项 ID（如 `selectedId`）必须与 Mock 列表保持强一致，避免野指针状态。
   2. **关键交互操作的双向防御**：对于高频切换的核心开关操作（如 Lock/Unlock），子组件应具备即时乐观更新（Optimistic UI）能力，并配合父级健全的回退容错逻辑。
 
+---
+
+### [2026-09-16] AICopilotPanel 组件形参解构漏写 onJumpToTfl 引发运行时 ReferenceError 白屏
+
+* **现象 (Symptom)**：
+  控制台报错 `Uncaught ReferenceError: onJumpToTfl is not defined at AICopilotPanel (Main.tsx:2498:15)`，导致 AI Copilot 面板在渲染对话流（ChatConversation）时组件树崩溃白屏。
+* **根本原因 (Root Cause)**：
+  在扩展 `AICopilotPanel` 的 Props 接口类型时增加了 `onJumpToTfl?: (tflId: string) => void`，并在 JSX 中将其传递给 `<ChatConversation onJumpToTfl={onJumpToTfl} />`。但由于函数签名的对象解构参数 `{ ... }` 列表中漏填了 `onJumpToTfl`，导致在函数体内访问未在作用域内声明的变量，触发运行时 `ReferenceError`。
+* **解决方案 (Solution)**：
+  在 `AICopilotPanel` 的形参解构列表中补齐 `onJumpToTfl`。
+* **经验教训 (Takeaways)**：
+  1. **Props 扩展双向核对**：在 TypeScript 中向带有内联类型注解的组件形参添加新属性时，必须同时检查左侧解构形参列表与右侧类型定义，确保两者完全镜像匹配。
+  2. **避免未声明变量直接下发**：传递回调时可先检查局部作用域绑定，必要时配合 ESLint `no-undef` 规则在保存时即时捕获解构漏写的变量。
+
+
 

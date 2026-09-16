@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iSP Study资产产品 Roadmap｜2026.09—2027.12</title>
+  <style>
+    :root {
+      --navy: #0b2748;
+      --navy-2: #173f6b;
+      --blue: #246bce;
+      --cyan: #0d8da8;
+      --teal: #0c8a72;
+      --green: #2b8c63;
+      --orange: #dd7a24;
+      --amber: #b97909;
+      --violet: #7652b8;
+      --red: #b54848;
+      --ink: #17283a;
+      --muted: #617386;
+      --line: #d9e2ec;
+      --line-2: #e8eef4;
+      --paper: #ffffff;
+      --soft: #f4f7fa;
+      --soft-blue: #eaf2fc;
+      --soft-teal: #e8f7f3;
+      --soft-orange: #fff3e7;
+      --soft-violet: #f1edfa;
+      --shadow: 0 14px 40px rgba(11, 39, 72, .09);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #eef3f8;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+      line-height: 1.62;
+    }
+    button, select { font: inherit; }
+    a { color: var(--blue); }
+    .page { max-width: 1540px; margin: 0 auto; background: var(--paper); box-shadow: var(--shadow); }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      min-height: 390px;
+      padding: 54px clamp(28px, 5vw, 78px) 48px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 88% 15%, rgba(33, 174, 190, .34), transparent 28%),
+        linear-gradient(125deg, #081f3a 0%, #123b69 60%, #145f78 100%);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -7%; bottom: -160px;
+      width: 540px; height: 540px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 50%;
+      box-shadow: 0 0 0 72px rgba(255,255,255,.035), 0 0 0 150px rgba(255,255,255,.025);
+    }
+    .eyebrow { letter-spacing: .14em; text-transform: uppercase; font-size: 13px; opacity: .76; }
+    h1 { margin: 12px 0 10px; max-width: 1020px; font-size: clamp(34px, 5vw, 66px); line-height: 1.12; letter-spacing: -.03em; font-weight: 700; }
+    .subtitle { max-width: 940px; margin: 0; color: rgba(255,255,255,.82); font-size: clamp(16px, 1.7vw, 22px); }
+    .hero-meta { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 14px; margin-top: 36px; max-width: 1120px; }
+    .hero-stat { padding: 14px 16px; border-left: 2px solid rgba(125, 231, 221, .7); background: rgba(255,255,255,.06); backdrop-filter: blur(4px); }
+    .hero-stat strong { display: block; font-size: 22px; line-height: 1.25; }
+    .hero-stat span { color: rgba(255,255,255,.7); font-size: 13px; }
+
+    .nav {
+      position: sticky; top: 0; z-index: 50;
+      display: flex; flex-wrap: wrap; gap: 8px;
+      padding: 12px clamp(20px, 4vw, 64px);
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(12px);
+    }
+    .nav a { padding: 7px 11px; border-radius: 6px; color: var(--navy-2); text-decoration: none; font-size: 13px; }
+    .nav a:hover { background: var(--soft-blue); }
+
+    main { padding: 0 clamp(22px, 4vw, 64px) 72px; }
+    section { padding-top: 56px; scroll-margin-top: 58px; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+    .section-kicker { margin: 0 0 4px; color: var(--teal); font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    h2 { margin: 0; color: var(--navy); font-size: clamp(27px, 3vw, 40px); line-height: 1.2; letter-spacing: -.02em; }
+    h3 { margin: 0 0 8px; color: var(--navy); font-size: 19px; line-height: 1.35; }
+    p { margin: 0 0 10px; }
+    .lead { max-width: 950px; color: var(--muted); font-size: 16px; }
+    .note { color: var(--muted); font-size: 13px; }
+
+    .callout {
+      display: grid; grid-template-columns: 5px 1fr; gap: 16px;
+      margin: 20px 0; padding: 18px 20px;
+      background: var(--soft); border: 1px solid var(--line-2); border-radius: 12px;
+    }
+    .callout::before { content: ""; border-radius: 4px; background: linear-gradient(var(--cyan), var(--teal)); }
+    .callout strong { color: var(--navy); }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(190px, 1fr)); gap: 14px; }
+    .summary-card { min-height: 168px; padding: 20px; border: 1px solid var(--line); border-top: 4px solid var(--blue); border-radius: 12px; background: #fff; }
+    .summary-card:nth-child(2) { border-top-color: var(--teal); }
+    .summary-card:nth-child(3) { border-top-color: var(--orange); }
+    .summary-card:nth-child(4) { border-top-color: var(--violet); }
+    .summary-card .num { display: block; margin-bottom: 8px; color: var(--navy); font-size: 30px; font-weight: 700; }
+    .summary-card p { color: var(--muted); font-size: 14px; }
+
+    .scope-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 18px; margin-top: 20px; }
+    .panel { padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .panel.soft { background: var(--soft); }
+    .clean-list { margin: 10px 0 0; padding-left: 20px; }
+    .clean-list li { margin: 8px 0; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .tag { display: inline-flex; align-items: center; min-height: 26px; padding: 3px 9px; border-radius: 999px; background: var(--soft-blue); color: var(--navy-2); font-size: 12px; font-weight: 700; }
+    .tag.current { background: var(--soft-teal); color: #096e5d; }
+    .tag.roadmap { background: var(--soft-orange); color: #925514; }
+    .tag.boundary { background: #f8e9e9; color: var(--red); }
+
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 18px 0 12px; }
+    .controls span { color: var(--muted); font-size: 13px; margin-right: 4px; }
+    .filter-btn, .phase-btn {
+      border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+      color: var(--navy-2); background: #fff; cursor: pointer;
+    }
+    .filter-btn[aria-pressed="true"], .phase-btn[aria-pressed="true"] { color: #fff; border-color: var(--navy-2); background: var(--navy-2); }
+    .filter-btn:hover, .phase-btn:hover { border-color: var(--blue); }
+
+    .timeline-shell { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .timeline { min-width: 1180px; }
+    .timeline-head, .timeline-row { display: grid; grid-template-columns: 170px 1fr; }
+    .timeline-head { position: sticky; top: 0; z-index: 2; background: #f8fafc; border-bottom: 1px solid var(--line); }
+    .lane-label { padding: 11px 14px; border-right: 1px solid var(--line); color: var(--navy); font-size: 13px; font-weight: 700; }
+    .months, .lane-grid { display: grid; grid-template-columns: repeat(16, minmax(58px, 1fr)); }
+    .month { padding: 10px 2px; border-right: 1px solid var(--line-2); color: var(--muted); text-align: center; font-size: 11px; }
+    .month.year-start { border-left: 2px solid #a9bacb; }
+    .timeline-row { min-height: 62px; border-bottom: 1px solid var(--line-2); }
+    .timeline-row:last-child { border-bottom: 0; }
+    .lane-grid { position: relative; align-items: center; background-image: linear-gradient(to right, transparent calc(100% - 1px), var(--line-2) 0); background-size: calc(100% / 16) 100%; }
+    .bar {
+      position: relative; z-index: 1; align-self: center;
+      margin: 7px 3px; padding: 7px 8px; min-height: 38px;
+      border-radius: 7px; color: #fff; font-size: 11px; font-weight: 700; line-height: 1.25;
+      box-shadow: 0 3px 8px rgba(11,39,72,.12);
+      cursor: default;
+    }
+    .bar small { display: block; opacity: .78; font-weight: 400; }
+    .bar.asset { background: var(--blue); }
+    .bar.loop-a { background: var(--orange); }
+    .bar.loop-b { background: var(--teal); }
+    .bar.loop-c { background: #3f79b7; }
+    .bar.loop-d { background: #6c58a8; }
+    .bar.loop-e { background: #168aa0; }
+    .bar.loop-f { background: #a36a24; }
+    .bar.loop-g { background: #28785f; }
+    .bar.kb { background: var(--violet); }
+    .bar.platform { background: var(--navy-2); }
+    .bar.quality { background: var(--red); }
+    .bar.dimmed { opacity: .13; filter: grayscale(.35); }
+
+    .release-strip { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 16px; }
+    .release { padding: 13px 14px; border-left: 4px solid var(--blue); background: var(--soft); }
+    .release:nth-child(2) { border-left-color: var(--teal); }
+    .release:nth-child(3) { border-left-color: var(--orange); }
+    .release:nth-child(4) { border-left-color: var(--cyan); }
+    .release:nth-child(5) { border-left-color: var(--violet); }
+    .release:nth-child(6) { border-left-color: var(--red); }
+    .release strong { display: block; color: var(--navy); }
+    .release span { color: var(--muted); font-size: 12px; }
+
+    .phase-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .phase-layout { display: grid; grid-template-columns: .72fr 1.28fr; gap: 18px; }
+    .phase-index { display: grid; gap: 10px; }
+    .phase-card { padding: 14px 16px; border: 1px solid var(--line); border-left: 5px solid var(--blue); border-radius: 10px; background: #fff; }
+    .phase-card strong { color: var(--navy); }
+    .phase-card span { display: block; color: var(--muted); font-size: 12px; }
+    .phase-detail { min-height: 370px; padding: 24px; border-radius: 14px; color: #fff; background: linear-gradient(140deg, var(--navy) 0%, var(--navy-2) 68%, #155c70 100%); }
+    .phase-detail .phase-time { color: #9de2d8; font-weight: 700; letter-spacing: .06em; }
+    .phase-detail h3 { margin-top: 7px; color: #fff; font-size: 28px; }
+    .phase-detail p { color: rgba(255,255,255,.76); }
+    .phase-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+    .phase-detail-box { padding: 14px; border: 1px solid rgba(255,255,255,.17); border-radius: 9px; background: rgba(255,255,255,.06); }
+    .phase-detail-box h4 { margin: 0 0 7px; color: #fff; }
+    .phase-detail-box ul { margin: 0; padding-left: 18px; color: rgba(255,255,255,.8); font-size: 13px; }
+    .phase-detail-box li { margin: 5px 0; }
+
+    .loop-map { overflow-x: auto; padding: 18px 0 2px; }
+    .loop-flow { min-width: 1040px; display: grid; grid-template-columns: 1.1fr .18fr 1.1fr .18fr 1.1fr .18fr 1.1fr; gap: 8px; align-items: stretch; }
+    .flow-box { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .flow-box.route { background: var(--soft-blue); border-color: #b9d2f0; }
+    .flow-box.loopA { background: var(--soft-orange); border-color: #efd0aa; }
+    .flow-box.loopB { background: var(--soft-teal); border-color: #b4dfd4; }
+    .flow-box.future { background: var(--soft-violet); border-color: #d7ccec; }
+    .flow-arrow { display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 26px; }
+    .flow-box ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
+    .flow-box .mini { color: var(--muted); font-size: 12px; }
+    .loop-catalog { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+    .loop-card { padding: 20px; border: 1px solid var(--line); border-top: 4px solid var(--blue); border-radius: 12px; background: #fff; }
+    .loop-card:nth-child(2) { border-top-color: var(--teal); }
+    .loop-card:nth-child(3) { border-top-color: #3f79b7; }
+    .loop-card:nth-child(4) { border-top-color: var(--violet); }
+    .loop-card:nth-child(5) { border-top-color: var(--cyan); }
+    .loop-card:nth-child(6) { border-top-color: var(--amber); }
+    .loop-card:nth-child(7) { border-top-color: var(--green); }
+    .loop-card-head { display: flex; justify-content: space-between; gap: 14px; align-items: start; margin-bottom: 12px; }
+    .loop-card-head h3 { margin: 0; }
+    .loop-version { flex: 0 0 auto; padding: 3px 8px; border-radius: 999px; background: var(--soft-blue); color: var(--navy-2); font-size: 11px; font-weight: 700; }
+    .loop-purpose { color: var(--muted); font-size: 13px; }
+    .loop-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    .loop-field { padding: 11px 12px; background: var(--soft); font-size: 12px; }
+    .loop-field b { display: block; margin-bottom: 4px; color: var(--navy); }
+    .loop-update { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--teal); background: var(--soft-teal); color: #365e56; font-size: 12px; }
+    .object-chain { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 18px; }
+    .object { min-height: 86px; padding: 12px 8px; border-top: 3px solid var(--blue); background: var(--soft); text-align: center; font-size: 12px; }
+    .object b { display: block; color: var(--navy); margin-bottom: 4px; }
+    .object:nth-child(3), .object:nth-child(4) { border-top-color: var(--orange); }
+    .object:nth-child(5), .object:nth-child(6) { border-top-color: var(--teal); }
+    .object:nth-child(7) { border-top-color: var(--violet); }
+
+    .tech-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .tech-card { position: relative; padding: 20px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .tech-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--cyan); }
+    .tech-card p { color: var(--muted); font-size: 13px; }
+    .tech-card strong { color: var(--navy); }
+    .decision { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); color: var(--navy-2); font-size: 12px; }
+
+    .kb-stack { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 22px 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .kb-layer { min-height: 210px; padding: 20px; border-right: 1px solid var(--line); }
+    .kb-layer:last-child { border-right: 0; }
+    .kb-layer:nth-child(1) { background: var(--soft-blue); }
+    .kb-layer:nth-child(2) { background: var(--soft-teal); }
+    .kb-layer:nth-child(3) { background: var(--soft-orange); }
+    .kb-layer:nth-child(4) { background: var(--soft-violet); }
+    .kb-layer ol, .kb-layer ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
+    .kb-layer li { margin: 5px 0; }
+
+    .retrieval-pipeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 16px; }
+    .retrieval-step { position: relative; min-height: 104px; padding: 14px 12px; border-top: 3px solid var(--violet); background: var(--soft); text-align: center; font-size: 12px; }
+    .retrieval-step b { display: block; margin-bottom: 5px; color: var(--navy); font-size: 14px; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid var(--line-2); vertical-align: top; text-align: left; }
+    th { color: var(--navy); background: #f5f8fb; font-weight: 700; }
+    tr:last-child td { border-bottom: 0; }
+    .num-cell { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+    .team-layout { display: grid; grid-template-columns: .88fr 1.12fr; gap: 18px; }
+    .team-total { display: flex; align-items: center; justify-content: center; min-height: 190px; border-radius: 14px; color: #fff; background: linear-gradient(140deg, var(--navy), var(--cyan)); text-align: center; }
+    .team-total strong { display: block; font-size: 58px; line-height: 1; }
+    .team-total span { display: block; margin-top: 8px; color: rgba(255,255,255,.8); }
+    .role-bars { display: grid; gap: 10px; }
+    .role-line { display: grid; grid-template-columns: 104px 1fr 44px; gap: 10px; align-items: center; }
+    .role-line label { color: var(--navy); font-size: 13px; font-weight: 700; }
+    .track { height: 18px; border-radius: 9px; background: var(--line-2); overflow: hidden; }
+    .fill { height: 100%; border-radius: 9px; background: var(--blue); }
+    .role-line:nth-child(2) .fill { background: var(--violet); }
+    .role-line:nth-child(3) .fill { background: var(--teal); }
+    .role-line:nth-child(4) .fill { background: var(--cyan); }
+    .role-line:nth-child(5) .fill { background: var(--orange); }
+    .role-line:nth-child(6) .fill { background: var(--red); }
+
+    .capacity-note { margin-top: 16px; padding: 16px; background: var(--soft-orange); border-left: 4px solid var(--orange); }
+    .capacity-note strong { color: var(--navy); }
+
+    .gate-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .gate-card { padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .gate-card .gate-id { color: var(--teal); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+    .metric { display: flex; justify-content: space-between; gap: 18px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+    .metric:last-child { border-bottom: 0; }
+    .metric b { color: var(--navy); text-align: right; }
+
+    .risk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .risk { padding: 16px 18px; border-left: 4px solid var(--red); background: #fff7f7; }
+    .risk strong { color: #8f3030; }
+    .risk p { color: var(--muted); font-size: 13px; }
+
+    .source-box { padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); }
+    .source-box ul { margin-bottom: 0; }
+    .source-box li { margin: 6px 0; }
+    footer { padding: 26px clamp(22px, 4vw, 64px); color: #b7c6d5; background: var(--navy); font-size: 12px; }
+
+    @media (max-width: 1050px) {
+      .hero-meta, .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .scope-grid, .phase-layout, .team-layout { grid-template-columns: 1fr; }
+      .tech-grid { grid-template-columns: repeat(2, 1fr); }
+      .kb-stack { grid-template-columns: repeat(2, 1fr); }
+      .kb-layer:nth-child(2) { border-right: 0; }
+      .kb-layer:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .release-strip { grid-template-columns: repeat(3, 1fr); }
+      .object-chain { grid-template-columns: repeat(4, 1fr); }
+      .gate-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 680px) {
+      .hero { padding-top: 38px; }
+      .hero-meta, .summary-grid, .tech-grid, .gate-grid, .risk-grid { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      .release-strip { grid-template-columns: repeat(2, 1fr); }
+      .phase-detail-grid { grid-template-columns: 1fr; }
+      .loop-catalog, .loop-fields { grid-template-columns: 1fr; }
+      .kb-stack, .retrieval-pipeline, .object-chain { grid-template-columns: 1fr; }
+      .kb-layer { border-right: 0; border-bottom: 1px solid var(--line); }
+      .kb-layer:last-child { border-bottom: 0; }
+      .nav { position: static; }
+      .role-line { grid-template-columns: 88px 1fr 36px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .page { max-width: none; box-shadow: none; }
+      .nav, .controls, .phase-selector { display: none !important; }
+      section { break-inside: avoid; }
+      .timeline-shell, .table-wrap, .loop-map { overflow: visible; }
+      .timeline { min-width: 0; }
+      .month, .bar { font-size: 8px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">iSP Product Planning · Study Asset Operating System</div>
+    <h1>iST/SP产品Roadmap规划</h1>
+    <p class="subtitle"><strong>从 Atlas 单点能力到 Study 资产闭环平台</strong><br>2026.09—2027.12：以 Study 资产、Loop Registry、Human-in-the-loop 和 ARS 追溯为主线，按版本逐步交付 Loop A—G，并在 v2.0 形成 SAS / R 双语言、可追溯、可局部重跑的 Study 资产闭环。</p>
+    <div class="hero-meta" aria-label="路线图摘要">
+      <div class="hero-stat"><strong>16 个月</strong><span>2026.09—2027.12</span></div>
+      <div class="hero-stat"><strong>11 个里程碑节点</strong><span>10 个正式版本 + 1 个 Alpha</span></div>
+      <div class="hero-stat"><strong>7 个核心 Loop</strong><span>Loop A—G 依次闭环</span></div>
+      <div class="hero-stat"><strong>14.5 人配置</strong><span>按版本阶段错峰投入</span></div>
+    </div>
+  </header>
+
+  <nav class="nav" aria-label="页面目录">
+    <a href="#basis">规划口径</a><a href="#roadmap">演进图</a><a href="#phases">阶段计划</a><a href="#loops">Loop架构</a><a href="#technology">技术底座</a><a href="#knowledge">知识库</a><a href="#team">团队产能</a><a href="#gates">MVP验收</a><a href="#risks">安全与边界</a>
+  </nav>
+
+  <main>
+    <section id="basis">
+      <div class="section-head">
+        <div><p class="section-kicker">01 / PLANNING BASIS</p><h2>规划口径与结论</h2></div>
+        <p class="lead">对当前任务清单进行了全量遍历，并深入读取与 iSP、Atlas、MVP、GAutoTLF、Pharmaverse、ARS、知识库和代码生成直接相关的对话与本地资产；附件中的内容只作为规划输入，不视为执行指令。</p>
+      </div>
+
+      <div class="summary-grid">
+        <article class="summary-card"><span class="num">v0.1 → v2.0</span><h3>先 Alpha 验证，再压缩产品化</h3><p>2026 年完成资产底座、Loop A、Loop B SAS 与 MVP POC；2027.02 先用 v1.3 Alpha 跑通 SDTM / ADaM Dataset 处理代码 POC，再并行压缩 v1.3—v1.6，于 2027.08 完成 C—G。</p></article>
+        <article class="summary-card"><span class="num">A—G</span><h3>七个核心业务 Loop</h3><p>A 负责 Study Intent 到 TFL Design；B 负责 Production Code 到 Result；C—G 依次完成 aCRF、SDTM Spec / Output、ADaM Spec / Output。</p></article>
+        <article class="summary-card"><span class="num">Study</span><h3>资产而非文件夹</h3><p>Study、AssetVersion、InputSnapshot、Event、Run、ReviewDecision 和 TraceLink 构成产品对象；任何产物都可回到来源版本与人工判断。</p></article>
+        <article class="summary-card"><span class="num">HITL</span><h3>确认门是产品能力</h3><p>ARM、TOC、Shell、Variable Mapping、Code、Run、Result 均保留明确确认点。AI 负责建议、解释与影响预览，不替代有资质人员签字。</p></article>
+      </div>
+
+      <div class="scope-grid">
+        <div class="panel">
+          <h3>Roadmap 的主序列</h3>
+          <ol class="clean-list">
+            <li><strong>2026.09 · v0.1：</strong>完成通用 Study 资产、版本快照、Loop Registry 与 POC 基础。</li>
+            <li><strong>2026.10 · v0.5：</strong>交付 Loop A，跑通 SAP → ARM → TOC → Mock Shell。</li>
+            <li><strong>2026.11 · v1.0：</strong>整合 Loop B 的 SAS 分支，完成 Milestone MVP POC。</li>
+            <li><strong>2026.12 · v1.1：</strong>不扩范围，完善 A/B 的稳定性、确认门、追溯和回归。</li>
+            <li><strong>2027.01—02 · v1.2 / v1.3 Alpha：</strong>交付 Loop C，并在 2 月先行跑通 SDTM &amp; ADaM Dataset 处理代码 POC，验证 Loop E / G 的最小链路。</li>
+            <li><strong>2027.03—08 · v1.3—v1.6：</strong>依次产品化 Loop D、E、F、G；v1.3 同步加入 Loop B 的 R 分支，通过并行开发与复用 Alpha 资产将完成时间提前至 8 月。</li>
+            <li><strong>2027.09—12 · v2.0：</strong>整合 A—G、SAS/R 双语言、端到端追溯，完成受控试点、回归和产品化验收。</li>
+          </ol>
+        </div>
+        <div class="panel soft">
+          <h3>边界声明</h3>
+          <div class="tag-row"><span class="tag current">当前可复用：Shell / Metadata / SAS Code / Runtime / Copilot</span><span class="tag roadmap">Roadmap：Loop A—G；Loop B SAS / R 双分支</span><span class="tag boundary">不承诺：无人审核直接申报</span></div>
+          <ul class="clean-list">
+            <li>团队按 <strong>14.5 人资源配置</strong>建模，其中产品 2.5 人、业务专家 2 人；各版本按任务重点错峰投入。</li>
+            <li>无真实 Dataset 时只允许结构性 dummy smoke，产物强制标记 <strong>NON-ANALYTIC</strong>。</li>
+            <li>Atlas 是企业项目能力与资产来源，不把客户专属字段、页面或规则写入 iSP 核心。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="roadmap">
+      <div class="section-head">
+        <div><p class="section-kicker">02 / EVOLUTION MAP</p><h2>Roadmap 演进图</h2></div>
+        <p class="lead">横向按月、纵向按核心 Loop 展示；每个新 Loop 采用约两个月的设计、实现和验收窗口，资产版本、知识库、平台治理与质量验证横向支撑所有 Loop。</p>
+      </div>
+      <div class="controls" aria-label="路线图过滤器">
+        <span>显示能力域：</span>
+        <button class="filter-btn" data-filter="all" aria-pressed="true">全部</button>
+        <button class="filter-btn" data-filter="asset" aria-pressed="false">Study资产</button>
+        <button class="filter-btn" data-filter="loop-a" aria-pressed="false">Loop A</button>
+        <button class="filter-btn" data-filter="loop-b" aria-pressed="false">Loop B</button>
+        <button class="filter-btn" data-filter="loop-c" aria-pressed="false">Loop C</button>
+        <button class="filter-btn" data-filter="loop-d" aria-pressed="false">Loop D</button>
+        <button class="filter-btn" data-filter="loop-e" aria-pressed="false">Loop E</button>
+        <button class="filter-btn" data-filter="loop-f" aria-pressed="false">Loop F</button>
+        <button class="filter-btn" data-filter="loop-g" aria-pressed="false">Loop G</button>
+        <button class="filter-btn" data-filter="kb" aria-pressed="false">知识库</button>
+        <button class="filter-btn" data-filter="platform" aria-pressed="false">平台治理</button>
+        <button class="filter-btn" data-filter="quality" aria-pressed="false">质量验证</button>
+      </div>
+
+      <div class="timeline-shell" role="region" aria-label="2026年9月至2027年12月路线图" tabindex="0">
+        <div class="timeline">
+          <div class="timeline-head">
+            <div class="lane-label">能力域 / 月份</div>
+            <div class="months">
+              <div class="month">26.09</div><div class="month">26.10</div><div class="month">26.11</div><div class="month">26.12</div>
+              <div class="month year-start">27.01</div><div class="month">27.02</div><div class="month">27.03</div><div class="month">27.04</div>
+              <div class="month">27.05</div><div class="month">27.06</div><div class="month">27.07</div><div class="month">27.08</div>
+              <div class="month">27.09</div><div class="month">27.10</div><div class="month">27.11</div><div class="month">27.12</div>
+            </div>
+          </div>
+
+          <div class="timeline-row"><div class="lane-label">Study资产底座</div><div class="lane-grid">
+            <div class="bar asset" data-category="asset" style="grid-column:1 / 2">v0.1<small>资产 / 快照</small></div>
+            <div class="bar asset" data-category="asset" style="grid-column:2 / 17">版本重跑与追溯<small>InputSnapshot、Impact、TraceLink、历史版本保留</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">Loop A：SAP→Shell</div><div class="lane-grid">
+            <div class="bar loop-a" data-category="loop-a" style="grid-column:1 / 3">v0.5 · Intent → TFL Design<small>SAP / ARM / TOC / Mock Shell</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">Loop B：Code→Result</div><div class="lane-grid">
+            <div class="bar loop-b" data-category="loop-b" style="grid-column:2 / 4">v1.0 SAS<small>Production Code / Runtime / Result</small></div>
+            <div class="bar loop-b" data-category="loop-b" style="grid-column:4 / 5">v1.1<small>A/B稳定化</small></div>
+            <div class="bar loop-b" data-category="loop-b" style="grid-column:7 / 9">v1.3 R 分支<small>Pharmaverse / rtables / tern / R Runtime</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">Loop C：Generate aCRF</div><div class="lane-grid">
+            <div class="bar loop-c" data-category="loop-c" style="grid-column:5 / 7">v1.2 · aCRF<small>CRF/eCRF + Raw metadata → aCRF</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">Loop D：SDTM Spec</div><div class="lane-grid">
+            <div class="bar loop-d" data-category="loop-d" style="grid-column:7 / 9">v1.3 · SDTM Spec<small>aCRF/eCRF + Raw Dictionary → Mapping</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">Loop E：SDTM Output</div><div class="lane-grid">
+            <div class="bar loop-e" data-category="loop-e" style="grid-column:6 / 7">v1.3α<small>SDTM Code POC</small></div>
+            <div class="bar loop-e" data-category="loop-e" style="grid-column:8 / 10">v1.4 · SDTM Output<small>2027.04—05 · Spec + Raw Data → Dataset + Program</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">Loop F：ADaM Spec</div><div class="lane-grid">
+            <div class="bar loop-f" data-category="loop-f" style="grid-column:10 / 12">v1.5 · ADaM Spec<small>2027.06—07 · SDTM + SAP → Analysis Mapping</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">Loop G：ADaM Output</div><div class="lane-grid">
+            <div class="bar loop-g" data-category="loop-g" style="grid-column:6 / 7">v1.3α<small>ADaM Code POC</small></div>
+            <div class="bar loop-g" data-category="loop-g" style="grid-column:11 / 13">v1.6 · ADaM Output<small>2027.07—08 · Spec + SDTM → Dataset + Program</small></div>
+            <div class="bar loop-g" data-category="loop-g" style="grid-column:13 / 17">v2.0 · A—G整合<small>2027.09—12 · 试点、全链回归、追溯与产品验收</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">知识库与评测</div><div class="lane-grid">
+            <div class="bar kb" data-category="kb" style="grid-column:1 / 7">Atlas资产规范化<small>Macro / Template / Reference / Rule / Golden Set</small></div>
+            <div class="bar kb" data-category="kb" style="grid-column:7 / 17">Loop N：横向资产库维护<small>标准、企业、Study、SAS/R知识包、评测与反馈；不作为核心业务Loop</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">平台与治理</div><div class="lane-grid">
+            <div class="bar platform" data-category="platform" style="grid-column:1 / 6">编排 / API / 安全底线<small>步骤状态、权限、隔离、凭据、审计事件</small></div>
+            <div class="bar platform" data-category="platform" style="grid-column:6 / 11">SSO / Audit / Evidence<small>受控单Study试点</small></div>
+            <div class="bar platform" data-category="platform" style="grid-column:11 / 17">企业部署与运营<small>配置中心、保留策略、可观测性、开放API</small></div>
+          </div></div>
+
+          <div class="timeline-row"><div class="lane-label">测试与验证</div><div class="lane-grid">
+            <div class="bar quality" data-category="quality" style="grid-column:1 / 5">MVP POC Gate<small>Loop A/B、SAS、确认门、版本重跑</small></div>
+            <div class="bar quality" data-category="quality" style="grid-column:5 / 13">Alpha + 逐Loop Golden Set<small>2月 E/G POC；C—G 每版含业务确认、回归、失败与局部重跑</small></div>
+            <div class="bar quality" data-category="quality" style="grid-column:13 / 17">v2.0 V&amp;V<small>A—G、SAS/R、端到端证据与变更控制</small></div>
+          </div></div>
+        </div>
+      </div>
+
+      <div class="release-strip" aria-label="发布节点">
+        <div class="release"><strong>v0.1</strong><span>2026.09 · Study资产 / POC基础</span></div>
+        <div class="release"><strong>v0.5</strong><span>2026.10 · Loop A</span></div>
+        <div class="release"><strong>v1.0</strong><span>2026.11 · Loop B SAS / MVP POC</span></div>
+        <div class="release"><strong>v1.1</strong><span>2026.12 · A/B稳定化</span></div>
+        <div class="release"><strong>v1.2</strong><span>2027.02 · Loop C</span></div>
+        <div class="release"><strong>v1.3 Alpha</strong><span>2027.02 · E/G Dataset Code POC</span></div>
+        <div class="release"><strong>v1.3</strong><span>2027.04 · Loop D + Loop B R</span></div>
+        <div class="release"><strong>v1.4</strong><span>2027.05 · Loop E</span></div>
+        <div class="release"><strong>v1.5</strong><span>2027.07 · Loop F</span></div>
+        <div class="release"><strong>v1.6</strong><span>2027.08 · Loop G</span></div>
+        <div class="release"><strong>v2.0</strong><span>2027.12 · 试点与A—G整合</span></div>
+      </div>
+    </section>
+
+    <section id="phases">
+      <div class="section-head">
+        <div><p class="section-kicker">03 / RELEASE PLAN</p><h2>十个正式版本 + 一个 Alpha 里程碑</h2></div>
+        <p class="lead">2026 年先完成 MVP POC；2027.02 插入 v1.3 Alpha，提前验证 Loop E / G 的 Dataset 处理代码链路。正式版 v1.3—v1.6 通过并行开发与 Alpha 资产复用压缩至 2027.08 完成，9—12 月集中用于全链整合和产品化验收。</p>
+      </div>
+      <div class="phase-selector" role="group" aria-label="选择路线图阶段">
+        <button class="phase-btn" data-phase="0" aria-pressed="true">v0.1 底座</button>
+        <button class="phase-btn" data-phase="1" aria-pressed="false">v0.5 Loop A</button>
+        <button class="phase-btn" data-phase="2" aria-pressed="false">v1.0 Loop B SAS</button>
+        <button class="phase-btn" data-phase="3" aria-pressed="false">v1.1 稳定化</button>
+        <button class="phase-btn" data-phase="4" aria-pressed="false">v1.2 Loop C</button>
+        <button class="phase-btn" data-phase="5" aria-pressed="false">v1.3α E/G POC</button>
+        <button class="phase-btn" data-phase="6" aria-pressed="false">v1.3 Loop D + R</button>
+        <button class="phase-btn" data-phase="7" aria-pressed="false">v1.4 Loop E</button>
+        <button class="phase-btn" data-phase="8" aria-pressed="false">v1.5 Loop F</button>
+        <button class="phase-btn" data-phase="9" aria-pressed="false">v1.6 Loop G</button>
+        <button class="phase-btn" data-phase="10" aria-pressed="false">v2.0 整合</button>
+      </div>
+      <div class="phase-layout">
+        <div class="phase-index" aria-label="阶段总览">
+          <div class="phase-card"><strong>v0.1｜Study 资产与 POC 基础</strong><span>截至 2026.09</span></div>
+          <div class="phase-card"><strong>v0.5｜Loop A</strong><span>截至 2026.10</span></div>
+          <div class="phase-card"><strong>v1.0｜Loop B SAS / MVP POC</strong><span>截至 2026.11</span></div>
+          <div class="phase-card"><strong>v1.1｜A/B 完善</strong><span>截至 2026.12</span></div>
+          <div class="phase-card"><strong>v1.2｜Loop C</strong><span>2027.01—02</span></div>
+          <div class="phase-card"><strong>v1.3 Alpha｜Loop E / G Dataset Code POC</strong><span>2027.02</span></div>
+          <div class="phase-card"><strong>v1.3｜Loop D + Loop B R</strong><span>2027.03—04</span></div>
+          <div class="phase-card"><strong>v1.4｜Loop E 产品化</strong><span>2027.04—05</span></div>
+          <div class="phase-card"><strong>v1.5｜Loop F</strong><span>2027.06—07</span></div>
+          <div class="phase-card"><strong>v1.6｜Loop G 产品化</strong><span>2027.07—08</span></div>
+          <div class="phase-card"><strong>v2.0｜试点与 A—G 全链整合</strong><span>2027.09—12</span></div>
+        </div>
+        <div class="phase-detail" id="phaseDetail" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="loops">
+      <div class="section-head">
+        <div><p class="section-kicker">04 / STUDY LOOP MODEL</p><h2>Study 资产驱动的 Loop 架构</h2></div>
+        <p class="lead">七个核心业务 Loop 覆盖从 Study Intent、CRF 与标准化数据到 TFL Result 的主要资产演进。系统先识别已有资产、版本和批准状态，再按依赖推荐可执行 Loop，并把缺口、降级行为、确认点和版本影响显式呈现。</p>
+      </div>
+
+      <div class="loop-map">
+          <div class="loop-flow">
+            <div class="flow-box"><h3>Study Asset Manifest</h3><p class="mini">Protocol / SAP / CRF / Raw / SDTM / ADaM / Shell / Code / Result</p><ul><li>AssetVersion、Owner、批准状态、hash</li><li>存在 / 缺失 / 冲突 / 过期</li><li>InputSnapshot 与 TraceLink</li></ul></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box loopA"><h3>设计主线｜Loop A</h3><ul><li>SAP → Objective / Endpoint / ARM</li><li>ARM → TOC / Mock Shell</li><li>为 Loop B 提供 TFL Design</li><li>ARM / TOC / Shell 人工确认</li></ul></div>
+            <div class="flow-arrow">↔</div>
+            <div class="flow-box future"><h3>数据主线｜Loop C—G</h3><ul><li>C：CRF/eCRF → aCRF</li><li>D/E：SDTM Spec → SDTM Output</li><li>F/G：ADaM Spec → ADaM Output</li><li>为分析与 TFL 提供受控数据资产</li></ul></div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box loopB"><h3>结果主线｜Loop B</h3><ul><li>Shell + Spec/Dataset → SAS/R Code</li><li>Production Runtime / Log / Result</li><li>Code 与 Result 在同一 Loop 关闭</li><li>Mapping / Code / Run / Result 确认</li></ul></div>
+          </div>
+        </div>
+
+      <div class="callout"><div><strong>所有 Loop 的统一版本行为：</strong>每次运行固化 InputSnapshot；输入版本变化后先进行 Impact Analysis，只从最小安全锚点重跑受影响对象，生成新的 Output Version，保留历史输出、人工锁定内容、ReviewDecision、Run / Log 与端到端 TraceLink。原 Loop M 因此不再单列。</div></div>
+
+      <div class="loop-catalog" aria-label="Loop A 至 G 详细定义">
+        <article class="loop-card">
+          <div class="loop-card-head"><h3>Loop A｜Study Intent → TFL Design</h3><span class="loop-version">v0.5 · 2026.10</span></div>
+          <p class="loop-purpose">从研究设计证据建立分析意图，并形成可确认、可编程的 T/F/L 设计资产。</p>
+          <div class="loop-fields"><div class="loop-field"><b>主要输入</b>SAP；Protocol 可选；企业 Shell / 统计规则</div><div class="loop-field"><b>核心处理</b>证据定位 → Objective / Endpoint → ARM → TOC → Mock Shell</div><div class="loop-field"><b>主要输出</b>Objective、Endpoint、Analysis / ARM、TOC、T/F/L Mock Shell</div><div class="loop-field"><b>确认点</b>ARM、TOC、Shell 三道业务 Review Gate</div></div>
+          <div class="loop-update"><strong>版本更新：</strong>SAP / Protocol / 规则更新后定位受影响 Analysis 与 Output，仅重建对应 ARM、TOC 或 Shell，并保留已批准版本。</div>
+        </article>
+
+        <article class="loop-card">
+          <div class="loop-card-head"><h3>Loop B｜Production Code → Runtime → Result</h3><span class="loop-version">SAS v1.0 · R v1.3</span></div>
+          <p class="loop-purpose">把批准的 Output Design 与数据定义转成生产程序、运行日志和结果；Production Code 与 Result 均在本 Loop 内闭环，不再单列 Loop J。</p>
+          <div class="loop-fields"><div class="loop-field"><b>主要输入</b>Mock Shell、SDTM / ADaM Spec、Dataset 可选、SAS Macro / Template 或 R Package / Template</div><div class="loop-field"><b>核心处理</b>Variable Mapping → Program Design → SAS/R Code → Runtime → Log 解析 → Result 注册</div><div class="loop-field"><b>主要输出</b>SAS/R Production Code、Runtime Log、T/F/L Result、Trace / Evidence</div><div class="loop-field"><b>确认点</b>Mapping、Code、Run、Result 四道 Gate</div></div>
+          <div class="loop-update"><strong>版本更新：</strong>Shell、Spec、Dataset、模板或运行环境变化时按依赖确定最小重跑锚点，生成新 Code / Run / Result 版本；v1.3 引入 Pharmaverse、rtables、tern 与 R Runtime Adapter。</div>
+        </article>
+
+        <article class="loop-card">
+          <div class="loop-card-head"><h3>Loop C｜Generate aCRF</h3><span class="loop-version">v1.2 · 2027.01—02</span></div>
+          <p class="loop-purpose">依据 CRF / eCRF 与可用的 Raw 数据或元数据生成标准化、可追溯的 annotated CRF。</p>
+          <div class="loop-fields"><div class="loop-field"><b>主要输入</b>CRF / eCRF；Raw Data / Raw Metadata 可选；Annotation Rules</div><div class="loop-field"><b>核心处理</b>表单 / 字段识别 → 域变量建议 → 注释定位 → 规则校验</div><div class="loop-field"><b>主要输出</b>aCRF PDF、结构化 Annotation、字段级 Source Trace</div><div class="loop-field"><b>确认点</b>页面识别、变量注释、未映射字段、发布版本</div></div>
+          <div class="loop-update"><strong>版本更新：</strong>CRF 页面、字段或规则变化时只重建受影响页与注释，输出页面级 Diff 和新 aCRF 版本。</div>
+        </article>
+
+        <article class="loop-card">
+          <div class="loop-card-head"><h3>Loop D｜Generate SDTM Spec</h3><span class="loop-version">v1.3 · 2027.03—04</span></div>
+          <p class="loop-purpose">将采集层资产和 SDTM 标准转成可执行、可审阅的 source-to-target 规范。</p>
+          <div class="loop-fields"><div class="loop-field"><b>主要输入</b>aCRF / eCRF、Raw Data Dictionary、SDTM 标准、企业规则</div><div class="loop-field"><b>核心处理</b>Domain / Variable Mapping → Controlled Terminology → Derivation / Validation Rule</div><div class="loop-field"><b>主要输出</b>SDTM Spec、Source-to-Target Mapping、转换与验证规则</div><div class="loop-field"><b>确认点</b>Domain、变量、术语、派生、例外规则</div></div>
+          <div class="loop-update"><strong>版本更新：</strong>aCRF、Raw Dictionary 或标准版本变化时进行 Domain / Variable 影响分析，仅刷新相关 Mapping 与规则版本。</div>
+        </article>
+
+        <article class="loop-card">
+          <div class="loop-card-head"><h3>Loop E｜Generate SDTM Output</h3><span class="loop-version">v1.3α POC · 2027.02 / v1.4 · 2027.04—05</span></div>
+          <p class="loop-purpose">2027.02 先以 Alpha 验证 Raw → SDTM Dataset 的处理代码、运行和最小校验链路；正式版再依据批准的 SDTM Spec 产品化标准数据集与可复现程序。</p>
+          <div class="loop-fields"><div class="loop-field"><b>主要输入</b>Approved SDTM Spec、Raw Data；SAP 可选</div><div class="loop-field"><b>核心处理</b>转换程序生成 → Domain 运行 → 结构 / 内容验证 → Issue Closure</div><div class="loop-field"><b>主要输出</b>SDTM Datasets、Production Programs、Validation Report、define-ready Metadata</div><div class="loop-field"><b>确认点</b>程序、运行、验证问题、Domain 发布</div></div>
+          <div class="loop-update"><strong>版本更新：</strong>Raw Data 或 SDTM Spec 变化时按 Domain 和变量依赖重跑，只发布受影响 Dataset / Program 的新版本。</div>
+        </article>
+
+        <article class="loop-card">
+          <div class="loop-card-head"><h3>Loop F｜Generate ADaM Spec</h3><span class="loop-version">v1.5 · 2027.06—07</span></div>
+          <p class="loop-purpose">把 SDTM、SAP 和输出设计中的分析意图转成一致的 ADaM 规范与派生规则。</p>
+          <div class="loop-fields"><div class="loop-field"><b>主要输入</b>SDTM Dataset / Spec、SAP、TOC / Mock Shell 可选、企业分析标准</div><div class="loop-field"><b>核心处理</b>Population / Parameter / Endpoint Mapping → Dataset Design → Derivation Rule</div><div class="loop-field"><b>主要输出</b>ADaM Spec、分析映射、派生规则、与 ARM / TFL 的 Trace</div><div class="loop-field"><b>确认点</b>Dataset 结构、变量、Population、Parameter、派生与 Trace</div></div>
+          <div class="loop-update"><strong>版本更新：</strong>SAP、SDTM 或 Shell 更新后定位受影响 Dataset / Variable / Analysis，只重建相关 Spec 与追溯关系。</div>
+        </article>
+
+        <article class="loop-card">
+          <div class="loop-card-head"><h3>Loop G｜Generate ADaM Output</h3><span class="loop-version">v1.3α POC · 2027.02 / v1.6 · 2027.07—08</span></div>
+          <p class="loop-purpose">2027.02 先以 Alpha 验证 SDTM → ADaM Dataset 的处理代码、运行和最小派生校验；正式版再依据批准的 ADaM Spec 产品化分析数据集与验证证据。</p>
+          <div class="loop-fields"><div class="loop-field"><b>主要输入</b>Approved ADaM Spec、SDTM Datasets；SAP 可选</div><div class="loop-field"><b>核心处理</b>程序生成 → Dataset 构建 → 派生 / 一致性验证 → Snapshot 发布</div><div class="loop-field"><b>主要输出</b>ADaM Datasets、Production Programs、Derivation Validation、Analysis Snapshot</div><div class="loop-field"><b>确认点</b>程序、运行、派生验证、Dataset 发布</div></div>
+          <div class="loop-update"><strong>版本更新：</strong>SDTM 或 ADaM Spec 变化时沿依赖图重跑受影响 Dataset / Parameter；下游 Loop B 接收新的 Analysis Snapshot 并决定是否重跑 Result。</div>
+        </article>
+      </div>
+
+      <div class="object-chain" aria-label="核心对象传递链">
+        <div class="object"><b>1. Study</b>AssetVersion<br>InputSnapshot</div>
+        <div class="object"><b>2. Intent</b>Objective<br>Endpoint / ARM</div>
+        <div class="object"><b>3. Collection</b>CRF / aCRF<br>Raw Metadata</div>
+        <div class="object"><b>4. SDTM</b>Spec<br>Dataset</div>
+        <div class="object"><b>5. ADaM</b>Spec<br>Dataset</div>
+        <div class="object"><b>6. TFL</b>Shell / Code<br>Run / Result</div>
+        <div class="object"><b>7. Evidence</b>TraceLink<br>ReviewDecision</div>
+      </div>
+
+      <div class="callout"><div><strong>ARS 与资产库边界：</strong>Objective / Endpoint 通过稳定 ID、证据定位和 Analysis 的 reason / purpose 与 ARS Analysis 相连；运行、审批、审计与版本影响使用 companion sidecar。Loop N 作为横向资产库维护能力，负责标准、企业、Study、SAS/R、Reference、反馈与 Golden Set，但不列入七个核心业务 Loop。</div></div>
+    </section>
+
+    <section id="technology">
+      <div class="section-head">
+        <div><p class="section-kicker">05 / TECHNOLOGY BASELINE</p><h2>Atlas 信息反映的主要技术与产品化方向</h2></div>
+        <p class="lead">这里只描述已能从对话、功能清单和目录资产中确认的能力技术，不臆测具体前后端框架、向量数据库或云厂商。</p>
+      </div>
+
+      <div class="tech-grid">
+        <article class="tech-card"><h3>Agent / Node 工作流</h3><p>已有方向包括 AI 生成链路拆点、节点级上下文组织、步骤运行控制、递归规避、失败定位与重跑。Evaluation Agent 不是单轮 Judge，而是加载额外信息并执行多步验证。</p><div class="decision"><strong>产品化：</strong>统一为 LoopDefinition → StepRun → Gate → Artifact 的状态机；模型、Prompt、KB和工具版本随 Run 固化。</div></article>
+        <article class="tech-card"><h3>Shell 语义结构化</h3><p>Atlas 输出 JSON 已包含 Table / Figure / Listing 类型、row/column/cell、层级、对齐、颜色、页信息、annotation 和 mosaic metadata，说明 Shell 已被转为可查询的 canonical 对象。</p><div class="decision"><strong>产品化：</strong>保留平台中立 Schema；企业字段进入扩展命名空间，避免产品核心依赖专属页面结构。</div></article>
+        <article class="tech-card"><h3>多路 Reference 召回</h3><p>功能清单明确要求 Table / Listing / Figure 特征抽取、Reference锚定、全局Reference、上下文构建与生成链路使用。仅依赖一个大向量检索分数会削弱可解释性与召回稳定性。</p><div class="decision"><strong>产品化：</strong>结构化过滤 + 特征召回 + 语义召回 + rerank + 运行验证，所有结果带适用范围与版本。</div></article>
+        <article class="tech-card"><h3>SAS 代码生成与 Copilot</h3><p>现有能力围绕 Macro参数、Block、Group、Page-by、Filter、Program name、Suffix、数据前/后处理、Uncovered Code、代码编辑、局部Regenerate和Diff展开。</p><div class="decision"><strong>产品化：</strong>先生成 Program Design IR，再组装批准 Macro / Template / Reference；人工锁定代码块不被局部重跑覆盖。</div></article>
+        <article class="tech-card"><h3>Runtime 与反馈闭环</h3><p>已有规划包括编译检查、服务接入、Dummy Data、日志解析与回传、执行结果用于错误归因，以及 Review 节点。Runtime把代码生成转化为可验证结果。</p><div class="decision"><strong>产品化：</strong>SAS Runtime Adapter 在 v1.0 先行；v1.3（2027.03—04）引入 R Adapter，重跑创建新 Attempt，不覆盖历史 Run。</div></article>
+        <article class="tech-card"><h3>R / Pharmaverse 路线</h3><p>GAutoTLF 方案以 R Shiny、R Template、Pharmaverse/rtables、Shell Processor、本地执行、自动修复和 Human Review 为核心。它适合作为 R Programming Engine，不适合作为统一主产品入口。</p><div class="decision"><strong>产品化：</strong>复用函数、模板、包依赖与Runtime经验；UI、对象、编排、资产和审计统一上收至 iSP。</div></article>
+        <article class="tech-card"><h3>Study / Event / 版本治理</h3><p>Atlas 已暴露 Event、Study级参数、输入变更、多人编辑、代码版本、Metadata↔Code一致性、Review关键信息和审计追踪等产品需求。</p><div class="decision"><strong>产品化：</strong>Study是资源边界，Event是业务意图，InputSnapshot是可复现输入，所有批准对象追加版本。</div></article>
+        <article class="tech-card"><h3>安全与部署底线</h3><p>Atlas二期清单覆盖 SSO、权限、审计、加密、净化层、TLS/mTLS、API安全与限流、数据保留、CI/CD安全和部署。</p><div class="decision"><strong>产品化：</strong>这些不是“后补非功能”；在 v1.0 受控试点前必须完成最小可验证底线。</div></article>
+        <article class="tech-card"><h3>质量工程</h3><p>目录与计划同时包含 validation log、自动 dry run、table 对比、评估 Agent、错误归因、SIT/UAT 与客户验证样本。AI准确率必须按场景、输入完整度和复杂度分层。</p><div class="decision"><strong>产品化：</strong>以 first-pass runnable、业务可用、最终运行成功、人工修改量和追溯完整率组成指标组合，不用单一“准确率”。</div></article>
+      </div>
+    </section>
+
+    <section id="knowledge">
+      <div class="section-head">
+        <div><p class="section-kicker">06 / KNOWLEDGE SYSTEM</p><h2>知识库构建蓝图</h2></div>
+        <p class="lead">知识库不是文档堆；它必须能被 Loop 在正确的 Study、企业、时间、版本和步骤中调用，并能证明“为什么使用了这个资产”。</p>
+      </div>
+
+      <div class="kb-stack">
+        <article class="kb-layer"><h3>L1 行业标准库</h3><ul><li>CDISC SDTM / ADaM / ARS</li><li>分析方法、Operation与术语词典</li><li>通用 T/F/L 结构规则</li><li>Pharmaverse 包、函数与范例</li></ul></article>
+        <article class="kb-layer"><h3>L2 企业知识库</h3><ul><li>SOP、命名、Title/Footnote、格式</li><li>Analysis / Display / Utility Macro</li><li>Code Template、参数契约、禁止模式</li><li>治疗领域与Corporate模板</li></ul></article>
+        <article class="kb-layer"><h3>L3 Study 项目库</h3><ul><li>SAP、Shell、TOC、Spec、Dataset</li><li>Reference Program / Result配对</li><li>Run / Log / Validation记录</li><li>批准决定、例外与Study级参数</li></ul></article>
+        <article class="kb-layer"><h3>L4 评测与反馈库</h3><ul><li>Golden set 与标准答案</li><li>问题分类、根因、修复路径</li><li>Prompt / Model / KB版本效果</li><li>专家决策与不可自动化边界</li></ul></article>
+      </div>
+
+      <div class="scope-grid">
+        <div class="panel">
+          <h3>每个 KnowledgeAsset 的最小治理字段</h3>
+          <div class="tag-row"><span class="tag">asset_id</span><span class="tag">type</span><span class="tag">namespace</span><span class="tag">version</span><span class="tag">applicability</span><span class="tag">source_locator</span><span class="tag">approval_status</span><span class="tag">owner</span><span class="tag">effective_date</span><span class="tag">checksum</span><span class="tag">model/prompt compatibility</span></div>
+          <ul class="clean-list"><li>只有 Approved 且适用范围匹配的资产才可进入正式代码生成上下文。</li><li>企业与 Study 命名空间必须强隔离；历史项目资产需授权、脱敏和去常量化。</li><li>每次生成都保存所用知识资产、检索理由、排序分数和最终取舍。</li></ul>
+        </div>
+        <div class="panel soft">
+          <h3>Atlas 目录扫描反映的现有资产形态</h3>
+          <p class="note">以下为 2026-08-26 本地目录点位扫描，不代表已完成可用性与授权审核。</p>
+          <div class="table-wrap"><table><thead><tr><th>资产层</th><th class="num-cell">文件数</th><th>主要形态</th></tr></thead><tbody>
+            <tr><td>Study Shell / Spec / TOC / Code / Validation</td><td class="num-cell">19</td><td>CSV、PDF、XLSX、14个SAS程序、验证日志</td></tr>
+            <tr><td>Shell Pairs</td><td class="num-cell">6</td><td>DOCX 配对案例</td></tr>
+            <tr><td>Analysis Macro文档</td><td class="num-cell">149</td><td>45 MD、45 HTML、59 PNG</td></tr>
+            <tr><td>Display Macro文档</td><td class="num-cell">188</td><td>53 MD、51 HTML、84 PNG</td></tr>
+            <tr><td>Utility Macro文档</td><td class="num-cell">117</td><td>45 MD、29 HTML、43 PNG</td></tr>
+            <tr><td>Corporate / TA / Provisional模板</td><td class="num-cell">28</td><td>XLS/XLSX 与说明文档</td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:24px">推荐的检索—生成—验证链</h3>
+      <div class="retrieval-pipeline" aria-label="知识检索流水线">
+        <div class="retrieval-step"><b>1. 强过滤</b>企业 / Study / TFL类型 / 语言 / 版本 / 有效期</div>
+        <div class="retrieval-step"><b>2. 特征召回</b>Analysis signature、Dataset、Macro参数、Shell结构</div>
+        <div class="retrieval-step"><b>3. 语义召回</b>SAP语义、标题、脚注、规则与历史问题</div>
+        <div class="retrieval-step"><b>4. Rerank</b>适用度、业务优先级、证据、批准状态</div>
+        <div class="retrieval-step"><b>5. 执行验证</b>静态检查、Runtime、Log、Result与人工Review</div>
+      </div>
+      <div class="callout"><div><strong>为什么不做“纯向量检索 + Top-K”：</strong>对 Reference Program 来说，很多关键差异藏在少数结构化维度（TFL类型、分析方法、Population、Dataset、Macro、输出形态）。先做强过滤和特征召回，再进行语义检索与重排，可以减轻高维距离集中导致的排序不稳定，也更容易解释和验证。</div></div>
+    </section>
+
+    <section id="team">
+      <div class="section-head">
+        <div><p class="section-kicker">07 / TEAM & CAPACITY</p><h2>团队配置与产能假设</h2></div>
+        <p class="lead">团队资源配置合计 14.5 人，其中产品 2.5 人、业务专家 2 人。各角色按版本重点错峰参与，在 MVP POC、数据 Loop 验收与全链整合阶段提高有效投入。</p>
+      </div>
+      <div class="team-layout">
+        <div>
+          <div class="team-total"><div><strong>14.5</strong><span>人员配置｜按版本阶段错峰投入</span></div></div>
+          <div class="capacity-note"><strong>计划节奏：</strong>以 2 周 Sprint 为执行单元，16 个月约 34 个 Sprint。建议预留 35% 左右给验证、缺陷、客户环境适配、知识清洗与不可预见工作，避免把全部席位换算为纯功能开发。</div>
+        </div>
+        <div class="panel">
+          <h3>角色席位</h3>
+          <div class="role-bars">
+            <div class="role-line"><label>产品</label><div class="track"><div class="fill" style="width:62.5%"></div></div><b>2.5</b></div>
+            <div class="role-line"><label>AI算法</label><div class="track"><div class="fill" style="width:100%"></div></div><b>4</b></div>
+            <div class="role-line"><label>后端</label><div class="track"><div class="fill" style="width:50%"></div></div><b>2</b></div>
+            <div class="role-line"><label>前端</label><div class="track"><div class="fill" style="width:50%"></div></div><b>2</b></div>
+            <div class="role-line"><label>测试</label><div class="track"><div class="fill" style="width:50%"></div></div><b>2</b></div>
+            <div class="role-line"><label>业务专家</label><div class="track"><div class="fill" style="width:50%"></div></div><b>2</b></div>
+          </div>
+          <h3 style="margin-top:24px">建议拆法</h3>
+          <ul class="clean-list">
+            <li><strong>2.5 产品：</strong>1人负责产品对象/交互/版本治理，1人负责业务方案、客户试点、范围与验收，0.5人负责跨Loop计划、数据与指标运营。</li>
+            <li><strong>4 AI：</strong>文档/ARM、Shell/Metadata、SAS/R代码、检索评测与Copilot四个方向；共享Agent框架。</li>
+            <li><strong>2后端：</strong>资产/对象/API与编排/Runtime各1人；安全、部署由组织公共平台支持。</li>
+            <li><strong>2前端：</strong>Study资源与Preview/Gate工作台各1人。</li>
+            <li><strong>2测试：</strong>1人偏产品/SIT，1人偏AI Benchmark/Runtime；2026年初期可1人主投入、1人部分投入。</li>
+            <li><strong>2 业务专家：</strong>1人侧重统计分析、SAP/ARM与TFL Review，1人侧重CDISC、Metadata、数据Loop与规则裁决。</li>
+          </ul>
+        </div>
+      </div>
+
+    </section>
+
+    <section id="gates">
+      <div class="section-head">
+        <div><p class="section-kicker">08 / MVP QUALITY GATES</p><h2>MVP 阶段验收指标</h2></div>
+        <p class="lead">当前只定义 2026.10—11 的 Loop A / Loop B MVP POC 指标。指标采用稳健目标：支持范围覆盖以 <strong>70%</strong> 为基线，关键内容准确性与可运行结果成功率以 <strong>约 80%</strong> 为建议目标；均需人工 Review 后确认。</p>
+      </div>
+      <div class="gate-grid">
+        <article class="gate-card"><div class="gate-id">MVP-01 · SCOPE</div><h3>MVP 场景覆盖</h3><div class="metric"><span>Milestone 场景覆盖</span><b>≥ 70%</b></div><div class="metric"><span>代表性输出</span><b>Table / Figure / Listing</b></div><div class="metric"><span>未覆盖项</span><b>显式标记并人工确认</b></div></article>
+        <article class="gate-card"><div class="gate-id">MVP-02 · LOOP A</div><h3>TOC 与 Mock Shell</h3><div class="metric"><span>目标 TFL 覆盖完整性</span><b>≥ 70%</b></div><div class="metric"><span>标题、结构、关键字段准确性</span><b>目标约 80%</b></div><div class="metric"><span>确认方式</span><b>TOC / Shell 人工 Review</b></div></article>
+        <article class="gate-card"><div class="gate-id">MVP-03 · LOOP B CODE</div><h3>SAS 代码生成</h3><div class="metric"><span>批准模板范围覆盖</span><b>≥ 70%</b></div><div class="metric"><span>关键 Mapping / 代码准确性</span><b>目标约 80%</b></div><div class="metric"><span>确认方式</span><b>Code Review 后运行</b></div></article>
+        <article class="gate-card"><div class="gate-id">MVP-04 · LOOP B RUN</div><h3>Run 出结果</h3><div class="metric"><span>覆盖场景运行出结果</span><b>目标约 80%</b></div><div class="metric"><span>运行证据</span><b>Code / Log / Result 可追溯</b></div><div class="metric"><span>结果边界</span><b>业务正确性需人工确认</b></div></article>
+      </div>
+    </section>
+
+    <section id="risks">
+      <div class="section-head">
+        <div><p class="section-kicker">09 / DATA SECURITY &amp; AI BOUNDARY</p><h2>数据集安全风险与 AI 使用边界</h2></div>
+        <p class="lead">随着 Loop C—G 开始接触 Raw、SDTM 与 ADaM 数据集，安全控制需要从文件管理升级为覆盖输入、检索、生成、运行、输出和审计的全链治理。AI 只承担建议、生成与辅助验证，不替代有资质人员的批准和业务判断。</p>
+      </div>
+
+      <div class="risk-grid">
+        <article class="risk"><strong>数据分级与最小化不足</strong><p>Raw Data 可能包含直接或间接身份信息。接入前执行数据分级、去标识化或假名化，只向当前 Loop 提供完成任务所需的最小字段和最小记录范围；测试优先使用合成或脱敏数据。</p></article>
+        <article class="risk"><strong>跨 Study / 跨企业数据串用</strong><p>Study 与企业命名空间必须作为强隔离边界。资产、向量索引、缓存、运行目录和结果均继承租户与 Study 权限；默认拒绝跨域检索，采用最小权限、职责分离及访问到期机制。</p></article>
+        <article class="risk"><strong>运行环境与结果泄露</strong><p>SAS / R 代码在受控沙箱中执行，限制外部网络、文件系统和未批准包；传输与静态存储加密。Log、错误栈、Preview 和导出文件需进行敏感值遮蔽，临时数据按策略自动清理。</p></article>
+        <article class="risk"><strong>外部模型的数据使用风险</strong><p>敏感数据默认不进入公共模型或未批准服务。仅允许白名单模型端点，并明确不用于模型训练、受控保留期限和数据驻留要求；优先发送结构化 Metadata、必要片段或脱敏上下文，而不是完整数据集。</p></article>
+        <article class="risk"><strong>AI Touch 生产级 Raw / SDTM / ADaM 数据</strong><p>行级生产数据进入模型上下文可能造成敏感信息泄露、缓存或日志残留；AI 直接生成或修改 Dataset 还可能引入静默误改、版本污染和不可复现结果。默认仅向 AI 提供 Schema、Metadata、统计摘要或脱敏样本；确需访问时采用临时、只读、最小字段授权。AI 只生成 Mapping、转换建议或代码，不直接写入生产数据集；实际转换必须在受控 Runtime 中确定性执行，并经过 Dataset Diff、规则校验和人工批准。</p></article>
+        <article class="risk"><strong>AI 越权作出业务结论</strong><p>AI 可生成 TOC、Shell、Spec、Mapping、代码和问题建议，但不得自行批准 Spec / Dataset / TFL，不得替代统计师确认结果正确性，不得自动执行申报发布。关键 Gate 必须由授权人员确认。</p></article>
+        <article class="risk"><strong>Prompt / 知识库注入与不可追溯</strong><p>上传文档、Reference Program 和检索内容均视为不可信输入，进行来源校验、内容净化与工具权限限制。每个输出固化 Model、Prompt、KB、InputSnapshot、Code、Run 与 ReviewDecision 版本，并支持停用与回滚。</p></article>
+      </div>
+
+      <div class="callout"><div><strong>明确红线：</strong>不上传未脱敏的直接身份信息；默认不向模型暴露行级生产 Raw / SDTM / ADaM 数据；不允许 AI 直接写入或覆盖生产数据集；不允许跨企业或跨 Study 默认召回；不允许生成代码在无隔离环境中执行；不允许 AI 绕过 Review Gate 自动批准、发布或申报。任何红线触发时，Loop 必须阻断并生成可审计事件。</div></div>
+    </section>
+  </main>
+
+  <footer>iSP Study Asset Roadmap · Internal Planning Draft · 2026-08-26 · 建议在首个 Golden Set 基线完成后复核指标与资源。</footer>
+</div>
+
+<script>
+  const phaseData = [
+    {
+      time: "截至 2026.09 · Release v0.1",
+      title: "v0.1｜Study 资产与 POC 基础",
+      summary: "把 Atlas 的项目经验拆成 iSP 可复用对象、Schema、知识资产和基准，建立后续七个 Loop 共用的版本、运行和追溯底座。",
+      outputs: ["Study / AssetVersion / Event / InputSnapshot 对象", "Loop Registry、就绪检查与依赖图", "平台中立 Schema 与企业扩展区", "Atlas Golden Set、问题分类和回归流水线"],
+      gates: ["跨Study资产串用为0", "输入与输出追加版本、不可覆盖", "至少T/F/L各一类案例可复算", "版本变化可生成影响预览"],
+      staffing: "重点：产品、AI、后端与两位业务专家共同冻结 POC 范围、资产口径和评测基线。"
+    },
+    {
+      time: "截至 2026.10 · Release v0.5",
+      title: "v0.5｜Loop A：Study Intent → TFL Design",
+      summary: "从 SAP 原文证据提取研究意图，组装 ARS 对齐的分析定义，生成 TOC 与 Mock Shell，并把不确定性暴露给统计师。",
+      outputs: ["SAP章节索引与 Source Locator", "Objective / Endpoint / Analysis / ARM", "TOC 与 T/F/L Mock Shell", "ARM、TOC、Shell Review 工作台"],
+      gates: ["目标TFL与TOC/Shell覆盖≥70%", "标题、结构和关键字段准确性目标约80%", "未知项显式Unknown，不臆造", "TOC与Shell必须人工Review"],
+      staffing: "重点：文档/ARM与Shell/Metadata两组AI并行；业务专家负责三道确认门。"
+    },
+    {
+      time: "截至 2026.11 · Release v1.0",
+      title: "v1.0｜Loop B SAS + MVP POC",
+      summary: "整合 Atlas 基础较强的 Shell / Metadata / SAS Code / Runtime 主链，从批准的 TFL Design 生成生产 SAS 程序、运行和 Result，并跑通 Milestone POC。",
+      outputs: ["Shell / Spec / Dataset Mapping", "Program Design IR 与 SAS Production Code", "SAS Runtime、Log解析与 T/F/L Result", "Code→Run→Result Evidence Package"],
+      gates: ["批准模板范围代码覆盖≥70%", "Mapping与代码准确性目标约80%", "覆盖场景运行出结果目标约80%", "Mapping、Code、Run、Result确认门可用"],
+      staffing: "重点：4 AI全开；后端负责对象/API与SAS Runtime；前端完成Mapping、Code、Result Gate。"
+    },
+    {
+      time: "截至 2026.12 · Release v1.1",
+      title: "v1.1｜Loop A/B 稳定化",
+      summary: "不扩展业务范围，完善 2026 年已交付的 Loop A 与 Loop B SAS，集中解决版本重跑、人工锁定、异常恢复、追溯和 POC 回归。",
+      outputs: ["Objective→Result Traceability Matrix", "Impact Preview与最小安全锚点重跑", "人工锁定、Diff、ReviewDecision与审计", "A/B Golden Set、SIT与回归报告"],
+      gates: ["输入版本更新可安全重跑", "人工锁定内容不被覆盖", "已覆盖MVP场景回归通过率目标约80%", "MVP POC可重复演示"],
+      staffing: "重点：测试2人全量参与；AI从新增能力转向稳定性、失败归因和回归。"
+    },
+    {
+      time: "2027.01—02 · Release v1.2",
+      title: "v1.2｜Loop C：Generate aCRF",
+      summary: "依据 CRF / eCRF 与可用的 Raw 数据或元数据生成 aCRF、结构化注释和字段级追溯。",
+      outputs: ["CRF/eCRF页面与字段结构", "域变量 Annotation 建议", "aCRF PDF与结构化 Annotation", "字段级 Source Trace与页面Diff"],
+      gates: ["页面/字段识别可Review", "未映射字段显式列出", "Annotation规则可追溯", "输入变化只刷新受影响页面"],
+      staffing: "重点：文档视觉理解、Metadata Agent 与 Review UI；业务专家负责注释规则裁决。"
+    },
+    {
+      time: "2027.02 · Release v1.3 Alpha",
+      title: "v1.3 Alpha｜SDTM & ADaM Dataset Code POC",
+      summary: "在完整 Spec 产品化前先验证数据处理代码主链：用限定 Domain / Dataset 和脱敏样本跑通 Raw → SDTM 与 SDTM → ADaM，提前暴露运行、Mapping、校验和数据安全问题，为 Loop E / G 复用代码框架与 Runtime 资产。",
+      outputs: ["Loop E：Raw → SDTM 处理代码 POC", "Loop G：SDTM → ADaM 处理代码 POC", "受控 Runtime、Log、Dataset Diff 与最小验证报告", "可复用 Data Program IR、Code Template 与问题清单"],
+      gates: ["至少一个 SDTM Domain 与一个 ADaM Dataset 跑通", "Code→Run→Dataset→Validation 证据完整", "仅使用脱敏或最小化样本数据", "POC 输出标记 Alpha，不作为生产发布"],
+      staffing: "重点：Data AI、SAS/R代码、Runtime、测试与CDISC业务专家组成短周期突击小组；不等待全部Loop D/F完成。"
+    },
+    {
+      time: "2027.03—04 · Release v1.3",
+      title: "v1.3｜Loop D：SDTM Spec + Loop B R 分支",
+      summary: "从 aCRF / eCRF、Raw Dictionary 与标准生成 SDTM Spec；同时把 Loop B 扩展到 R，形成与 SAS 共用对象、审计和 Result 的第二执行分支。",
+      outputs: ["SDTM Spec与Source-to-Target Mapping", "Controlled Terminology、派生与验证规则", "R Program Design / Production Code", "Pharmaverse、rtables、tern知识包与R Runtime Adapter"],
+      gates: ["SDTM来源与规则可解释", "Spec必须人工批准", "R运行使用与SAS相同的Gate和Trace", "输入更新可按Domain/变量局部重跑"],
+      staffing: "重点：Metadata/Data AI与R代码AI并行；后端扩展Runtime Adapter，测试覆盖SAS/R一致行为。"
+    },
+    {
+      time: "2027.04—05 · Release v1.4",
+      title: "v1.4｜Loop E：Generate SDTM Output",
+      summary: "复用 v1.3 Alpha 的 Data Program IR、代码模板与 Runtime，依据批准的 SDTM Spec 和 Raw Data 产品化 SDTM Dataset、生产程序、验证报告和 define-ready Metadata。",
+      outputs: ["SDTM Production Programs", "SDTM Datasets与发布Snapshot", "结构/内容Validation Report", "define-ready Metadata与Issue Closure"],
+      gates: ["程序、运行、验证问题均有Owner", "Spec↔Program↔Dataset追溯100%", "仅批准Domain进入发布", "Raw/Spec变化按Domain局部重跑"],
+      staffing: "重点：Data Agent、后端数据适配与测试的数据级验证；业务专家负责Domain Release Gate。"
+    },
+    {
+      time: "2027.06—07 · Release v1.5",
+      title: "v1.5｜Loop F：Generate ADaM Spec",
+      summary: "把 SDTM、SAP 与 TFL Design 中的分析意图转成 ADaM Dataset 设计、分析映射和派生规则。",
+      outputs: ["ADaM Spec", "Population / Parameter / Endpoint Mapping", "Dataset / Variable Design与Derivation Rule", "ARM / TFL / ADaM Trace"],
+      gates: ["分析意图与派生规则一致", "Dataset/Variable必须人工批准", "未知规则显式阻断", "上游变化只重建受影响Spec"],
+      staffing: "重点：分析Metadata AI、统计编程 SME Review 和 Trace 工作台。"
+    },
+    {
+      time: "2027.07—08 · Release v1.6",
+      title: "v1.6｜Loop G：Generate ADaM Output",
+      summary: "复用 v1.3 Alpha 已验证的 ADaM 处理代码链，依据批准的 ADaM Spec 和 SDTM 数据产品化分析就绪 Dataset、生产程序、派生验证与 Analysis Snapshot。",
+      outputs: ["ADaM Production Programs", "ADaM Datasets与Analysis Snapshot", "Derivation Validation与Issue Closure", "向Loop B发布受控数据版本"],
+      gates: ["Spec↔Program↔Dataset追溯100%", "派生验证通过", "Dataset发布必须人工确认", "影响可沿依赖图传递到Loop B"],
+      staffing: "重点：Data Agent、Runtime、数据验证和跨Loop影响分析，全团队进入整合准备。"
+    },
+    {
+      time: "2027.09—12 · Release v2.0",
+      title: "v2.0｜受控试点与 Loop A—G 全链整合",
+      summary: "利用提前释放的 9—10 月窗口开展受控 Study 试点，整合七个业务 Loop、SAS/R 双语言、版本重跑、端到端追溯和企业级质量控制，并在 12 月完成产品化验收。",
+      outputs: ["A—G统一资产图与Loop Registry", "SAS/R双引擎受控配置", "受控Study试点、跨Loop回归与问题关闭", "端到端验证包、变更控制与部署模板"],
+      gates: ["端到端断链=0", "验证包可重建目标Run", "Model/Prompt/KB/Runtime变更可回归", "所有Loop输入更新均可产生新输出版本"],
+      staffing: "重点：测试与业务Review占比最高；AI聚焦稳定性、错误归因、跨Loop回归和性能。"
+    }
+  ];
+
+  function renderPhase(index) {
+    const phase = phaseData[index];
+    const detail = document.getElementById("phaseDetail");
+    detail.innerHTML = `
+      <div class="phase-time">${phase.time}</div>
+      <h3>${phase.title}</h3>
+      <p>${phase.summary}</p>
+      <div class="phase-detail-grid">
+        <div class="phase-detail-box"><h4>关键交付</h4><ul>${phase.outputs.map(item => `<li>${item}</li>`).join("")}</ul></div>
+        <div class="phase-detail-box"><h4>退出门禁</h4><ul>${phase.gates.map(item => `<li>${item}</li>`).join("")}</ul></div>
+      </div>
+      <div class="phase-detail-box" style="margin-top:14px"><h4>团队投入重点</h4><p style="margin:0">${phase.staffing}</p></div>`;
+  }
+
+  document.querySelectorAll(".phase-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll(".phase-btn").forEach(item => item.setAttribute("aria-pressed", "false"));
+      button.setAttribute("aria-pressed", "true");
+      renderPhase(Number(button.dataset.phase));
+    });
+  });
+
+  document.querySelectorAll(".filter-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      const filter = button.dataset.filter;
+      document.querySelectorAll(".filter-btn").forEach(item => item.setAttribute("aria-pressed", "false"));
+      button.setAttribute("aria-pressed", "true");
+      document.querySelectorAll(".bar").forEach(bar => {
+        const matches = filter === "all" || bar.dataset.category === filter;
+        bar.classList.toggle("dimmed", !matches);
+      });
+    });
+  });
+
+  renderPhase(0);
+</script>
+</body>
+</html>

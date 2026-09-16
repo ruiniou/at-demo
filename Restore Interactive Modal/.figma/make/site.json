@@ -1,0 +1,10 @@
+{
+  "description": "This interactive web application restores modal functionality within the Atlas Design System, enhancing user experience for designers and developers.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

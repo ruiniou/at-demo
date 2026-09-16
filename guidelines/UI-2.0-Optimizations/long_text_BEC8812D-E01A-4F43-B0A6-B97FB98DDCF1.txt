@@ -1,0 +1,365 @@
+# Variable Spec Picker 弹窗设计需求
+
+## 1. 背景
+
+用户在编辑 Table、Listing 的 Block/Column Metadata 时，需要从 ADaM Spec 或 SDTM Spec 中查找并选择 Variable，同时查看与 Variable 关联的 Derivation、Value Level Metadata、Codelist、Mapping 和 Predecessor 来源。
+
+当前如果先到独立 Spec 页面查看，再返回 Metadata 重新搜索选择，操作链路较长。因此，希望在 Variable 选择弹窗内完成“查找—理解—选择”，但需要控制信息密度，不能把 Excel 各 Sheet 直接堆叠到一个页面中。
+
+## 2. 核心设计原则
+
+1. **Variable 是唯一选择源**
+
+   Dataset 不单独选择，也不存在“只选择 Dataset、不选择 Variable”的业务场景。Dataset 字段由已选 Variable 自动汇总并保持只读。
+
+2. **Browse All 中所有 Variable 均可选择**
+
+   不再因为当前 Dataset 未选中而禁用其他 Dataset 下的 Variable。用户选择新的 Variable 后，系统自动同步对应 Dataset。
+
+3. **查看与选择必须分离**
+
+   - 点击 Variable 行：查看详情。
+   - 点击 Checkbox：选择或取消选择。
+   - 查看 VLM、Codelist、Mapping 或 Predecessor，不能隐式改变选择结果。
+
+4. **采用渐进披露控制信息密度**
+
+   默认只展示 Variable 的核心定义和关联信息入口。VLM、Codelist、Mapping、SDTM 来源在同一个右侧区域切换显示，不能同时纵向堆叠，也不建议继续打开嵌套弹窗。
+
+5. **ADaM 与 SDTM 使用同一套选择器**
+
+   - Table 默认以 ADaM 为主要数据源，但底层交互需支持 SDTM。
+   - Listing 必须支持同时搜索和选择 ADaM、SDTM Variable。
+
+## 3. 弹窗整体结构
+
+弹窗分为四部分：
+
+### 3.1 顶部标题区
+
+- 标题：Find & select variables
+- 简短说明：可在同一位置查看 Variable 的 Spec 信息并完成选择。
+- 标识当前支持的数据标准：ADaM + SDTM。
+- 关闭按钮。
+
+### 3.2 搜索和筛选区
+
+包含：
+
+- 全局搜索：支持 Variable Name、Label、Dataset、Derivation 等关键字。
+- Standard 切换：All、ADaM、SDTM，并显示结果数量。
+- 快捷筛选：
+  - Has VLM
+  - Has Codelist
+  - Selected
+  - Clear filters
+
+建议：
+
+- Table 默认定位到 ADaM 或当前 Metadata 已涉及的 Dataset。
+- Listing 默认展示 All，方便跨 ADaM、SDTM 查找。
+- 搜索和筛选结果实时更新，不需要额外点击 Search。
+
+### 3.3 主体三栏
+
+#### 左栏：Dataset 导航
+
+按 Standard 分组展示 Dataset：
+
+- All datasets
+- ADaM
+  - ADSL
+  - ADAE
+  - ADEG
+  - ADLB
+- SDTM
+  - AE
+  - DM
+  - LB
+  - 其他 Dataset
+
+每个 Dataset 显示当前结果数量。
+
+左栏只用于筛选和定位，不能代表 Dataset 已被选择。
+
+#### 中栏：Variable 列表
+
+每行展示：
+
+- Checkbox
+- Variable Name
+- Dataset Name
+- Variable Label
+- Standard 标识
+- 可用辅助信息标识，例如：
+  - VLM 12
+  - Codelist 8
+  - Mappings 2
+  - External CT
+  - Codelist missing
+
+交互要求：
+
+- 点击行主体，在右栏查看详情。
+- 点击 Checkbox，选择或取消选择。
+- 当前查看行与已选行需要有不同的视觉状态。
+- 所有 Dataset 下的 Variable 均可勾选，不出现“因 Dataset 未选而禁用”的状态。
+- 长列表需要独立滚动、固定表头，并考虑虚拟加载。
+
+#### 右栏：Variable 详情
+
+右栏使用紧凑 Header 展示：
+
+- Standard / Dataset
+- Variable Name
+- Label
+- Type
+- Length
+- Origin
+- Role
+- Core
+
+下方采用互斥 Tab：
+
+- Overview
+- Value level
+- Codelist
+- Mappings
+
+只显示当前 Variable 实际具有的附加信息入口，避免大量无效 Tab。
+
+## 4. Overview
+
+Overview 是默认状态，主要展示：
+
+### 4.1 Derivation / Mapping 摘要
+
+展示当前 Variable 的 Derivation。
+
+- 短内容直接显示。
+- 长算法控制默认高度，可展开查看全文。
+- 不在 VLM、Codelist 等其他 Tab 中重复展示。
+
+### 4.2 Direct Predecessor
+
+当 ADaM Variable 的 Origin 为 `Predecessor`，且 Derivation 中能解析出 SDTM `Dataset.Variable` 时，展示紧凑的来源关系：
+
+`ADaM ADSL.ACTARM ← SDTM DM.ACTARM`
+
+视觉上包含两个节点：
+
+- 当前 ADaM Variable
+- 对应 SDTM Source Variable
+
+SDTM 节点可点击，文案明确为“查看来源详情”。
+
+查看来源属于只读行为，不能：
+
+- 自动选择 SDTM Variable；
+- 改变当前 ADaM Variable；
+- 改变 Dataset 字段；
+- 改变左侧 Dataset 筛选。
+
+如果 Derivation 引用了来源，但当前 SDTM Spec 中找不到对应 Variable，需要显示明确提示，不能静默隐藏。
+
+## 5. SDTM 来源详情
+
+点击 Predecessor 后，在当前右栏原位切换到 SDTM 来源视图，不打开新弹窗。
+
+需要保留：
+
+- 当前 ADaM Variable 上下文；
+- 返回 ADaM Overview 的入口；
+- “只读来源信息”状态说明。
+
+来源视图展示：
+
+### 5.1 SDTM Variable 摘要
+
+- SDTM Dataset / Variable
+- Label
+- Type / Length
+- Origin
+- Role
+- Core
+- Codelist
+- Mapping 数量
+
+### 5.2 ADaM 与 SDTM 对照
+
+以紧凑表格对照：
+
+- Label
+- Type / Length
+- Origin
+- Codelist
+
+相同字段弱化，差异字段突出，帮助用户快速判断继承关系是否合理。
+
+### 5.3 SDTM Derivation / Mapping
+
+默认折叠，用户按需展开。
+
+如果同一个 SDTM Variable 对应多条 Mapping，需要显示 Mapping 数量，并支持查看：
+
+- Source
+- Condition
+- Assignment / Algorithm
+
+默认只追溯一层 `ADaM → SDTM`，不自动继续展开到 Raw 数据。
+
+Listing 场景如果需要从来源视图直接选择 SDTM Variable，应提供独立且明确的“Select this SDTM variable”操作；不能把“查看来源”本身设计成选择操作。
+
+## 6. Value Level Metadata
+
+VLM 不能使用一组独立卡片平铺。业务上，一个 Parameter/Where 条件通常同时关联：
+
+- PARAM
+- PARAMCD
+- AVAL
+- AVALC
+- DTYPE
+- 其他相关 Variable
+
+因此采用主从表格：
+
+### 左侧：Parameter/Condition 列表
+
+展示：
+
+- Parameter Name
+- Where Clause
+- 关联 Variable 标识
+- 当前 Variable 高亮
+- Parameter/Condition 搜索
+
+### 右侧：关联 Variable Definition
+
+选择一个 Parameter 后，同时展示该 Parameter 下所有相关 Variable 的：
+
+- Variable Name
+- Origin
+- Definition/Derivation
+
+当前正在查看的 Variable 需要高亮，但不能因此隐藏其他关联 Variable。
+
+也就是说，用户从 PARAM、PARAMCD、AVAL 或 AVALC 任意一个 Variable 进入，都应能看到同一个 Parameter 上下文中的完整关联定义。
+
+对于没有独立 VLM Sheet 的 SDTM Spec，不应伪造空数据。可以不显示 VLM Tab，或者使用明确的 Unavailable 状态。
+
+## 7. Codelist
+
+Codelist Tab 展示当前 Variable 实际引用的受控术语。
+
+包含：
+
+- Codelist Name/Reference
+- Value 数量
+- Extensible 状态
+- 搜索框
+- Value
+- Label
+- Origin
+
+大数据量时：
+
+- 默认搜索优先；
+- 使用虚拟加载或分页；
+- 不一次渲染完整 Codelist；
+- 表头固定。
+
+特殊状态：
+
+- External CT：例如 MedDRA、ISO 8601，仅说明外部来源，不伪造可展开的值列表。
+- Codelist missing：Variable Metadata 中存在引用，但当前 Spec 找不到对应数据，需要作为数据质量提示明确展示。
+- No Codelist：与 Missing 状态区分。
+
+## 8. Mappings
+
+当 SDTM Spec 中多条记录最终指向同一个 SDTM Variable 时：
+
+- Variable 列表中只显示一个 Variable；
+- 通过 `Mappings N` 标识存在多条 Mapping；
+- Mappings Tab 展示全部或可搜索的 Mapping 明细。
+
+每条 Mapping 至少展示：
+
+- Source
+- Condition
+- Assignment / Algorithm
+
+不能因为多条 Mapping 而在 Variable 列表中重复显示同名 Variable。
+
+## 9. 选择结果与底部操作区
+
+选择操作在弹窗内采用临时状态。
+
+底部固定展示：
+
+- 已选 Variable 数量；
+- 自动派生出的 Dataset 数量；
+- 涉及的 Standard / Dataset；
+- 本次新增数量；
+- 本次移除数量；
+- 是否存在未保存变更。
+
+操作：
+
+- Confirm：提交 Variable 选择，并同步 Dataset 字段。
+- Cancel：放弃本次变更，恢复打开弹窗前的状态。
+- 无任何 Variable 时，Confirm 禁用。
+- Dataset 不能脱离 Variable 单独保留。
+
+## 10. 信息密度和视觉要求
+
+1. 默认首屏只展示 Variable Header、Overview 和一条可用的 Lineage。
+2. Derivation、VLM 表格、Codelist 表格不能同时出现。
+3. 右侧 Header 固定，内容区域独立滚动。
+4. VLM 使用结构化表格，不使用大量卡片。
+5. SDTM 来源详情替换当前右栏内容，不继续向下追加。
+6. 长算法默认折叠或限高。
+7. 颜色主要用于区分：
+   - ADaM
+   - SDTM
+   - 当前查看项
+   - 已选择项
+   - Missing/Warning
+8. 不能仅依赖颜色表达状态，需要同时配合文字或图标。
+9. 弹窗需要适配常见桌面分辨率；较窄时，VLM 主从区域可由左右布局切换为上下布局。
+
+## 11. 关键异常和空状态
+
+UI 需要覆盖：
+
+- 搜索无结果；
+- 当前筛选无结果；
+- Variable 无 VLM；
+- Variable 无 Codelist；
+- Codelist Reference 缺失；
+- External Codelist；
+- Predecessor 无法解析；
+- SDTM 来源在当前 Spec 中不存在；
+- 一个 Variable 有多条 Mapping；
+- 存在未保存的选择变更；
+- Cancel 后恢复原选择。
+
+## 12. UI 设计交付建议
+
+至少设计以下关键状态：
+
+1. 普通 Variable 的 Overview。
+2. ADaM Predecessor 的 Overview。
+3. SDTM 来源对照视图。
+4. PARAM/PARAMCD/AVAL/AVALC 关联 VLM 视图。
+5. 大数据量 Codelist 视图。
+6. 多 Mapping 视图。
+7. Codelist missing / External CT / Predecessor unresolved 状态。
+8. 已选多个 Standard、多个 Dataset 时的底部汇总状态。
+
+## 13. 尚需产品确认
+
+1. Table 场景是否允许直接选择 SDTM Variable，还是只允许查看 SDTM 来源。
+2. Listing 的 SDTM 来源详情中，是否需要“Select this SDTM variable”快捷操作。
+3. Variable 是否需要保留用户选择顺序。
+4. 大规模 Spec 的具体加载方式：分页、虚拟滚动或服务端搜索。
+5. 除 Direct Predecessor 外，Derivation 中出现的其他 `Dataset.Variable` 是否作为次级“Referenced variables”展示。

@@ -134,8 +134,8 @@ export function AIUserPrompt({
   }, [metaDiffItems]);
 
   const renderTextWithQuoteTags = (text: string) => {
-    // Matches @[fieldId:label]
-    const regex = /@\[([^:]+):([^\]]+)\]/g;
+    // Matches @[mention:id:type:label] OR @[fieldId:label]
+    const regex = /@\[(?:mention:([^:]+):([^:]+):([^\]]+)|([^:]+):([^\]]+))\]/g;
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
     let match: RegExpExecArray | null;
@@ -144,14 +144,39 @@ export function AIUserPrompt({
       if (match.index > lastIndex) {
         parts.push(text.slice(lastIndex, match.index));
       }
-      const label = match[2];
-      const key = `${match.index}-${label}`;
-      parts.push(
-        <span key={key} className="inline-flex items-center gap-[3px] rounded-[4px] bg-graphite-10 px-[5px] py-[1px] text-[12px] leading-[20px] text-text-primary align-baseline my-[1px] mx-[2px] shrink-0 select-none">
-          <img src={doubleQuotesLUrl} className="w-[12px] h-[12px] opacity-60 shrink-0" alt="" />
-          <span className="truncate max-w-[140px] font-normal">{label}</span>
-        </span>
-      );
+      if (match[1] !== undefined) {
+        // Mention tag: id=match[1], type=match[2], label=match[3]
+        const type = match[2];
+        const label = match[3];
+        const key = `mention-${match.index}-${label}`;
+        parts.push(
+          <span
+            key={key}
+            className="inline-flex items-center gap-[3px] rounded-[4px] bg-graphite-10 px-[5px] py-[1px] text-[12px] leading-[20px] text-brand-1 font-medium align-baseline my-[1px] mx-[2px] shrink-0 select-none"
+          >
+            {type === "event" ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0 text-brand-1">
+                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C14.4 22 16.6 21.15 18.33 19.73L16.92 18.32C15.56 19.38 13.86 20 12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4C16.42 4 20 7.58 20 12V13.5C20 14.33 19.33 15 18.5 15C17.67 15 17 14.33 17 13.5V12C17 9.24 14.76 7 12 7C9.24 7 7 9.24 7 12C7 14.76 9.24 17 12 17C13.38 17 14.63 16.44 15.54 15.54C16.27 16.43 17.32 17 18.5 17C20.43 17 22 15.43 22 13.5V12C22 6.48 17.52 2 12 2ZM12 15C10.34 15 9 13.66 9 12C9 10.34 10.34 9 12 9C13.66 9 15 10.34 15 12C15 13.66 13.66 15 12 15Z" fill="currentColor" />
+              </svg>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0 text-brand-1">
+                <path d="M4 3H20C20.5523 3 21 3.44772 21 4V20C21 20.5523 20.4477 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3ZM5 9V14H10V9H5ZM12 9V14H19V9H12ZM19 7V5H5V7H19ZM5 16V19H10V16H5ZM12 19H19V16H12V19Z" fill="currentColor" />
+              </svg>
+            )}
+            <span className="truncate max-w-[160px]">{type === "event" ? "@Event" : `@${label}`}</span>
+          </span>
+        );
+      } else {
+        // Quote tag: fieldId=match[4], label=match[5]
+        const label = match[5];
+        const key = `${match.index}-${label}`;
+        parts.push(
+          <span key={key} className="inline-flex items-center gap-[3px] rounded-[4px] bg-graphite-10 px-[5px] py-[1px] text-[12px] leading-[20px] text-text-primary align-baseline my-[1px] mx-[2px] shrink-0 select-none">
+            <img src={doubleQuotesLUrl} className="w-[12px] h-[12px] opacity-60 shrink-0" alt="" />
+            <span className="truncate max-w-[140px] font-normal">{label}</span>
+          </span>
+        );
+      }
       lastIndex = regex.lastIndex;
     }
 

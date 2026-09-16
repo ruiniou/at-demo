@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atlas AI Copilot - Detail Page Layout Sample (Exact Replica)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-1': '#830051',
+            'az-secondary': '#F4E8EE',
+            'az-secondary-hover': '#eddbe4',
+            'az-danger': '#CC2C3C',
+            'az-warning': '#F0AB00',
+            'text-primary': '#3F4444',
+            'text-secondary': '#8C8F8F',
+            'text-muted': '#A0A3A3',
+            'graphite-10': '#ECECEC',
+            'graphite-15': '#E0E0E0',
+            'graphite-20': '#D0D0D0',
+            'bg-panel': '#F8F7F7',
+            'border-default': '#D9DADA',
+            'status-success-bg': '#E6F3F0',
+            'status-success-icon': '#008369',
+            'status-error-bg': '#FAD4D8',
+            'status-error-text': '#CC2C3C',
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+            mono: ['Menlo', 'Monaco', 'Consolas', '"Courier New"', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --color-brand-1: #830051;
+      --color-az-secondary: #F4E8EE;
+      --color-text-primary: #3F4444;
+      --color-text-secondary: #8C8F8F;
+      --color-graphite-10: #ECECEC;
+      --color-graphite-15: #E0E0E0;
+      --color-graphite-20: #D0D0D0;
+      --color-bg-panel: #F8F7F7;
+      --color-border-default: #D9DADA;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      color: #3F4444;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #F8F7F7;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Atlas Design System Elevation & Mulberry Shadow */
+    .shadow-card-mulberry {
+      box-shadow: 
+        0 0 2px 0 rgba(63, 68, 68, 0.035),
+        0 2px 5px -1px rgba(63, 68, 68, 0.04),
+        0 0 12px -2px rgba(131, 0, 81, 0.065);
+    }
+
+    .shadow-elevation-panel {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .shadow-elevation-overlay {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Design Tokens - Typography Classes */
+    .t-heading { font-size: 16px; font-weight: 600; line-height: 22px; }
+    .t-body { font-size: 14px; font-weight: 400; line-height: 24px; }
+    .t-body-secondary { font-size: 14px; font-weight: 400; line-height: 20px; }
+    .t-small { font-size: 12px; font-weight: 400; line-height: 18px; }
+    .t-caption { font-size: 13px; font-weight: 400; line-height: 20px; }
+    .t-footnote { font-size: 10.5px; font-weight: 400; line-height: 15px; }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #D9DADA;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #B0B3B3;
+    }
+
+    /* Code Selection */
+    .code-container ::selection {
+      background-color: rgba(131, 0, 81, 0.15) !important;
+      color: inherit !important;
+    }
+
+    /* Indent Guides for SAS Code */
+    .indent-guide {
+      position: relative;
+    }
+    .indent-guide::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: #E5E7EB;
+    }
+
+    /* Resizer Dragger */
+    .resizer-divider {
+      width: 4px;
+      cursor: col-resize;
+      transition: background-color 0.15s;
+    }
+    .resizer-divider:hover, .resizer-divider:active {
+      background-color: rgba(131, 0, 81, 0.35);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex overflow-hidden bg-bg-panel select-none">
+
+  <!-- ========================================================================= -->
+  <!-- 1. PANEL: TREE LIST SIDEBAR (左侧导航树 - 完全展开状态)                    -->
+  <!-- ========================================================================= -->
+  <aside id="panel-treelist" class="flex flex-col h-full w-[240px] shrink-0 bg-bg-panel overflow-hidden pl-[4px] py-[4px]">
+    <div class="flex h-full w-full flex-col bg-bg-panel">
+      
+      <!-- TreeList Header: Logo + Study Info + Action Buttons -->
+      <div class="flex h-[52px] shrink-0 items-center gap-[8px] px-[10px]">
+        <!-- Atlas Logo / Home Button -->
+        <button class="group flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]" title="Back to Home">
+          <svg class="h-[20px] w-[20px] text-brand-1" viewBox="0 0 24 24" fill="none">
+            <path d="M12.0062 14.7301C12.1092 16.4118 13.4763 17.7575 15.1846 17.859V17.8712C13.4763 17.9726 12.1092 19.3184 12.0062 21H11.9938C11.8908 19.3184 10.5237 17.7575 8.81538 17.8712V17.859C10.5237 17.7575 11.8908 16.4118 11.9938 14.7301H12.0062ZM21 20.9917H16.5692L12 8.87479L7.43077 20.9917H3L9.78462 3H14.2154L21 20.9917Z" fill="#830051"/>
+          </svg>
+        </button>
+
+        <div class="min-w-0 flex-1">
+          <p class="t-small truncate font-medium text-text-primary leading-[18px]">AZE2001-301</p>
+          <p class="truncate text-[10px] leading-[15px] text-text-secondary">CSR Interim Analysis</p>
+        </div>
+
+        <!-- Event Info Icon -->
+        <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] text-text-secondary" title="Event Information">
+          <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+
+        <!-- Collapse Tree List Icon -->
+        <button class="flex h-[28px] w-[28px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] text-text-secondary" title="Collapse Tree List">
+          <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- SearchBar (dark theme in tree list) -->
+      <div class="mx-[8px] my-[2px] shrink-0">
+        <div class="relative flex items-center">
+          <svg class="absolute left-[8px] h-[14px] w-[14px] text-[#888E8E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search..."
+            class="h-[28px] w-full rounded-[4px] border border-[#D9DADA] bg-[#F1F2F2] pl-[26px] pr-[8px] text-[12px] text-text-primary placeholder:text-[#888E8E] focus:bg-white focus:outline-none focus:border-brand-1"
+          />
+        </div>
+      </div>
+
+      <!-- Tree Hierarchy Content -->
+      <div class="min-h-0 flex-1 overflow-auto py-[4px] pr-[4px]">
+        <div class="flex flex-col gap-[2px]">
+
+          <!-- Section A (Expanded Parent) -->
+          <div class="relative h-[28px] w-full cursor-pointer rounded-[4px] hover:bg-graphite-10 transition-colors">
+            <div class="flex h-full items-center justify-between px-[12px]">
+              <div class="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
+                <button class="flex h-[16px] w-[16px] shrink-0 items-center justify-center text-[#888E8E]">
+                  <svg class="h-[14px] w-[14px] rotate-90 transform transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M10 17l5-5-5-5v10z"/>
+                  </svg>
+                </button>
+                <p class="t-small min-w-0 flex-1 truncate text-text-primary font-normal">Section A</p>
+              </div>
+              <div class="h-[20px] w-[20px]" />
+            </div>
+          </div>
+
+          <!-- Section A Children -->
+          <div class="flex flex-col">
+            <!-- Child 1: Table 14.1.6.1 (Active Selected) -->
+            <div class="relative h-[28px] w-full rounded-[4px] bg-az-secondary transition-colors cursor-pointer">
+              <div class="flex h-full items-center justify-between pl-[24px] pr-[12px]">
+                <div class="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
+                  <!-- Table Icon -->
+                  <svg class="h-[14px] w-[14px] shrink-0 text-brand-1" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 8H20V5H4V8ZM14 19V10H10V19H14ZM16 19H20V10H16V19ZM8 19V10H4V19H8ZM3 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3Z"/>
+                  </svg>
+                  <p class="t-small min-w-0 truncate text-brand-1 font-medium">Table 14.1.6.1</p>
+                </div>
+                <!-- Lock Status Icon -->
+                <button class="flex h-[20px] w-[20px] items-center justify-center rounded-[4px] text-text-secondary hover:bg-black/5" title="Lock Table Code">
+                  <svg class="h-[13px] w-[13px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Child 2: Listing 16.2.1 -->
+            <div class="relative h-[28px] w-full rounded-[4px] hover:bg-graphite-10 transition-colors cursor-pointer">
+              <div class="flex h-full items-center justify-between pl-[24px] pr-[12px]">
+                <div class="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
+                  <!-- Listing Icon -->
+                  <svg class="h-[14px] w-[14px] shrink-0 text-[#888E8E]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 4H21V6H8V4ZM3 3.5H6V6.5H3V3.5ZM3 10.5H6V13.5H3V10.5ZM3 17.5H6V20.5H3V17.5ZM8 11H21V13H8V11ZM8 18H21V20H8V18Z"/>
+                  </svg>
+                  <p class="t-small min-w-0 truncate text-text-primary">Listing 16.2.1</p>
+                </div>
+                <div class="h-[20px] w-[20px]" />
+              </div>
+            </div>
+
+            <!-- Child 3: Figure 15.1.1 -->
+            <div class="relative h-[28px] w-full rounded-[4px] hover:bg-graphite-10 transition-colors cursor-pointer">
+              <div class="flex h-full items-center justify-between pl-[24px] pr-[12px]">
+                <div class="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
+                  <!-- Figure Icon -->
+                  <svg class="h-[14px] w-[14px] shrink-0 text-[#888E8E]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3ZM4 5V19H20V5H4ZM7 13H9V17H7V13ZM11 7H13V17H11V7ZM15 10H17V17H15V10Z"/>
+                  </svg>
+                  <p class="t-small min-w-0 truncate text-text-primary">Figure 15.1.1</p>
+                </div>
+                <div class="h-[20px] w-[20px]" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tree List Bottom-Left: AI Layout Switcher (Drawer vs In-Card) -->
+      <div class="shrink-0 flex items-center justify-between px-[10px] py-[8px] border-t border-graphite-10 bg-bg-panel gap-[8px]">
+        <span class="text-[11px] text-text-secondary whitespace-nowrap">AI Layout</span>
+        <div class="flex bg-[#EAEAEA] p-[2px] rounded-[4px] gap-[2px]">
+          <button class="px-[8px] py-[2px] text-[11px] rounded-[3px] text-text-secondary hover:text-text-primary font-normal">Drawer</button>
+          <button class="px-[8px] py-[2px] text-[11px] rounded-[3px] bg-white font-medium text-text-primary shadow-sm">In-Card</button>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Resizer Divider (TreeList <-> Main Workspace) -->
+  <div class="resizer-divider shrink-0"></div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. MAIN WORKSPACE CONTAINER (Middle + Right)                              -->
+  <!-- ========================================================================= -->
+  <main class="flex flex-1 flex-col min-w-0 h-full overflow-hidden pl-[4px] pt-[4px] pb-[8px] pr-[8px]">
+
+    <!-- =================== ViewToggleBar (顶部视图切换行) =================== -->
+    <div class="shrink-0 w-full overflow-hidden mb-[4px]">
+      <div class="h-[48px] w-full flex items-center justify-end px-[12px]">
+        <div class="flex items-center">
+          
+          <!-- 1. Left Action Buttons: Group Code & Download (gap: 4px, borderless transparent default) -->
+          <div class="flex items-center gap-[4px]">
+            <!-- Group Code Button (Active state shown) -->
+            <button class="relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] transition-colors bg-az-secondary text-brand-1 active:scale-[0.96]" title="Toggle Group Code">
+              <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+            </button>
+            <!-- Download Button -->
+            <button class="relative flex h-[28px] w-[28px] items-center justify-center rounded-[4px] bg-transparent hover:bg-black/5 transition-colors active:scale-[0.96] text-text-secondary" title="Download SAS Programs">
+              <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- 2. Vertical Divider: Graphite-20, h-18px, w-1.2px, rounded-full, 12px margin on left & right -->
+          <div class="w-[1.2px] h-[18px] bg-graphite-20 rounded-full shrink-0 mx-[12px]" aria-hidden="true"></div>
+
+          <!-- 3. Panel View Toggle & AI Copilot Button (gap: 8px) -->
+          <div class="flex items-center gap-[8px]">
+            <!-- PanelViewToggle Pill (Both / Shell / Code) -->
+            <div class="inline-flex h-[28px] items-center rounded-[6px] bg-[#EEF0F0] p-[2px] gap-[1px]">
+              <button class="flex h-[24px] items-center px-[10px] text-[12px] font-medium rounded-[4px] bg-white text-brand-1 shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
+                Both
+              </button>
+              <button class="flex h-[24px] items-center px-[10px] text-[12px] font-normal rounded-[4px] text-text-secondary hover:text-text-primary">
+                Shell
+              </button>
+              <button class="flex h-[24px] items-center px-[10px] text-[12px] font-normal rounded-[4px] text-text-secondary hover:text-text-primary">
+                Code
+              </button>
+              <!-- Orientation Split Toggle (Horizontal active) -->
+              <div class="w-[1px] h-[14px] bg-[#D8DADA] mx-[2px]"></div>
+              <button class="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] text-brand-1 hover:bg-black/5" title="Horizontal Split">
+                <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4H4v16h5V4zm11 0h-5v16h5V4z"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- AI Copilot Button (Opened State: bg-az-secondary + brand color) -->
+            <button class="relative flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] transition-colors active:scale-[0.96] bg-az-secondary text-brand-1 shadow-[0_1px_2px_rgba(0,0,0,0.06)]" title="AI Copilot (Open)">
+              <svg class="h-[16px] w-[16px] shrink-0 text-brand-1" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.0062 14.7301C12.1092 16.4118 13.4763 17.7575 15.1846 17.859V17.8712C13.4763 17.9726 12.1092 19.3184 12.0062 21H11.9938C11.8908 19.3184 10.5237 17.7575 8.81538 17.8712V17.859C10.5237 17.7575 11.8908 16.4118 11.9938 14.7301H12.0062ZM21 20.9917H16.5692L12 8.87479L7.43077 20.9917H3L9.78462 3H14.2154L21 20.9917Z"/>
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== Multi-Panel Cards Container =================== -->
+    <!-- 3 Separate In-Card panels with 8px radius, white bg, Mulberry-tinted soft shadow, and dividers -->
+    <div class="relative flex min-w-0 min-h-0 flex-1 overflow-visible">
+      
+      <!-- Split Row: Shell + Code -->
+      <div class="flex-1 flex min-w-0 min-h-0 h-full overflow-visible">
+
+        <!-- ================================================================= -->
+        <!-- 3. PANEL: SHELL PREVIEW & METADATA (表格渲染与元数据侧抽屉)         -->
+        <!-- ================================================================= -->
+        <div id="panel-shell" class="h-full flex flex-col min-w-0 w-[560px] shrink-0 overflow-hidden bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry">
+          
+          <!-- Shell Preview Top Header -->
+          <div class="flex h-[40px] shrink-0 items-center justify-between px-[12px] bg-white border-b border-graphite-10">
+            <div class="flex items-center gap-[8px]">
+              <span class="text-[13px] font-semibold text-text-primary">Shell Preview</span>
+              <span class="text-[11px] text-text-secondary">Table 14.1.6.1</span>
+            </div>
+            <!-- Action buttons: Metadata drawer toggle (Opened) -->
+            <div class="flex items-center gap-[6px]">
+              <button class="flex items-center gap-[4px] px-[8px] py-[3px] rounded-[4px] bg-az-secondary text-brand-1 text-[12px] font-medium transition-colors" title="Toggle Metadata">
+                <svg class="h-[14px] w-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                </svg>
+                <span>Metadata (Open)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Shell Body: Paper Render View + Metadata Panel (Split Inside Shell) -->
+          <div class="flex flex-1 min-h-0 overflow-hidden">
+            
+            <!-- Left: Clinical Table Paper View (ZoomContainer area) -->
+            <div class="flex-1 overflow-auto bg-[#F4F5F5] p-[16px] flex justify-center">
+              <!-- Clinical Document Paper Card -->
+              <div class="w-full max-w-[580px] bg-white border border-[#E0E0E0] shadow-sm rounded-[2px] p-[24px] text-left text-text-primary text-[12px] font-mono leading-[1.5]">
+                
+                <!-- TFL Standard Header -->
+                <div class="text-center font-bold text-[13px] mb-[16px] space-y-[2px]">
+                  <p>Protocol AZE2001-301</p>
+                  <p>Table 14.1.6.1: Summary of Demographics and Baseline Characteristics</p>
+                  <p class="text-[11px] font-normal text-text-secondary">(Safety Analysis Set)</p>
+                </div>
+
+                <!-- TFL Data Table -->
+                <table class="w-full border-collapse text-[11px]">
+                  <thead>
+                    <tr class="border-t-[1.5px] border-b-[1.5px] border-black font-bold">
+                      <th class="py-[4px] text-left">Parameter / Statistic</th>
+                      <th class="py-[4px] text-right">AZD999 1 mg<br/>(N=45)</th>
+                      <th class="py-[4px] text-right">AZD999 2 mg<br/>(N=48)</th>
+                      <th class="py-[4px] text-right">Total<br/>(N=93)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    <tr>
+                      <td class="pt-[6px] font-semibold text-text-primary" colspan="4">Age (years)</td>
+                    </tr>
+                    <tr class="hover:bg-[#FBF4F7] cursor-pointer">
+                      <td class="py-[2px] pl-[12px] text-text-primary">Mean (SD)</td>
+                      <td class="py-[2px] text-right text-text-primary">58.4 (9.2)</td>
+                      <td class="py-[2px] text-right text-text-primary">59.1 (8.7)</td>
+                      <td class="py-[2px] text-right text-text-primary">58.8 (8.9)</td>
+                    </tr>
+                    <tr class="hover:bg-[#FBF4F7] cursor-pointer">
+                      <td class="py-[2px] pl-[12px] text-text-primary">Median (Min, Max)</td>
+                      <td class="py-[2px] text-right text-text-primary">59.0 (32, 78)</td>
+                      <td class="py-[2px] text-right text-text-primary">60.0 (35, 80)</td>
+                      <td class="py-[2px] text-right text-text-primary">59.5 (32, 80)</td>
+                    </tr>
+                    <tr>
+                      <td class="pt-[6px] font-semibold text-text-primary" colspan="4">Sex, n (%)</td>
+                    </tr>
+                    <tr class="hover:bg-[#FBF4F7] cursor-pointer">
+                      <td class="py-[2px] pl-[12px] text-text-primary">Male</td>
+                      <td class="py-[2px] text-right text-text-primary">24 (53.3%)</td>
+                      <td class="py-[2px] text-right text-text-primary">26 (54.2%)</td>
+                      <td class="py-[2px] text-right text-text-primary">50 (53.8%)</td>
+                    </tr>
+                    <tr class="hover:bg-[#FBF4F7] cursor-pointer border-b-[1.5px] border-black">
+                      <td class="py-[2px] pl-[12px] text-text-primary">Female</td>
+                      <td class="py-[2px] text-right text-text-primary">21 (46.7%)</td>
+                      <td class="py-[2px] text-right text-text-primary">22 (45.8%)</td>
+                      <td class="py-[2px] text-right text-text-primary">43 (46.2%)</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <!-- Footnotes -->
+                <div class="mt-[16px] space-y-[2px] text-[10px] text-text-secondary leading-[14px]">
+                  <p>[1] N = Total number of subjects in the specified treatment group.</p>
+                  <p>[2] Percentages are calculated based on the number of subjects with non-missing values.</p>
+                  <p class="pt-[6px] font-mono text-[9px] text-[#A0A3A3]">Program: t_ae_14_3_2_8_2.sas | Output: t_14_1_6_1.rtf</p>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Right inside Shell: Metadata Panel (Opened Drawer) -->
+            <div class="w-[260px] shrink-0 border-l border-graphite-10 flex flex-col bg-white overflow-hidden">
+              
+              <!-- Metadata Header (Tabs: Basic Info / Blocks) -->
+              <div class="flex h-[38px] shrink-0 items-center justify-between border-b border-graphite-10 bg-white px-[8px]">
+                <div class="flex items-center gap-[12px] h-full">
+                  <button class="h-full border-b-[2px] border-brand-1 text-[12px] font-semibold text-brand-1 px-[2px]">
+                    Basic Info
+                  </button>
+                  <button class="h-full border-b-[2px] border-transparent text-[12px] font-normal text-text-secondary hover:text-text-primary px-[2px]">
+                    Blocks (2)
+                  </button>
+                </div>
+                <!-- Close Drawer Icon -->
+                <button class="h-[20px] w-[20px] flex items-center justify-center text-text-secondary hover:bg-black/5 rounded">
+                  <svg class="h-[14px] w-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Metadata Fields List -->
+              <div class="flex-1 overflow-y-auto p-[10px] space-y-[10px]">
+                
+                <!-- Field 1: Input Dataset -->
+                <div class="space-y-[2px]">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-medium text-text-secondary">Input Dataset(s)</span>
+                    <span class="inline-flex items-center px-[4px] py-[1px] text-[10px] text-[#888E8E] border border-[#D8DADA] rounded bg-white font-normal">
+                      AI Infer
+                    </span>
+                  </div>
+                  <input type="text" value="ADSL" class="w-full h-[26px] px-[8px] text-[12px] font-mono bg-white border border-[#D8DADA] rounded-[4px] focus:outline-none focus:border-brand-1" />
+                </div>
+
+                <!-- Field 2: Program Name -->
+                <div class="space-y-[2px]">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-medium text-text-secondary">Program Name</span>
+                  </div>
+                  <input type="text" value="t_ae_14_3_2_8_2" class="w-full h-[26px] px-[8px] text-[12px] font-mono bg-white border border-[#D8DADA] rounded-[4px] focus:outline-none focus:border-brand-1" />
+                </div>
+
+                <!-- Field 3: Population Flag -->
+                <div class="space-y-[2px]">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-medium text-text-secondary">Population Flag</span>
+                    <span class="inline-flex items-center px-[4px] py-[1px] text-[10px] text-[#888E8E] border border-[#D8DADA] rounded bg-white font-normal">
+                      AI Infer
+                    </span>
+                  </div>
+                  <input type="text" value="SAF1LFL='Y'" class="w-full h-[26px] px-[8px] text-[12px] font-mono bg-white border border-[#D8DADA] rounded-[4px] focus:outline-none focus:border-brand-1" />
+                </div>
+
+                <!-- Field 4: Distinguishing Param -->
+                <div class="space-y-[2px]">
+                  <span class="text-[11px] font-medium text-text-secondary">Distinguishing Param</span>
+                  <div class="p-[6px] text-[11px] font-mono bg-[#F9F9F9] border border-[#E5E5E5] rounded-[4px] text-text-primary">
+                    trtfmtC: gpT01bG3L2_5_8_456f
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Resizer Divider (Shell <-> Code) -->
+        <div class="resizer-divider shrink-0"></div>
+
+        <!-- ================================================================= -->
+        <!-- 4. PANEL: CODE EDITOR (SAS 代码编辑与查看面板 - 白底干净风格)        -->
+        <!-- ================================================================= -->
+        <div id="panel-code" class="min-w-0 min-h-0 flex-1 overflow-hidden flex flex-col bg-white rounded-[8px] border border-graphite-10 shadow-card-mulberry code-container">
+          
+          <!-- Code Panel Header -->
+          <div class="flex h-[40px] shrink-0 items-center justify-between px-[12px] bg-white border-b border-graphite-10">
+            <!-- Title: Code Slash Icon + Filename -->
+            <div class="flex items-center gap-[6px]">
+              <svg class="w-[16px] h-[16px] text-[#888E8E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+              </svg>
+              <span class="text-[12px] font-mono text-text-primary">t_ae_14_3_2_8_2.sas</span>
+            </div>
+
+            <!-- Toolbar Buttons: Save, Copy, Lock, History -->
+            <div class="flex items-center gap-[6px]">
+              <!-- 1. Save (Secondary style, h-26px) -->
+              <button class="h-[26px] px-[8px] py-0 gap-[4px] rounded-[4px] border border-[#D9DADA] bg-white hover:bg-black/5 flex items-center justify-center text-text-primary active:scale-[0.96]">
+                <svg class="w-[14px] h-[14px] text-[#888E8E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                </svg>
+                <span class="text-[12px] leading-[18px] font-normal">Saved</span>
+              </button>
+
+              <!-- 2. Copy -->
+              <button class="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] text-text-secondary" title="Copy Code">
+                <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </button>
+
+              <!-- 3. Lock Status -->
+              <button class="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] text-text-secondary" title="Lock / Unlock Code">
+                <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                </svg>
+              </button>
+
+              <!-- 4. Version History -->
+              <button class="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] text-text-secondary" title="Version History">
+                <svg class="h-[16px] w-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Code Content Area: Line Numbers + Highlighted SAS Code (White Theme) -->
+          <div class="relative min-h-0 flex-1 overflow-hidden">
+            <!-- Top Fade -->
+            <div class="pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b from-white to-transparent z-20"></div>
+
+            <div class="h-full w-full overflow-auto bg-white flex font-mono text-[13px] leading-[20px]">
+              
+              <!-- Sticky Line Numbers Column -->
+              <div class="select-none bg-white py-[16px] text-right text-[#999999] shrink-0 w-[48px] sticky left-0 z-10 border-r border-[#F0F0F0]">
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">1</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">2</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">3</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">4</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">5</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">6</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">7</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">8</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">9</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">10</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums font-semibold text-text-primary">11</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums font-semibold text-text-primary">12</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">13</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">14</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">15</div>
+                <div class="h-[20px] px-[8px] text-[12px] tabular-nums">16</div>
+              </div>
+
+              <!-- SAS Code Body with Syntax Colors & Indent Guides -->
+              <div class="flex-1 py-[16px] bg-white pl-[12px] pr-[16px] whitespace-pre overflow-x-auto">
+                <div class="h-[20px] text-[#008000]">/* =================================================== */</div>
+                <div class="h-[20px] text-[#008000]">/* Table 14.1.6.1 - Demographics and Baseline        */</div>
+                <div class="h-[20px] text-[#008000]">/* Standard: AZ Global Statistical Programming v3.2 */</div>
+                <div class="h-[20px] text-[#008000]">/* =================================================== */</div>
+                <div class="h-[20px]"></div>
+                <div class="h-[20px]"><span class="text-[#0000FF] font-medium">options</span> nodate nonumber orientation=landscape;</div>
+                <div class="h-[20px]"><span class="text-[#830051] font-semibold">%m_u_popn</span>(</div>
+                <div class="h-[20px] indent-guide pl-[16px]">inds = adam.adsl,</div>
+                <div class="h-[20px] indent-guide pl-[16px]">pop_flag = SAF1LFL=<span class="text-[#A31515]">'Y'</span>,</div>
+                <div class="h-[20px] indent-guide pl-[16px]">trtgrpn = TRT01AN,</div>
+                <!-- Selected Line Highlighting: bg-[#FBF4F7] -->
+                <div class="h-[20px] indent-guide pl-[16px] bg-[#FBF4F7] rounded-sm">trtfmtC = gpT01bG3L2_5_8_456f,</div>
+                <div class="h-[20px] indent-guide pl-[16px] bg-[#FBF4F7] rounded-sm">gmacro = SAF1LT01bL2_5_8_456NP,</div>
+                <div class="h-[20px] indent-guide pl-[16px]">BigN = Y</div>
+                <div class="h-[20px]">);</div>
+                <div class="h-[20px]"></div>
+                <div class="h-[20px]"><span class="text-[#0000FF] font-medium">proc freq</span> data=work._popn noprint;</div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Resizer Divider (Workspace <-> AI Copilot) -->
+      <div class="resizer-divider shrink-0 ml-[4px] mr-[2px]"></div>
+
+      <!-- =================================================================== -->
+      <!-- 5. PANEL: AI COPILOT (In-Card 智能副驾驶面板 - 完全打开状态)           -->
+      <!-- =================================================================== -->
+      <aside id="panel-copilot" class="h-full flex flex-col w-[360px] min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 rounded-[8px] border border-graphite-10 shadow-card-mulberry">
+        
+        <!-- Copilot Header: FilterChip Session Dropdown + Action Buttons -->
+        <div class="relative z-10 shrink-0 bg-white border-b border-graphite-10">
+          <div class="flex h-[40px] items-center justify-between px-[12px]">
+            <!-- Session FilterChip Dropdown -->
+            <div class="flex items-center min-w-0 max-w-[240px]">
+              <div class="inline-flex items-center h-[26px] px-[8px] py-[2px] rounded-full border border-[#D8DADA] bg-white hover:bg-bg-panel cursor-pointer transition-colors gap-[4px]">
+                <span class="text-[12px] font-medium text-text-primary truncate">Session: Demographics</span>
+                <svg class="h-[12px] w-[12px] text-text-secondary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Actions: New Session + Collapse Copilot -->
+            <div class="flex items-center gap-[4px]">
+              <button type="button" class="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] text-text-secondary" title="New Session">
+                <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+              </button>
+              <button type="button" class="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] text-text-secondary" title="Collapse AI Copilot">
+                <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Copilot Conversation Stream -->
+        <div class="flex-1 overflow-y-auto p-[12px] space-y-[12px] bg-[#FAFAFA]">
+          
+          <!-- User Prompt Bubble -->
+          <div class="flex flex-col items-end space-y-[2px]">
+            <div class="bg-brand-1 text-white text-[13px] px-[12px] py-[8px] rounded-[16px] rounded-tr-[2px] max-w-[88%] shadow-sm leading-[20px]">
+              请将 Table 14.1.6.1 中年龄统计项增加 Q1 和 Q3（四分位数）统计逻辑。
+            </div>
+            <span class="text-[10px] text-text-secondary pr-[4px]">14:10</span>
+          </div>
+
+          <!-- AI Thinking Indicator -->
+          <div class="flex items-center gap-[8px] px-[10px] py-[6px] bg-az-secondary/60 border border-az-secondary rounded-[6px] text-[12px] text-brand-1">
+            <svg class="w-[14px] h-[14px] animate-spin text-brand-1" viewBox="0 0 24 24" fill="none">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span class="font-medium">Analyzing SAS macro %m_u_popn parameters...</span>
+          </div>
+
+          <!-- AI Response Card with Tool Call & Code Diff -->
+          <div class="flex flex-col items-start space-y-[4px] max-w-[100%]">
+            <div class="w-full bg-white border border-graphite-10 rounded-[12px] rounded-tl-[2px] p-[12px] shadow-sm text-[12px] space-y-[10px] text-text-primary">
+              <p class="leading-[18px]">已完成分析。针对人口统计学参数，建议在宏调用中加入 <code>Q1 Q3</code> 输出：</p>
+
+              <!-- Tool Call Block -->
+              <div class="rounded-[4px] border border-[#E0E0E0] bg-[#F7F8F8] overflow-hidden text-[11px]">
+                <div class="flex items-center justify-between px-[8px] py-[4px] bg-[#EFEFEF] border-b border-[#E0E0E0] font-mono text-[#555]">
+                  <span class="flex items-center gap-[6px]">
+                    <svg class="w-[12px] h-[12px] text-[#008369]" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    execute_macro: %m_u_popn_summary
+                  </span>
+                  <span class="text-[9px] text-[#888]">Done (120ms)</span>
+                </div>
+              </div>
+
+              <!-- Code Diff Block -->
+              <div class="rounded-[6px] border border-[#D9DADA] overflow-hidden font-mono text-[11px] leading-[18px]">
+                <div class="bg-[#F1F2F2] px-[8px] py-[3px] text-[10px] text-[#666] font-semibold border-b border-[#D9DADA]">
+                  Code Changes
+                </div>
+                <div class="p-[8px] bg-[#FAFAFA] space-y-[2px]">
+                  <div class="text-[#CC2C3C] bg-[#FAD4D8]/50 px-[4px] rounded">-  ,stats = MEAN STD MEDIAN MIN MAX</div>
+                  <div class="text-[#008369] bg-[#E6F3F0] px-[4px] rounded font-medium">+  ,stats = MEAN STD MEDIAN Q1 Q3 MIN MAX</div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex items-center gap-[6px] pt-[2px]">
+                <button class="px-[10px] py-[4px] text-[11px] font-medium bg-brand-1 text-white rounded-[4px] hover:opacity-95 shadow-sm active:scale-[0.96]">
+                  Apply to Program
+                </button>
+                <button class="px-[10px] py-[4px] text-[11px] font-normal border border-[#D8DADA] rounded-[4px] hover:bg-black/5 text-text-primary">
+                  View Diff
+                </button>
+              </div>
+            </div>
+            <span class="text-[10px] text-text-secondary pl-[4px]">14:11</span>
+          </div>
+
+        </div>
+
+        <!-- Copilot Input Box Footer -->
+        <div class="p-[10px] border-t border-graphite-10 bg-white space-y-[8px]">
+          <!-- Quick Suggestion Chips -->
+          <div class="flex items-center gap-[6px] overflow-x-auto pb-[2px]">
+            <button class="px-[8px] py-[2px] text-[11px] rounded-full border border-[#D8DADA] bg-white text-text-secondary hover:border-brand-1 hover:text-brand-1 whitespace-nowrap">
+              + Subgroup Analysis
+            </button>
+            <button class="px-[8px] py-[2px] text-[11px] rounded-full border border-[#D8DADA] bg-white text-text-secondary hover:border-brand-1 hover:text-brand-1 whitespace-nowrap">
+              Format Digits
+            </button>
+          </div>
+
+          <!-- Chat Input Container -->
+          <div class="border border-[#D9DADA] rounded-[6px] bg-white focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1 transition-all">
+            <textarea
+              placeholder="Ask Copilot or give instructions..."
+              rows="2"
+              class="w-full p-[8px] text-[12px] bg-transparent resize-none focus:outline-none text-text-primary placeholder:text-[#888E8E]"
+            ></textarea>
+            
+            <div class="flex items-center justify-between px-[8px] pb-[6px]">
+              <!-- Attachment & Quote buttons -->
+              <div class="flex items-center gap-[4px] text-text-secondary">
+                <button class="p-[3px] rounded hover:bg-black/5" title="Attach file">
+                  <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                  </svg>
+                </button>
+                <button class="p-[3px] rounded hover:bg-black/5" title="Quote active table field">
+                  <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Submit Arrow Button -->
+              <button class="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] bg-brand-1 text-white hover:opacity-90 active:scale-[0.96] shadow-sm">
+                <svg class="w-[14px] h-[14px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+
+  </main>
+
+</body>
+</html>
