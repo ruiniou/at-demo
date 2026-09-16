@@ -10999,7 +10999,7 @@ function HomePage({
               ))}
             </div>
             {/* User account */}
-            <div className="px-[6px] pb-[12px]">
+            <div className="px-[6px] pb-[8px]">
               <AccountMenu onLogout={onLogout} />
             </div>
           </div>
