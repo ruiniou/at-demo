@@ -59,6 +59,7 @@ import imageAiLineIconUrl from "../../icons/image-ai-line.svg";
 import CreateEventModal from "./components/CreateEventModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
+import AccountMenu from "../../components/auth/AccountMenu";
 import { TreeFilterPopover, OwnerAvatar } from "./components/TreeFilterPopover";
 import { FacetedSearchBar } from "./components/FacetedSearchBar";
 import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal";
@@ -9270,6 +9271,7 @@ function WorkspaceContent({
   treeListWidth,
   setTreeListWidth,
   onOpenDownloadModal,
+  onLogout,
 }: {
   onNavigateHome: () => void;
   treeListOpen: boolean;
@@ -9277,6 +9279,7 @@ function WorkspaceContent({
   treeListWidth: number;
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
   onOpenDownloadModal?: () => void;
+  onLogout?: () => void;
 }) {
   const [aiLayoutVariant, setAiLayoutVariant] = useState<'drawer' | 'incard'>('incard');
   const [metaDiffItems, setMetaDiffItems] = useState<MetaDiffItem[]>([]);
@@ -10160,6 +10163,11 @@ function WorkspaceContent({
                   ]}
                 />
               </div>
+
+              {/* User Account */}
+              <div className="pt-[4px] px-[2px] border-t border-border-default/60 mt-[4px]">
+                <AccountMenu onLogout={onLogout} />
+              </div>
             </div>
           </div>
         </div>
@@ -10928,6 +10936,7 @@ function HomePage({
   setTreeListWidth,
   onOpenDownloadModal,
   onOpenDeleteModal,
+  onLogout,
 }: {
   onEventClick: () => void;
   onCreateEvent: () => void;
@@ -10939,6 +10948,7 @@ function HomePage({
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
   onOpenDownloadModal?: (event: EventCardData) => void;
   onOpenDeleteModal?: (event: EventCardData) => void;
+  onLogout?: () => void;
 }) {
   const [searchValue, setSearchValue] = useState('');
   const [isResizing, setIsResizing] = useState(false);
@@ -10989,11 +10999,8 @@ function HomePage({
               ))}
             </div>
             {/* User account */}
-            <div className="flex items-center gap-[8px] px-[12px] pb-[16px]">
-              <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#9DB0AC]">
-                <span className="text-[12px] font-medium text-white">U</span>
-              </div>
-              <span className="font-normal text-text-primary" style={{ fontSize: '14px', lineHeight: '20px' }}>User account</span>
+            <div className="px-[6px] pb-[12px]">
+              <AccountMenu onLogout={onLogout} />
             </div>
           </div>
         </div>
@@ -11090,7 +11097,7 @@ function HomePage({
   );
 }
 
-export default function Main() {
+export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [page, setPage] = useState<'home' | 'event'>('home');
   const [treeListOpen, setTreeListOpen] = useState(true);
   const [treeListWidth, setTreeListWidth] = useState(240);
@@ -11147,6 +11154,7 @@ export default function Main() {
           setTreeListWidth={setTreeListWidth}
           onOpenDownloadModal={handleOpenDownload}
           onOpenDeleteModal={handleOpenDelete}
+          onLogout={onLogout}
         />
       ) : (
         <WorkspaceContent
@@ -11156,6 +11164,7 @@ export default function Main() {
           treeListWidth={treeListWidth}
           setTreeListWidth={setTreeListWidth}
           onOpenDownloadModal={() => handleOpenDownload()}
+          onLogout={onLogout}
         />
       )}
       <CreateEventModal
