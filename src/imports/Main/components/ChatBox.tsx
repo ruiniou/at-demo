@@ -474,7 +474,9 @@ export interface ChatBoxProps {
   showMention?: boolean;
   disabled?: boolean;
   onSkipEventProgressItem?: (tflId: string) => void;
+  placeholder?: string;
   className?: string;
+  panelTone?: 'panel' | 'white';
 }
 
 export default function ChatBox({
@@ -498,7 +500,9 @@ export default function ChatBox({
   onJumpToTfl,
   mentionOptions,
   showMention = true,
+  placeholder,
   className = "",
+  panelTone = 'white',
 }: ChatBoxProps) {
   // --- Core Functional States ---
   const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -985,7 +989,7 @@ export default function ChatBox({
     ? "Add instructions or submit directly..." 
     : (eventProgressData && !eventProgressData.isCompleted)
     ? "Waiting for updates to complete..."
-    : "Ask Me Anything...";
+    : (placeholder || "Ask Me Anything...");
 
   const isMaxHeightAndNotPending = resolvedStatus === "Max height" && !pending;
   const isFocusedAndNotPending = resolvedStatus === "Focused" && !pending;
@@ -1397,6 +1401,8 @@ export default function ChatBox({
                 ? "bg-graphite-5 cursor-not-allowed select-none"
                 : isFocusedAndNotPending
                 ? "bg-white border-brand-1 shadow-[0_0_0_1px_var(--color-brand-1)]"
+                : panelTone === 'panel'
+                ? "bg-bg-panel hover:border-graphite-30"
                 : "bg-white hover:border-graphite-30"
             } ${isMaxHeightAndNotPending ? "rounded-[6px]" : "rounded-[8px]"}`}
           >
@@ -1589,7 +1595,7 @@ export default function ChatBox({
         {/* --- Inputbox when Pending is active --- */}
         {pending && (
           <div className={`border border-solid content-stretch flex flex-col items-start justify-center p-[8px] relative rounded-[8px] shrink-0 w-full ${
-            disabled ? "bg-[#F7F8F8] border-graphite-10 cursor-not-allowed" : "bg-white border-graphite-10"
+            disabled ? "bg-[#F7F8F8] border-graphite-10 cursor-not-allowed" : panelTone === 'panel' ? "bg-bg-panel border-graphite-10" : "bg-white border-graphite-10"
           }`}>
             <div className="content-stretch flex gap-[16px] items-center relative shrink-0 w-full">
               <div className="content-stretch flex flex-[1_0_0] items-center justify-start min-w-px relative">
@@ -1597,7 +1603,7 @@ export default function ChatBox({
                   ref={pendingInputRef}
                   type="text"
                   disabled={disabled}
-                  placeholder={disabled ? "Historical session is read-only" : "Ask Me Anything..."}
+                  placeholder={disabled ? "Historical session is read-only" : (placeholder || "Ask Me Anything...")}
                   className={`flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] ${
                     disabled ? "cursor-not-allowed text-text-secondary/60 italic" : ""
                   }`}

@@ -35,6 +35,7 @@ export interface AIUserPromptProps {
   onJumpToMetadata?: (fieldId: string) => void;
   className?: string;
   variant?: 'drawer' | 'incard';
+  panelTone?: 'panel' | 'white';
 }
 
 function ChevronRightIcon({ className = "size-[14px]", color = "var(--color-text-secondary)" }) {
@@ -62,6 +63,7 @@ export function AIUserPrompt({
   onJumpToMetadata,
   className = "",
   variant = 'incard',
+  panelTone = 'white',
 }: AIUserPromptProps) {
   const paragraphs = content.split("\n");
   const isSingleTotal = (toBeUpdatedCount === 1) || (metaDiffItems?.length === 1);
@@ -187,7 +189,9 @@ export function AIUserPrompt({
     return parts;
   };
 
-  const bubbleStyle = variant === 'incard'
+  const bubbleStyle = panelTone === 'panel'
+    ? "bg-white border border-graphite-15 shadow-none"
+    : variant === 'incard'
     ? "bg-bg-panel border border-graphite-15"
     : "bg-white border-[0.6px] border-graphite-20";
 

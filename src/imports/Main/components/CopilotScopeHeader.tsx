@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import chatAiFillIconUrl from "../../../icons/chat-ai-4-fill.svg";
-import tableIconUrl from "../../../icons/table.svg";
+import fileAiFillIconUrl from "../../../icons/file-ai-fill.svg";
 import gitBranchIconUrl from "../../../icons/git-branch-line.svg";
 import addLineIconUrl from "../../../icons/add-line.svg";
 import checkIconUrl from "../../../icons/check-line.svg";
@@ -190,7 +190,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
               color="var(--color-brand-1)"
             />
             <span className="t-small-medium font-medium text-[13px] truncate text-brand-1 leading-none">
-              {activeEventSession?.name || "Event Copilot"}
+              Event Copilot
             </span>
             <ChevronDownIcon className="size-[12px] shrink-0 text-brand-1 opacity-80" color="var(--color-brand-1)" />
           </button>
@@ -225,12 +225,12 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
             aria-expanded={openDropdown === "tfl"}
           >
             <ScopeIcon
-              src={tableIconUrl}
+              src={fileAiFillIconUrl}
               className="h-[14px] w-[14px] shrink-0"
               color="var(--color-brand-1)"
             />
             <span className="t-small-medium font-medium text-[13px] truncate text-brand-1 leading-none">
-              {activeTflSession?.name || "TFL Copilot"}
+              TFL Copilot
             </span>
             <ChevronDownIcon className="size-[12px] shrink-0 text-brand-1 opacity-80" color="var(--color-brand-1)" />
           </button>
@@ -245,7 +245,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
             aria-label="TFL Copilot"
           >
             <ScopeIcon
-              src={tableIconUrl}
+              src={fileAiFillIconUrl}
               className="h-[14px] w-[14px] shrink-0"
               color="var(--color-text-secondary)"
             />

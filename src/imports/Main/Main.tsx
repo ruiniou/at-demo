@@ -1137,6 +1137,19 @@ export type EventSummaryCardData = {
   items: EventSummaryItem[];
 };
 
+export type EventSearchItem = {
+  tflId: string;
+  name: string;
+  reason?: string;
+  found?: boolean;
+};
+
+export type EventSearchCardData = {
+  query?: string;
+  items: EventSearchItem[];
+  status?: 'searching' | 'completed';
+};
+
 export type EventDispatchedTaskData = {
   eventTitle?: string;
   targetTflName?: string;
@@ -1161,6 +1174,7 @@ type Message = {
     | 'ai_update_complete'
     | 'ai_update_accepted'
     | 'meta_update_card'
+    | 'event_search_block'
     | 'event_scope_card'
     | 'event_progress_card'
     | 'event_summary_card'
@@ -1176,6 +1190,7 @@ type Message = {
   isProcessing?: boolean;
   /** Images submitted alongside the user message */
   attachments?: AttachmentItem[];
+  searchCardData?: EventSearchCardData;
   scopeCardData?: EventScopeCardData;
   progressCardData?: EventProgressCardData;
   summaryCardData?: EventSummaryCardData;
@@ -1215,7 +1230,7 @@ function EventScopeCard({
   const isPending = !isConfirmed && !isCancelled;
 
   return (
-    <div className={`flex flex-col bg-white border border-border-default rounded-[8px] overflow-hidden w-full shadow-sm my-[2px] transition-opacity ${
+    <div className={`flex flex-col bg-white border border-graphite-10 rounded-[8px] overflow-hidden w-full my-[2px] transition-opacity ${
       isCancelled ? "opacity-75" : ""
     }`}>
       {/* Header */}
@@ -1292,12 +1307,12 @@ function EventScopeCard({
                 <div
                   key={item.tflId}
                   onClick={() => onJumpToTfl?.(item.tflId)}
-                  className={`group flex items-center justify-between gap-[10px] px-[12px] py-[8px] transition-colors cursor-pointer hover:bg-bg-panel ${
+                  className={`group flex items-start justify-between gap-[10px] px-[12px] py-[8px] transition-colors cursor-pointer hover:bg-bg-panel ${
                     !isSelected || isCancelled ? "opacity-60 bg-graphite-5/50" : ""
                   }`}
                   title="Click to navigate to this TFL"
                 >
-                  <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                  <div className="flex items-start gap-[8px] min-w-0 flex-1">
                     {isPending ? (
                       <button
                         type="button"
@@ -1305,7 +1320,7 @@ function EventScopeCard({
                           e.stopPropagation();
                           onToggleExclude(item.tflId);
                         }}
-                        className="p-[2px] -m-[2px] rounded-[3px] hover:opacity-80 active:scale-95 transition-all cursor-pointer shrink-0"
+                        className="p-[2px] -m-[2px] mt-[2px] rounded-[3px] hover:opacity-80 active:scale-95 transition-all cursor-pointer shrink-0"
                         aria-label={isSelected ? "Deselect TFL" : "Select TFL"}
                       >
                         <span
@@ -1321,20 +1336,32 @@ function EventScopeCard({
                         </span>
                       </button>
                     ) : (
-                      <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px] shrink-0 text-text-secondary" />
+                      <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px] mt-[2px] shrink-0 text-text-secondary" />
                     )}
 
-                    <span
-                      className={`text-[13px] leading-[18px] truncate transition-colors ${
-                        isCancelled
-                          ? "text-text-secondary line-through"
-                          : isSelected
-                          ? "text-text-primary font-medium group-hover:text-brand-1"
-                          : "text-text-secondary line-through"
-                      }`}
-                    >
-                      {displayName}
-                    </span>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span
+                        className={`text-[13px] leading-[18px] truncate transition-colors ${
+                          isCancelled
+                            ? "text-text-secondary line-through"
+                            : isSelected
+                            ? "text-text-primary font-medium group-hover:text-brand-1"
+                            : "text-text-secondary line-through"
+                        }`}
+                      >
+                        {displayName}
+                      </span>
+                      {item.reason && (
+                        <Tooltip label={item.reason} placement="topLeft" maxWidth={320}>
+                          <span
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[11px] leading-[15px] text-text-secondary line-clamp-2 break-words mt-[2px] cursor-help"
+                          >
+                            {item.reason}
+                          </span>
+                        </Tooltip>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-[6px] shrink-0">
@@ -1425,7 +1452,7 @@ function EventProgressCard({
   const isAllDone = data.isCompleted || (totalCount > 0 && completedCount === totalCount);
 
   return (
-    <div className="flex flex-col bg-white border border-border-default rounded-[8px] overflow-hidden w-full shadow-sm my-[2px]">
+    <div className="flex flex-col bg-white border border-graphite-10 rounded-[8px] overflow-hidden w-full my-[2px]">
       {/* Header */}
       <div
         onClick={() => setIsExpanded((prev) => !prev)}
@@ -1580,7 +1607,7 @@ function EventSummaryCard({
   }
 
   return (
-    <div className="flex flex-col bg-white border border-border-default rounded-[8px] overflow-hidden w-full shadow-sm my-[2px]">
+    <div className="flex flex-col bg-white border border-graphite-10 rounded-[8px] overflow-hidden w-full my-[2px]">
       {/* Header */}
       <div
         className="flex items-center justify-between px-[12px] py-[9px] border-b border-graphite-10"
@@ -1656,63 +1683,186 @@ function EventSummaryCard({
   );
 }
 
-function EventDispatchedTaskCard({
+function EventSearchBlock({
   data,
+  onJumpToTfl,
 }: {
-  data?: EventDispatchedTaskData;
+  data: EventSearchCardData;
+  onJumpToTfl?: (tflId: string) => void;
 }) {
-  const eventTitle = data?.eventTitle || "Variable Replacement: TRTA → TRT01P";
-  const targetTflName = data?.targetTflName || "14.1.1 Disposition";
-  const description = data?.description || "Execute automated variable replacement across this TFL. Replace clinical variable TRTA with TRT01P in analysis datasets and reporting steps as specified in amended protocol SAP v2.1.";
-  const sourceVar = data?.sourceVar || "TRTA";
-  const targetVar = data?.targetVar || "TRT01P";
+  const isSearching = data.status === 'searching';
+  const items = data.items || [];
+  // While searching: expand to show real-time scanning items; when completed: automatically collapse
+  const [isExpanded, setIsExpanded] = useState(isSearching);
+  const [headerHovered, setHeaderHovered] = useState(false);
+
+  // Automatically collapse when searching finishes
+  useEffect(() => {
+    if (!isSearching) {
+      setIsExpanded(false);
+    }
+  }, [isSearching]);
+
+  const title = isSearching
+    ? (data.query ? `Searching TFLs for "${data.query}"...` : "Scanning domain TFLs...")
+    : `Scanned ${items.length} TFLs`;
 
   return (
-    <div className="flex flex-col w-full rounded-[8px] border border-[#BFDBFE] bg-[#F0F7FF] overflow-hidden my-[2px] shadow-sm">
-      {/* Top Banner */}
-      <div className="flex items-center justify-between px-[12px] py-[8px] border-b border-[#DBEAFE] bg-[#E0EFFF]">
-        <div className="flex items-center gap-[8px]">
-          <div className="w-[20px] h-[20px] rounded-[4px] bg-brand-1 flex items-center justify-center text-white shrink-0 shadow-xs">
-            <LocalIcon src={atlasLogoUrl} className="w-[14px] h-[14px]" />
+    <div className="flex flex-col bg-white border border-graphite-10 rounded-[8px] overflow-hidden w-full my-[2px]">
+      {/* Header */}
+      <div
+        onClick={() => setIsExpanded((prev) => !prev)}
+        onMouseEnter={() => setHeaderHovered(true)}
+        onMouseLeave={() => setHeaderHovered(false)}
+        className={`flex items-center justify-between px-[12px] py-[8px] w-full transition-colors cursor-pointer select-none ${
+          headerHovered ? "bg-bg-panel" : "bg-transparent"
+        } ${isExpanded && items.length > 0 ? "border-b border-graphite-10" : ""}`}
+        style={{ borderBottomWidth: isExpanded && items.length > 0 ? "0.6px" : "0px" }}
+      >
+        <div className="flex items-center gap-[6px] min-w-0 flex-1">
+          {/* Arrow toggle */}
+          <svg
+            className={`w-[14px] h-[14px] text-text-secondary transition-transform shrink-0 ${
+              isExpanded ? "rotate-0" : "-rotate-90"
+            }`}
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12.0001 13.1714L16.9499 8.22168L18.3641 9.63589L12.0001 15.9999L5.63623 9.63589L7.05044 8.22168L12.0001 13.1714Z"
+              fill="currentColor"
+            />
+          </svg>
+
+          {/* Search Icon or Spinner */}
+          <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
+            {isSearching ? (
+              <SpinnerIcon className="w-[14px] h-[14px]" />
+            ) : (
+              <LocalIcon src={searchLineIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
+            )}
           </div>
-          <span className="text-[13px] font-semibold text-text-primary">
-            Event Copilot
-          </span>
-          <span className="px-[6px] py-[1px] rounded-[4px] bg-brand-1/10 text-brand-1 text-[11px] font-medium leading-[14px]">
-            Dispatched Task
+
+          <span className="text-[13px] font-medium text-text-primary truncate">
+            {title}
           </span>
         </div>
-        <span className="text-[11px] text-text-secondary font-medium truncate max-w-[200px]">
-          {eventTitle}
-        </span>
+
+        {/* Count badge */}
+        <div className="flex items-center gap-[6px] shrink-0">
+          <span className="text-[11px] font-medium text-text-secondary">
+            {items.length} {items.length === 1 ? 'target' : 'targets'}
+          </span>
+        </div>
       </div>
 
-      {/* Task Content */}
-      <div className="p-[12px] flex flex-col gap-[10px]">
-        <div className="flex flex-col gap-[4px]">
-          <span className="text-[13px] font-medium text-text-primary leading-[18px]">
-            Target: <span className="font-semibold text-text-primary">{targetTflName}</span>
+      {/* Collapsible item list */}
+      {isExpanded && items.length > 0 && (
+        <div className="p-[4px] flex flex-col gap-[2px] max-h-[200px] overflow-y-auto">
+          {items.map((item) => (
+            <div
+              key={item.tflId}
+              onClick={() => onJumpToTfl?.(item.tflId)}
+              className="flex items-center justify-between gap-[8px] px-[8px] py-[6px] rounded-[6px] hover:bg-bg-panel cursor-pointer transition-colors group select-none"
+            >
+              <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                {/* Search result icon */}
+                <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
+                  <LocalIcon src={searchLineIconUrl} className="w-[12px] h-[12px]" color="var(--color-text-secondary)" />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-[12px] font-medium text-text-primary truncate group-hover:text-brand-1 transition-colors">
+                    {item.name}
+                  </span>
+                  {item.reason && (
+                    <span className="text-[11px] text-text-secondary truncate leading-[14px]">
+                      {item.reason}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-[6px] shrink-0">
+                {item.found !== false ? (
+                  <span className="px-[5px] py-px rounded-[4px] bg-brand-1/10 text-brand-1 text-[10px] font-medium leading-[14px]">
+                    Matched
+                  </span>
+                ) : (
+                  <span className="px-[5px] py-px rounded-[4px] bg-graphite-10 text-text-secondary text-[10px] font-medium leading-[14px]">
+                    Checked
+                  </span>
+                )}
+                <LocalIcon
+                  src={arrowRightIconUrl}
+                  className="w-[12px] h-[12px] opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  color="#888E8E"
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EventDispatchedTaskCard({
+  data,
+  variant = 'incard',
+  onJumpToEvent,
+}: {
+  data?: EventDispatchedTaskData;
+  variant?: 'drawer' | 'incard';
+  onJumpToEvent?: () => void;
+}) {
+  const sourceVar = data?.sourceVar || "TRTA";
+  const targetVar = data?.targetVar || "TRT01P";
+  const commandText = data?.description || `Replace clinical variable ${sourceVar} with ${targetVar} across analysis datasets and reporting steps as specified in amended protocol SAP v2.1.`;
+
+  const bubbleStyle = variant === 'incard'
+    ? "bg-bg-panel border border-graphite-15"
+    : "bg-white border-[0.6px] border-graphite-20";
+
+  return (
+    <div className="flex flex-col gap-[6px] w-full">
+      {/* Sender & Header row: outlined Event badge + jump icon on the right */}
+      <div className="flex items-center justify-between w-full px-[2px]">
+        <div className="flex items-center gap-[6px]">
+          {/* Outlined Event badge */}
+          <span className="inline-flex items-center px-[6px] py-0 rounded-[4px] border border-border-default bg-transparent text-[11px] font-medium leading-[18px] text-text-secondary">
+            Event
           </span>
-          <p className="text-[12px] text-text-secondary leading-[18px]">
-            {description}
-          </p>
         </div>
 
-        {/* Variables mapping pill */}
-        <div className="flex items-center justify-between p-[8px] rounded-[6px] bg-white border border-[#DBEAFE]">
-          <div className="flex items-center gap-[8px]">
-            <span className="text-[11px] font-medium text-text-secondary uppercase tracking-wider">
-              Variable Migration:
-            </span>
-            <div className="flex items-center gap-[6px]">
-              <InlineHighlight>{sourceVar}</InlineHighlight>
-              <span className="text-[12px] text-text-secondary font-mono font-bold">→</span>
-              <InlineHighlight>{targetVar}</InlineHighlight>
-            </div>
+        {/* Jump-to-event icon on the same row */}
+        {onJumpToEvent && (
+          <button
+            type="button"
+            onClick={onJumpToEvent}
+            title="Locate in Event Copilot"
+            aria-label="Locate in Event Copilot"
+            className="flex items-center gap-[3px] text-[11px] text-text-secondary hover:text-brand-1 transition-colors cursor-pointer select-none p-[2px] rounded hover:bg-black/5"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="shrink-0">
+              <path d="M13 3L21 3M21 3L21 11M21 3L13 11M10 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21H17C18.1046 21 19 20.1046 19 19V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* User-style dialogue bubble: identical style to user prompts, showing command text */}
+      <div className="w-full">
+        <div
+          className={[
+            bubbleStyle,
+            "rounded-[8px] px-[10px] py-[8px]",
+            "flex flex-col gap-[4px] w-full",
+          ].join(" ")}
+        >
+          <div className="t-body text-text-secondary break-words whitespace-pre-wrap">
+            {commandText}
           </div>
-          <span className="text-[11px] font-mono text-text-secondary">
-            Protocol SAP v2.1
-          </span>
         </div>
       </div>
     </div>
@@ -1723,8 +1873,6 @@ function createInitialTflMessages(tflId: string, foundTable: TableItem | null, i
   // If this TFL is t1 (14.1.1 Disposition) or t5 (14.1.5 Baseline Characteristics) or any table dispatched from Event Copilot:
   if (tflId === 't1' || tflId === 't5' || isDispatched) {
     const tableName = foundTable?.name || (tflId === 't1' ? '14.1.1 Disposition' : (tflId === 't5' ? '14.1.5 Baseline Characteristics' : (tflId === 't8' ? '14.1.8 Medical History by SOC' : (tflId === 't4' ? '14.1.4 Demographics (Full Analysis Set)' : `TFL ${tflId}`))));
-    const cleanId = (foundTable?.name ? foundTable.name.split(' ')[0] : tflId).replace(/\./g, '_').toLowerCase();
-    const sasFileName = `t_${cleanId}.sas`;
 
     const msgs: Message[] = [
       {
@@ -1732,36 +1880,12 @@ function createInitialTflMessages(tflId: string, foundTable: TableItem | null, i
         dispatchedTaskData: {
           eventTitle: 'Variable Replacement: TRTA → TRT01P',
           targetTflName: tableName,
-          description: 'Execute automated variable replacement across this TFL. Replace clinical variable TRTA with TRT01P in analysis datasets and reporting steps as specified in amended protocol SAP v2.1.',
+          description: `Replace clinical variable TRTA with TRT01P in analysis datasets and reporting steps as specified in amended protocol SAP v2.1.`,
           sourceVar: 'TRTA',
           targetVar: 'TRT01P',
         },
       },
-      {
-        type: 'tfl_task_executing',
-        content: `Executing variable replacement for ${tableName}...`,
-      },
     ];
-
-    if (foundTable?.status !== 'analyzing') {
-      msgs.push({
-        type: 'tfl_task_completed',
-        content: `Variable replacement completed for ${tableName}. Replaced references of TRTA with TRT01P in SAS program. Code refactoring and syntax validation succeeded with 0 errors and 0 warnings.`,
-        codeDiffData: {
-          summary: `Lines 46-52 in ${sasFileName}`,
-          deletions: [
-            { content: "  /* Stratification by treatment group */" },
-            { content: "  strata TRTA / test=logrank;" },
-            { content: "  class TRTA(ref=\"Placebo\") &var;" },
-          ],
-          additions: [
-            { content: "  /* Stratification by treatment group (SAP v2.1) */" },
-            { content: "  strata TRT01P / test=logrank;" },
-            { content: "  class TRT01P(ref=\"Placebo\") &var;" },
-          ],
-        },
-      });
-    }
 
     return msgs;
   }
@@ -1798,6 +1922,8 @@ function ChatConversation({
   onSkipProgressItem,
   programs,
   isExecutingInEventCopilot = false,
+  onJumpToEvent,
+  panelTone = 'white',
 }: { 
   messages: Message[]; 
   isPending: boolean; 
@@ -1817,6 +1943,8 @@ function ChatConversation({
   onSkipProgressItem?: (tflId: string) => void;
   programs?: ProgramItem[];
   isExecutingInEventCopilot?: boolean;
+  onJumpToEvent?: () => void;
+  panelTone?: 'panel' | 'white';
 }) {
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
@@ -1866,6 +1994,7 @@ function ChatConversation({
                     attachments={msg.attachments}
                     onJumpToMetadata={(fieldId) => onJumpToMetadata?.('', fieldId)}
                     variant={variant}
+                    panelTone={panelTone}
                     className="w-full"
                   />
                 )}
@@ -1914,6 +2043,15 @@ function ChatConversation({
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {msg.type === 'event_search_block' && msg.searchCardData && (
+              <div className="w-full relative">
+                <EventSearchBlock
+                  data={msg.searchCardData}
+                  onJumpToTfl={onJumpToTfl}
+                />
               </div>
             )}
 
@@ -2207,62 +2345,10 @@ function ChatConversation({
 
             {msg.type === 'event_dispatched_task' && (
               <div className="w-full relative">
-                <EventDispatchedTaskCard data={msg.dispatchedTaskData} />
+                <EventDispatchedTaskCard data={msg.dispatchedTaskData} variant={variant} onJumpToEvent={onJumpToEvent} />
               </div>
             )}
 
-            {msg.type === 'tfl_task_executing' && (
-              <div className="flex flex-col gap-[8px] w-full relative">
-                <AIThinkingStatus status={isExecutingInEventCopilot ? "loading" : "completed"} />
-                <div className="flex flex-col gap-[6px] w-full">
-                  <ToolCallCard toolName="scan_references(var='TRTA', scope='study_program')">
-                    <p className="text-[12px] text-text-secondary leading-[16px]">
-                      Located 2 variable occurrences of <InlineHighlight>TRTA</InlineHighlight> in DATA step and PROC LIFETEST strata statement.
-                    </p>
-                  </ToolCallCard>
-                  <ToolCallCard toolName="edit_code(file='t_program.sas', replace='TRTA -> TRT01P')">
-                    <p className="text-[12px] text-text-secondary leading-[16px]">
-                      Replaced variable references with <InlineHighlight>TRT01P</InlineHighlight> at lines 48 and 54 in accordance with amended protocol SAP v2.1.
-                    </p>
-                  </ToolCallCard>
-                  <ToolCallCard toolName="validate_syntax(compiler='SAS 9.4')">
-                    <p className="text-[12px] text-text-secondary leading-[16px]">
-                      {isExecutingInEventCopilot
-                        ? "Running syntax and schema verification..."
-                        : "Compilation check passed: 0 syntax errors, 0 warnings."}
-                    </p>
-                  </ToolCallCard>
-                </div>
-              </div>
-            )}
-
-            {msg.type === 'tfl_task_completed' && (
-              <div className="flex flex-col gap-[12px] w-full relative">
-                <div className="flex flex-col w-full px-[10px]">
-                  <p className="t-body text-text-primary leading-relaxed">
-                    {msg.content || "Variable replacement completed. Replaced clinical variable TRTA with TRT01P in SAS program. Program structure and statistical parameters successfully verified."}
-                  </p>
-                </div>
-                <div className="relative w-full">
-                  <AICodeDiff
-                    summary={msg.codeDiffData?.summary || "Lines 46-52 in SAS program"}
-                    additions={msg.codeDiffData?.additions || [
-                      { content: "  /* Stratification by treatment group (SAP v2.1) */" },
-                      { content: "  strata TRT01P / test=logrank;" },
-                      { content: "  class TRT01P(ref=\"Placebo\") &var;" },
-                    ]}
-                    deletions={msg.codeDiffData?.deletions || [
-                      { content: "  /* Stratification by treatment group */" },
-                      { content: "  strata TRTA / test=logrank;" },
-                      { content: "  class TRTA(ref=\"Placebo\") &var;" },
-                    ]}
-                    additionCount={msg.codeDiffData?.additions?.length || 3}
-                    deletionCount={msg.codeDiffData?.deletions?.length || 3}
-                    defaultExpanded={true}
-                  />
-                </div>
-              </div>
-            )}
             </div>
           </React.Fragment>;
           })}
@@ -2378,6 +2464,9 @@ function AICopilotPanel({
     if (m.summaryCardData) {
       return { type: 'event_summary_card', summaryCardData: m.summaryCardData, content: m.content };
     }
+    if (m.searchCardData) {
+      return { type: 'event_search_block', searchCardData: m.searchCardData, content: m.content };
+    }
     if (m.scopeCardData) {
       return { type: 'event_scope_card', scopeCardData: m.scopeCardData, content: m.content };
     }
@@ -2397,6 +2486,9 @@ function AICopilotPanel({
     }
     if (m.type === 'event_summary_card' && m.summaryCardData) {
       return { role: 'assistant', summaryCardData: m.summaryCardData, content: m.content };
+    }
+    if (m.type === 'event_search_block' && m.searchCardData) {
+      return { role: 'assistant', searchCardData: m.searchCardData, content: m.content };
     }
     if (m.type === 'event_scope_card' && m.scopeCardData) {
       return { role: 'assistant', scopeCardData: m.scopeCardData, content: m.content };
@@ -3149,52 +3241,89 @@ function AICopilotPanel({
         status: "processing",
       });
 
+      // Phase 1: show search block in "searching" state
       setTimeout(() => {
-        const aiMsg: Message = {
-          type: "ai_complete" as const,
-          content:
-            "Identified 4 TFLs referencing TRTA in the demographic domain. Review and select TFLs to update:",
-        };
-        const scopeMsg: Message = {
-          type: "event_scope_card" as const,
-          scopeCardData: {
-            title: "Target TFLs",
-            status: "pending",
+        const searchingMsg: Message = {
+          type: "event_search_block" as const,
+          searchCardData: {
+            query: userContent.length > 30 ? userContent.slice(0, 28) + "..." : userContent,
+            status: "searching",
             items: [
-              {
-                tflId: "t1",
-                name: "14.1.1 Disposition",
-                itemStatus: "normal",
-                isExcluded: false,
-              },
-              {
-                tflId: "t4",
-                name: "14.1.4 Demographics (Full Analysis Set)",
-                itemStatus: "pending",
-                isExcluded: false,
-              },
-              {
-                tflId: "t8",
-                name: "14.1.8 Medical History by SOC",
-                itemStatus: "locked",
-                isExcluded: false,
-              },
-              {
-                tflId: "t5",
-                name: "14.1.5 Baseline Characteristics",
-                itemStatus: "normal",
-                isExcluded: false,
-              },
+              { tflId: "t1", name: "14.1.1 Disposition", reason: "Scanning strata and analysis datasets..." },
+              { tflId: "t4", name: "14.1.4 Demographics (Full Analysis Set)", reason: "Analyzing baseline programming steps..." },
             ],
           },
         };
-        const finalMsgs = [...msgsWithUser, aiMsg, scopeMsg];
-        setMessages(finalMsgs);
-        setIsPending(false);
-        updateEventSessionMessages(finalMsgs, {
-          status: "idle",
-        });
-      }, 1200);
+        setMessages([...msgsWithUser, searchingMsg]);
+
+        // Phase 2: complete search with all scanned items, then present target TFLs scope card
+        setTimeout(() => {
+          const completedSearchMsg: Message = {
+            type: "event_search_block" as const,
+            searchCardData: {
+              query: userContent.length > 30 ? userContent.slice(0, 28) + "..." : userContent,
+              status: "completed",
+              items: [
+                { tflId: "t1", name: "14.1.1 Disposition", reason: "Found 2 occurrences of TRTA in strata & datasets", found: true },
+                { tflId: "t4", name: "14.1.4 Demographics (Full Analysis Set)", reason: "Found 3 occurrences of TRTA in baseline table step", found: true },
+                { tflId: "t8", name: "14.1.8 Medical History by SOC", reason: "Found 1 occurrence of TRTA in dataset merge", found: true },
+                { tflId: "t5", name: "14.1.5 Baseline Characteristics", reason: "Found 2 occurrences of TRTA in summary stats", found: true },
+              ],
+            },
+          };
+
+          const aiMsg: Message = {
+            type: "ai_complete" as const,
+            content:
+              "Identified 4 TFLs referencing TRTA in the demographic domain. Review and select TFLs to update:",
+          };
+
+          const scopeMsg: Message = {
+            type: "event_scope_card" as const,
+            scopeCardData: {
+              title: "Target TFLs",
+              status: "pending",
+              items: [
+                {
+                  tflId: "t1",
+                  name: "14.1.1 Disposition",
+                  reason: "TRTA referenced in 2 strata derivations · affects ARM, ARMCD metadata",
+                  itemStatus: "normal",
+                  isExcluded: false,
+                },
+                {
+                  tflId: "t4",
+                  name: "14.1.4 Demographics (Full Analysis Set)",
+                  reason: "TRTA used in 3 summary table steps · affects TRTPN metadata",
+                  itemStatus: "pending",
+                  isExcluded: false,
+                },
+                {
+                  tflId: "t8",
+                  name: "14.1.8 Medical History by SOC",
+                  reason: "TRTA referenced in adverse event merge · affects TRTA metadata",
+                  itemStatus: "locked",
+                  isExcluded: false,
+                },
+                {
+                  tflId: "t5",
+                  name: "14.1.5 Baseline Characteristics",
+                  reason: "TRTA referenced in continuous variable stats · affects TRTA metadata",
+                  itemStatus: "normal",
+                  isExcluded: false,
+                },
+              ],
+            },
+          };
+
+          const finalMsgs = [...msgsWithUser, completedSearchMsg, aiMsg, scopeMsg];
+          setMessages(finalMsgs);
+          setIsPending(false);
+          updateEventSessionMessages(finalMsgs, {
+            status: "idle",
+          });
+        }, 900);
+      }, 700);
       return;
     }
 
@@ -3291,9 +3420,12 @@ function AICopilotPanel({
 
       {/* Header */}
       {variant === 'incard' ? (
-        <div className="relative z-10 shrink-0 bg-white">
+        <div className={`relative z-10 shrink-0 transition-colors ${
+          isEventCopilot ? 'bg-bg-panel' : 'bg-white'
+        }`}>
           <PanelHeader
             noBorder
+            className={isEventCopilot ? 'bg-bg-panel' : 'bg-white'}
             title={
               <CopilotScopeHeader
                 scope={isEventCopilot ? "event" : "tfl"}
@@ -3345,7 +3477,9 @@ function AICopilotPanel({
           />
         </div>
       ) : (
-        <div className="relative z-10 shrink-0 bg-transparent h-[48px] flex items-center justify-between px-[12px] mb-[4px]">
+        <div className={`relative z-10 shrink-0 h-[48px] flex items-center justify-between px-[12px] mb-[4px] transition-colors ${
+          isEventCopilot ? 'bg-bg-panel' : 'bg-transparent'
+        }`}>
           <CopilotScopeHeader
             scope={isEventCopilot ? "event" : "tfl"}
             onSelectScope={(s) => onSelectScope?.(s)}
@@ -3396,7 +3530,9 @@ function AICopilotPanel({
       {/* Chat Area with Isolated Top & Bottom Fades (Right-[12px] isolates and protects the scrollbar from fading) */}
       <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* Top compact fade (8px, avoids 12px scrollbar on right) */}
-        <div className="pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b from-white to-transparent z-10" />
+        <div className={`pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b z-10 ${
+          isEventCopilot ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
+        }`} />
 
         <div 
           ref={chatAreaRef} 
@@ -3438,16 +3574,22 @@ function AICopilotPanel({
               onSkipProgressItem={handleSkipItem}
               programs={programs}
               isExecutingInEventCopilot={!isEventCopilot && isExecutingInEventCopilot}
+              onJumpToEvent={!isEventCopilot ? () => onSelectScope?.('event') : undefined}
+              panelTone={isEventCopilot ? 'panel' : 'white'}
             />
           )}
         </div>
 
         {/* Bottom fade (16px, avoids 12px scrollbar on right) */}
-        <div className="pointer-events-none absolute bottom-0 left-0 right-[12px] h-[16px] bg-gradient-to-t from-white to-transparent z-10" />
+        <div className={`pointer-events-none absolute bottom-0 left-0 right-[12px] h-[16px] bg-gradient-to-t z-10 ${
+          isEventCopilot ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
+        }`} />
       </div>
 
       {/* Input Area */}
-      <div className="shrink-0 p-[8px] flex flex-col gap-[4px] bg-transparent relative z-10">
+      <div className={`shrink-0 p-[8px] flex flex-col gap-[4px] relative z-10 transition-colors ${
+        isEventCopilot ? 'bg-bg-panel' : 'bg-transparent'
+      }`}>
         <div className="w-full flex flex-col gap-[4px] relative">
           {!isEventCopilot && isExecutingInEventCopilot && (
             <div className="mx-[2px] mb-[4px] p-[8px_10px] rounded-[6px] bg-[#FFF8E6] border border-[#E5A000]/30 flex items-center gap-[8px] shrink-0 select-none">
@@ -3491,7 +3633,9 @@ function AICopilotPanel({
               onSkipEventProgressItem={handleSkipItem}
               onJumpToTfl={onJumpToTfl}
               mentionOptions={mentionOptions}
-              showMention={isEventCopilot}
+              showMention={true}
+              placeholder={isEventCopilot ? "Ask Event Copilot..." : "Ask TFL Copilot..."}
+              panelTone={isEventCopilot ? 'panel' : 'white'}
             />
           ) : isCurrentTflPending ? (
             <ChatBox 
@@ -3510,11 +3654,13 @@ function AICopilotPanel({
               onSkipEventProgressItem={handleSkipItem}
               onJumpToTfl={onJumpToTfl}
               mentionOptions={mentionOptions}
-              showMention={isEventCopilot}
+              showMention={true}
+              placeholder={isEventCopilot ? "Ask Event Copilot..." : "Ask TFL Copilot..."}
+              panelTone={isEventCopilot ? 'panel' : 'white'}
             />
           ) : (
-            <ChatBox
-              onSubmit={handleSubmit}
+            <ChatBox 
+              onSubmit={handleSubmit} 
               onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
               disabled={isHistoricalTflSession}
@@ -3528,7 +3674,9 @@ function AICopilotPanel({
               onSkipEventProgressItem={handleSkipItem}
               onJumpToTfl={onJumpToTfl}
               mentionOptions={mentionOptions}
-              showMention={isEventCopilot}
+              showMention={true}
+              placeholder={isEventCopilot ? "Ask Event Copilot..." : "Ask TFL Copilot..."}
+              panelTone={isEventCopilot ? 'panel' : 'white'}
             />
           )}
           {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
@@ -3656,6 +3804,7 @@ type EventSessionMessage = {
   role: 'user' | 'assistant';
   content?: string;
   attachments?: AttachmentItem[];
+  searchCardData?: EventSearchCardData;
   scopeCardData?: EventScopeCardData;
   progressCardData?: EventProgressCardData;
   summaryCardData?: EventSummaryCardData;
@@ -3678,6 +3827,19 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
     status: 'idle',
     messages: [
       { role: 'user', content: 'Replace variable TRTA with TRT01P across all demographic tables.' },
+      {
+        role: 'assistant',
+        searchCardData: {
+          query: 'TRTA in demographic domain',
+          status: 'completed',
+          items: [
+            { tflId: 't1', name: '14.1.1 Disposition', reason: 'Found 2 occurrences of TRTA in strata & datasets' },
+            { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', reason: 'Found 3 occurrences of TRTA in baseline table step' },
+            { tflId: 't8', name: '14.1.8 Medical History by SOC', reason: 'Found 1 occurrence of TRTA in dataset merge' },
+            { tflId: 't5', name: '14.1.5 Baseline Characteristics', reason: 'Found 2 occurrences of TRTA in summary stats' },
+          ],
+        },
+      },
       { role: 'assistant', content: 'Identified 4 TFLs referencing TRTA in the demographic domain. Review and select TFLs to update:' },
       {
         role: 'assistant',
@@ -3685,10 +3847,10 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
           title: 'Target TFLs',
           status: 'pending',
           items: [
-            { tflId: 't1', name: '14.1.1 Disposition', isExcluded: false },
-            { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', itemStatus: 'pending', isExcluded: false },
-            { tflId: 't8', name: '14.1.8 Medical History by SOC', itemStatus: 'locked', isExcluded: false },
-            { tflId: 't5', name: '14.1.5 Baseline Characteristics', isExcluded: false },
+            { tflId: 't1', name: '14.1.1 Disposition', reason: 'TRTA referenced in 2 strata derivations · affects ARM, ARMCD metadata', isExcluded: false },
+            { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', reason: 'TRTA used in 3 summary table steps · affects TRTPN metadata', itemStatus: 'pending', isExcluded: false },
+            { tflId: 't8', name: '14.1.8 Medical History by SOC', reason: 'TRTA referenced in adverse event merge · affects TRTA metadata', itemStatus: 'locked', isExcluded: false },
+            { tflId: 't5', name: '14.1.5 Baseline Characteristics', reason: 'TRTA referenced in continuous variable stats · affects TRTA metadata', isExcluded: false },
           ],
         },
       },
@@ -4712,13 +4874,15 @@ function PanelHeader({
   title,
   actions,
   noBorder = false,
+  className = "",
 }: {
   title: React.ReactNode;
   actions?: React.ReactNode;
   noBorder?: boolean;
+  className?: string;
 }) {
   return (
-    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between bg-white px-[12px] py-0 ${noBorder ? '' : 'border-b border-graphite-10'}`}>
+    <div className={`flex h-[40px] w-full shrink-0 items-center justify-between px-[12px] py-0 ${noBorder ? '' : 'border-b border-graphite-10'} ${className || 'bg-white'}`}>
       <div className="truncate flex items-center">{title}</div>
       {actions && <div className="flex items-center gap-[4px]">{actions}</div>}
     </div>
@@ -12448,7 +12612,7 @@ function WorkspaceContent({
               </div>
 
               {/* AI Layout Switcher */}
-              <div className="flex items-center justify-between px-[10px] py-[6px] gap-[8px]">
+              <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
                 <span className="text-[11px] text-text-secondary whitespace-nowrap">AI Layout</span>
                 <SegmentedControl
                   size="sm"
@@ -12746,7 +12910,9 @@ function WorkspaceContent({
                     />
                     <div
                       style={{ width: `${aiCopilotWidth}px` }}
-                      className="h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden bg-white shrink-0 rounded-[12px] border border-graphite-10 shadow-card-mulberry"
+                      className={`h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden shrink-0 rounded-[12px] border border-graphite-10 shadow-card-mulberry transition-colors ${
+                        copilotScope === 'event' ? 'bg-bg-panel' : 'bg-white'
+                      }`}
                     >
                       {renderAICopilotComponent('incard')}
                     </div>
@@ -12789,7 +12955,9 @@ function WorkspaceContent({
                 transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
               }}
             >
-              <div className="h-full w-full flex flex-col overflow-hidden bg-white rounded-[12px] border border-graphite-10 shadow-card-mulberry">
+              <div className={`h-full w-full flex flex-col overflow-hidden rounded-[12px] border border-graphite-10 shadow-card-mulberry transition-colors ${
+                copilotScope === 'event' ? 'bg-bg-panel' : 'bg-white'
+              }`}>
                 {renderAICopilotComponent('drawer')}
               </div>
             </div>
@@ -12842,6 +13010,7 @@ interface EventCardData {
   status: EventStatus;
   progress?: { completed: number; total: number };
   errorMessage?: string;
+  ta?: string;
 }
 
 const homeEvents: EventCardData[] = [
@@ -12854,6 +13023,7 @@ const homeEvents: EventCardData[] = [
     creator: 'Tom',
     createdDate: '2025-11-11',
     status: 'ai-processing',
+    ta: 'Oncology',
   },
   {
     id: 'e2',
@@ -12865,6 +13035,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-11',
     status: 'in-progress',
     progress: { completed: 14, total: 15 },
+    ta: 'Oncology',
   },
   {
     id: 'e3',
@@ -12876,6 +13047,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-11',
     status: 'completed',
     progress: { completed: 8, total: 8 },
+    ta: 'Oncology',
   },
   {
     id: 'e4',
@@ -12887,6 +13059,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-11',
     status: 'to-do',
     progress: { completed: 0, total: 12 },
+    ta: 'Oncology',
   },
   {
     id: 'e5',
@@ -12898,6 +13071,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-11',
     status: 'error',
     errorMessage: 'Shell file parsing failed.',
+    ta: 'Oncology',
   },
   {
     id: 'e6',
@@ -12909,6 +13083,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-09',
     status: 'in-progress',
     progress: { completed: 6, total: 20 },
+    ta: 'Oncology',
   },
   {
     id: 'e7',
@@ -12920,6 +13095,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-08',
     status: 'completed',
     progress: { completed: 12, total: 12 },
+    ta: 'Oncology',
   },
   {
     id: 'e8',
@@ -12930,6 +13106,7 @@ const homeEvents: EventCardData[] = [
     creator: 'James',
     createdDate: '2025-11-07',
     status: 'ai-processing',
+    ta: 'Cardiology',
   },
   {
     id: 'e9',
@@ -12941,6 +13118,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-05',
     status: 'to-do',
     progress: { completed: 0, total: 8 },
+    ta: 'Cardiology',
   },
   {
     id: 'e10',
@@ -12952,6 +13130,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-03',
     status: 'in-progress',
     progress: { completed: 3, total: 10 },
+    ta: 'Oncology',
   },
   {
     id: 'e11',
@@ -12963,6 +13142,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-01',
     status: 'completed',
     progress: { completed: 15, total: 15 },
+    ta: 'Neurology',
   },
   {
     id: 'e12',
@@ -12974,6 +13154,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-10-28',
     status: 'error',
     errorMessage: 'SAS macro execution failed.',
+    ta: 'Neurology',
   },
   {
     id: 'e13',
@@ -12985,6 +13166,7 @@ const homeEvents: EventCardData[] = [
     createdDate: '2025-11-12',
     status: 'error',
     errorMessage: 'Critical validation failed: The database structure does not conform to CDISC SDTM IG v3.2. Columns USUBJID, AGE, and SEX are missing or formatted incorrectly in the DM domain file. Please check files and try again.',
+    ta: 'Oncology',
   },
 ];
 
@@ -13216,6 +13398,13 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
   );
 }
 
+const studyOwnerMap: Record<string, string> = {
+  'AZE2001-301': 'Tom',
+  'AZE2001-302': 'Sarah',
+  'AZE2001-303': 'James',
+  'AZE2001-401': 'Emily',
+};
+
 function HomePage({
   onEventClick,
   onCreateEvent,
@@ -13242,12 +13431,212 @@ function HomePage({
   onLogout?: () => void;
 }) {
   const [searchValue, setSearchValue] = useState('');
+  const [selectedTA, setSelectedTA] = useState<string>('All');
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'name-asc'>('date-desc');
   const [isResizing, setIsResizing] = useState(false);
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!openActionMenuId && !sortMenuOpen) return;
+    const handleClose = () => {
+      setOpenActionMenuId(null);
+      setSortMenuOpen(false);
+    };
+    document.addEventListener('click', handleClose);
+    return () => document.removeEventListener('click', handleClose);
+  }, [openActionMenuId, sortMenuOpen]);
+
+  // Expanded state for Projects and Studies in the left tree
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
+    () => new Set(['PRO001', 'PRO002', 'PRO003', 'PRO004'])
+  );
+  const [expandedStudies, setExpandedStudies] = useState<Set<string>>(
+    () => new Set(['AZE2001-301', 'AZE2001-302', 'AZE2001-303', 'AZE2001-401'])
+  );
+
+  const toggleProject = (projectId: string) => {
+    setExpandedProjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
+  };
+
+  const toggleStudy = (studyId: string) => {
+    setExpandedStudies((prev) => {
+      const next = new Set(prev);
+      if (next.has(studyId)) next.delete(studyId);
+      else next.add(studyId);
+      return next;
+    });
+  };
+
+  // Expanded state for Projects and Studies in the right workspace panel
+  const [panelExpandedProjects, setPanelExpandedProjects] = useState<Set<string>>(
+    () => new Set(['PRO001', 'PRO002', 'PRO003', 'PRO004'])
+  );
+  const [panelExpandedStudies, setPanelExpandedStudies] = useState<Set<string>>(
+    () => new Set(['AZE2001-301', 'AZE2001-302', 'AZE2001-303', 'AZE2001-401'])
+  );
+
+  const togglePanelProject = (projectId: string) => {
+    setPanelExpandedProjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
+  };
+
+  const togglePanelStudy = (studyId: string) => {
+    setPanelExpandedStudies((prev) => {
+      const next = new Set(prev);
+      if (next.has(studyId)) next.delete(studyId);
+      else next.add(studyId);
+      return next;
+    });
+  };
+
+  // Recents: 5 most recently accessed events (showing only name)
+  const recentEvents = useMemo(() => events.slice(0, 5), [events]);
+
+  // Group events into 3-tier hierarchy: Project -> Study -> Events (for left tree)
+  const projectGroups = useMemo(() => {
+    const map = new Map<string, Map<string, { ta: string; events: EventCardData[] }>>();
+    events.forEach((ev) => {
+      if (!map.has(ev.project)) {
+        map.set(ev.project, new Map());
+      }
+      const studies = map.get(ev.project)!;
+      if (!studies.has(ev.study)) {
+        studies.set(ev.study, { ta: ev.ta || 'Oncology', events: [] });
+      }
+      studies.get(ev.study)!.events.push(ev);
+    });
+
+    return Array.from(map.entries()).map(([projectId, studyMap]) => ({
+      projectId,
+      studies: Array.from(studyMap.entries()).map(([studyId, { ta, events: stdEvents }]) => ({
+        studyId,
+        ta,
+        events: stdEvents,
+      })),
+      totalEvents: Array.from(studyMap.values()).reduce((sum, s) => sum + s.events.length, 0),
+    }));
+  }, [events]);
+
+  // TA Filtered events for the right-side summary & metrics
+  const taFilteredEvents = useMemo(() => {
+    if (selectedTA === 'All') return events;
+    return events.filter((e) => e.ta === selectedTA);
+  }, [events, selectedTA]);
+
+  // Brief: 4 core metrics (calculated from active TA scope)
+  const totalCount = taFilteredEvents.length;
+  const notStartedCount = useMemo(() => taFilteredEvents.filter((e) => e.status === 'to-do').length, [taFilteredEvents]);
+  const inProgressCount = useMemo(
+    () => taFilteredEvents.filter((e) => e.status === 'in-progress' || e.status === 'ai-processing').length,
+    [taFilteredEvents]
+  );
+  const completedCount = useMemo(() => taFilteredEvents.filter((e) => e.status === 'completed').length, [taFilteredEvents]);
+
+  // Hierarchical structure for right panel: Project -> Study -> Events
+  // Respects selectedTA at the Study level and searchValue at all levels
+  const hierarchicalProjects = useMemo(() => {
+    const q = searchValue.trim().toLowerCase();
+    const map = new Map<string, Map<string, { ta: string; owner: string; events: EventCardData[] }>>();
+
+    events.forEach((ev) => {
+      const studyTA = ev.ta || 'Oncology';
+      // Study TA Filter
+      if (selectedTA !== 'All' && studyTA !== selectedTA) {
+        return;
+      }
+
+      if (!map.has(ev.project)) {
+        map.set(ev.project, new Map());
+      }
+      const sMap = map.get(ev.project)!;
+      const owner = studyOwnerMap[ev.study] || ev.creator || 'Tom';
+      if (!sMap.has(ev.study)) {
+        sMap.set(ev.study, { ta: studyTA, owner, events: [] });
+      }
+
+      const matchSearch =
+        !q ||
+        ev.name.toLowerCase().includes(q) ||
+        ev.project.toLowerCase().includes(q) ||
+        ev.study.toLowerCase().includes(q) ||
+        ev.creator.toLowerCase().includes(q) ||
+        owner.toLowerCase().includes(q);
+
+      if (matchSearch) {
+        sMap.get(ev.study)!.events.push(ev);
+      }
+    });
+
+    const result = [];
+    for (const [projectId, studyMap] of map.entries()) {
+      const studies = [];
+      let totalEvents = 0;
+
+      for (const [studyId, sData] of studyMap.entries()) {
+        if (sData.events.length === 0) continue;
+
+        let sorted = [...sData.events];
+        if (sortBy === 'date-desc') {
+          sorted.sort((a, b) => b.createdDate.localeCompare(a.createdDate));
+        } else if (sortBy === 'date-asc') {
+          sorted.sort((a, b) => a.createdDate.localeCompare(b.createdDate));
+        } else if (sortBy === 'name-asc') {
+          sorted.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        totalEvents += sorted.length;
+        studies.push({
+          studyId,
+          ta: sData.ta,
+          owner: sData.owner,
+          events: sorted,
+        });
+      }
+
+      if (studies.length > 0) {
+        result.push({
+          projectId,
+          studies,
+          totalEvents,
+        });
+      }
+    }
+
+    return result;
+  }, [events, selectedTA, searchValue, sortBy]);
+
+  const allPanelProjectIds = useMemo(() => hierarchicalProjects.map((p) => p.projectId), [hierarchicalProjects]);
+  const allPanelStudyIds = useMemo(
+    () => hierarchicalProjects.flatMap((p) => p.studies.map((s) => s.studyId)),
+    [hierarchicalProjects]
+  );
+  const isAllPanelExpanded = panelExpandedProjects.size > 0 || panelExpandedStudies.size > 0;
+
+  const toggleExpandAllPanel = () => {
+    if (isAllPanelExpanded) {
+      setPanelExpandedProjects(new Set());
+      setPanelExpandedStudies(new Set());
+    } else {
+      setPanelExpandedProjects(new Set(allPanelProjectIds));
+      setPanelExpandedStudies(new Set(allPanelStudyIds));
+    }
+  };
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-bg-panel">
       <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
-        {/* Tree list sidebar */}
+        {/* Tree list sidebar (no custom right-border; separation is managed by WorkspaceDivider) */}
         <div
           className="shrink-0 overflow-hidden"
           style={{
@@ -13259,7 +13648,7 @@ function HomePage({
           <div className="flex h-full w-full flex-col bg-bg-panel">
             {/* Sidebar header */}
             <div className="flex h-[48px] shrink-0 items-center justify-between px-[10px]">
-              <img src={atlasLogoFullUrl} alt="" className="h-[24px] block shrink-0" />
+              <img src={atlasLogoFullUrl} alt="Atlas" className="h-[24px] block shrink-0" />
               <TooltipText label="Collapse Tree List">
                 <button
                   onClick={() => setTreeListOpen(false)}
@@ -13270,27 +13659,130 @@ function HomePage({
                 </button>
               </TooltipText>
             </div>
-            {/* Nav items */}
-            <div className="flex flex-1 flex-col gap-[2px] pt-[8px] pr-[4px]">
-              {homeNavItems.map((item) => (
-                <div
-                  key={item.id}
-                  className={`flex h-[32px] items-center gap-[4px] rounded-[4px] px-[12px] ${
-                    item.active ? 'bg-az-secondary' : 'hover:bg-black/5'
-                  }`}
-                >
-                  <LocalIcon src={item.icon} className="h-[16px] w-[16px]" color={item.active ? '#830051' : '#888E8E'} />
-                  <span
-                    className={`font-normal ${item.active ? 'text-brand-1' : 'text-text-primary'}`}
-                    style={{ fontSize: '14px', lineHeight: '20px' }}
+
+            {/* Recents section (5 most recent events, name only) */}
+            <div className="flex flex-col gap-[2px] px-[8px] pt-[4px] pb-[6px]">
+              <span className="text-[12px] font-medium text-text-secondary px-[8px] py-[3px]">
+                Recents
+              </span>
+              <div className="flex flex-col gap-[1px]">
+                {recentEvents.map((rec) => (
+                  <div
+                    key={rec.id}
+                    onClick={onEventClick}
+                    className="group flex h-[28px] items-center rounded-[4px] px-[8px] hover:bg-black/5 cursor-pointer transition-colors"
+                    title={`${rec.name} (${rec.project} / ${rec.study})`}
                   >
-                    {item.label}
-                  </span>
-                </div>
-              ))}
+                    <span className="t-small truncate text-text-primary group-hover:text-brand-1 font-normal">
+                      {rec.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
+
+            {/* Events Tree section */}
+            <div className="flex min-h-0 flex-1 flex-col pt-[4px]">
+              <div className="px-[8px] pb-[3px]">
+                <span className="text-[12px] font-medium text-text-secondary px-[8px] py-[3px]">
+                  Events
+                </span>
+              </div>
+              {/* All Events primary entry */}
+              <div className="px-[8px] mb-[6px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTA('All');
+                    setSearchValue('');
+                  }}
+                  className="flex h-[32px] w-full items-center gap-[6px] rounded-[4px] px-[8px] bg-az-secondary text-brand-1 font-medium cursor-pointer transition-colors"
+                >
+                  <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px]" color="#830051" />
+                  <span className="t-small-medium font-medium text-brand-1">All Events</span>
+                </button>
+              </div>
+
+              {/* 3-tier Tree List (Directly browse Project -> Study -> Event) */}
+              <div className="flex-1 overflow-auto px-[6px]">
+                <div className="flex flex-col gap-[2px] pb-[12px]">
+                  {projectGroups.map((proj) => {
+                    const isProjExpanded = expandedProjects.has(proj.projectId);
+                    return (
+                      <div key={proj.projectId} className="flex flex-col gap-[1px]">
+                        {/* Project Node (pl-[8px]: Arrow at 8px, Icon at 32px, Name at 56px) */}
+                        <div
+                          className="group flex h-[28px] items-center justify-between rounded-[4px] px-[8px] hover:bg-black/5 cursor-pointer select-none transition-colors"
+                          onClick={() => toggleProject(proj.projectId)}
+                        >
+                          <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                            <span className="flex h-[16px] w-[16px] items-center justify-center shrink-0">
+                              <ChevronRightTreeIcon isExpanded={isProjExpanded} color="#888E8E" />
+                            </span>
+                            <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
+                            <span className="t-small-medium font-medium truncate text-text-primary">
+                              {proj.projectId}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Studies under Project */}
+                        {isProjExpanded && (
+                          <div className="flex flex-col gap-[1px]">
+                            {proj.studies.map((std) => {
+                              const isStdExpanded = expandedStudies.has(std.studyId);
+                              return (
+                                <div key={std.studyId} className="flex flex-col gap-[1px]">
+                                  {/* Study Node (pl-[32px]: Arrow at 32px [under Proj Icon], Icon at 56px [under Proj Name], Name at 80px) */}
+                                  <div
+                                    className="group flex h-[28px] items-center justify-between rounded-[4px] pl-[32px] pr-[8px] hover:bg-black/5 cursor-pointer select-none transition-colors"
+                                    onClick={() => toggleStudy(std.studyId)}
+                                  >
+                                    <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                                      <span className="flex h-[16px] w-[16px] items-center justify-center shrink-0">
+                                        <ChevronRightTreeIcon isExpanded={isStdExpanded} color="#888E8E" />
+                                      </span>
+                                      <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
+                                      <span className="t-small-medium font-medium truncate text-text-primary">
+                                        {std.studyId}
+                                      </span>
+                                      <span className="text-[10px] px-[5px] py-[0.5px] rounded-full bg-black/5 text-text-secondary border border-border-default shrink-0 ml-[2px]">
+                                        {std.ta}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Events under Study (pl-[80px]: text aligns directly under Study Name at 80px) */}
+                                  {isStdExpanded && (
+                                    <div className="flex flex-col gap-[1px]">
+                                      {std.events.map((ev) => (
+                                        <div
+                                          key={ev.id}
+                                          onClick={onEventClick}
+                                          className="group flex h-[28px] items-center rounded-[4px] pl-[80px] pr-[8px] hover:bg-black/5 cursor-pointer transition-colors"
+                                          title={ev.name}
+                                        >
+                                          <span className="t-small truncate text-text-primary group-hover:text-brand-1 font-normal">
+                                            {ev.name}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
             {/* User account */}
-            <div className="px-[6px] pb-[8px]">
+            <div className="px-[6px] pb-[8px] shrink-0 border-t border-border-default pt-[4px]">
               <AccountMenu onLogout={onLogout} />
             </div>
           </div>
@@ -13305,7 +13797,7 @@ function HomePage({
           />
         )}
 
-        {/* Main Container Wrapper (与详情页结构、图层层级和裁剪规则完全保持一致) */}
+        {/* Main Container Wrapper */}
         <div className="relative z-20 flex min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pt-[4px] pb-[8px] pr-[8px]">
           <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry pointer-events-auto">
             {/* Expand tree list button when collapsed */}
@@ -13322,63 +13814,480 @@ function HomePage({
                 </TooltipText>
               </div>
             )}
-            {/* Top section: Overview + metrics */}
-            <div className="flex flex-col justify-center gap-[12px] px-[16px] sm:px-[28px] py-[12px]">
-              <h2 className="t-heading text-text-primary">Overview</h2>
-              <div className="grid grid-cols-2 gap-[12px] sm:grid-cols-3 lg:grid-cols-6 md:gap-[16px] lg:gap-[20px]">
-                {homeMetrics.map((m) => (
-                  <div
-                    key={m.label}
-                    className="flex flex-col gap-[4px] rounded-[4px] border-[0.6px] border-border-default bg-white px-[16px] py-[8px]"
-                  >
-                    <span className="text-[14px] font-medium leading-[20px] text-text-secondary truncate" title={m.label}>{m.label}</span>
-                    <span className="text-[28px] sm:text-[32px] md:text-[36px] font-semibold leading-[1] text-text-primary">{m.value}</span>
-                  </div>
-                ))}
+
+            {/* Top Header Row: Events title with filled-circle icon + New Event button on the right */}
+            <div className="flex items-center justify-between px-[16px] sm:px-[28px] pt-[20px] pb-[16px]">
+              <div className="flex items-center gap-[10px]">
+                <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-az-secondary shrink-0">
+                  <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px]" color="#830051" />
+                </div>
+                <h1 className="text-[22px] font-bold text-text-primary tracking-tight leading-[28px]">
+                  Events
+                </h1>
               </div>
+
+              {/* New Event Button on the far right using local Button component */}
+              <Button
+                variant="primary"
+                onClick={onCreateEvent}
+                className="gap-[6px] px-[14px] py-[6px] whitespace-nowrap shrink-0"
+              >
+                <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
+                <span>New Event</span>
+              </Button>
             </div>
 
-            {/* Event list */}
-            <div className="flex min-h-0 flex-1 flex-col gap-[12px] px-[16px] sm:px-[28px] pt-[20px] sm:pt-[28px]">
-              {/* Event list header */}
+            {/* Event list content area */}
+            <div className="flex min-h-0 flex-1 flex-col gap-[14px] px-[16px] sm:px-[28px] pt-[4px] pb-[16px]">
+              {/* Toolbar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-[12px]">
-                <SearchBar
-                  value={searchValue}
-                  onChange={setSearchValue}
-                  placeholder="Search..."
-                  background="light"
-                  className="w-full sm:w-[320px] shrink-0"
-                />
-                <div className="flex items-center justify-between sm:justify-end gap-[16px] w-full sm:w-auto">
-                  <button className="flex items-center gap-[4px] rounded-[4px] px-[12px] py-[8px] hover:bg-black/5 active:scale-[0.96]">
-                    <LocalIcon src={filterIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-primary)" />
-                    <span className="text-[14px] leading-[20px] text-text-primary">Filter</span>
-                  </button>
-                  <button
-                    onClick={onCreateEvent}
-                    className="flex items-center gap-[4px] rounded-[4px] bg-brand-1 px-[12px] py-[8px] hover:opacity-90 active:scale-[0.96] whitespace-nowrap shrink-0"
-                    style={{ whiteSpace: 'nowrap' }}
-                  >
-                    <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
-                    <span className="text-[14px] leading-[20px] text-white">New Event</span>
-                  </button>
+                {/* Left: Search bar + FilterChip placed adjacently */}
+                <div className="flex items-center gap-[10px] flex-1 max-w-[560px]">
+                  <SearchBar
+                    value={searchValue}
+                    onChange={setSearchValue}
+                    placeholder="Search Project / Study / Event"
+                    background="light"
+                    className="w-full sm:w-[320px] md:w-[360px] shrink-0"
+                  />
+
+                  {/* TA FilterChip dropdown adjacent to Search bar */}
+                  <FilterChip
+                    type="Dropdown"
+                    variant="filter"
+                    label={selectedTA === 'All' ? 'All TA' : `TA: ${selectedTA}`}
+                    value={selectedTA}
+                    onChange={(val) => setSelectedTA(val)}
+                    icon={<LocalIcon src={microscopeIconUrl} className="size-[16px]" color="currentColor" />}
+                    options={[
+                      { label: 'All TA', value: 'All' },
+                      { label: 'Oncology', value: 'Oncology' },
+                      { label: 'Cardiology', value: 'Cardiology' },
+                      { label: 'Neurology', value: 'Neurology' },
+                    ]}
+                  />
+                </div>
+
+                {/* Right: View Toggle (Segmented Control - Icons only) */}
+                <div className="flex items-center justify-end shrink-0">
+
+                  {/* View Toggle: Segmented Control (Icons only) */}
+                  <div className="flex items-center rounded-[6px] border border-graphite-10 bg-bg-app p-[2px]">
+                    <TooltipText label="Table view">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('table')}
+                        className={`flex h-[28px] w-[28px] items-center justify-center rounded-[4px] transition-colors cursor-pointer ${
+                          viewMode === 'table'
+                            ? 'bg-az-secondary text-brand-1 shadow-sm'
+                            : 'text-text-secondary hover:text-text-primary'
+                        }`}
+                        aria-label="Table view"
+                      >
+                        <svg className="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
+                          <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
+                          <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    </TooltipText>
+                    <TooltipText label="Gallery view">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('card')}
+                        className={`flex h-[28px] w-[28px] items-center justify-center rounded-[4px] transition-colors cursor-pointer ${
+                          viewMode === 'card'
+                            ? 'bg-az-secondary text-brand-1 shadow-sm'
+                            : 'text-text-secondary hover:text-text-primary'
+                        }`}
+                        aria-label="Gallery view"
+                      >
+                        <svg className="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="7" height="7" rx="1" />
+                          <rect x="14" y="3" width="7" height="7" rx="1" />
+                          <rect x="3" y="14" width="7" height="7" rx="1" />
+                          <rect x="14" y="14" width="7" height="7" rx="1" />
+                        </svg>
+                      </button>
+                    </TooltipText>
+                  </div>
                 </div>
               </div>
 
-              {/* Event cards */}
-              <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-auto pb-[16px]">
-                {events
-                  .filter((event) => event.name.toLowerCase().includes(searchValue.toLowerCase()) || event.project.toLowerCase().includes(searchValue.toLowerCase()) || event.study.toLowerCase().includes(searchValue.toLowerCase()))
-                  .map((event) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      onEventClick={onEventClick}
-                      onUpdateStatus={onUpdateStatus}
-                      onOpenDownload={() => onOpenDownloadModal?.(event)}
-                      onDelete={() => onOpenDeleteModal?.(event)}
-                    />
-                  ))}
+              {/* Main List Display: Hierarchical Table or Gallery (Card) */}
+              <div className="flex-1 overflow-auto">
+                {hierarchicalProjects.length === 0 ? (
+                  <div className="flex h-[240px] items-center justify-center rounded-[6px] border border-dashed border-graphite-10 text-[13px] text-text-muted">
+                    No matching projects, studies or events found
+                  </div>
+                ) : viewMode === 'table' ? (
+                  /* Hierarchical Table (List) View */
+                  <div className="min-w-full overflow-hidden rounded-[6px] border border-graphite-10 bg-white">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-graphite-10 bg-bg-app text-[12px] font-normal text-text-secondary tracking-normal">
+                          <th className="px-[16px] py-[10px] font-normal">Event Name</th>
+                          <th className="px-[16px] py-[10px] font-normal w-[180px]">Status</th>
+                          <th className="px-[16px] py-[10px] font-normal w-[180px]">Owner</th>
+                          <th className="px-[16px] py-[10px] font-normal text-right w-[80px]">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-graphite-10 text-[13px]">
+                        {hierarchicalProjects.map((proj) => {
+                          const isProjExpanded = panelExpandedProjects.has(proj.projectId);
+                          return (
+                            <React.Fragment key={proj.projectId}>
+                              {/* Level 1: Project Header Row (pl-[16px]: Arrow at 16px, Icon at 40px, Name at 64px) */}
+                              <tr
+                                onClick={() => togglePanelProject(proj.projectId)}
+                                className="bg-bg-app/80 hover:bg-black/[0.03] cursor-pointer transition-colors select-none"
+                              >
+                                <td colSpan={4} className="py-[8px] pl-[16px] pr-[16px]">
+                                  <div className="flex items-center gap-[8px]">
+                                    <span className="flex h-[16px] w-[16px] items-center justify-center text-text-secondary shrink-0">
+                                      <ChevronRightTreeIcon isExpanded={isProjExpanded} color="#888E8E" />
+                                    </span>
+                                    <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
+                                    <span className="text-[13px] font-medium text-text-primary">
+                                      Project: {proj.projectId}
+                                    </span>
+                                  </div>
+                                </td>
+                              </tr>
+
+                              {/* Level 2: Studies under Project */}
+                              {isProjExpanded &&
+                                proj.studies.map((std) => {
+                                  const isStdExpanded = panelExpandedStudies.has(std.studyId);
+                                  return (
+                                    <React.Fragment key={std.studyId}>
+                                      {/* Study Header Row (pl-[40px]: Arrow at 40px [under Proj Icon], Icon at 64px [under Proj Name], Name at 88px) */}
+                                      <tr
+                                        onClick={() => togglePanelStudy(std.studyId)}
+                                        className="bg-[#FCFCFC] hover:bg-black/[0.02] cursor-pointer transition-colors select-none"
+                                      >
+                                        {/* Study Name & TA tag */}
+                                        <td className="py-[8px] pl-[40px] pr-[16px]">
+                                          <div className="flex items-center gap-[8px]">
+                                            <span className="flex h-[16px] w-[16px] items-center justify-center text-text-secondary shrink-0">
+                                              <ChevronRightTreeIcon isExpanded={isStdExpanded} color="#888E8E" />
+                                            </span>
+                                            <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
+                                            <span className="text-[13px] font-medium text-text-primary">
+                                              {std.studyId}
+                                            </span>
+                                            <TooltipText label={`Filter by ${std.ta}`}>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setSelectedTA(std.ta);
+                                                }}
+                                                className="text-[10px] px-[6px] py-[0.5px] rounded-full bg-black/5 hover:bg-brand-1/10 hover:text-brand-1 text-text-secondary border border-graphite-10 transition-colors cursor-pointer"
+                                              >
+                                                {std.ta}
+                                              </button>
+                                            </TooltipText>
+                                          </div>
+                                        </td>
+
+                                        {/* Status Column: Empty for Study */}
+                                        <td className="px-[16px] py-[8px]"></td>
+
+                                        {/* Owner Column: Study Owner */}
+                                        <td className="px-[16px] py-[8px] text-text-secondary whitespace-nowrap">
+                                          <div className="flex items-center gap-[6px]">
+                                            <OwnerAvatar owner={std.owner} size={18} />
+                                            <span className="text-[13px] text-text-primary font-medium">{std.owner}</span>
+                                          </div>
+                                        </td>
+
+                                        {/* Actions Column: Empty for Study */}
+                                        <td className="px-[16px] py-[8px] text-right"></td>
+                                      </tr>
+
+                                      {/* Level 3: Events under Study */}
+                                      {isStdExpanded &&
+                                        std.events.map((ev) => {
+                                          const isMenuOpen = openActionMenuId === `table-${ev.id}`;
+                                          const actionButtons = [
+                                            { icon: toolCallIconUrl, label: 'AI edit' },
+                                            { icon: teamIconUrl, label: 'Team' },
+                                            { icon: barChartIconUrl, label: 'View charts' },
+                                            { icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) },
+                                            { icon: deleteBinIconUrl, label: 'Delete', onClick: () => onOpenDeleteModal?.(ev) },
+                                          ];
+
+                                          return (
+                                            <tr
+                                              key={ev.id}
+                                              onClick={onEventClick}
+                                              className="group hover:bg-black/[0.02] cursor-pointer transition-colors"
+                                            >
+                                              {/* Event Name (pl-[88px]: Event Name starts at 88px, exactly aligned under Study Name at 88px) */}
+                                              <td className="py-[10px] pl-[88px] pr-[16px] max-w-[280px]">
+                                                <div className="flex items-center gap-[6px] min-w-0">
+                                                  <span className="font-normal text-text-primary group-hover:text-brand-1 truncate" title={ev.name}>
+                                                    {ev.name}
+                                                  </span>
+                                                  <span className="flex h-[16px] items-center justify-center rounded-[2px] border border-graphite-10 px-[5px] text-[10px] leading-[12px] text-text-secondary shrink-0 tabular-nums">
+                                                    {ev.version}
+                                                  </span>
+                                                </div>
+                                              </td>
+
+                                              {/* Status */}
+                                              <td className="px-[16px] py-[10px] whitespace-nowrap">
+                                                <div className="flex items-center gap-[8px]">
+                                                  <StatusTag status={ev.status} />
+                                                  {ev.progress && (
+                                                    <span className="text-[11px] text-text-secondary tabular-nums">
+                                                      ({ev.progress.completed}/{ev.progress.total} TLF)
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              </td>
+
+                                              {/* Event Owner */}
+                                              <td className="px-[16px] py-[10px] text-text-secondary whitespace-nowrap">
+                                                <div className="flex items-center gap-[6px]">
+                                                  <OwnerAvatar owner={ev.creator} size={18} />
+                                                  <span className="text-[13px] text-text-primary">{ev.creator}</span>
+                                                </div>
+                                              </td>
+
+                                              {/* Actions - Collapsed into Ellipsis (...) */}
+                                              <td className="px-[16px] py-[10px] text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                                                <div className="relative inline-flex items-center justify-end">
+                                                  <TooltipText label="More actions">
+                                                    <button
+                                                      type="button"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setOpenActionMenuId((prev) => (prev === `table-${ev.id}` ? null : `table-${ev.id}`));
+                                                      }}
+                                                      className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors ${
+                                                        isMenuOpen ? 'bg-black/5' : ''
+                                                      }`}
+                                                      aria-label="More actions"
+                                                    >
+                                                      <MoreIcon color="var(--color-text-secondary)" />
+                                                    </button>
+                                                  </TooltipText>
+
+                                                  {isMenuOpen && (
+                                                    <div
+                                                      onClick={(e) => e.stopPropagation()}
+                                                      className="absolute right-0 top-[28px] bg-white border border-graphite-10 rounded-[6px] shadow-elevation-overlay py-[4px] w-[140px] z-50 animate-fade-in"
+                                                    >
+                                                      {actionButtons.map((btn, i) => (
+                                                        <button
+                                                          key={i}
+                                                          type="button"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setOpenActionMenuId(null);
+                                                            btn.onClick?.();
+                                                          }}
+                                                          className="w-full text-left px-[10px] py-[6px] text-[13px] text-text-primary hover:bg-bg-panel flex items-center gap-[8px] transition-colors cursor-pointer"
+                                                        >
+                                                          <LocalIcon src={btn.icon} className="h-[15px] w-[15px] shrink-0" color="var(--color-text-secondary)" />
+                                                          <span className="truncate">{btn.label}</span>
+                                                        </button>
+                                                      ))}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </td>
+                                            </tr>
+                                          );
+                                        })}
+                                    </React.Fragment>
+                                  );
+                                })}
+                            </React.Fragment>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  /* Hierarchical Gallery (Card) View */
+                  <div className="flex flex-col gap-[16px]">
+                    {hierarchicalProjects.map((proj) => {
+                      const isProjExpanded = panelExpandedProjects.has(proj.projectId);
+                      return (
+                        <div key={proj.projectId} className="flex flex-col rounded-[8px] border border-graphite-10 bg-white overflow-hidden">
+                          {/* Level 1: Project Header Bar */}
+                          <div
+                            onClick={() => togglePanelProject(proj.projectId)}
+                            className="flex items-center justify-between px-[16px] py-[10px] bg-bg-app/70 hover:bg-black/[0.03] cursor-pointer border-b border-graphite-10 transition-colors select-none"
+                          >
+                            <div className="flex items-center gap-[8px]">
+                              <span className="flex h-[16px] w-[16px] items-center justify-center text-text-secondary shrink-0">
+                                <ChevronRightTreeIcon isExpanded={isProjExpanded} color="#888E8E" />
+                              </span>
+                              <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
+                              <span className="text-[13px] font-medium text-text-primary">
+                                Project: {proj.projectId}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Level 2 & 3: Studies & Events */}
+                          {isProjExpanded && (
+                            <div className="flex flex-col p-[16px] gap-[14px]">
+                              {proj.studies.map((std) => {
+                                const isStdExpanded = panelExpandedStudies.has(std.studyId);
+                                return (
+                                  <div key={std.studyId} className="flex flex-col rounded-[6px] border border-graphite-10 bg-[#FAFAFA] overflow-hidden">
+                                    {/* Study Subheader Bar */}
+                                    <div
+                                      onClick={() => togglePanelStudy(std.studyId)}
+                                      className="flex flex-wrap items-center justify-between px-[14px] py-[8px] hover:bg-black/[0.02] cursor-pointer transition-colors border-b border-graphite-10 select-none gap-[8px]"
+                                    >
+                                      <div className="flex items-center gap-[8px]">
+                                        <span className="flex h-[16px] w-[16px] items-center justify-center text-text-secondary shrink-0">
+                                          <ChevronRightTreeIcon isExpanded={isStdExpanded} color="#888E8E" />
+                                        </span>
+                                        <LocalIcon src={stackIconUrl} className="h-[15px] w-[15px] shrink-0" color="#888E8E" />
+                                        <span className="text-[13px] font-medium text-text-primary">
+                                          {std.studyId}
+                                        </span>
+                                        <TooltipText label={`Filter by ${std.ta}`}>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedTA(std.ta);
+                                            }}
+                                            className="text-[10px] px-[6px] py-[0.5px] rounded-full bg-black/5 hover:bg-brand-1/10 hover:text-brand-1 text-text-secondary border border-graphite-10 transition-colors cursor-pointer"
+                                          >
+                                            {std.ta}
+                                          </button>
+                                        </TooltipText>
+                                      </div>
+
+                                      <div className="flex items-center gap-[6px]">
+                                        <OwnerAvatar owner={std.owner} size={18} />
+                                        <span className="text-[12px] text-text-primary font-medium">{std.owner}</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Study Events Cards Grid */}
+                                    {isStdExpanded && (
+                                      <div className="p-[14px] grid grid-cols-1 xl:grid-cols-2 gap-[14px] bg-white">
+                                        {std.events.map((ev) => {
+                                          const isMenuOpen = openActionMenuId === `card-${ev.id}`;
+                                          const actionButtons = [
+                                            { icon: toolCallIconUrl, label: 'AI edit' },
+                                            { icon: teamIconUrl, label: 'Team' },
+                                            { icon: barChartIconUrl, label: 'View charts' },
+                                            { icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) },
+                                            { icon: deleteBinIconUrl, label: 'Delete', onClick: () => onOpenDeleteModal?.(ev) },
+                                          ];
+
+                                          return (
+                                            <div
+                                              key={ev.id}
+                                              onClick={onEventClick}
+                                              className="group flex flex-col sm:flex-row justify-between rounded-[8px] border border-graphite-10 bg-white p-[16px] gap-[14px] hover:border-brand-1 hover:shadow-card-mulberry transition-all cursor-pointer"
+                                            >
+                                              {/* Card Left */}
+                                              <div className="flex flex-col justify-between flex-1 min-w-0 gap-[10px]">
+                                                <div className="flex flex-col gap-[4px]">
+                                                  <div className="flex items-center gap-[6px] min-w-0">
+                                                    <span className="font-semibold text-[15px] text-text-primary group-hover:text-brand-1 truncate" title={ev.name}>
+                                                      {ev.name}
+                                                    </span>
+                                                    <span className="flex h-[16px] items-center justify-center rounded-[2px] border border-graphite-10 px-[5px] text-[10px] leading-[12px] text-text-secondary shrink-0 tabular-nums">
+                                                      {ev.version}
+                                                    </span>
+                                                  </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-[8px]">
+                                                  <StatusTag status={ev.status} />
+                                                  {ev.progress && (
+                                                    <span className="text-[11px] text-text-secondary tabular-nums">
+                                                      {ev.progress.completed}/{ev.progress.total} TLF Completed
+                                                    </span>
+                                                  )}
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-[4px]">
+                                                  <div className="flex items-center gap-[6px]">
+                                                    <OwnerAvatar owner={ev.creator} size={16} />
+                                                    <span className="text-[12px] text-text-secondary">
+                                                      {ev.creator}
+                                                    </span>
+                                                  </div>
+                                                  {/* Actions - Collapsed into Ellipsis (...) */}
+                                                  <div className="relative inline-flex items-center" onClick={(e) => e.stopPropagation()}>
+                                                    <TooltipText label="More actions">
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          setOpenActionMenuId((prev) => (prev === `card-${ev.id}` ? null : `card-${ev.id}`));
+                                                        }}
+                                                        className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors ${
+                                                          isMenuOpen ? 'bg-black/5' : ''
+                                                        }`}
+                                                        aria-label="More actions"
+                                                      >
+                                                        <MoreIcon color="var(--color-text-secondary)" />
+                                                      </button>
+                                                    </TooltipText>
+
+                                                    {isMenuOpen && (
+                                                      <div
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="absolute right-0 bottom-[28px] bg-white border border-graphite-10 rounded-[6px] shadow-elevation-overlay py-[4px] w-[140px] z-50 animate-fade-in"
+                                                      >
+                                                        {actionButtons.map((btn, i) => (
+                                                          <button
+                                                            key={i}
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              setOpenActionMenuId(null);
+                                                              btn.onClick?.();
+                                                            }}
+                                                            className="w-full text-left px-[10px] py-[6px] text-[13px] text-text-primary hover:bg-bg-panel flex items-center gap-[8px] transition-colors cursor-pointer"
+                                                          >
+                                                            <LocalIcon src={btn.icon} className="h-[15px] w-[15px] shrink-0" color="var(--color-text-secondary)" />
+                                                            <span className="truncate">{btn.label}</span>
+                                                          </button>
+                                                        ))}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              </div>
+
+                                              {/* Card Right: Thumbnail preview */}
+                                              <div className="hidden sm:flex w-[110px] h-[96px] rounded-[6px] bg-bg-app border border-graphite-10 shrink-0 items-center justify-center overflow-hidden">
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#830051" strokeWidth="1.5" className="opacity-40">
+                                                  <path d="M3 3v18h18" strokeLinecap="round" />
+                                                  <path d="M7 15l3-4 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </div>
