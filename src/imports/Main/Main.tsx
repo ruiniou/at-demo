@@ -17,6 +17,7 @@ import editIconUrl from "../../icons/edit-2-line.svg";
 import errorWarningIconUrl from "../../icons/error-warning-line.svg";
 import closeCircleIconUrl from "../../icons/close-circle-line.svg";
 import alertIconUrl from "../../icons/alert-line.svg";
+import pauseCircleIconUrl from "../../icons/pause-circle-line.svg";
 import expandIconUrl from "../../icons/Icon-expand.svg";
 import figureIconUrl from "../../icons/Figure.svg";
 import historyIconUrl from "../../icons/History Icon.svg";
@@ -67,6 +68,7 @@ import { TreeFilterPopover, OwnerAvatar } from "./components/TreeFilterPopover";
 import { FacetedSearchBar } from "./components/FacetedSearchBar";
 import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal";
 import { KMPlot } from "./components/KMPlot";
+import { CopilotScopeHeader } from "./components/CopilotScopeHeader";
 import { Button } from "../../components/ui/Button";
 import { Tooltip } from "../../components/ui/Tooltip";
 import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
@@ -394,6 +396,14 @@ export const MOCK_GROUP_CODES: Record<string, GroupCodeItem[]> = {
 };
 
 // ==================== Icons ====================
+
+function MoreIcon({ className = "w-[16px] h-[16px]", color = "currentColor" }: { className?: string; color?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 10C3.9 10 3 10.9 3 12C3 13.1 3.9 14 5 14C6.1 14 7 13.1 7 12C7 10.9 6.1 10 5 10ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10ZM19 10C17.9 10 17 10.9 17 12C17 13.1 17.9 14 19 14C20.1 14 21 13.1 21 12C21 10.9 20.1 10 19 10Z" fill={color} />
+    </svg>
+  );
+}
 
 function CloseIcon({ className = "w-[24px] h-[24px]", color = "currentColor" }) {
   return <LocalIcon src={closeIconUrl} className={className} color={color === "currentColor" ? undefined : color} />;
@@ -1092,8 +1102,9 @@ function Divider({ className }: { className?: string }) {
 export type EventScopeItem = {
   tflId: string;
   name: string;
-  reason: string;
+  reason?: string;
   isExcluded?: boolean;
+  itemStatus?: 'normal' | 'pending' | 'locked';
 };
 
 export type EventScopeCardData = {
@@ -1105,7 +1116,8 @@ export type EventScopeCardData = {
 export type EventProgressItem = {
   tflId: string;
   name: string;
-  status: 'queued' | 'running' | 'done' | 'failed';
+  status: 'queued' | 'running' | 'done' | 'failed' | 'needs_action' | 'skipped';
+  itemStatus?: 'normal' | 'pending' | 'locked';
 };
 
 export type EventProgressCardData = {
@@ -1117,6 +1129,7 @@ export type EventProgressCardData = {
 export type EventSummaryItem = {
   tflId: string;
   name: string;
+  status?: 'updated' | 'needs_action' | 'skipped';
 };
 
 export type EventSummaryCardData = {
@@ -1124,8 +1137,36 @@ export type EventSummaryCardData = {
   items: EventSummaryItem[];
 };
 
+export type EventDispatchedTaskData = {
+  eventTitle?: string;
+  targetTflName?: string;
+  description?: string;
+  sourceVar?: string;
+  targetVar?: string;
+};
+
+export type CodeDiffData = {
+  summary?: string;
+  additions?: { content: string }[];
+  deletions?: { content: string }[];
+};
+
 type Message = {
-  type: 'user' | 'ai_thinking' | 'ai_ask_user' | 'ask_user_result' | 'ai_complete' | 'ai_update_complete' | 'ai_update_accepted' | 'meta_update_card' | 'event_scope_card' | 'event_progress_card' | 'event_summary_card';
+  type:
+    | 'user'
+    | 'ai_thinking'
+    | 'ai_ask_user'
+    | 'ask_user_result'
+    | 'ai_complete'
+    | 'ai_update_complete'
+    | 'ai_update_accepted'
+    | 'meta_update_card'
+    | 'event_scope_card'
+    | 'event_progress_card'
+    | 'event_summary_card'
+    | 'event_dispatched_task'
+    | 'tfl_task_executing'
+    | 'tfl_task_completed';
   content?: string;
   hasTag?: boolean;
   toBeUpdatedCount?: number;
@@ -1138,16 +1179,29 @@ type Message = {
   scopeCardData?: EventScopeCardData;
   progressCardData?: EventProgressCardData;
   summaryCardData?: EventSummaryCardData;
+  dispatchedTaskData?: EventDispatchedTaskData;
+  codeDiffData?: CodeDiffData;
 };
+
+function findTableItem(programs?: ProgramItem[], currentTableId?: string): TableItem | null {
+  if (!programs || !currentTableId) return null;
+  for (const prog of programs) {
+    const found = prog.tables.find((t) => t.id === currentTableId);
+    if (found) return found;
+  }
+  return null;
+}
 
 function EventScopeCard({
   data,
+  programs,
   onToggleExclude,
   onConfirm,
   onCancel,
   onJumpToTfl,
 }: {
   data: EventScopeCardData;
+  programs?: ProgramItem[];
   onToggleExclude: (tflId: string) => void;
   onConfirm: () => void;
   onCancel?: () => void;
@@ -1188,7 +1242,7 @@ function EventScopeCard({
             />
           </svg>
           <span className="text-[13px] font-semibold text-text-primary">
-            {data.title || "Impacted Deliverables"}
+            {data.title || (data.items?.length === 1 ? "Target TFL" : "Target TFLs")}
           </span>
           <span className="flex items-center justify-center h-[16px] min-w-[16px] px-[5px] rounded-[10px] bg-graphite-10 text-[10px] font-medium text-text-secondary">
             {includedCount}
@@ -1216,7 +1270,7 @@ function EventScopeCard({
           {isPending && (
             <div className="px-[12px] pt-[8px] pb-[4px]">
               <p className="t-small text-text-secondary">
-                Select tables to apply updates:
+                Select TFLs to apply updates:
               </p>
             </div>
           )}
@@ -1224,51 +1278,81 @@ function EventScopeCard({
           <div className="flex flex-col max-h-[220px] overflow-y-auto divide-y divide-graphite-10">
             {data.items.map((item) => {
               const isSelected = !item.isExcluded;
+              const liveTable = programs ? findTableItem(programs, item.tflId) : null;
+              const effectiveStatus: 'normal' | 'pending' | 'locked' = liveTable
+                ? liveTable.status === 'locked'
+                  ? 'locked'
+                  : liveTable.status === 'pending'
+                  ? 'pending'
+                  : 'normal'
+                : (item.itemStatus || 'normal');
+              const displayName = liveTable?.name || item.name;
+
               return (
                 <div
                   key={item.tflId}
-                  onClick={() => {
-                    if (isPending) onToggleExclude(item.tflId);
-                  }}
-                  className={`flex items-center justify-between gap-[10px] px-[12px] py-[8px] transition-colors ${
-                    isPending ? "cursor-pointer hover:bg-bg-panel" : ""
-                  } ${!isSelected || isCancelled ? "opacity-60 bg-graphite-5/50" : ""}`}
+                  onClick={() => onJumpToTfl?.(item.tflId)}
+                  className={`group flex items-center justify-between gap-[10px] px-[12px] py-[8px] transition-colors cursor-pointer hover:bg-bg-panel ${
+                    !isSelected || isCancelled ? "opacity-60 bg-graphite-5/50" : ""
+                  }`}
+                  title="Click to navigate to this TFL"
                 >
                   <div className="flex items-center gap-[8px] min-w-0 flex-1">
                     {isPending ? (
-                      <span
-                        className={`w-[14px] h-[14px] rounded-[3px] flex items-center justify-center shrink-0 transition-colors ${
-                          isSelected
-                            ? "bg-brand-1"
-                            : "border border-graphite-30 bg-white"
-                        }`}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleExclude(item.tflId);
+                        }}
+                        className="p-[2px] -m-[2px] rounded-[3px] hover:opacity-80 active:scale-95 transition-all cursor-pointer shrink-0"
+                        aria-label={isSelected ? "Deselect TFL" : "Select TFL"}
                       >
-                        {isSelected && (
-                          <LocalIcon src={checkIconUrl} className="w-[10px] h-[10px]" color="white" />
-                        )}
-                      </span>
+                        <span
+                          className={`w-[14px] h-[14px] rounded-[3px] flex items-center justify-center transition-colors ${
+                            isSelected
+                              ? "bg-brand-1"
+                              : "border border-graphite-30 bg-white"
+                          }`}
+                        >
+                          {isSelected && (
+                            <LocalIcon src={checkIconUrl} className="w-[10px] h-[10px]" color="white" />
+                          )}
+                        </span>
+                      </button>
                     ) : (
                       <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px] shrink-0 text-text-secondary" />
                     )}
 
                     <span
-                      className={`text-[13px] leading-[18px] truncate ${
+                      className={`text-[13px] leading-[18px] truncate transition-colors ${
                         isCancelled
                           ? "text-text-secondary line-through"
                           : isSelected
-                          ? "text-text-primary font-medium"
+                          ? "text-text-primary font-medium group-hover:text-brand-1"
                           : "text-text-secondary line-through"
                       }`}
                     >
-                      {item.name}
+                      {displayName}
                     </span>
                   </div>
 
-                  {item.reason && (
-                    <span className="shrink-0 px-[6px] py-[1px] rounded bg-graphite-10 text-[11px] text-text-secondary font-mono">
-                      {item.reason}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-[6px] shrink-0">
+                    {effectiveStatus === "pending" && (
+                      <span className="px-[6px] py-[1px] rounded bg-[#FFF8E6] text-[#B25E00] border border-[#FFE2A4] text-[11px] font-medium leading-[14px]">
+                        Pending
+                      </span>
+                    )}
+                    {effectiveStatus === "locked" && (
+                      <span className="px-[6px] py-[1px] rounded bg-graphite-10 text-text-secondary border border-graphite-20 text-[11px] font-medium leading-[14px]">
+                        Locked
+                      </span>
+                    )}
+                    <LocalIcon
+                      src={arrowRightIconUrl}
+                      className="w-[12px] h-[12px] opacity-0 group-hover:opacity-60 transition-opacity text-text-secondary"
+                    />
+                  </div>
                 </div>
               );
             })}
@@ -1292,7 +1376,7 @@ function EventScopeCard({
                 disabled={includedCount === 0}
                 className="h-[28px] px-[12px]"
               >
-                {includedCount > 0 ? `Apply to ${includedCount} ${includedCount === 1 ? 'Table' : 'Tables'}` : "Select Tables"}
+                Apply
               </Button>
             </div>
           )}
@@ -1308,17 +1392,36 @@ function EventScopeCard({
   );
 }
 
+function SpinnerIcon({ className = "w-[14px] h-[14px]" }: { className?: string }) {
+  return (
+    <svg className={`animate-spin ${className} shrink-0`} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="8" r="6" stroke="var(--color-graphite-20, #D8DADA)" strokeWidth="2" fill="none" />
+      <path d="M14 8a6 6 0 0 0-6-6" stroke="var(--color-brand-1, #0077FA)" strokeWidth="2" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+function PauseCircleIcon({ className = "w-[14px] h-[14px]", color = "currentColor" }: { className?: string; color?: string }) {
+  return (
+    <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM9 9H11V15H9V9ZM13 9H15V15H13V9Z" fill={color} />
+    </svg>
+  );
+}
+
 function EventProgressCard({
   data,
   onJumpToTfl,
+  onSkipItem,
 }: {
   data: EventProgressCardData;
   onJumpToTfl?: (tflId: string) => void;
+  onSkipItem?: (tflId: string) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [headerHovered, setHeaderHovered] = useState(false);
   const totalCount = data.items.length;
-  const completedCount = data.items.filter((i) => i.status === "done").length;
+  const completedCount = data.items.filter((i) => i.status === "done" || i.status === "skipped").length;
   const isAllDone = data.isCompleted || (totalCount > 0 && completedCount === totalCount);
 
   return (
@@ -1347,10 +1450,8 @@ function EventProgressCard({
               fill="currentColor"
             />
           </svg>
-          {isAllDone ? (
+          {isAllDone && (
             <LocalIcon src={checkIconUrl} className="w-[14px] h-[14px]" color="#059669" />
-          ) : (
-            <img src={aiProcessingIconUrl} className="w-[14px] h-[14px]" alt="" />
           )}
           <span className="text-[13px] font-semibold text-text-primary">
             {isAllDone ? "All Updates Applied" : (data.title || "Applying Updates")}
@@ -1371,6 +1472,9 @@ function EventProgressCard({
             const isRunning = item.status === "running";
             const isDone = item.status === "done";
             const isQueued = item.status === "queued";
+            const isNeedsAction = item.status === "needs_action";
+            const isSkipped = item.status === "skipped";
+            const canSkip = isQueued || isNeedsAction;
 
             return (
               <div
@@ -1381,15 +1485,19 @@ function EventProgressCard({
                 <div className="flex items-center gap-[8px] min-w-0 flex-1">
                   <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
                     {isRunning && (
-                      <img src={aiProcessingIconUrl} className="w-[14px] h-[14px] block" alt="Running" />
+                      <SpinnerIcon className="w-[14px] h-[14px]" />
                     )}
                     {isDone && (
                       <LocalIcon src={checkIconUrl} className="w-[12px] h-[12px]" color="#059669" />
                     )}
+                    {isNeedsAction && (
+                      <LocalIcon src={alertIconUrl} className="w-[14px] h-[14px] shrink-0" color="#B25E00" />
+                    )}
+                    {isSkipped && (
+                      <div className="w-[10px] h-[1.5px] rounded bg-graphite-30" />
+                    )}
                     {isQueued && (
-                      <div className="w-[12px] h-[12px] rounded-full border border-graphite-30 flex items-center justify-center">
-                        <div className="w-[4px] h-[4px] rounded-full bg-graphite-30" />
-                      </div>
+                      <PauseCircleIcon className="w-[14px] h-[14px]" color="#888E8E" />
                     )}
                   </div>
 
@@ -1400,6 +1508,10 @@ function EventProgressCard({
                           ? "text-brand-1 font-medium"
                           : isDone
                           ? "text-text-primary font-medium"
+                          : isNeedsAction
+                          ? "text-text-primary font-medium"
+                          : isSkipped
+                          ? "text-text-secondary line-through opacity-70"
                           : "text-text-secondary"
                       }`}
                     >
@@ -1410,15 +1522,28 @@ function EventProgressCard({
                         ? "Updating SAS code & metadata…"
                         : isDone
                         ? "Completed"
+                        : isNeedsAction
+                        ? "Action required"
+                        : isSkipped
+                        ? "Skipped by user"
                         : "Queued"}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-[4px] shrink-0">
-                  <span className="text-[11px] font-mono text-text-secondary px-[5px] py-px rounded bg-graphite-10">
-                    {isRunning ? "Running" : isDone ? "Done" : "Queued"}
-                  </span>
+                <div className="flex items-center gap-[6px] shrink-0">
+                  {canSkip && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSkipItem?.(item.tflId);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 px-[6px] py-[1px] rounded text-[11px] font-medium text-brand-1 hover:bg-brand-1/10 transition-all"
+                    >
+                      Skip
+                    </button>
+                  )}
                   <LocalIcon
                     src={arrowRightIconUrl}
                     className="w-[14px] h-[14px] opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1441,9 +1566,22 @@ function EventSummaryCard({
   data: EventSummaryCardData;
   onJumpToTfl?: (tflId: string) => void;
 }) {
+  const updatedCount = data.items.filter((i) => !i.status || i.status === "updated").length;
+  const needsActionCount = data.items.filter((i) => i.status === "needs_action").length;
+  const skippedCount = data.items.filter((i) => i.status === "skipped").length;
+
+  let defaultTitle = `Updated ${updatedCount} ${updatedCount === 1 ? 'TFL' : 'TFLs'}`;
+  if (needsActionCount > 0 && skippedCount > 0) {
+    defaultTitle = `${updatedCount} Updated · ${needsActionCount} Action Required · ${skippedCount} Skipped`;
+  } else if (needsActionCount > 0) {
+    defaultTitle = `${updatedCount} Updated · ${needsActionCount} Action Required`;
+  } else if (skippedCount > 0) {
+    defaultTitle = `${updatedCount} Updated · ${skippedCount} Skipped`;
+  }
+
   return (
     <div className="flex flex-col bg-white border border-border-default rounded-[8px] overflow-hidden w-full shadow-sm my-[2px]">
-      {/* Header matching user case */}
+      {/* Header */}
       <div
         className="flex items-center justify-between px-[12px] py-[9px] border-b border-graphite-10"
         style={{ borderBottomWidth: "0.6px" }}
@@ -1452,34 +1590,193 @@ function EventSummaryCard({
           className="text-[13px] font-semibold text-text-primary truncate"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          {data.title || `Updated ${data.items.length} ${data.items.length === 1 ? 'Deliverable' : 'Deliverables'}`}
+          {data.title || defaultTitle}
+        </span>
+        <span className="text-[11px] text-text-secondary font-medium">
+          {data.items.length} total
         </span>
       </div>
 
       {/* Deliverable list */}
       <div className="p-[4px] flex flex-col gap-[2px] max-h-[220px] overflow-y-auto">
-        {data.items.map((item) => (
-          <div
-            key={item.tflId}
-            onClick={() => onJumpToTfl?.(item.tflId)}
-            className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[6px] hover:bg-bg-panel cursor-pointer transition-colors group select-none"
-          >
-            <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
-              <LocalIcon src={fileIconUrl} className="w-[16px] h-[16px]" />
+        {data.items.map((item) => {
+          const isUpdated = !item.status || item.status === "updated";
+          const isNeedsAction = item.status === "needs_action";
+          const isSkipped = item.status === "skipped";
+
+          return (
+            <div
+              key={item.tflId}
+              onClick={() => onJumpToTfl?.(item.tflId)}
+              className="flex items-center justify-between gap-[8px] px-[8px] py-[6px] rounded-[6px] hover:bg-bg-panel cursor-pointer transition-colors group select-none"
+            >
+              <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
+                  {isUpdated && (
+                    <LocalIcon src={checkIconUrl} className="w-[14px] h-[14px]" color="#059669" />
+                  )}
+                  {isNeedsAction && (
+                    <LocalIcon src={alertIconUrl} className="w-[14px] h-[14px] shrink-0" color="#B25E00" />
+                  )}
+                  {isSkipped && (
+                    <div className="w-[10px] h-[1.5px] rounded bg-graphite-30" />
+                  )}
+                </div>
+                <span className={`text-[13px] truncate flex-1 transition-colors ${
+                  isSkipped
+                    ? "text-text-secondary line-through opacity-70"
+                    : "text-text-primary group-hover:text-brand-1 font-medium"
+                }`}>
+                  {item.name}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-[6px] shrink-0">
+                {isNeedsAction && (
+                  <span className="px-[6px] py-[1px] rounded-[4px] bg-[#FFF8E6] text-[#B25E00] text-[11px] font-medium leading-[14px]">
+                    Action Required
+                  </span>
+                )}
+                {isSkipped && (
+                  <span className="px-[6px] py-[1px] rounded-[4px] bg-graphite-10 text-text-secondary text-[11px] font-medium leading-[14px]">
+                    Skipped
+                  </span>
+                )}
+                <LocalIcon
+                  src={arrowRightIconUrl}
+                  className="w-[14px] h-[14px] opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  color="#888E8E"
+                />
+              </div>
             </div>
-            <span className="text-[13px] text-text-primary truncate flex-1 group-hover:text-brand-1 transition-colors">
-              {item.name}
-            </span>
-            <LocalIcon
-              src={arrowRightIconUrl}
-              className="w-[14px] h-[14px] opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-              color="#888E8E"
-            />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
+}
+
+function EventDispatchedTaskCard({
+  data,
+}: {
+  data?: EventDispatchedTaskData;
+}) {
+  const eventTitle = data?.eventTitle || "Variable Replacement: TRTA → TRT01P";
+  const targetTflName = data?.targetTflName || "14.1.1 Disposition";
+  const description = data?.description || "Execute automated variable replacement across this TFL. Replace clinical variable TRTA with TRT01P in analysis datasets and reporting steps as specified in amended protocol SAP v2.1.";
+  const sourceVar = data?.sourceVar || "TRTA";
+  const targetVar = data?.targetVar || "TRT01P";
+
+  return (
+    <div className="flex flex-col w-full rounded-[8px] border border-[#BFDBFE] bg-[#F0F7FF] overflow-hidden my-[2px] shadow-sm">
+      {/* Top Banner */}
+      <div className="flex items-center justify-between px-[12px] py-[8px] border-b border-[#DBEAFE] bg-[#E0EFFF]">
+        <div className="flex items-center gap-[8px]">
+          <div className="w-[20px] h-[20px] rounded-[4px] bg-brand-1 flex items-center justify-center text-white shrink-0 shadow-xs">
+            <LocalIcon src={atlasLogoUrl} className="w-[14px] h-[14px]" />
+          </div>
+          <span className="text-[13px] font-semibold text-text-primary">
+            Event Copilot
+          </span>
+          <span className="px-[6px] py-[1px] rounded-[4px] bg-brand-1/10 text-brand-1 text-[11px] font-medium leading-[14px]">
+            Dispatched Task
+          </span>
+        </div>
+        <span className="text-[11px] text-text-secondary font-medium truncate max-w-[200px]">
+          {eventTitle}
+        </span>
+      </div>
+
+      {/* Task Content */}
+      <div className="p-[12px] flex flex-col gap-[10px]">
+        <div className="flex flex-col gap-[4px]">
+          <span className="text-[13px] font-medium text-text-primary leading-[18px]">
+            Target: <span className="font-semibold text-text-primary">{targetTflName}</span>
+          </span>
+          <p className="text-[12px] text-text-secondary leading-[18px]">
+            {description}
+          </p>
+        </div>
+
+        {/* Variables mapping pill */}
+        <div className="flex items-center justify-between p-[8px] rounded-[6px] bg-white border border-[#DBEAFE]">
+          <div className="flex items-center gap-[8px]">
+            <span className="text-[11px] font-medium text-text-secondary uppercase tracking-wider">
+              Variable Migration:
+            </span>
+            <div className="flex items-center gap-[6px]">
+              <InlineHighlight>{sourceVar}</InlineHighlight>
+              <span className="text-[12px] text-text-secondary font-mono font-bold">→</span>
+              <InlineHighlight>{targetVar}</InlineHighlight>
+            </div>
+          </div>
+          <span className="text-[11px] font-mono text-text-secondary">
+            Protocol SAP v2.1
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function createInitialTflMessages(tflId: string, foundTable: TableItem | null, isDispatched = false): Message[] {
+  // If this TFL is t1 (14.1.1 Disposition) or t5 (14.1.5 Baseline Characteristics) or any table dispatched from Event Copilot:
+  if (tflId === 't1' || tflId === 't5' || isDispatched) {
+    const tableName = foundTable?.name || (tflId === 't1' ? '14.1.1 Disposition' : (tflId === 't5' ? '14.1.5 Baseline Characteristics' : (tflId === 't8' ? '14.1.8 Medical History by SOC' : (tflId === 't4' ? '14.1.4 Demographics (Full Analysis Set)' : `TFL ${tflId}`))));
+    const cleanId = (foundTable?.name ? foundTable.name.split(' ')[0] : tflId).replace(/\./g, '_').toLowerCase();
+    const sasFileName = `t_${cleanId}.sas`;
+
+    const msgs: Message[] = [
+      {
+        type: 'event_dispatched_task',
+        dispatchedTaskData: {
+          eventTitle: 'Variable Replacement: TRTA → TRT01P',
+          targetTflName: tableName,
+          description: 'Execute automated variable replacement across this TFL. Replace clinical variable TRTA with TRT01P in analysis datasets and reporting steps as specified in amended protocol SAP v2.1.',
+          sourceVar: 'TRTA',
+          targetVar: 'TRT01P',
+        },
+      },
+      {
+        type: 'tfl_task_executing',
+        content: `Executing variable replacement for ${tableName}...`,
+      },
+    ];
+
+    if (foundTable?.status !== 'analyzing') {
+      msgs.push({
+        type: 'tfl_task_completed',
+        content: `Variable replacement completed for ${tableName}. Replaced references of TRTA with TRT01P in SAS program. Code refactoring and syntax validation succeeded with 0 errors and 0 warnings.`,
+        codeDiffData: {
+          summary: `Lines 46-52 in ${sasFileName}`,
+          deletions: [
+            { content: "  /* Stratification by treatment group */" },
+            { content: "  strata TRTA / test=logrank;" },
+            { content: "  class TRTA(ref=\"Placebo\") &var;" },
+          ],
+          additions: [
+            { content: "  /* Stratification by treatment group (SAP v2.1) */" },
+            { content: "  strata TRT01P / test=logrank;" },
+            { content: "  class TRT01P(ref=\"Placebo\") &var;" },
+          ],
+        },
+      });
+    }
+
+    return msgs;
+  }
+
+  if (foundTable?.status === 'pending' || tflId === 't4') {
+    return [
+      { type: 'user', content: `Update ${foundTable?.name || 'demographics table'} to reflect amended protocol SAP v2.1 criteria.` },
+      { type: 'ai_update_complete' }
+    ];
+  }
+
+  return [
+    { type: 'user', content: 'Review and showcase all supported Markdown typography, elements, and styles in this conversation stream.' },
+    { type: 'ai_complete' }
+  ];
 }
 
 function ChatConversation({ 
@@ -1498,6 +1795,9 @@ function ChatConversation({
   onToggleScopeItem,
   onConfirmScope,
   onCancelScope,
+  onSkipProgressItem,
+  programs,
+  isExecutingInEventCopilot = false,
 }: { 
   messages: Message[]; 
   isPending: boolean; 
@@ -1514,6 +1814,9 @@ function ChatConversation({
   onToggleScopeItem?: (msgIndex: number, tflId: string) => void;
   onConfirmScope?: (msgIndex: number) => void;
   onCancelScope?: (msgIndex: number) => void;
+  onSkipProgressItem?: (tflId: string) => void;
+  programs?: ProgramItem[];
+  isExecutingInEventCopilot?: boolean;
 }) {
   const lastMessage = messages[messages.length - 1];
   const showAskUser = lastMessage?.type === 'ai_ask_user';
@@ -1522,7 +1825,7 @@ function ChatConversation({
   let currentRound: Message[] = [];
 
   messages.forEach(msg => {
-    if (msg.type === 'user' || msg.type === 'meta_update_card') {
+    if (msg.type === 'user' || msg.type === 'meta_update_card' || msg.type === 'event_dispatched_task') {
       if (currentRound.length > 0) {
         rounds.push(currentRound);
       }
@@ -1618,6 +1921,7 @@ function ChatConversation({
               <div className="w-full relative">
                 <EventScopeCard
                   data={msg.scopeCardData}
+                  programs={programs}
                   onToggleExclude={(tflId) => onToggleScopeItem?.(currentFlatIdx, tflId)}
                   onConfirm={() => onConfirmScope?.(currentFlatIdx)}
                   onCancel={() => onCancelScope?.(currentFlatIdx)}
@@ -1631,6 +1935,7 @@ function ChatConversation({
                 <EventProgressCard
                   data={msg.progressCardData}
                   onJumpToTfl={onJumpToTfl}
+                  onSkipItem={onSkipProgressItem}
                 />
               </div>
             )}
@@ -1899,6 +2204,65 @@ function ChatConversation({
                 </div>
               </div>
             )}
+
+            {msg.type === 'event_dispatched_task' && (
+              <div className="w-full relative">
+                <EventDispatchedTaskCard data={msg.dispatchedTaskData} />
+              </div>
+            )}
+
+            {msg.type === 'tfl_task_executing' && (
+              <div className="flex flex-col gap-[8px] w-full relative">
+                <AIThinkingStatus status={isExecutingInEventCopilot ? "loading" : "completed"} />
+                <div className="flex flex-col gap-[6px] w-full">
+                  <ToolCallCard toolName="scan_references(var='TRTA', scope='study_program')">
+                    <p className="text-[12px] text-text-secondary leading-[16px]">
+                      Located 2 variable occurrences of <InlineHighlight>TRTA</InlineHighlight> in DATA step and PROC LIFETEST strata statement.
+                    </p>
+                  </ToolCallCard>
+                  <ToolCallCard toolName="edit_code(file='t_program.sas', replace='TRTA -> TRT01P')">
+                    <p className="text-[12px] text-text-secondary leading-[16px]">
+                      Replaced variable references with <InlineHighlight>TRT01P</InlineHighlight> at lines 48 and 54 in accordance with amended protocol SAP v2.1.
+                    </p>
+                  </ToolCallCard>
+                  <ToolCallCard toolName="validate_syntax(compiler='SAS 9.4')">
+                    <p className="text-[12px] text-text-secondary leading-[16px]">
+                      {isExecutingInEventCopilot
+                        ? "Running syntax and schema verification..."
+                        : "Compilation check passed: 0 syntax errors, 0 warnings."}
+                    </p>
+                  </ToolCallCard>
+                </div>
+              </div>
+            )}
+
+            {msg.type === 'tfl_task_completed' && (
+              <div className="flex flex-col gap-[12px] w-full relative">
+                <div className="flex flex-col w-full px-[10px]">
+                  <p className="t-body text-text-primary leading-relaxed">
+                    {msg.content || "Variable replacement completed. Replaced clinical variable TRTA with TRT01P in SAS program. Program structure and statistical parameters successfully verified."}
+                  </p>
+                </div>
+                <div className="relative w-full">
+                  <AICodeDiff
+                    summary={msg.codeDiffData?.summary || "Lines 46-52 in SAS program"}
+                    additions={msg.codeDiffData?.additions || [
+                      { content: "  /* Stratification by treatment group (SAP v2.1) */" },
+                      { content: "  strata TRT01P / test=logrank;" },
+                      { content: "  class TRT01P(ref=\"Placebo\") &var;" },
+                    ]}
+                    deletions={msg.codeDiffData?.deletions || [
+                      { content: "  /* Stratification by treatment group */" },
+                      { content: "  strata TRTA / test=logrank;" },
+                      { content: "  class TRTA(ref=\"Placebo\") &var;" },
+                    ]}
+                    additionCount={msg.codeDiffData?.additions?.length || 3}
+                    deletionCount={msg.codeDiffData?.deletions?.length || 3}
+                    defaultExpanded={true}
+                  />
+                </div>
+              </div>
+            )}
             </div>
           </React.Fragment>;
           })}
@@ -1907,6 +2271,15 @@ function ChatConversation({
     </div>
   );
 }
+
+interface TflStoreEntry {
+  sessionOptions: { id: string; name: string }[];
+  selectedSession: string;
+  tflSessionMessages: Record<string, Message[]>;
+  messages: Message[];
+}
+
+const tflSessionStore: Record<string, TflStoreEntry> = {};
 
 function AICopilotPanel({
   variant = 'drawer',
@@ -1939,6 +2312,7 @@ function AICopilotPanel({
   onUpdateEventSession,
   onStartEventExecution,
   onCompleteTflExecution,
+  onSkipTflExecution,
   onFinishEventExecution,
   isExecutingInEventCopilot = false,
   executingSessionTitle,
@@ -1948,6 +2322,11 @@ function AICopilotPanel({
   programs,
   currentTableId,
   onHandoffToEventCopilot,
+  copilotScope = 'tfl',
+  onSelectScope,
+  eventSessions = [],
+  onSelectEventSession,
+  onDeleteEventSession,
 }: {
   variant?: 'drawer' | 'incard';
   quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
@@ -1974,11 +2353,17 @@ function AICopilotPanel({
   activeRenderVersionLabel?: string;
   onRenderThumbnailClick?: (version: RenderVersion) => void;
   isEventCopilot?: boolean;
+  copilotScope?: 'event' | 'tfl';
+  onSelectScope?: (scope: 'event' | 'tfl') => void;
+  eventSessions?: EventSession[];
+  onSelectEventSession?: (session: EventSession) => void;
   activeEventSession?: EventSession | null;
   onNewEventSession?: () => void;
   onUpdateEventSession?: (sessionId: string, updates: Partial<EventSession>) => void;
+  onDeleteEventSession?: (sessionId: string) => void;
   onStartEventExecution?: (sessionId: string, sessionTitle: string, tflIds: string[]) => void;
   onCompleteTflExecution?: (completedTflId: string) => void;
+  onSkipTflExecution?: (skippedTflId: string) => void;
   onFinishEventExecution?: (sessionId: string, allTflIds: string[]) => void;
   isExecutingInEventCopilot?: boolean;
   executingSessionTitle?: string | null;
@@ -2037,6 +2422,10 @@ function AICopilotPanel({
     });
   };
 
+  const currentTable = useMemo(() => {
+    return findTableItem(programs, currentTableId);
+  }, [programs, currentTableId]);
+
   const [messages, setMessages] = useState<Message[]>(() => {
     if (isEventCopilot) {
       if (!activeEventSession || (activeEventSession.messages ?? []).length === 0) {
@@ -2044,11 +2433,13 @@ function AICopilotPanel({
       }
       return (activeEventSession.messages ?? []).map(mapEventSessionMessage);
     }
+    const tflKey = currentTableId || 'tfl';
+    if (tflSessionStore[tflKey]?.messages) {
+      return tflSessionStore[tflKey].messages;
+    }
     if (docType === 'figure') return [{ type: 'ai_complete' }];
-    return [
-      { type: 'user', content: 'Review and showcase all supported Markdown typography, elements, and styles in this conversation stream.' },
-      { type: 'ai_complete' }
-    ];
+    const foundTable = findTableItem(programs, currentTableId);
+    return createInitialTflMessages(tflKey, foundTable);
   });
 
   useEffect(() => {
@@ -2059,19 +2450,251 @@ function AICopilotPanel({
       } else {
         setMessages((activeEventSession.messages ?? []).map(mapEventSessionMessage));
       }
+    } else if (currentTableId) {
+      const store = tflSessionStore[currentTableId];
+      if (store) {
+        setSessionOptions(store.sessionOptions);
+        setSelectedSession(store.selectedSession);
+        setTflSessionMessages(store.tflSessionMessages);
+        setMessages(store.messages);
+      }
     }
-  }, [isEventCopilot, activeEventSession?.id]);
+  }, [isEventCopilot, activeEventSession?.id, currentTableId]);
 
   const [isPending, setIsPending] = useState(false);
   const [dockedProgressData, setDockedProgressData] = useState<EventProgressCardData | null>(null);
   const activeProgressData = eventProgressData !== undefined && eventProgressData !== null ? eventProgressData : dockedProgressData;
 
-  const [sessionOptions] = useState([
-    { label: "Session: Demographics", value: "session-1" },
-    { label: "Session: Safety Analysis", value: "session-2" },
-    { label: "Session: KM Plot Generator", value: "session-3" },
-  ]);
-  const [selectedSession, setSelectedSession] = useState("session-1");
+  const [sessionOptions, setSessionOptions] = useState<{ id: string; name: string }[]>(() => {
+    const tflKey = currentTableId || 'tfl';
+    if (tflSessionStore[tflKey]?.sessionOptions) {
+      return tflSessionStore[tflKey].sessionOptions;
+    }
+    const foundTable = findTableItem(programs, currentTableId);
+    const tflName = foundTable?.name ? foundTable.name.replace(/^[\d.]+\s*/, '') : 'Demographics';
+    return [
+      { id: `${tflKey}-session-1`, name: `Session: ${tflName}` },
+      { id: `${tflKey}-session-2`, name: `Session: Safety Analysis` },
+      { id: `${tflKey}-session-3`, name: `Session: Exploratory Analysis` },
+    ];
+  });
+
+  const [selectedSession, setSelectedSession] = useState<string>(() => {
+    const tflKey = currentTableId || 'tfl';
+    if (tflSessionStore[tflKey]?.selectedSession) {
+      return tflSessionStore[tflKey].selectedSession;
+    }
+    return `${tflKey}-session-1`;
+  });
+
+  const isHistoricalTflSession = !isEventCopilot && selectedSession !== sessionOptions[0]?.id;
+
+  const [tflSessionMessages, setTflSessionMessages] = useState<Record<string, Message[]>>(() => {
+    const tflKey = currentTableId || 'tfl';
+    if (tflSessionStore[tflKey]?.tflSessionMessages) {
+      return tflSessionStore[tflKey].tflSessionMessages;
+    }
+    const s1Id = `${tflKey}-session-1`;
+    const s2Id = `${tflKey}-session-2`;
+    const s3Id = `${tflKey}-session-3`;
+    const foundTable = findTableItem(programs, currentTableId);
+    const s1Msgs = createInitialTflMessages(tflKey, foundTable);
+    return {
+      [s1Id]: s1Msgs,
+      [s2Id]: [
+        { type: 'user', content: 'Extract safety data and verify dictionary terms.' },
+        { type: 'ai_complete', content: 'Safety data extracted successfully. 12 AE terms matched MedDRA 24.0 dictionary.' }
+      ],
+      [s3Id]: [
+        { type: 'user', content: 'Generate preliminary distribution overview.' },
+        { type: 'ai_complete', content: 'Overview generated with summary statistics.' }
+      ],
+    };
+  });
+
+  useEffect(() => {
+    if (!isEventCopilot && currentTableId) {
+      tflSessionStore[currentTableId] = {
+        sessionOptions,
+        selectedSession,
+        tflSessionMessages: {
+          ...tflSessionMessages,
+          [selectedSession]: messages,
+        },
+        messages,
+      };
+    }
+  }, [messages, sessionOptions, selectedSession, tflSessionMessages, isEventCopilot, currentTableId]);
+
+  const handleSelectTflSession = (sessionId: string) => {
+    if (!isEventCopilot) {
+      setTflSessionMessages((prev) => ({
+        ...prev,
+        [selectedSession]: messages,
+      }));
+      setMessages(tflSessionMessages[sessionId] || []);
+    }
+    setSelectedSession(sessionId);
+  };
+
+  const handleNewTflSession = () => {
+    if (!isEventCopilot) {
+      setTflSessionMessages((prev) => ({
+        ...prev,
+        [selectedSession]: messages,
+      }));
+    }
+    const newId = `session-${Date.now()}`;
+    const newOption = { id: newId, name: 'New TFL Session' };
+    setSessionOptions((prev) => [newOption, ...prev]);
+    setTflSessionMessages((prev) => ({ ...prev, [newId]: [] }));
+    setSelectedSession(newId);
+    setMessages([]);
+  };
+
+  const handleRenameTflSession = (sessionId: string, newName: string) => {
+    setSessionOptions((prev) =>
+      prev.map((s) => (s.id === sessionId ? { ...s, name: newName } : s))
+    );
+    const tflKey = currentTableId || 'tfl';
+    if (tflSessionStore[tflKey]) {
+      tflSessionStore[tflKey].sessionOptions = (tflSessionStore[tflKey].sessionOptions || []).map((s) =>
+        s.id === sessionId ? { ...s, name: newName } : s
+      );
+    }
+  };
+
+  const handleDeleteTflSession = (sessionId: string) => {
+    const nextOptions = sessionOptions.filter((s) => s.id !== sessionId);
+    let nextSelected = selectedSession;
+    if (sessionId === selectedSession) {
+      if (nextOptions.length > 0) {
+        nextSelected = nextOptions[0].id;
+        setMessages(tflSessionMessages[nextSelected] || []);
+      } else {
+        const fallbackId = `session-${Date.now()}`;
+        const fallbackOption = { id: fallbackId, name: 'New TFL Session' };
+        nextOptions.push(fallbackOption);
+        nextSelected = fallbackId;
+        setMessages([]);
+      }
+      setSelectedSession(nextSelected);
+    }
+    setSessionOptions(nextOptions);
+    setTflSessionMessages((prev) => {
+      const nextMsgs = { ...prev };
+      delete nextMsgs[sessionId];
+      return nextMsgs;
+    });
+    const tflKey = currentTableId || 'tfl';
+    if (tflSessionStore[tflKey]) {
+      tflSessionStore[tflKey].sessionOptions = nextOptions;
+      tflSessionStore[tflKey].selectedSession = nextSelected;
+      if (tflSessionStore[tflKey].tflSessionMessages) {
+        delete tflSessionStore[tflKey].tflSessionMessages[sessionId];
+      }
+    }
+  };
+
+  // Header More Options & Session Management (Rename, Delete)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [moreMenuPos, setMoreMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renamePos, setRenamePos] = useState<{ top: number; right: number } | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  const currentSessionTitle = isEventCopilot
+    ? (activeEventSession?.name || eventSessions[0]?.name || "Event Copilot")
+    : (sessionOptions.find((s) => s.id === selectedSession)?.name || sessionOptions[0]?.name || "Session");
+
+  const handleToggleMoreMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMoreMenuPos({
+      top: rect.bottom + 4,
+      right: window.innerWidth - rect.right,
+    });
+    setMoreMenuOpen((prev) => !prev);
+  };
+
+  const handleStartRename = () => {
+    setMoreMenuOpen(false);
+    if (moreMenuPos) {
+      setRenamePos(moreMenuPos);
+    }
+    setRenameValue(currentSessionTitle);
+    setIsRenaming(true);
+  };
+
+  const handleConfirmRename = () => {
+    const trimmed = renameValue.trim();
+    if (trimmed) {
+      if (isEventCopilot) {
+        const activeId = activeEventSession?.id || eventSessions[0]?.id;
+        if (activeId) {
+          onUpdateEventSession?.(activeId, { name: trimmed });
+        }
+      } else {
+        handleRenameTflSession(selectedSession, trimmed);
+      }
+    }
+    setIsRenaming(false);
+  };
+
+  const handleCancelRename = () => {
+    setIsRenaming(false);
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleConfirmRename();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleCancelRename();
+    }
+  };
+
+  const handleStartDelete = () => {
+    setMoreMenuOpen(false);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (isEventCopilot) {
+      const activeId = activeEventSession?.id || eventSessions[0]?.id;
+      if (activeId) {
+        onDeleteEventSession?.(activeId);
+      }
+    } else {
+      handleDeleteTflSession(selectedSession);
+    }
+    setDeleteModalOpen(false);
+  };
+
+  useEffect(() => {
+    if (isRenaming) {
+      const timer = setTimeout(() => {
+        if (renameInputRef.current) {
+          renameInputRef.current.focus();
+          renameInputRef.current.select();
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isRenaming]);
+
+  useEffect(() => {
+    if (!moreMenuOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMoreMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [moreMenuOpen]);
 
   const isSubmitDisabled = isEventCopilot
     ? (isPending || (activeProgressData ? !activeProgressData.isCompleted : false))
@@ -2181,12 +2804,30 @@ function AICopilotPanel({
     onCodeDiffChange?.(hasCodeDiff);
   }, [hasCodeDiff, onCodeDiffChange]);
 
+  const isCurrentTflPending = !isEventCopilot && !isHistoricalTflSession && (currentTable?.status === 'pending' || hasCodeDiff);
+
   const handleAcceptPending = () => {
-    setMessages(prev => prev.map(m => m.type === 'ai_update_complete' ? { ...m, type: 'ai_update_accepted' as const } : m));
+    const updated = messages.map(m => m.type === 'ai_update_complete' ? { ...m, type: 'ai_update_accepted' as const } : m);
+    setMessages(updated);
+    if (currentTableId) {
+      if (tflSessionStore[currentTableId]) {
+        tflSessionStore[currentTableId].messages = updated;
+        tflSessionStore[currentTableId].tflSessionMessages[selectedSession] = updated;
+      }
+      onCompleteTflExecution?.(currentTableId);
+    }
   };
 
   const handleRejectPending = () => {
-    setMessages(prev => prev.filter(m => m.type !== 'ai_update_complete'));
+    const updated = messages.filter(m => m.type !== 'ai_update_complete');
+    setMessages(updated);
+    if (currentTableId) {
+      if (tflSessionStore[currentTableId]) {
+        tflSessionStore[currentTableId].messages = updated;
+        tflSessionStore[currentTableId].tflSessionMessages[selectedSession] = updated;
+      }
+      onCompleteTflExecution?.(currentTableId);
+    }
   };
 
   const handleAskUserSubmit = (answers: { q: string; a: string }[]) => {
@@ -2245,6 +2886,44 @@ function AICopilotPanel({
     });
   };
 
+  const activeProgressItemsRef = useRef<EventProgressItem[]>([]);
+  const stepTimerRef = useRef<any>(null);
+  const advanceStepRef = useRef<() => void>(() => {});
+  const currentIdxRef = useRef<number>(0);
+
+  const handleSkipItem = (tflId: string) => {
+    // 1. Immediately notify parent Main.tsx so eventProgressData has status: 'skipped' synchronously
+    onSkipTflExecution?.(tflId);
+
+    // 2. Immediately mark as skipped in activeProgressItemsRef
+    let wasActive = false;
+    activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
+      if (it.tflId === tflId) {
+        if (idx === currentIdxRef.current && (it.status === "needs_action" || it.status === "running")) {
+          wasActive = true;
+        }
+        return { ...it, status: "skipped" as const };
+      }
+      return it;
+    });
+
+    // 3. Immediately update dockedProgressData state
+    setDockedProgressData((prev) => {
+      if (!prev) return prev;
+      const updated = prev.items.map((it) =>
+        it.tflId === tflId ? { ...it, status: "skipped" as const } : it
+      );
+      return { ...prev, items: updated };
+    });
+
+    // 4. If currently active waiting/running item was skipped, immediately abort timer and advance to next item
+    if (wasActive && stepTimerRef.current) {
+      clearTimeout(stepTimerRef.current);
+      stepTimerRef.current = null;
+      advanceStepRef.current?.();
+    }
+  };
+
   const handleConfirmScope = (msgIndex: number) => {
     const scopeMsg = messages[msgIndex];
     const targetItems = scopeMsg?.scopeCardData?.items?.filter((item) => !item.isExcluded) || [];
@@ -2273,11 +2952,23 @@ function AICopilotPanel({
     onStartEventExecution?.(sessionId, sessionTitle, targetTflIds);
 
     // 2. Set docked progress card above input box
-    const initialProgressItems: EventProgressItem[] = targetItems.map((t, idx) => ({
-      tflId: t.tflId,
-      name: t.name,
-      status: idx === 0 ? ("running" as const) : ("queued" as const),
-    }));
+    const initialProgressItems: EventProgressItem[] = targetItems.map((t, idx) => {
+      const liveTable = programs ? findTableItem(programs, t.tflId) : null;
+      const effectiveStatus = liveTable
+        ? (liveTable.status === 'locked' ? 'locked' : liveTable.status === 'pending' ? 'pending' : 'normal')
+        : (t.itemStatus || 'normal');
+      const isConflicted = effectiveStatus === "pending" || effectiveStatus === "locked";
+      return {
+        tflId: t.tflId,
+        name: liveTable?.name || t.name,
+        status: idx === 0 
+          ? (isConflicted ? ("needs_action" as const) : ("running" as const)) 
+          : ("queued" as const),
+        itemStatus: effectiveStatus,
+      };
+    });
+
+    activeProgressItemsRef.current = initialProgressItems;
 
     setDockedProgressData({
       title: "Applying Updates",
@@ -2288,61 +2979,137 @@ function AICopilotPanel({
 
     // 3. Sequentially process each TFL deliverable
     let currentIdx = 0;
-    const stepDuration = 1800;
+    currentIdxRef.current = 0;
 
-    const executeStep = () => {
-      if (currentIdx < targetItems.length) {
-        const activeTflId = targetItems[currentIdx].tflId;
+    const finishExecution = () => {
+      setIsPending(false);
+      onFinishEventExecution?.(sessionId, targetTflIds);
 
-        // Update docked progress card state
-        setDockedProgressData((prev) => {
-          if (!prev) return prev;
-          const updated = prev.items.map((it, idx) => {
-            if (idx < currentIdx) return { ...it, status: "done" as const };
-            if (idx === currentIdx) return { ...it, status: "running" as const };
-            return { ...it, status: "queued" as const };
-          });
+      setTimeout(() => {
+        setDockedProgressData(null);
+        onCloseEventProgress?.();
+
+        const summaryItems: EventSummaryItem[] = activeProgressItemsRef.current.map((it) => {
+          let outcome: "updated" | "needs_action" | "skipped" = "updated";
+          if (it.status === "skipped") outcome = "skipped";
+          else if (it.status === "needs_action") outcome = "needs_action";
           return {
-            ...prev,
-            items: updated,
+            tflId: it.tflId,
+            name: it.name,
+            status: outcome,
           };
         });
 
-        setTimeout(() => {
-          // Notify parent that activeTflId finished
-          onCompleteTflExecution?.(activeTflId);
+        const updatedCount = summaryItems.filter((i) => i.status === "updated").length;
+        const needsActionCount = summaryItems.filter((i) => i.status === "needs_action").length;
+        const skippedCount = summaryItems.filter((i) => i.status === "skipped").length;
+
+        let summaryTitle = `Updated ${updatedCount} ${updatedCount === 1 ? "TFL" : "TFLs"}`;
+        if (needsActionCount > 0 && skippedCount > 0) {
+          summaryTitle = `${updatedCount} Updated · ${needsActionCount} Action Required · ${skippedCount} Skipped`;
+        } else if (needsActionCount > 0) {
+          summaryTitle = `${updatedCount} Updated · ${needsActionCount} Action Required`;
+        } else if (skippedCount > 0) {
+          summaryTitle = `${updatedCount} Updated · ${skippedCount} Skipped`;
+        }
+
+        const summaryMsg: Message = {
+          type: "event_summary_card" as const,
+          summaryCardData: {
+            title: summaryTitle,
+            items: summaryItems,
+          },
+        };
+        const finalMessages = [...confirmedMessages, summaryMsg];
+        setMessages(finalMessages);
+        updateEventSessionMessages(finalMessages, { status: "completed" });
+      }, 600);
+    };
+
+    const runStep = () => {
+      while (currentIdx < targetItems.length && activeProgressItemsRef.current[currentIdx]?.status === "skipped") {
+        currentIdx++;
+        currentIdxRef.current = currentIdx;
+      }
+
+      if (currentIdx >= targetItems.length) {
+        finishExecution();
+        return;
+      }
+
+      currentIdxRef.current = currentIdx;
+
+      const activeItem = targetItems[currentIdx];
+      const liveTable = programs ? findTableItem(programs, activeItem.tflId) : null;
+      const effectiveStatus = liveTable
+        ? (liveTable.status === 'locked' ? 'locked' : liveTable.status === 'pending' ? 'pending' : 'normal')
+        : (activeItem.itemStatus || 'normal');
+      const isConflicted = effectiveStatus === "pending" || effectiveStatus === "locked";
+
+      if (isConflicted) {
+        // Mark as needs_action
+        activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
+          if (idx === currentIdx && it.status !== "skipped") {
+            return { ...it, status: "needs_action" as const };
+          }
+          return it;
+        });
+        setDockedProgressData((prev) => {
+          if (!prev) return prev;
+          return { ...prev, items: activeProgressItemsRef.current };
+        });
+
+        // Allow 3.5s for user to click Skip; if not clicked, keep needs_action and proceed to next item
+        stepTimerRef.current = setTimeout(() => {
+          currentIdx++;
+          currentIdxRef.current = currentIdx;
+          runStep();
+        }, 3500);
+      } else {
+        // Normal item running
+        activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
+          if (idx === currentIdx && it.status !== "skipped") {
+            return { ...it, status: "running" as const };
+          }
+          return it;
+        });
+        setDockedProgressData((prev) => {
+          if (!prev) return prev;
+          return { ...prev, items: activeProgressItemsRef.current };
+        });
+
+        stepTimerRef.current = setTimeout(() => {
+          if (activeProgressItemsRef.current[currentIdx]?.status !== "skipped") {
+            onCompleteTflExecution?.(activeItem.tflId);
+
+            activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
+              if (idx === currentIdx && it.status !== "skipped") {
+                return { ...it, status: "done" as const };
+              }
+              return it;
+            });
+            setDockedProgressData((prev) => {
+              if (!prev) return prev;
+              return { ...prev, items: activeProgressItemsRef.current };
+            });
+          }
 
           currentIdx++;
-          if (currentIdx < targetItems.length) {
-            executeStep();
-          } else {
-            // All completed!
-            setIsPending(false);
-            onFinishEventExecution?.(sessionId, targetTflIds);
-
-            // Per user request:
-            // "2.当任务完成时候：进度卡片就可以移走了，因为对话流里已经出现了汇总卡片"
-            // Wait 600ms so user briefly sees the last item transition, then remove progress card and append summary card
-            setTimeout(() => {
-              setDockedProgressData(null);
-              onCloseEventProgress?.();
-              const summaryMsg: Message = {
-                type: "event_summary_card" as const,
-                summaryCardData: {
-                  title: `Updated ${targetItems.length} ${targetItems.length === 1 ? "Deliverable" : "Deliverables"}`,
-                  items: targetItems.map((t) => ({ tflId: t.tflId, name: t.name })),
-                },
-              };
-              const finalMessages = [...confirmedMessages, summaryMsg];
-              setMessages(finalMessages);
-              updateEventSessionMessages(finalMessages, { status: "completed" });
-            }, 600);
-          }
-        }, stepDuration);
+          currentIdxRef.current = currentIdx;
+          runStep();
+        }, 1800);
       }
     };
 
-    setTimeout(executeStep, 400);
+    advanceStepRef.current = () => {
+      currentIdx++;
+      currentIdxRef.current = currentIdx;
+      runStep();
+    };
+
+    setTimeout(runStep, 400);
+
+    setTimeout(runStep, 400);
   };
 
   const handleSubmit = (text: string, attachments?: AttachmentItem[]) => {
@@ -2354,7 +3121,7 @@ function AICopilotPanel({
 
     if (isEventCopilot) {
       const sessionId = activeEventSession?.id || "event";
-      const isInitialNewSession = !activeEventSession?.messages?.length || activeEventSession?.name === "New Session";
+      const isInitialNewSession = !activeEventSession?.messages?.length || activeEventSession?.name === "New Session" || activeEventSession?.name === "New Event Session";
 
       let newSessionTitle = activeEventSession?.name;
       if (isInitialNewSession) {
@@ -2386,30 +3153,36 @@ function AICopilotPanel({
         const aiMsg: Message = {
           type: "ai_complete" as const,
           content:
-            "Identified 3 deliverables referencing TRTA in the demographic domain. Review and select deliverables to update:",
+            "Identified 4 TFLs referencing TRTA in the demographic domain. Review and select TFLs to update:",
         };
         const scopeMsg: Message = {
           type: "event_scope_card" as const,
           scopeCardData: {
-            title: "Target Deliverables",
+            title: "Target TFLs",
             status: "pending",
             items: [
               {
                 tflId: "t1",
                 name: "14.1.1 Disposition",
-                reason: "Filter condition",
+                itemStatus: "normal",
                 isExcluded: false,
               },
               {
                 tflId: "t4",
                 name: "14.1.4 Demographics (Full Analysis Set)",
-                reason: "Summary columns",
+                itemStatus: "pending",
+                isExcluded: false,
+              },
+              {
+                tflId: "t8",
+                name: "14.1.8 Medical History by SOC",
+                itemStatus: "locked",
                 isExcluded: false,
               },
               {
                 tflId: "t5",
                 name: "14.1.5 Baseline Characteristics",
-                reason: "Stratification",
+                itemStatus: "normal",
                 isExcluded: false,
               },
             ],
@@ -2522,32 +3295,39 @@ function AICopilotPanel({
           <PanelHeader
             noBorder
             title={
-              <div className="flex items-center min-w-0 max-w-[260px]">
-                <FilterChip
-                  type="Dropdown"
-                  variant="select"
-                  showIcon={false}
-                  labelClassName="t-small-medium font-medium"
-                  options={isEventCopilot
-                    ? [{ label: activeEventSession?.name || "New Session", value: activeEventSession?.id || "event" }]
-                    : sessionOptions
-                  }
-                  value={isEventCopilot ? (activeEventSession?.id || "event") : selectedSession}
-                  onChange={isEventCopilot ? () => {} : setSelectedSession}
-                  className="max-w-full"
-                />
-              </div>
+              <CopilotScopeHeader
+                scope={isEventCopilot ? "event" : "tfl"}
+                onSelectScope={(s) => onSelectScope?.(s)}
+                eventSessions={eventSessions}
+                selectedEventSessionId={activeEventSession?.id || null}
+                onSelectEventSession={(session) => onSelectEventSession?.(session)}
+                onNewEventSession={onNewEventSession}
+                tflSessions={sessionOptions}
+                selectedTflSessionId={selectedSession}
+                onSelectTflSession={handleSelectTflSession}
+                onNewTflSession={handleNewTflSession}
+              />
             }
             actions={
               <div className="flex items-center gap-[4px]">
-                <TooltipText label="New Session">
+                <TooltipText label={isEventCopilot ? "New Event Session" : "New TFL Session"}>
                   <button
                     type="button"
-                    onClick={isEventCopilot ? onNewEventSession : undefined}
+                    onClick={isEventCopilot ? onNewEventSession : handleNewTflSession}
                     aria-label="New Session"
-                    className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+                    className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer"
                   >
                     <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                  </button>
+                </TooltipText>
+                <TooltipText label="More Options" disabled={moreMenuOpen}>
+                  <button
+                    type="button"
+                    onClick={handleToggleMoreMenu}
+                    aria-label="More Options"
+                    className={`w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer ${moreMenuOpen ? 'bg-black/5' : ''}`}
+                  >
+                    <MoreIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
                   </button>
                 </TooltipText>
                 <TooltipText label="Collapse AI Copilot">
@@ -2555,7 +3335,7 @@ function AICopilotPanel({
                     type="button"
                     onClick={onClose}
                     aria-label="Collapse AI Copilot"
-                    className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0"
+                    className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer"
                   >
                     <LocalIcon src={arrowRightDoubleLineUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
                   </button>
@@ -2566,30 +3346,37 @@ function AICopilotPanel({
         </div>
       ) : (
         <div className="relative z-10 shrink-0 bg-transparent h-[48px] flex items-center justify-between px-[12px] mb-[4px]">
-          <div className="flex items-center min-w-0 max-w-[260px]">
-            <FilterChip
-              type="Dropdown"
-              variant="select"
-              showIcon={false}
-              labelClassName="t-small-medium font-medium"
-              options={isEventCopilot
-                ? [{ label: activeEventSession?.name || "New Session", value: activeEventSession?.id || "event" }]
-                : sessionOptions
-              }
-              value={isEventCopilot ? (activeEventSession?.id || "event") : selectedSession}
-              onChange={isEventCopilot ? () => {} : setSelectedSession}
-              className="max-w-full"
-            />
-          </div>
+          <CopilotScopeHeader
+            scope={isEventCopilot ? "event" : "tfl"}
+            onSelectScope={(s) => onSelectScope?.(s)}
+            eventSessions={eventSessions}
+            selectedEventSessionId={activeEventSession?.id || null}
+            onSelectEventSession={(session) => onSelectEventSession?.(session)}
+            onNewEventSession={onNewEventSession}
+            tflSessions={sessionOptions}
+            selectedTflSessionId={selectedSession}
+            onSelectTflSession={handleSelectTflSession}
+            onNewTflSession={handleNewTflSession}
+          />
           <div className="flex items-center gap-[4px]">
-            <TooltipText label="New Session">
+            <TooltipText label={isEventCopilot ? "New Event Session" : "New TFL Session"}>
               <button
                 type="button"
-                onClick={isEventCopilot ? onNewEventSession : undefined}
+                onClick={isEventCopilot ? onNewEventSession : handleNewTflSession}
                 aria-label="New Session"
-                className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
+                className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer after:content-[''] after:absolute after:-inset-[8px]"
               >
                 <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+              </button>
+            </TooltipText>
+            <TooltipText label="More Options" disabled={moreMenuOpen}>
+              <button
+                type="button"
+                onClick={handleToggleMoreMenu}
+                aria-label="More Options"
+                className={`relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer after:content-[''] after:absolute after:-inset-[8px] ${moreMenuOpen ? 'bg-black/5' : ''}`}
+              >
+                <MoreIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
               </button>
             </TooltipText>
             <TooltipText label="Collapse AI Copilot">
@@ -2597,7 +3384,7 @@ function AICopilotPanel({
                 type="button"
                 onClick={onClose}
                 aria-label="Collapse AI Copilot"
-                className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 after:content-[''] after:absolute after:-inset-[8px]"
+                className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer after:content-[''] after:absolute after:-inset-[8px]"
               >
                 <LocalIcon src={arrowRightDoubleLineUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
               </button>
@@ -2648,6 +3435,9 @@ function AICopilotPanel({
               onToggleScopeItem={handleToggleScopeItem}
               onConfirmScope={handleConfirmScope}
               onCancelScope={handleCancelScope}
+              onSkipProgressItem={handleSkipItem}
+              programs={programs}
+              isExecutingInEventCopilot={!isEventCopilot && isExecutingInEventCopilot}
             />
           )}
         </div>
@@ -2686,6 +3476,7 @@ function AICopilotPanel({
               onSubmit={handleSubmit} 
               onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
+              disabled={isHistoricalTflSession}
               metadataChangesCount={metaDiffItems.length}
               metaDiffItems={metaDiffItems}
               onCloseMetadataChanges={() => onMetaCancel?.()}
@@ -2697,29 +3488,36 @@ function AICopilotPanel({
                 setDockedProgressData(null);
                 onCloseEventProgress?.();
               }}
+              onSkipEventProgressItem={handleSkipItem}
               onJumpToTfl={onJumpToTfl}
               mentionOptions={mentionOptions}
+              showMention={isEventCopilot}
             />
-          ) : (!isEventCopilot && hasCodeDiff) ? (
+          ) : isCurrentTflPending ? (
             <ChatBox 
               onSubmit={handleSubmit} 
               onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
+              disabled={isHistoricalTflSession}
               pending={true} 
+              pendingChangesCount={currentTable?.pendingChanges || 3}
               onAcceptPending={handleAcceptPending}
               onRejectPending={handleRejectPending}
               quoteInsertRef={quoteInsertRef}
               attachFilesRef={attachFilesRef}
               eventProgressData={null}
               onCloseEventProgress={() => {}}
+              onSkipEventProgressItem={handleSkipItem}
               onJumpToTfl={onJumpToTfl}
               mentionOptions={mentionOptions}
+              showMention={isEventCopilot}
             />
           ) : (
             <ChatBox
               onSubmit={handleSubmit}
               onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
+              disabled={isHistoricalTflSession}
               quoteInsertRef={quoteInsertRef}
               attachFilesRef={attachFilesRef}
               eventProgressData={isEventCopilot ? activeProgressData : null}
@@ -2727,13 +3525,99 @@ function AICopilotPanel({
                 setDockedProgressData(null);
                 onCloseEventProgress?.();
               }}
+              onSkipEventProgressItem={handleSkipItem}
               onJumpToTfl={onJumpToTfl}
               mentionOptions={mentionOptions}
+              showMention={isEventCopilot}
             />
           )}
           {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
         </div>
       </div>
+
+      {/* More Options Dropdown Menu */}
+      {moreMenuOpen && moreMenuPos && createPortal(
+        <>
+          <div
+            className="fixed inset-0 z-[9998] bg-transparent"
+            onClick={() => setMoreMenuOpen(false)}
+          />
+          <div
+            ref={moreMenuRef}
+            style={{
+              position: "fixed",
+              top: moreMenuPos.top,
+              right: Math.max(12, moreMenuPos.right),
+              zIndex: 9999,
+              width: 160,
+            }}
+            className="bg-white rounded-[8px] p-[4px] border border-border-default shadow-[0px_4px_16px_rgba(0,0,0,0.12)] overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          >
+            <button
+              type="button"
+              onClick={handleStartRename}
+              className="w-full flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] text-left hover:bg-bg-panel active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <LocalIcon src={editIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
+              <span className="text-[13px] text-text-primary font-normal">Rename Session</span>
+            </button>
+            <div className="h-[1px] bg-[#E5E8E8] my-[3px]" />
+            <button
+              type="button"
+              onClick={handleStartDelete}
+              className="w-full flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] text-left hover:bg-[#fff5f5] active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <LocalIcon src={deleteBinIconUrl} className="w-[14px] h-[14px]" color="#CC2C3C" />
+              <span className="text-[13px] text-status-error font-normal">Delete Session</span>
+            </button>
+          </div>
+        </>,
+        document.body
+      )}
+
+      {/* Rename Popover (点空白处取消，回车则命名成功) */}
+      {isRenaming && renamePos && createPortal(
+        <>
+          <div
+            className="fixed inset-0 z-[9998] bg-transparent"
+            onClick={handleCancelRename}
+          />
+          <div
+            style={{
+              position: "fixed",
+              top: renamePos.top,
+              right: Math.max(12, renamePos.right),
+              zIndex: 9999,
+              width: 240,
+            }}
+            className="bg-white rounded-[6px] p-[4px] border border-border-default shadow-[0px_4px_16px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-100"
+          >
+            <input
+              ref={renameInputRef}
+              type="text"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={handleRenameKeyDown}
+              className="w-full h-[32px] px-[8px] text-[13px] border border-brand-1 rounded-[4px] outline-none focus:ring-1 focus:ring-brand-1 text-text-primary bg-white transition-all"
+              placeholder="Session name"
+            />
+          </div>
+        </>,
+        document.body
+      )}
+
+      {/* Delete Confirmation Modal (二次拦截Modal) */}
+      <WorkspaceModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Session"
+        description={`Are you sure you want to delete "${currentSessionTitle}"? This action cannot be undone and all messages in this session will be lost.`}
+        primaryLabel="Delete"
+        secondaryLabel="Cancel"
+        dangerPrimary={true}
+        onSecondary={() => setDeleteModalOpen(false)}
+        onPrimary={handleConfirmDelete}
+      />
     </div>
   );
 }
@@ -2791,30 +3675,20 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
   {
     id: 'es-1',
     name: 'Variable Replacement: TRTA → TRT01P',
-    status: 'completed',
+    status: 'idle',
     messages: [
       { role: 'user', content: 'Replace variable TRTA with TRT01P across all demographic tables.' },
-      { role: 'assistant', content: 'Identified 3 deliverables referencing TRTA in the demographic domain. Review and select deliverables to update:' },
+      { role: 'assistant', content: 'Identified 4 TFLs referencing TRTA in the demographic domain. Review and select TFLs to update:' },
       {
         role: 'assistant',
         scopeCardData: {
-          title: 'Target Deliverables',
-          status: 'confirmed',
+          title: 'Target TFLs',
+          status: 'pending',
           items: [
-            { tflId: 't1', name: '14.1.1 Disposition', reason: 'Filter condition', isExcluded: false },
-            { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', reason: 'Summary columns', isExcluded: false },
-            { tflId: 't5', name: '14.1.5 Baseline Characteristics', reason: 'Stratification', isExcluded: false },
-          ],
-        },
-      },
-      {
-        role: 'assistant',
-        summaryCardData: {
-          title: 'Updated 3 Deliverables',
-          items: [
-            { tflId: 't1', name: '14.1.1 Disposition' },
-            { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)' },
-            { tflId: 't5', name: '14.1.5 Baseline Characteristics' },
+            { tflId: 't1', name: '14.1.1 Disposition', isExcluded: false },
+            { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', itemStatus: 'pending', isExcluded: false },
+            { tflId: 't8', name: '14.1.8 Medical History by SOC', itemStatus: 'locked', isExcluded: false },
+            { tflId: 't5', name: '14.1.5 Baseline Characteristics', isExcluded: false },
           ],
         },
       },
@@ -2832,7 +3706,7 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
           {
             role: 'assistant',
             summaryCardData: {
-              title: 'Updated 2 Deliverables',
+              title: 'Updated 2 TFLs',
               items: [
                 { tflId: 't5', name: '14.1.5 Baseline Characteristics' },
                 { tflId: 't8', name: '14.1.8 Medical History by SOC' },
@@ -9952,7 +10826,7 @@ title2 "Demographic and Baseline Characteristics (ITT Population)";
 /* Call standardized listing macro */
 %m_u_listing(
   inds = adam.adsl,
-  cols = USUBJID | SUBJID | SITEID | AGE | SEX | RACE | TRT01A | VISIT | ASTDY | AEDECOD,
+  cols = USUBJID | SUBJID | SITEID | AGE | SEX | RACE | TRT01P | VISIT | ASTDY | AEDECOD,
   col_labels = Subject ID | Subj ID | Site ID | Age | Sex | Race | Treatment Group | Visit | Study Day | Adverse Event,
   freeze_cols = ${freezeCols ?? 2},
   page_cols = ${pageCols ?? 5},
@@ -10477,7 +11351,7 @@ function WorkspaceContent({
   const [treeListAutoCollapsed, setTreeListAutoCollapsed] = useState(false);
 
   // Event Copilot state
-  const [treeListTab, setTreeListTab] = useState<TreeListTab>('tfl');
+  const [copilotScope, setCopilotScope] = useState<'event' | 'tfl'>('tfl');
   const [eventSessions, setEventSessions] = useState<EventSession[]>(MOCK_EVENT_SESSIONS);
   const [selectedEventSession, setSelectedEventSession] = useState<EventSession | null>(null);
   const [eventSessionSearch, setEventSessionSearch] = useState('');
@@ -10844,7 +11718,7 @@ function WorkspaceContent({
           if (program.id !== programId) return program;
           return {
             ...program,
-            status: program.status === 'locked' ? 'pending' : 'locked',
+            status: program.status === 'locked' ? 'completed' : 'locked',
           };
         })
       );
@@ -10861,7 +11735,9 @@ function WorkspaceContent({
             }
             return {
               ...table,
-              status: table.status === 'locked' ? 'pending' : 'locked',
+              status: table.status === 'locked' 
+                ? (table.pendingChanges && table.pendingChanges > 0 ? 'pending' : 'completed') 
+                : 'locked',
             };
           }),
         };
@@ -11061,6 +11937,26 @@ function WorkspaceContent({
     setSelectedEventSession((curr) => (curr && curr.id === sessionId ? { ...curr, ...updates } : curr));
   };
 
+  const handleDeleteEventSession = (sessionId: string) => {
+    setEventSessions((prev) => {
+      const nextSessions = prev.filter((s) => s.id !== sessionId);
+      if (nextSessions.length === 0) {
+        const fallbackSession: EventSession = {
+          id: `es-new-${Date.now()}`,
+          name: 'New Event Session',
+          status: 'idle',
+          messages: [],
+        };
+        setSelectedEventSession(fallbackSession);
+        return [fallbackSession];
+      }
+      if (selectedEventSession?.id === sessionId || (!selectedEventSession && prev[0]?.id === sessionId)) {
+        setSelectedEventSession(nextSessions[0]);
+      }
+      return nextSessions;
+    });
+  };
+
   const handleStartEventExecution = (sessionId: string, sessionTitle: string, tflIds: string[]) => {
     setExecutingTflIds(tflIds);
     setExecutingSessionTitle(sessionTitle);
@@ -11113,19 +12009,56 @@ function WorkspaceContent({
     );
     setExecutingTflIds((prev) => prev.filter((id) => id !== completedTflId));
 
+    // Store completed TFL session with dispatched task and code diff
+    const foundTable = findTableItem(programs, completedTflId);
+    const initialMsgs = createInitialTflMessages(completedTflId, foundTable, true);
+    const s1Id = `${completedTflId}-session-1`;
+    const tflName = foundTable?.name ? foundTable.name.replace(/^[\d.]+\s*/, '') : 'Analysis';
+    tflSessionStore[completedTflId] = {
+      sessionOptions: [
+        { id: s1Id, name: `Session: ${tflName}` },
+        { id: `${completedTflId}-session-2`, name: `Session: Safety Analysis` },
+        { id: `${completedTflId}-session-3`, name: `Session: Exploratory Analysis` },
+      ],
+      selectedSession: s1Id,
+      tflSessionMessages: {
+        [s1Id]: initialMsgs,
+      },
+      messages: initialMsgs,
+    };
+
     setEventProgressData((prev) => {
       if (!prev) return prev;
       const completedIdx = prev.items.findIndex((it) => it.tflId === completedTflId);
-      const nextIdx = completedIdx + 1;
+      let nextRunningIdx = -1;
+      for (let i = completedIdx + 1; i < prev.items.length; i++) {
+        if (prev.items[i].status !== 'skipped') {
+          nextRunningIdx = i;
+          break;
+        }
+      }
       return {
         ...prev,
         items: prev.items.map((it, idx) => {
           if (it.tflId === completedTflId) return { ...it, status: 'done' as const };
-          if (idx === nextIdx) return { ...it, status: 'running' as const };
+          if (idx === nextRunningIdx && it.status !== 'skipped') return { ...it, status: 'running' as const };
           return it;
         }),
       };
     });
+  };
+
+  const handleSkipTflExecution = (skippedTflId: string) => {
+    setEventProgressData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((it) =>
+          it.tflId === skippedTflId ? { ...it, status: 'skipped' as const } : it
+        ),
+      };
+    });
+    setExecutingTflIds((prev) => prev.filter((id) => id !== skippedTflId));
   };
 
   const handleFinishEventExecution = (sessionId: string, allTflIds: string[]) => {
@@ -11158,16 +12091,19 @@ function WorkspaceContent({
     if (targetTflIds.length > 1) {
       candidateItems = targetTflIds.map((id) => {
         let name = id;
+        let itemStatus: 'normal' | 'pending' | 'locked' = 'normal';
         for (const prog of programs) {
           const found = prog.tables.find((t) => t.id === id);
           if (found) {
             name = found.name;
+            itemStatus = found.status === 'locked' ? 'locked' : found.status === 'pending' ? 'pending' : 'normal';
             break;
           }
         }
         return {
           tflId: id,
           name,
+          itemStatus,
           reason: id === sourceTflId ? "Source deliverable" : "Mentioned target deliverable",
           isExcluded: false,
         };
@@ -11175,20 +12111,31 @@ function WorkspaceContent({
     } else {
       // @Event mentioned: source deliverable + related demographic domain deliverables (excluding source)
       const defaultDomainIds = ["t1", "t4", "t5"].filter((id) => id !== sourceTflId);
+      let sourceStatus: 'normal' | 'pending' | 'locked' = 'normal';
+      for (const prog of programs) {
+        const found = prog.tables.find((t) => t.id === sourceTflId);
+        if (found) {
+          sourceStatus = found.status === 'locked' ? 'locked' : found.status === 'pending' ? 'pending' : 'normal';
+          break;
+        }
+      }
       candidateItems = [
-        { tflId: sourceTflId, name: sourceTableName, reason: "Source deliverable", isExcluded: false },
+        { tflId: sourceTflId, name: sourceTableName, itemStatus: sourceStatus, reason: "Source deliverable", isExcluded: false },
         ...defaultDomainIds.map((id) => {
           let name = id;
+          let itemStatus: 'normal' | 'pending' | 'locked' = 'normal';
           for (const prog of programs) {
             const found = prog.tables.find((t) => t.id === id);
             if (found) {
               name = found.name;
+              itemStatus = found.status === 'locked' ? 'locked' : found.status === 'pending' ? 'pending' : 'normal';
               break;
             }
           }
           return {
             tflId: id,
             name,
+            itemStatus,
             reason: "Related demographic domain deliverable",
             isExcluded: false,
           };
@@ -11209,12 +12156,12 @@ function WorkspaceContent({
         },
         {
           role: "assistant",
-          content: `Received diffusion request from ${sourceTableName}. Review and select target deliverables to update:`,
+          content: `Received diffusion request from ${sourceTableName}. Review and select target TFLs to update:`,
         },
         {
           role: "assistant",
           scopeCardData: {
-            title: "Target Deliverables",
+            title: "Target TFLs",
             status: "pending",
             items: candidateItems,
           },
@@ -11225,7 +12172,7 @@ function WorkspaceContent({
     setEventSessions((prev) => [newSession, ...prev]);
     setSelectedEventSession(newSession);
     setEventProgressData(null);
-    setTreeListTab("copilot");
+    setCopilotScope("event");
     setAiCopilotOpen(true);
   };
 
@@ -11236,18 +12183,22 @@ function WorkspaceContent({
       ? (eventSessions.find((s) => s.id === selectedEventSession.id) ||
          eventSessions.flatMap((s) => s.branches || []).find((b) => b.id === selectedEventSession.id) ||
          selectedEventSession)
-      : null;
+      : (eventSessions[0] || null);
 
     return (
       <AICopilotPanel
-        key={`${docType}-${variant}-${treeListTab === 'copilot' ? currentEventSession?.id || 'event' : 'tfl'}`}
+        key={`${docType}-${variant}-${copilotScope === 'event' ? currentEventSession?.id || 'event' : selectedTable?.id || selectedId || 'tfl'}`}
         variant={variant}
-        isEventCopilot={treeListTab === 'copilot'}
+        isEventCopilot={copilotScope === 'event'}
+        copilotScope={copilotScope}
+        onSelectScope={setCopilotScope}
+        eventSessions={eventSessions}
+        onSelectEventSession={setSelectedEventSession}
         activeEventSession={currentEventSession}
         onNewEventSession={() => {
           const newSession: EventSession = {
             id: `es-new-${Date.now()}`,
-            name: 'New Session',
+            name: 'New Event Session',
             status: 'idle',
             messages: [],
           };
@@ -11256,15 +12207,17 @@ function WorkspaceContent({
           setEventProgressData(null);
         }}
         onUpdateEventSession={handleUpdateEventSession}
+        onDeleteEventSession={handleDeleteEventSession}
         onStartEventExecution={handleStartEventExecution}
         onCompleteTflExecution={handleCompleteTflExecution}
+        onSkipTflExecution={handleSkipTflExecution}
         onFinishEventExecution={handleFinishEventExecution}
         isExecutingInEventCopilot={isSelectedTflExecuting}
         executingSessionTitle={executingSessionTitle}
-        eventProgressData={treeListTab === 'copilot' ? eventProgressData : null}
+        eventProgressData={copilotScope === 'event' ? eventProgressData : null}
         onCloseEventProgress={() => setEventProgressData(null)}
         onJumpToTfl={(tflId) => {
-          setTreeListTab('tfl');
+          setCopilotScope('tfl');
           handleSelect(tflId);
         }}
         programs={programs}
@@ -11358,83 +12311,6 @@ function WorkspaceContent({
                 </button>
               </TooltipText>
             </div>
-
-            {/* TFL / Copilot Tab Switcher */}
-            <div className="flex shrink-0 items-center gap-[4px] px-[10px] pb-[6px]">
-              {/* TFL Tab */}
-              <button
-                type="button"
-                onClick={() => setTreeListTab('tfl')}
-                className={`flex h-[28px] items-center gap-[4px] rounded-[6px] transition-all cursor-pointer shrink-0 ${
-                  treeListTab === 'tfl'
-                    ? 'bg-[#F4E8EE] text-brand-1 px-[8px]'
-                    : 'w-[28px] justify-center text-text-secondary hover:bg-black/5'
-                }`}
-                aria-label="TFL list"
-              >
-                <LocalIcon
-                  src={tableIconUrl}
-                  className="h-[14px] w-[14px] shrink-0"
-                  color={treeListTab === 'tfl' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'}
-                />
-                {treeListTab === 'tfl' && (
-                  <span className="t-small font-medium whitespace-nowrap">TFL</span>
-                )}
-              </button>
-
-              {/* Copilot Tab */}
-              <button
-                type="button"
-                onClick={() => {
-                  setTreeListTab('copilot');
-                  setAiCopilotOpen(true);
-                  if (!selectedEventSession && eventSessions.length > 0) {
-                    setSelectedEventSession(eventSessions[0]);
-                  }
-                }}
-                className={`flex h-[28px] items-center gap-[4px] rounded-[6px] transition-all cursor-pointer shrink-0 ${
-                  treeListTab === 'copilot'
-                    ? 'bg-[#F4E8EE] text-brand-1 px-[8px]'
-                    : 'w-[28px] justify-center text-text-secondary hover:bg-black/5'
-                }`}
-                aria-label="Event Copilot sessions"
-              >
-                <LocalIcon
-                  src={chatAiFillIconUrl}
-                  className="h-[14px] w-[14px] shrink-0"
-                  color={treeListTab === 'copilot' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'}
-                />
-                {treeListTab === 'copilot' && (
-                  <span className="t-small font-medium whitespace-nowrap">Copilot</span>
-                )}
-              </button>
-            </div>
-
-            {/* Copilot Tab: Session List */}
-            {treeListTab === 'copilot' ? (
-              <EventSessionList
-                sessions={eventSessions}
-                selectedId={selectedEventSession?.id ?? null}
-                onSelect={(s) => {
-                  setSelectedEventSession(s);
-                  setAiCopilotOpen(true);
-                }}
-                onNewSession={() => {
-                  const newSession: EventSession = {
-                    id: `es-new-${Date.now()}`,
-                    name: 'New Session',
-                    status: 'idle',
-                    messages: [],
-                  };
-                  setEventSessions((prev) => [newSession, ...prev]);
-                  setSelectedEventSession(newSession);
-                  setAiCopilotOpen(true);
-                }}
-                searchQuery={eventSessionSearch}
-                onSearchChange={setEventSessionSearch}
-              />
-            ) : (
-              <>
             {/* Search Bar / Filter Area based on filterStyleVariant */}
             {filterStyleVariant === 'in-search' ? (
 
@@ -11554,7 +12430,6 @@ function WorkspaceContent({
                 )}
               </div>
             </div>
-            </>) /* end TFL tab ternary */}
 
             {/* Tree List Bottom-Left Controls — always visible */}
             <div className="shrink-0 flex flex-col border-t border-graphite-10 bg-bg-panel">
@@ -12154,14 +13029,6 @@ function StatusTag({ status }: { status: EventStatus | 'uploading' }) {
       )}
       <span className="t-small" style={{ color: config.color }}>{config.label}</span>
     </div>
-  );
-}
-
-function MoreIcon({ color = "#888E8E" }) {
-  return (
-    <svg className="w-[16px] h-[16px]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M5 10C3.9 10 3 10.9 3 12C3 13.1 3.9 14 5 14C6.1 14 7 13.1 7 12C7 10.9 6.1 10 5 10ZM12 10C10.9 10 10 10.9 10 12C10 13.1 10.9 14 12 14C13.1 14 14 13.1 14 12C14 10.9 13.1 10 12 10ZM19 10C17.9 10 17 10.9 17 12C17 13.1 17.9 14 19 14C20.1 14 21 13.1 21 12C21 10.9 20.1 10 19 10Z" fill={color} />
-    </svg>
   );
 }
 

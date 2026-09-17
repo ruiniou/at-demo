@@ -5,6 +5,7 @@ import fileInfoLineUrl from "../../../icons/file-info-line.svg";
 import doubleQuotesLUrl from "../../../icons/double-quotes-l.svg";
 import aiProcessingIconUrl from "../../../icons/Status label/Status=AI Processing.svg";
 import checkIconUrl from "../../../icons/check-line.svg";
+import alertIconUrl from "../../../icons/alert-line.svg";
 import { Tooltip } from "../../../components/ui/Tooltip";
 import { ImagePreviewModal } from "../../../components/ui/ImagePreviewModal";
 import type { EventProgressCardData } from "../Main";
@@ -47,6 +48,23 @@ function ChevronRightIcon({ className = "size-[16px]", color = "var(--color-bran
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M13.1717 12L8.22192 7.05025L9.63614 5.63604L16.0001 12L9.63614 18.364L8.22192 16.95L13.1717 12Z" fill={color} />
+    </svg>
+  );
+}
+
+function SpinnerIcon({ className = "size-[14px]" }: { className?: string }) {
+  return (
+    <svg className={`animate-spin ${className} shrink-0`} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="8" r="6" stroke="var(--color-graphite-20, #D8DADA)" strokeWidth="2" fill="none" />
+      <path d="M14 8a6 6 0 0 0-6-6" stroke="var(--color-brand-1, #0077FA)" strokeWidth="2" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+function PauseCircleIcon({ className = "size-[14px]", color = "currentColor" }: { className?: string; color?: string }) {
+  return (
+    <svg className={`${className} shrink-0`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22ZM12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20ZM9 9H11V15H9V9ZM13 9H15V15H13V9Z" fill={color} />
     </svg>
   );
 }
@@ -435,6 +453,7 @@ export interface ChatBoxProps {
   /** If provided, called instead of onSubmit when attachments are present */
   onSubmitWithAttachments?: (text: string, attachments: AttachmentItem[]) => void;
   pending?: boolean;
+  pendingChangesCount?: number;
   submitDisabled?: boolean;
   metadataChangesCount?: number;
   metaDiffItems?: MetaDiffItem[];
@@ -452,6 +471,9 @@ export interface ChatBoxProps {
   onCloseEventProgress?: () => void;
   onJumpToTfl?: (tflId: string) => void;
   mentionOptions?: MentionOption[];
+  showMention?: boolean;
+  disabled?: boolean;
+  onSkipEventProgressItem?: (tflId: string) => void;
   className?: string;
 }
 
@@ -459,7 +481,9 @@ export default function ChatBox({
   onSubmit,
   onSubmitWithAttachments,
   pending = false,
+  pendingChangesCount = 3,
   submitDisabled = false,
+  disabled = false,
   metadataChangesCount = 0,
   metaDiffItems,
   onCloseMetadataChanges,
@@ -470,8 +494,10 @@ export default function ChatBox({
   attachFilesRef,
   eventProgressData,
   onCloseEventProgress,
+  onSkipEventProgressItem,
   onJumpToTfl,
   mentionOptions,
+  showMention = true,
   className = "",
 }: ChatBoxProps) {
   // --- Core Functional States ---
@@ -672,6 +698,10 @@ export default function ChatBox({
   );
 
   const checkMentionTrigger = useCallback(() => {
+    if (!showMention) {
+      setShowMentionMenu(false);
+      return;
+    }
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) {
       setShowMentionMenu(false);
@@ -700,9 +730,10 @@ export default function ChatBox({
     }
 
     setShowMentionMenu(false);
-  }, []);
+  }, [showMention]);
 
   const handleToolbarMentionClick = useCallback(() => {
+    if (!showMention) return;
     const el = editableRef.current;
     if (!el) return;
     el.focus();
@@ -948,7 +979,9 @@ export default function ChatBox({
       : "Typed"
     : "Default";
 
-  const placeholderText = metadataChangesCount > 0 
+  const placeholderText = disabled
+    ? "Historical session is read-only"
+    : metadataChangesCount > 0 
     ? "Add instructions or submit directly..." 
     : (eventProgressData && !eventProgressData.isCompleted)
     ? "Waiting for updates to complete..."
@@ -961,8 +994,8 @@ export default function ChatBox({
 
   // Derived attachment state
   const hasUploadingAttachments = attachments.some((a) => a.status === "uploading");
-  const isActuallyDisabled = submitDisabled || hasUploadingAttachments;
-  const canAddMore = attachments.length < 5;
+  const isActuallyDisabled = disabled || submitDisabled || hasUploadingAttachments;
+  const canAddMore = !disabled && attachments.length < 5;
 
   return (
     <div
@@ -1049,7 +1082,7 @@ export default function ChatBox({
                   )}
                 </div>
                 <div className="flex flex-col font-['PingFang_SC',sans-serif] justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-brand-1 text-center whitespace-nowrap">
-                  <p className="leading-[24px] font-medium">3 Pending Changes</p>
+                  <p className="leading-[24px] font-medium">{pendingChangesCount || 3} Pending Changes</p>
                 </div>
               </div>
 
@@ -1244,13 +1277,11 @@ export default function ChatBox({
                   )}
                 </div>
                 {/* Status Icon */}
-                <div className="overflow-clip relative shrink-0 size-[16px] flex items-center justify-center">
-                  {eventProgressData.isCompleted ? (
+                {eventProgressData.isCompleted && (
+                  <div className="overflow-clip relative shrink-0 size-[16px] flex items-center justify-center">
                     <img src={checkIconUrl} alt="" className="size-[14px]" />
-                  ) : (
-                    <img src={aiProcessingIconUrl} alt="" className="size-[16px]" />
-                  )}
-                </div>
+                  </div>
+                )}
                 {/* Label */}
                 <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[14px] text-text-primary text-center whitespace-nowrap">
                   <p className="leading-[24px]">
@@ -1259,34 +1290,13 @@ export default function ChatBox({
                       : (eventProgressData.title || "Applying Updates")}
                   </p>
                 </div>
-                {/* Count badge */}
-                <div className="bg-white border border-graphite-20 flex items-center justify-center px-[5px] py-px relative rounded-[16px] shrink-0 min-w-[16px] h-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-                  <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-text-secondary whitespace-nowrap">
-                    <p className="leading-[14px]">
-                      {eventProgressData.items.filter((i) => i.status === "done").length}/{eventProgressData.items.length}
-                    </p>
-                  </div>
-                </div>
               </div>
 
-              {/* Status text + Close × button */}
+              {/* Status text */}
               <div className="flex items-center gap-[6px] shrink-0">
                 <span className="text-[11px] text-text-secondary font-medium">
-                  {eventProgressData.items.filter((i) => i.status === "done").length} of {eventProgressData.items.length} completed
+                  {eventProgressData.items.filter((i) => i.status === "done" || i.status === "skipped").length} of {eventProgressData.items.length} completed
                 </span>
-                {onCloseEventProgress && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCloseEventProgress();
-                    }}
-                    className="w-[20px] h-[20px] rounded-[4px] flex items-center justify-center hover:bg-black/10 active:scale-[0.96] shrink-0 ml-[2px]"
-                    title="Dismiss progress"
-                    aria-label="Close progress"
-                  >
-                    <CloseIcon className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
-                  </button>
-                )}
               </div>
             </div>
 
@@ -1297,6 +1307,9 @@ export default function ChatBox({
                   const isRunning = item.status === "running";
                   const isDone = item.status === "done";
                   const isQueued = item.status === "queued";
+                  const isNeedsAction = item.status === "needs_action";
+                  const isSkipped = item.status === "skipped";
+                  const canSkip = isQueued || isNeedsAction;
 
                   return (
                     <div
@@ -1307,33 +1320,65 @@ export default function ChatBox({
                       <div className="flex items-center gap-[8px] min-w-0 flex-1">
                         <div className="w-[14px] h-[14px] shrink-0 flex items-center justify-center">
                           {isRunning && (
-                            <img src={aiProcessingIconUrl} className="w-[14px] h-[14px] block" alt="" />
+                            <SpinnerIcon className="w-[14px] h-[14px]" />
                           )}
                           {isDone && (
                             <img src={checkIconUrl} className="w-[12px] h-[12px]" alt="" />
                           )}
+                          {isNeedsAction && (
+                            <img src={alertIconUrl} className="w-[14px] h-[14px] shrink-0" alt="Action required" />
+                          )}
+                          {isSkipped && (
+                            <div className="w-[10px] h-[1.5px] rounded bg-graphite-30" />
+                          )}
                           {isQueued && (
-                            <div className="w-[8px] h-[8px] rounded-full bg-graphite-30/70" />
+                            <PauseCircleIcon className="w-[14px] h-[14px]" color="var(--color-text-secondary, #888E8E)" />
                           )}
                         </div>
 
-                        <span
-                          className={`text-[13px] leading-[18px] truncate transition-colors ${
-                            isRunning
-                              ? "text-brand-1 font-medium"
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span
+                            className={`text-[13px] leading-[18px] truncate transition-colors ${
+                              isRunning
+                                ? "text-brand-1 font-medium"
+                                : isDone
+                                ? "text-text-primary font-medium"
+                                : isNeedsAction
+                                ? "text-text-primary font-medium"
+                                : isSkipped
+                                ? "text-text-secondary line-through opacity-70"
+                                : "text-text-secondary"
+                            }`}
+                          >
+                            {item.name}
+                          </span>
+                          <span className="text-[11px] leading-[14px] text-text-secondary">
+                            {isRunning
+                              ? "Updating SAS code & metadata…"
                               : isDone
-                              ? "text-text-primary font-medium"
-                              : "text-text-secondary"
-                          }`}
-                        >
-                          {item.name}
-                        </span>
+                              ? "Completed"
+                              : isNeedsAction
+                              ? "Action required"
+                              : isSkipped
+                              ? "Skipped by user"
+                              : "Queued"}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-[6px] shrink-0">
-                        <span className="text-[11px] font-mono text-text-secondary px-[5px] py-px rounded bg-graphite-20/60">
-                          {isRunning ? "Running" : isDone ? "Done" : "Queued"}
-                        </span>
+                        {canSkip && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSkipEventProgressItem?.(item.tflId);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 px-[6px] py-[1px] rounded text-[11px] font-medium text-brand-1 hover:bg-brand-1/10 transition-all"
+                          >
+                            Skip
+                          </button>
+                        )}
                         <ChevronRightIcon className="size-[12px] opacity-0 group-hover:opacity-100 transition-opacity text-text-secondary" />
                       </div>
                     </div>
@@ -1347,9 +1392,13 @@ export default function ChatBox({
         {/* --- Inputbox Container (non-pending) --- */}
         {isNotPendingAndIsDefaultOrFocusedOrTypedOrMaxHeight && (
           <div
-            className={`bg-white border-solid flex flex-col items-start justify-start p-[8px] relative shrink-0 w-full transition-all duration-200 border border-graphite-10 ${
-              isMaxHeightAndNotPending ? "rounded-[6px]" : "rounded-[8px]"
-            }`}
+            className={`border-solid flex flex-col items-start justify-start p-[8px] relative shrink-0 w-full transition-all duration-200 border border-graphite-10 ${
+              disabled
+                ? "bg-graphite-5 cursor-not-allowed select-none"
+                : isFocusedAndNotPending
+                ? "bg-white border-brand-1 shadow-[0_0_0_1px_var(--color-brand-1)]"
+                : "bg-white hover:border-graphite-30"
+            } ${isMaxHeightAndNotPending ? "rounded-[6px]" : "rounded-[8px]"}`}
           >
             {/* ---- Attachment Preview Strip (Top) ---- */}
             {attachments.length > 0 && (
@@ -1368,7 +1417,7 @@ export default function ChatBox({
             {/* ---- ContentEditable Input (Upper Body) ---- */}
             <div className="w-full relative min-w-0 pb-[4px]">
               {/* Mention Dropdown */}
-              {showMentionMenu && filteredMentionOptions.length > 0 && (
+              {showMention && showMentionMenu && filteredMentionOptions.length > 0 && (
                 <div
                   className="absolute bottom-full left-0 mb-[8px] w-[310px] max-h-[260px] bg-white border border-border-default rounded-[8px] shadow-[0_6px_20px_rgba(0,0,0,0.12)] overflow-hidden z-50 flex flex-col select-none"
                   onMouseDown={(e) => e.preventDefault()}
@@ -1386,7 +1435,7 @@ export default function ChatBox({
                           onClick={() => handleSelectMention(opt)}
                           onMouseEnter={() => setMentionSelectedIndex(idx)}
                           className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[6px] cursor-pointer transition-colors text-[13px] ${
-                            isSelected ? "bg-az-secondary text-brand-1 font-medium" : "text-text-primary hover:bg-graphite-5"
+                            isSelected ? "bg-az-secondary text-brand-1 font-medium hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
                           }`}
                         >
                           {opt.type === "event" ? (
@@ -1418,7 +1467,9 @@ export default function ChatBox({
               {/* Placeholder (CSS trick: show when empty and not focused) */}
               {!hasContent && (
                 <span
-                  className="absolute left-0 top-0 pointer-events-none select-none t-body text-text-secondary text-[14px] leading-[22px] whitespace-nowrap overflow-hidden"
+                  className={`absolute left-0 top-0 pointer-events-none select-none t-body text-[14px] leading-[22px] whitespace-nowrap overflow-hidden ${
+                    disabled ? "text-text-secondary/60 italic cursor-not-allowed" : "text-text-secondary"
+                  }`}
                   style={{ maxWidth: '100%', textOverflow: 'ellipsis' }}
                   aria-hidden="true"
                 >
@@ -1427,23 +1478,26 @@ export default function ChatBox({
               )}
               <div
                 ref={editableRef}
-                contentEditable
+                contentEditable={!disabled}
                 suppressContentEditableWarning
                 role="textbox"
                 aria-multiline="true"
                 aria-label={placeholderText}
-                onFocus={() => setIsFocused(true)}
+                onFocus={disabled ? undefined : () => setIsFocused(true)}
                 onBlur={() => setTimeout(() => {
                   setIsFocused(false);
                   setShowMentionMenu(false);
                 }, 180)}
                 onInput={() => {
+                  if (disabled) return;
                   syncHasContent();
                   checkMentionTrigger();
                 }}
-                onKeyDown={handleEditableKeyDown}
-                onPaste={handlePaste}
+                onKeyDown={disabled ? undefined : handleEditableKeyDown}
+                onPaste={disabled ? undefined : handlePaste}
                 className={`w-full t-body text-text-primary bg-transparent outline-none text-[14px] leading-[22px] break-words whitespace-pre-wrap ${
+                  disabled ? "cursor-not-allowed pointer-events-none select-none" : ""
+                } ${
                   isMaxHeightAndNotPending ? "max-h-[140px] overflow-y-auto pr-[4px]" : "min-h-[24px]"
                 }`}
                 style={{ wordBreak: 'break-word' }}
@@ -1469,16 +1523,18 @@ export default function ChatBox({
             <div className="flex items-center justify-between w-full pt-[4px]">
               {/* Left: Tool actions (Upload Image, Mention) */}
               <div className="flex items-center gap-[6px]">
-                <Tooltip label={canAddMore ? "Upload Image" : "Maximum 5 images reached"}>
+                <Tooltip label={disabled ? "Historical session is read-only" : canAddMore ? "Upload Image" : "Maximum 5 images reached"}>
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={!canAddMore}
+                    onClick={() => !disabled && fileInputRef.current?.click()}
+                    disabled={disabled || !canAddMore}
                     aria-label="Upload Image"
                     className={[
                       "relative shrink-0 w-[24px] h-[24px] flex items-center justify-center rounded-[4px] transition-colors duration-100",
                       "after:content-[''] after:absolute after:-inset-[6px]",
-                      canAddMore
+                      disabled
+                        ? "text-graphite-20 cursor-not-allowed opacity-40 pointer-events-none"
+                        : canAddMore
                         ? "text-text-secondary hover:text-text-primary hover:bg-black/5 cursor-pointer active:scale-[0.92]"
                         : "text-graphite-20 cursor-not-allowed opacity-40",
                     ].join(" ")}
@@ -1488,26 +1544,33 @@ export default function ChatBox({
                 </Tooltip>
 
                 {/* Mention @ button */}
-                <Tooltip label="Mention scope or table (@)">
-                  <button
-                    type="button"
-                    onClick={handleToolbarMentionClick}
-                    aria-label="Mention scope or table"
-                    className="relative shrink-0 w-[24px] h-[24px] flex items-center justify-center rounded-[4px] transition-colors duration-100 text-text-secondary hover:text-text-primary hover:bg-black/5 cursor-pointer active:scale-[0.92]"
-                  >
-                    <AtIcon className="w-[14px] h-[14px]" />
-                  </button>
-                </Tooltip>
+                {showMention && (
+                  <Tooltip label={disabled ? "Historical session is read-only" : "Mention scope or table (@)"}>
+                    <button
+                      type="button"
+                      onClick={disabled ? undefined : handleToolbarMentionClick}
+                      disabled={disabled}
+                      aria-label="Mention scope or table"
+                      className={`relative shrink-0 w-[24px] h-[24px] flex items-center justify-center rounded-[4px] transition-colors duration-100 ${
+                        disabled
+                          ? "text-graphite-20 cursor-not-allowed opacity-40 pointer-events-none"
+                          : "text-text-secondary hover:text-text-primary hover:bg-black/5 cursor-pointer active:scale-[0.92]"
+                      }`}
+                    >
+                      <AtIcon className="w-[14px] h-[14px]" />
+                    </button>
+                  </Tooltip>
+                )}
               </div>
 
               {/* Right: Submit CTA Button */}
               <button
                 onClick={isActuallyDisabled ? undefined : handleSend}
                 disabled={isActuallyDisabled}
-                title={hasUploadingAttachments ? "Waiting for images to finish uploading…" : undefined}
+                title={disabled ? "Historical session is read-only" : hasUploadingAttachments ? "Waiting for images to finish uploading…" : undefined}
                 className={`${
                   isActuallyDisabled
-                    ? "bg-graphite-20 cursor-not-allowed opacity-50"
+                    ? "bg-graphite-20 cursor-not-allowed opacity-50 pointer-events-none"
                     : "bg-brand-1 hover:bg-az-warning cursor-pointer active:scale-95"
                 } relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center transition-colors select-none`}
               >
@@ -1525,15 +1588,21 @@ export default function ChatBox({
 
         {/* --- Inputbox when Pending is active --- */}
         {pending && (
-          <div className="bg-white border border-graphite-10 border-solid content-stretch flex flex-col items-start justify-center p-[8px] relative rounded-[8px] shrink-0 w-full">
+          <div className={`border border-solid content-stretch flex flex-col items-start justify-center p-[8px] relative rounded-[8px] shrink-0 w-full ${
+            disabled ? "bg-[#F7F8F8] border-graphite-10 cursor-not-allowed" : "bg-white border-graphite-10"
+          }`}>
             <div className="content-stretch flex gap-[16px] items-center relative shrink-0 w-full">
               <div className="content-stretch flex flex-[1_0_0] items-center justify-start min-w-px relative">
                 <input
                   ref={pendingInputRef}
                   type="text"
-                  placeholder="Ask Me Anything..."
-                  className="flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px]"
+                  disabled={disabled}
+                  placeholder={disabled ? "Historical session is read-only" : "Ask Me Anything..."}
+                  className={`flex-1 t-input text-text-primary placeholder-text-secondary bg-transparent border-none outline-none font-['PingFang_SC',sans-serif] text-[14px] leading-[24px] ${
+                    disabled ? "cursor-not-allowed text-text-secondary/60 italic" : ""
+                  }`}
                   onKeyDown={(e) => {
+                    if (disabled) return;
                     if (e.key === "Enter") {
                       onSubmit(e.currentTarget.value);
                       e.currentTarget.value = "";
@@ -1543,11 +1612,17 @@ export default function ChatBox({
               </div>
 
               <button
+                disabled={disabled}
                 onClick={() => {
+                  if (disabled) return;
                   const el = pendingInputRef.current;
-                  if (el) { onSubmit(el.value); el.value = ""; }
+                  if (el && el.value.trim()) { onSubmit(el.value.trim()); el.value = ""; }
                 }}
-                className="bg-brand-1 hover:opacity-90 transition-colors relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center cursor-pointer select-none active:scale-95"
+                className={`relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center select-none ${
+                  disabled
+                    ? "bg-graphite-10 cursor-not-allowed opacity-50"
+                    : "bg-brand-1 hover:opacity-90 transition-colors cursor-pointer active:scale-95"
+                }`}
               >
                 <img
                   src={aiSubmitIconUrl}

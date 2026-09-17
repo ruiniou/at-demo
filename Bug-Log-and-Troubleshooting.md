@@ -238,5 +238,21 @@
   1. **Props 扩展双向核对**：在 TypeScript 中向带有内联类型注解的组件形参添加新属性时，必须同时检查左侧解构形参列表与右侧类型定义，确保两者完全镜像匹配。
   2. **避免未声明变量直接下发**：传递回调时可先检查局部作用域绑定，必要时配合 ESLint `no-undef` 规则在保存时即时捕获解构漏写的变量。
 
+---
 
+### [2026-09-17] 锁定表解锁函数 `handleToggleLock` 错误将状态置为 `pending` 导致解锁后误现待定变更状态
 
+* **现象 (Symptom)**：
+  在左侧 Tree List 或代码工具栏中对锁定状态的交付物（如 `14.1.8 Medical History by SOC`）执行解锁后，该表并没有恢复为正常的已完成（`completed`）状态，反而意外变成了 `pending` 状态（目录树中显示黄色待办圆点、AI Copilot 输入框出现 Pending Changes 操作条、Event Copilot 的 Target TFLs 卡片中显示黄色「Pending」标签）。
+* **根本原因 (Root Cause)**：
+  在 `Main.tsx` 的 `handleToggleLock` 函数中，对锁定状态的切换逻辑直接使用了二值三元表达式：
+  `status: table.status === 'locked' ? 'pending' : 'locked'`
+  这导致只要对任何处于 `locked` 状态的表格执行解锁操作，其状态都会被硬编码赋予 `'pending'`。进而引发系统级级联反应（`liveTable.status === 'pending'`），使得工作区、输入框和 Event Copilot 全部误判该表存在待人工审查的变更。
+* **解决方案 (Solution)**：
+  修正 `handleToggleLock` 中的状态流转逻辑：
+  当解除锁定时，优先检查该表是否原本存在未处理的待定改动（`table.pendingChanges > 0`），若有则恢复为 `'pending'`，否则恢复为正常的已完成状态 `'completed'`：
+  `status: table.status === 'locked' ? (table.pendingChanges && table.pendingChanges > 0 ? 'pending' : 'completed') : 'locked'`
+  同步将 program 层级的解锁逻辑由 `'pending'` 修正为 `'completed'`。
+* **经验教训 (Takeaways)**：
+  1. **多态状态机流转严禁简化为布尔二值开关**：当实体具备多种状态（`completed` / `pending` / `locked` / `error` 等）时，不可随意用 `a ? b : c` 做二元翻转，必须明确每个状态被切换时的前置条件与预期归宿。
+  2. **锁定（Freeze/Lock）的本质是冻结而非待定**：业务心智中代码锁定通常发生于交付物已定稿/已完成之后，解锁操作恢复的应是其基线正常态（`completed`），不应凭空制造“待定变更”。
