@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Checkbox } from "../../../components/ui/Checkbox";
 import { Badge } from "../../../components/ui/Badge";
 import { UploadCard, UploadStatus } from "../../../components/ui/UploadCard";
@@ -23,6 +23,14 @@ import searchIconUrl from "../../../icons/search-line.svg";
 import checkIconUrl from "../../../icons/check-line.svg";
 import arrowDownIconUrl from "../../../icons/arrow-down-s-line.svg";
 import { PrimaryButton, SecondaryButton } from "./Button";
+import {
+  AssignmentTab,
+  TFLRow,
+  TeamMember,
+  MOCK_TFL_ROWS,
+  MOCK_TEAM_MEMBERS,
+  MOCK_USER_POOL,
+} from "./EventTeamMemberModal";
 
 // ==================== Icons ====================
 
@@ -220,114 +228,7 @@ function Stepper({ currentStep }: { currentStep: 1 | 2 }) {
   );
 }
 
-// ==================== Status Tag ====================
 
-type TaskStatus = "ai-processing" | "in-progress" | "completed" | "to-do";
-
-function StatusTag({ status }: { status: TaskStatus }) {
-  const config: Record<TaskStatus, { icon: string; label: string }> = {
-    "ai-processing": { icon: aiProcessingIconUrl, label: "AI Processing" },
-    "in-progress": { icon: wipStatusIconUrl, label: "In Progress" },
-    "completed": { icon: completedStatusIconUrl, label: "Completed" },
-    "to-do": { icon: untouchedStatusIconUrl, label: "To do" },
-  };
-  const c = config[status];
-  return (
-    <div className="flex items-center gap-[4px]">
-      <img src={c.icon} alt="" className="h-[16px] w-[16px] shrink-0" />
-      <span className="t-small" style={{ color: "var(--color-text-primary)" }}>{c.label}</span>
-    </div>
-  );
-}
-
-// ==================== Step 2 - Task Assignment ====================
-
-type TaskRow = {
-  section: string; tableNumber: string; tableTitle: string; program: string; suffix: string;
-  status: TaskStatus; programmer: string; qcProgram: string; qcStatus: TaskStatus; qcProgrammer: string;
-};
-
-const mockTaskRows: TaskRow[] = [
-  { section: "14.1", tableNumber: "14.1.1", tableTitle: "Demographics", program: "t_dm_01", suffix: "sas", status: "ai-processing", programmer: "Charlie", qcProgram: "qc_t_dm_01", qcStatus: "ai-processing", qcProgrammer: "Bob" },
-  { section: "14.1", tableNumber: "14.1.2", tableTitle: "Baseline Characteristics", program: "t_dm_02", suffix: "sas", status: "in-progress", programmer: "Sarah", qcProgram: "qc_t_dm_02", qcStatus: "in-progress", qcProgrammer: "James" },
-  { section: "14.1", tableNumber: "14.1.3", tableTitle: "Medical History", program: "t_dm_03", suffix: "sas", status: "completed", programmer: "Tom", qcProgram: "qc_t_dm_03", qcStatus: "completed", qcProgrammer: "Emily" },
-  { section: "14.1", tableNumber: "14.1.4", tableTitle: "Concomitant Meds", program: "t_dm_04", suffix: "sas", status: "to-do", programmer: "James", qcProgram: "qc_t_dm_04", qcStatus: "to-do", qcProgrammer: "Sarah" },
-];
-
-const headerCellStyle = "flex items-center px-[8px] py-[4px] text-[12px] font-medium text-text-primary border-r border-border-default shrink-0";
-const dataCellStyle = "flex items-center px-[8px] py-[4px] text-[12px] text-text-primary border-r border-border-default shrink-0";
-
-function Step2Body() {
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const allSelected = selectedRows.size === mockTaskRows.length;
-  const toggleRow = (idx: number) => {
-    setSelectedRows(prev => { const next = new Set(prev); if (next.has(idx)) next.delete(idx); else next.add(idx); return next; });
-  };
-  const toggleAll = () => {
-    if (allSelected) setSelectedRows(new Set());
-    else setSelectedRows(new Set(mockTaskRows.map((_, i) => i)));
-  };
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-[16px] overflow-y-auto p-[20px_24px]">
-      {/* Section title */}
-      <div className="flex shrink-0 items-center justify-between">
-        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 500, fontSize: 14, color: "#000000" }}>Task Assignment</span>
-      </div>
-      {/* Table */}
-      <div className="overflow-x-auto rounded-[4px] border border-graphite-10">
-        {/* Header row */}
-        <div className="flex w-max items-center border-b border-graphite-10 bg-graphite-10">
-          <div className="flex w-[36px] shrink-0 items-center justify-center py-[4px] border-r border-border-default">
-            <Checkbox checked={allSelected} onChange={toggleAll} />
-          </div>
-          <div className={headerCellStyle} style={{ width: "80px" }}>Section</div>
-          <div className={headerCellStyle} style={{ width: "96px" }}>Table Number</div>
-          <div className={`${headerCellStyle} min-w-[140px] flex-1 justify-between`}>
-            <span>Table Title</span>
-            <SearchIcon size={16} color="var(--color-text-secondary)" />
-          </div>
-          <div className={`${headerCellStyle} min-w-[100px]`}>Program</div>
-          <div className={`${headerCellStyle} min-w-[60px]`}>Suffix</div>
-          <div className={`${headerCellStyle} min-w-[120px] justify-between`}>
-            <span>Status</span>
-            <FilterIcon size={16} color="var(--color-text-secondary)" />
-          </div>
-          <div className={`${headerCellStyle} min-w-[100px] justify-between`}>Programmer</div>
-          <div className={`${headerCellStyle} min-w-[120px]`}>QC Program</div>
-          <div className={`${headerCellStyle} min-w-[120px] justify-between`}>
-            <span>QC Status</span>
-            <FilterIcon size={16} color="var(--color-text-secondary)" />
-          </div>
-          <div className="flex min-w-[110px] flex-1 items-center px-[8px] py-[4px] text-[12px] font-medium text-text-primary">QC Programmer</div>
-        </div>
-        {/* Data rows */}
-        {mockTaskRows.map((row, idx) => (
-          <div key={idx} className="flex w-max items-center border-b border-graphite-10 last:border-b-0 hover:bg-bg-panel">
-            <div className="flex w-[36px] shrink-0 items-center justify-center py-[4px] border-r border-border-default">
-              <Checkbox checked={selectedRows.has(idx)} onChange={() => toggleRow(idx)} />
-            </div>
-            <div className={dataCellStyle} style={{ width: "80px" }}>{row.section}</div>
-            <div className={dataCellStyle} style={{ width: "96px" }}>{row.tableNumber}</div>
-            <div className={`${dataCellStyle} min-w-[140px] flex-1`}>{row.tableTitle}</div>
-            <div className={`${dataCellStyle} min-w-[100px]`}>{row.program}</div>
-            <div className={`${dataCellStyle} min-w-[60px]`}>{row.suffix}</div>
-            <div className={`${dataCellStyle} min-w-[120px]`}><StatusTag status={row.status} /></div>
-            <div className={`${dataCellStyle} min-w-[100px] justify-between`}>
-              <span>{row.programmer}</span>
-              <ArrowRightIcon size={16} color="var(--color-text-secondary)" />
-            </div>
-            <div className={`${dataCellStyle} min-w-[120px]`}>{row.qcProgram}</div>
-            <div className={`${dataCellStyle} min-w-[120px]`}><StatusTag status={row.qcStatus} /></div>
-            <div className="flex min-w-[110px] flex-1 items-center justify-between px-[8px] py-[4px] text-[12px] text-text-primary">
-              <span>{row.qcProgrammer}</span>
-              <ArrowRightIcon size={16} color="var(--color-text-secondary)" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 // ==================== Historical Events Mock per Study ====================
 const STUDY_HISTORICAL_EVENTS: Record<
@@ -416,6 +317,60 @@ export default function CreateEventModal({
   const [customShellStatus, setCustomShellStatus] = useState<UploadStatus>("pending");
   const [customShellFile, setCustomShellFile] = useState("");
 
+  // Task assignment state for Step 2
+  const [tflRows, setTflRows] = useState<TFLRow[]>(MOCK_TFL_ROWS);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(MOCK_TEAM_MEMBERS);
+
+  const membersWithCounts = useMemo(
+    () =>
+      teamMembers.map((m) => ({
+        ...m,
+        assignedTFLs: tflRows.filter((r) => r.programmer === m.name).length,
+      })),
+    [teamMembers, tflRows]
+  );
+
+  const handleUpdateProgrammer = (id: string, programmer: string | null) => {
+    if (programmer && !teamMembers.find((m) => m.name === programmer)) {
+      const poolUser = MOCK_USER_POOL.find((u) => u.name === programmer);
+      if (poolUser) {
+        setTeamMembers((prev) => [
+          ...prev,
+          {
+            name: poolUser.name,
+            initials: poolUser.initials,
+            color: poolUser.color,
+            isOwner: false,
+            assignedTFLs: 0,
+            addedBy: "Sarah Chen",
+          },
+        ]);
+      }
+    }
+    setTflRows((prev) => prev.map((r) => (r.id === id ? { ...r, programmer } : r)));
+  };
+
+  const handleBatchUpdateProgrammer = (ids: string[], programmer: string | null) => {
+    const idSet = new Set(ids);
+    if (programmer && !teamMembers.find((m) => m.name === programmer)) {
+      const poolUser = MOCK_USER_POOL.find((u) => u.name === programmer);
+      if (poolUser) {
+        setTeamMembers((prev) => [
+          ...prev,
+          {
+            name: poolUser.name,
+            initials: poolUser.initials,
+            color: poolUser.color,
+            isOwner: false,
+            assignedTFLs: 0,
+            addedBy: "Sarah Chen",
+          },
+        ]);
+      }
+    }
+    setTflRows((prev) => prev.map((r) => (idSet.has(r.id) ? { ...r, programmer } : r)));
+  };
+
   const taOptions: DropdownOption[] = [
     { label: "Oncology", value: "oncology" }, { label: "Cardiology", value: "cardiology" },
     { label: "Neurology", value: "neurology" }, { label: "Immunology", value: "immunology" },
@@ -477,11 +432,13 @@ export default function CreateEventModal({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
-  // Reset to step 1 when modal closes
+  // Reset to step 1 and mock rows when modal closes
   useEffect(() => {
     if (!isOpen) { 
       setCurrentStep(1); 
       setStep1Height(null); 
+      setTflRows(MOCK_TFL_ROWS);
+      setTeamMembers(MOCK_TEAM_MEMBERS);
     }
   }, [isOpen]);
 
@@ -538,6 +495,9 @@ export default function CreateEventModal({
     setTifoFile("");
     setCustomShellStatus("pending");
     setCustomShellFile("");
+    setTflRows(MOCK_TFL_ROWS);
+    setTeamMembers(MOCK_TEAM_MEMBERS);
+    setCurrentStep(1);
     onClose();
   };
 
@@ -546,7 +506,7 @@ export default function CreateEventModal({
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <button className="absolute inset-0 bg-black/40" aria-label="Close modal" onClick={onClose} />
-      <div ref={modalRef} className="relative flex h-[740px] max-h-[calc(100vh-40px)] w-[760px] max-w-[90vw] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.15)]" style={currentStep === 2 && step1Height ? { height: `${step1Height}px` } : undefined}>
+      <div ref={modalRef} className="relative flex h-[740px] max-h-[calc(100vh-40px)] w-[840px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.15)]" style={currentStep === 2 && step1Height ? { height: `${step1Height}px` } : undefined}>
         {/* Header */}
         <div className="flex shrink-0 items-center gap-[16px] px-[20px] pb-[12px] pt-[16px]">
           <div className="flex min-w-0 flex-1 items-center gap-[10px]">
@@ -680,8 +640,13 @@ export default function CreateEventModal({
             </div>
           ) : (
             /* Step 2 - Task Assignment */
-            <div className="flex min-h-0 flex-1 flex-col border-t border-graphite-10">
-              <Step2Body />
+            <div className="flex min-h-0 flex-1 flex-col border-t border-graphite-10 relative overflow-hidden">
+              <AssignmentTab
+                tflRows={tflRows}
+                teamMembers={membersWithCounts}
+                onUpdateProgrammer={handleUpdateProgrammer}
+                onBatchUpdateProgrammer={handleBatchUpdateProgrammer}
+              />
             </div>
           )}
         </div>
