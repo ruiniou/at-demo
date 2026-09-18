@@ -3790,8 +3790,6 @@ function WorkspaceDivider({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="absolute inset-y-0 -left-[4px] -right-[4px] z-10 cursor-col-resize" />
-      {/* 缝隙填充底线：扣掉 8px 长度（上下各缩进 4px，带圆角柔化），避免卡片圆角转角处露亮线 */}
-      <div className="absolute inset-x-0 top-[4px] bottom-[4px] w-full bg-bg-panel rounded-full" />
       <div className={`absolute inset-x-0 top-[4px] bottom-[4px] w-full bg-brand-1 rounded-full transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
@@ -3975,8 +3973,6 @@ function HorizontalWorkspaceDivider({
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="absolute inset-x-0 -top-[4px] -bottom-[4px] z-10" />
-      {/* 缝隙填充底线：扣掉 8px 长度（左右各缩进 4px，带圆角柔化），避免卡片圆角转角处露亮线 */}
-      <div className="absolute inset-y-0 left-[4px] right-[4px] h-full bg-bg-panel rounded-full" />
       <div className={`absolute inset-y-0 left-[4px] right-[4px] h-full bg-brand-1 rounded-full transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
@@ -10484,6 +10480,7 @@ function WorkspaceContent({
   const [executingTflIds, setExecutingTflIds] = useState<string[]>([]);
   const [executingSessionTitle, setExecutingSessionTitle] = useState<string | null>(null);
   const [eventProgressData, setEventProgressData] = useState<EventProgressCardData | null>(null);
+  const isCopilotMode = treeListTab === 'copilot';
 
   // If TreeList is opened (e.g. manually by the user), clear the auto-collapsed flag
   useEffect(() => {
@@ -11314,8 +11311,16 @@ function WorkspaceContent({
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-1 overflow-hidden bg-bg-panel">
-      <div ref={workspaceContainerRef} className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
+    <div className="relative flex h-full min-w-0 flex-1 overflow-hidden bg-bg-panel transition-colors duration-500">
+      {/* Event Copilot Mode: Restrained Ambient Gradient Layer */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-700 ease-in-out"
+        style={{
+          opacity: isCopilotMode ? 1 : 0,
+          background: 'linear-gradient(150deg, var(--bg-light, #F8F7F7) 4.92%, var(--Light-AZ-Secondary, #F4E8EE) 39.96%, var(--Mulberry-20, #E6CCDC) 77.53%)',
+        }}
+      />
+      <div ref={workspaceContainerRef} className="relative z-10 flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         <div
           className="shrink-0 overflow-hidden"
           style={{
@@ -11324,7 +11329,7 @@ function WorkspaceContent({
             transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
           }}
         >
-          <div className="flex h-full w-full flex-col bg-bg-panel">
+          <div className={`flex h-full w-full flex-col transition-colors duration-500 ${isCopilotMode ? 'bg-white/20 backdrop-blur-[1px]' : 'bg-bg-panel'}`}>
             <div className="flex h-[52px] shrink-0 items-center gap-[8px] px-[10px]">
               <TooltipText label="Back to Home">
                 <button
@@ -11359,55 +11364,69 @@ function WorkspaceContent({
               </TooltipText>
             </div>
 
-            {/* TFL / Copilot Tab Switcher */}
-            <div className="flex shrink-0 items-center gap-[4px] px-[10px] pb-[6px]">
-              {/* TFL Tab */}
-              <button
-                type="button"
-                onClick={() => setTreeListTab('tfl')}
-                className={`flex h-[28px] items-center gap-[4px] rounded-[6px] transition-all cursor-pointer shrink-0 ${
-                  treeListTab === 'tfl'
-                    ? 'bg-[#F4E8EE] text-brand-1 px-[8px]'
-                    : 'w-[28px] justify-center text-text-secondary hover:bg-black/5'
+            {/* TFL / Copilot Segmented Mode Switcher */}
+            <div className="flex shrink-0 items-center px-[10px] pb-[6px]">
+              <div
+                role="tablist"
+                aria-label="Workspace mode switcher"
+                className={`inline-flex items-center p-[2px] rounded-[8px] transition-all duration-300 ${
+                  isCopilotMode
+                    ? 'bg-black/[0.05] border border-black/[0.06]'
+                    : 'bg-black/[0.04] border border-black/[0.04]'
                 }`}
-                aria-label="TFL list"
               >
-                <LocalIcon
-                  src={tableIconUrl}
-                  className="h-[14px] w-[14px] shrink-0"
-                  color={treeListTab === 'tfl' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'}
-                />
-                {treeListTab === 'tfl' && (
-                  <span className="t-small font-medium whitespace-nowrap">TFL</span>
-                )}
-              </button>
+                {/* TFL Tab */}
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={treeListTab === 'tfl'}
+                  onClick={() => setTreeListTab('tfl')}
+                  className={`flex h-[26px] items-center gap-[5px] rounded-[6px] transition-all duration-200 cursor-pointer select-none ${
+                    treeListTab === 'tfl'
+                      ? 'bg-white text-text-primary shadow-[0_1px_3px_rgba(0,0,0,0.08)] px-[9px] font-medium'
+                      : 'w-[28px] justify-center text-text-secondary hover:text-text-primary hover:bg-black/[0.03]'
+                  }`}
+                  aria-label="TFL list"
+                >
+                  <LocalIcon
+                    src={tableIconUrl}
+                    className="h-[14px] w-[14px] shrink-0"
+                    color={treeListTab === 'tfl' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'}
+                  />
+                  {treeListTab === 'tfl' && (
+                    <span className="t-small whitespace-nowrap">TFL</span>
+                  )}
+                </button>
 
-              {/* Copilot Tab */}
-              <button
-                type="button"
-                onClick={() => {
-                  setTreeListTab('copilot');
-                  setAiCopilotOpen(true);
-                  if (!selectedEventSession && eventSessions.length > 0) {
-                    setSelectedEventSession(eventSessions[0]);
-                  }
-                }}
-                className={`flex h-[28px] items-center gap-[4px] rounded-[6px] transition-all cursor-pointer shrink-0 ${
-                  treeListTab === 'copilot'
-                    ? 'bg-[#F4E8EE] text-brand-1 px-[8px]'
-                    : 'w-[28px] justify-center text-text-secondary hover:bg-black/5'
-                }`}
-                aria-label="Event Copilot sessions"
-              >
-                <LocalIcon
-                  src={chatAiFillIconUrl}
-                  className="h-[14px] w-[14px] shrink-0"
-                  color={treeListTab === 'copilot' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'}
-                />
-                {treeListTab === 'copilot' && (
-                  <span className="t-small font-medium whitespace-nowrap">Copilot</span>
-                )}
-              </button>
+                {/* Copilot Tab */}
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={treeListTab === 'copilot'}
+                  onClick={() => {
+                    setTreeListTab('copilot');
+                    setAiCopilotOpen(true);
+                    if (!selectedEventSession && eventSessions.length > 0) {
+                      setSelectedEventSession(eventSessions[0]);
+                    }
+                  }}
+                  className={`flex h-[26px] items-center gap-[5px] rounded-[6px] transition-all duration-200 cursor-pointer select-none ${
+                    treeListTab === 'copilot'
+                      ? 'bg-white text-brand-1 shadow-[0_1px_3px_rgba(0,0,0,0.08)] px-[9px] font-medium'
+                      : 'w-[28px] justify-center text-text-secondary hover:text-text-primary hover:bg-black/[0.03]'
+                  }`}
+                  aria-label="Event Copilot sessions"
+                >
+                  <LocalIcon
+                    src={chatAiFillIconUrl}
+                    className="h-[14px] w-[14px] shrink-0"
+                    color={treeListTab === 'copilot' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'}
+                  />
+                  {treeListTab === 'copilot' && (
+                    <span className="t-small whitespace-nowrap">Copilot</span>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Copilot Tab: Session List */}
@@ -11557,37 +11576,9 @@ function WorkspaceContent({
             </>) /* end TFL tab ternary */}
 
             {/* Tree List Bottom-Left Controls — always visible */}
-            <div className="shrink-0 flex flex-col border-t border-graphite-10 bg-bg-panel">
-              {/* Filter UI Switcher */}
-              <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
-                <span className="text-[11px] text-text-secondary whitespace-nowrap">Filter UI</span>
-                <SegmentedControl
-                  size="sm"
-                  value={filterStyleVariant}
-                  onChange={(val) => setFilterStyleVariant(val as 'in-search' | 'split')}
-                  options={[
-                    { label: "In-Search", value: "in-search" },
-                    { label: "Split", value: "split" },
-                  ]}
-                />
-              </div>
-
-              {/* AI Layout Switcher */}
-              <div className="flex items-center justify-between px-[10px] py-[6px] gap-[8px]">
-                <span className="text-[11px] text-text-secondary whitespace-nowrap">AI Layout</span>
-                <SegmentedControl
-                  size="sm"
-                  value={aiLayoutVariant}
-                  onChange={(val) => setAiLayoutVariant(val as 'drawer' | 'incard')}
-                  options={[
-                    { label: "Drawer", value: "drawer" },
-                    { label: "In-Card", value: "incard" },
-                  ]}
-                />
-              </div>
-
+            <div className={`shrink-0 flex flex-col border-t border-graphite-10 transition-colors duration-500 ${isCopilotMode ? 'bg-transparent' : 'bg-bg-panel'}`}>
               {/* User Account */}
-              <div className="pt-[4px] px-[2px] border-t border-border-default/60 mt-[4px]">
+              <div className="py-[4px] px-[2px]">
                 <AccountMenu onLogout={onLogout} />
               </div>
             </div>
