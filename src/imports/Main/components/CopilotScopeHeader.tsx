@@ -119,6 +119,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
     name: string;
     type: "event" | "tfl";
     pos: { top: number; left: number };
+    anchorRect?: { top: number; left: number; right: number; bottom: number };
   } | null>(null);
   const actionMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -128,6 +129,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
     name: string;
     type: "event" | "tfl";
     pos: { top: number; left: number };
+    anchorRect?: { top: number; left: number; right: number; bottom: number };
   } | null>(null);
   const [renameInputValue, setRenameInputValue] = useState("");
   const renameInputRef = useRef<HTMLInputElement | null>(null);
@@ -262,18 +264,35 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     const menuWidth = 148;
-    const left = Math.min(rect.right + 4, window.innerWidth - menuWidth - 8);
-    const top = Math.min(rect.top - 4, window.innerHeight - 90);
+    const padding = 8;
+
+    // Boundary check: if menu would overflow right viewport, flip to left of trigger
+    const fitsRight = rect.right + 4 + menuWidth <= window.innerWidth - padding;
+    const rawLeft = fitsRight ? rect.right + 4 : rect.left - 4 - menuWidth;
+    const left = Math.max(padding, Math.min(rawLeft, window.innerWidth - menuWidth - padding));
+    const top = Math.max(padding, Math.min(rect.top - 4, window.innerHeight - 90));
 
     setSessionActionMenu({
       id,
       name,
       type,
       pos: { top, left },
+      anchorRect: {
+        top: rect.top,
+        left: rect.left,
+        right: rect.right,
+        bottom: rect.bottom,
+      },
     });
   };
 
-  const handleStartRename = (session: { id: string; name: string; type: "event" | "tfl"; pos: { top: number; left: number } }) => {
+  const handleStartRename = (session: {
+    id: string;
+    name: string;
+    type: "event" | "tfl";
+    pos: { top: number; left: number };
+    anchorRect?: { top: number; left: number; right: number; bottom: number };
+  }) => {
     setSessionActionMenu(null);
     setRenameInputValue(session.name);
     setRenamingSession(session);
@@ -636,44 +655,68 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
       )}
 
       {/* Rename Popover */}
-      {renamingSession && createPortal(
-        <>
-          <div
-            className="fixed inset-0 z-[10000] bg-transparent"
-            onClick={() => handleConfirmRename()}
-          />
-          <div
-            style={{
-              position: "fixed",
-              top: renamingSession.pos.top,
-              left: renamingSession.pos.left,
-              zIndex: 10001,
-              width: 220,
-            }}
-            className="bg-white rounded-[6px] p-[4px] border border-border-default shadow-[0px_4px_16px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-100 select-none"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <input
-              ref={renameInputRef}
-              type="text"
-              value={renameInputValue}
-              onChange={(e) => setRenameInputValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleConfirmRename();
-                } else if (e.key === "Escape") {
-                  e.preventDefault();
-                  setRenamingSession(null);
-                }
-              }}
-              className="w-full h-[30px] px-[8px] text-[13px] border border-brand-1 rounded-[4px] outline-none focus:ring-1 focus:ring-brand-1 text-text-primary bg-white transition-all"
-              placeholder="Session name"
+      {renamingSession && (() => {
+        const RENAME_WIDTH = 220;
+        const PADDING = 8;
+
+        let left = renamingSession.pos.left;
+        let top = renamingSession.pos.top;
+
+        if (renamingSession.anchorRect) {
+          const anchor = renamingSession.anchorRect;
+          // If cannot fit on the right of anchor, flip to the left of the anchor
+          if (anchor.right + 4 + RENAME_WIDTH > window.innerWidth - PADDING) {
+            left = anchor.left - 4 - RENAME_WIDTH;
+          } else {
+            left = anchor.right + 4;
+          }
+          top = anchor.top - 4;
+        }
+
+        // Strict boundary collision detection: guarantees never exceeding right, left, or bottom viewport
+        const safeLeft = Math.max(PADDING, Math.min(left, window.innerWidth - RENAME_WIDTH - PADDING));
+        const safeTop = Math.max(PADDING, Math.min(top, window.innerHeight - 44 - PADDING));
+
+        return createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-[10000] bg-transparent"
+              onClick={() => handleConfirmRename()}
             />
-          </div>
-        </>,
-        document.body
-      )}
+            <div
+              style={{
+                position: "fixed",
+                top: safeTop,
+                left: safeLeft,
+                zIndex: 10001,
+                width: RENAME_WIDTH,
+                maxWidth: `calc(100vw - ${PADDING * 2}px)`,
+              }}
+              className="bg-white rounded-[6px] p-[4px] border border-border-default shadow-[0px_4px_16px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-100 select-none"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <input
+                ref={renameInputRef}
+                type="text"
+                value={renameInputValue}
+                onChange={(e) => setRenameInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleConfirmRename();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    setRenamingSession(null);
+                  }
+                }}
+                className="w-full h-[30px] px-[8px] text-[13px] border border-brand-1 rounded-[4px] outline-none focus:ring-1 focus:ring-brand-1 text-text-primary bg-white transition-all"
+                placeholder="Session name"
+              />
+            </div>
+          </>,
+          document.body
+        );
+      })()}
 
       {/* Delete Confirmation Modal */}
       {deletingSession && createPortal(
