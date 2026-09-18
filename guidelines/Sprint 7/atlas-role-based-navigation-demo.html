@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas — Role-Based Navigation Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAFAFA; --surface:#FFFFFF; --border:#E5E7EB; --border-strong:#D1D5DB;
+    --text:#18181B; --text-secondary:#71717A; --text-tertiary:#A1A1AA;
+    --accent:#7B1E3D; --accent-hover:#631730; --accent-tint:#FDF1F4; --accent-tint-border:#F3D9DF;
+    --status-progress:#B45309; --status-done:#047857; --status-todo:#6B7280; --status-error:#B91C1C;
+    --status-disabled:#9CA3AF; --status-disabled-tint:#F4F4F5;
+    --radius:10px; --cover-1:#EFE3E7; --cover-2:#E3EAF0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0F0F10; --surface:#1A1A1C; --border:#2C2C30; --border-strong:#3A3A40;
+      --text:#F2F2F3; --text-secondary:#A1A1AA; --text-tertiary:#71717A;
+      --accent:#E28FA3; --accent-hover:#EDB0BF; --accent-tint:#2A1920; --accent-tint-border:#4A2530;
+      --status-progress:#F0B860; --status-done:#5FD9A6; --status-todo:#A1A1AA; --status-error:#F09999;
+      --status-disabled:#71717A; --status-disabled-tint:#232326;
+      --cover-1:#2A2226; --cover-2:#20262C;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0F0F10; --surface:#1A1A1C; --border:#2C2C30; --border-strong:#3A3A40;
+    --text:#F2F2F3; --text-secondary:#A1A1AA; --text-tertiary:#71717A;
+    --accent:#E28FA3; --accent-hover:#EDB0BF; --accent-tint:#2A1920; --accent-tint-border:#4A2530;
+    --status-progress:#F0B860; --status-done:#5FD9A6; --status-todo:#A1A1AA; --status-error:#F09999;
+    --status-disabled:#71717A; --status-disabled-tint:#232326;
+    --cover-1:#2A2226; --cover-2:#20262C;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:'Inter','Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+
+  .demo-bar{background:#18181B;color:#E4E4E7;padding:9px 20px;display:flex;align-items:center;gap:12px;font-size:12px;flex-wrap:wrap;border-bottom:2px solid var(--accent);}
+  .demo-bar .demo-tag{color:#F0B860;font-weight:700;letter-spacing:0.3px;}
+  .role-group{display:flex;gap:6px;}
+  .role-btn{padding:5px 12px;border-radius:999px;border:1px solid #3A3A40;background:transparent;color:#D4D4D8;cursor:pointer;font-size:12px;font-family:inherit;}
+  .role-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;}
+  .demo-sep{color:#52525B;}
+
+  .app{display:flex;min-height:calc(100vh - 41px);}
+  .sidebar{width:230px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 12px;max-height:calc(100vh - 41px);overflow-y:auto;}
+  .logo{font-weight:700;font-size:18px;letter-spacing:0.5px;color:var(--accent);padding:4px 10px 16px 10px;}
+  .sidebar-section-label{font-size:11px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.4px;padding:0 10px;margin-bottom:6px;}
+  .recent-row{display:flex;flex-direction:column;padding:7px 10px;border-radius:7px;cursor:pointer;}
+  .recent-row:hover{background:var(--bg);}
+  .recent-row-top{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;overflow:hidden;}
+  .recent-row-path{font-size:10.5px;color:var(--text-tertiary);margin-left:14px;}
+  .empty-recent{padding:8px 10px;font-size:12px;color:var(--text-tertiary);font-style:italic;}
+  .back-row{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;}
+  .back-row:hover{background:var(--bg);color:var(--text);}
+  .mgmt-nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;font-size:13px;font-weight:600;background:var(--accent-tint);color:var(--accent);margin-top:2px;}
+  .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .dot.progress{background:var(--status-progress);} .dot.done{background:var(--status-done);} .dot.todo{background:var(--status-todo);} .dot.error{background:var(--status-error);}
+
+  .sidebar-footer{margin-top:auto;display:flex;align-items:center;gap:8px;padding:10px;color:var(--text-secondary);font-size:12.5px;}
+  .avatar-dot{width:26px;height:26px;border-radius:50%;background:var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--surface);flex-shrink:0;}
+  .footer-role-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .footer-icon-btn{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);cursor:pointer;border:1px solid transparent;font-size:15px;flex-shrink:0;}
+  .footer-icon-btn:hover{background:var(--bg);color:var(--text);}
+  .footer-icon-btn.active{background:var(--accent-tint);color:var(--accent);border-color:var(--accent-tint-border);}
+
+  .main{flex:1;padding:24px 28px 40px;min-width:0;}
+  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;}
+  .page-title{font-size:20px;font-weight:700;margin:0;}
+  .note-banner{background:var(--accent-tint);border:1px solid var(--accent-tint-border);color:var(--accent);font-size:12.5px;padding:9px 12px;border-radius:8px;margin-bottom:18px;display:flex;gap:8px;align-items:flex-start;}
+  .note-banner b{font-weight:600;}
+
+  .event-table,.mgmt-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:18px;}
+  .event-table th,.mgmt-table th{text-align:left;font-size:11.5px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.3px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);}
+  .event-table td,.mgmt-table td{padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+  .event-table tr:last-child td,.mgmt-table tbody tr:last-child td{border-bottom:none;}
+  .cell-status{display:flex;align-items:center;gap:6px;font-weight:600;}
+  .cell-status.progress{color:var(--status-progress);} .cell-status.done{color:var(--status-done);} .cell-status.todo{color:var(--text-tertiary);font-weight:500;}
+  .cell-owner,.cell-date{color:var(--text-secondary);}
+  .icon-row{display:flex;gap:12px;color:var(--text-tertiary);}
+  .icon-row span{cursor:pointer;} .icon-row span:hover{color:var(--text);}
+  .icon-row.disabled{color:var(--border-strong);font-style:italic;font-size:11.5px;}
+
+  .group-row td{background:var(--bg);}
+  .group-row .group-label{font-weight:700;font-size:13.5px;}
+  .group-row .group-sub{font-size:11px;color:var(--text-tertiary);font-weight:500;margin-left:8px;}
+  .study-row td{padding-left:34px;}
+  .ta-tag{font-size:10px;padding:2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--border);color:var(--text-secondary);margin-left:8px;}
+  .owner-chip{display:inline-flex;align-items:center;gap:6px;}
+  .owner-avatar{width:20px;height:20px;border-radius:50%;background:var(--border-strong);font-size:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;flex-shrink:0;}
+  .badge{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:600;display:inline-block;}
+  .badge.enabled{color:var(--status-done);background:#ECFDF5;}
+  .badge.disabled{color:var(--status-disabled);background:var(--status-disabled-tint);}
+  :root[data-theme="dark"] .badge.enabled, @media (prefers-color-scheme:dark){ .badge.enabled{background:rgba(95,217,166,0.12);} }
+  .row-action{cursor:pointer;font-size:12px;color:var(--text-secondary);}
+  .row-action:hover{color:var(--accent);}
+  .row-action + .row-action{margin-left:14px;}
+  .project-actions-row td{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px 8px 34px;}
+  .btn-add-study{font-size:12px;color:var(--accent);cursor:pointer;font-weight:600;}
+  .btn-add-study:hover{text-decoration:underline;}
+
+  .btn-primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+  .btn-primary:hover{background:var(--accent-hover);}
+  .btn-secondary{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;}
+  .btn-secondary:hover{border-color:var(--border-strong);}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .modal{background:var(--surface);border-radius:12px;width:420px;max-width:90vw;padding:22px;box-shadow:0 10px 40px rgba(0,0,0,0.25);}
+  .modal h3{margin:0 0 4px;font-size:16px;}
+  .modal .modal-sub{font-size:12px;color:var(--text-secondary);margin-bottom:18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;font-weight:600;margin-bottom:5px;}
+  .required-mark{color:var(--status-error);}
+  .field input,.field select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--accent);}
+  .field-error{color:var(--status-error);font-size:11px;margin-top:4px;display:none;}
+  .field.has-error input,.field.has-error select{border-color:var(--status-error);}
+  .field.has-error .field-error{display:block;}
+  .user-picker{border:1px solid var(--border);border-radius:7px;padding:6px;max-height:150px;overflow-y:auto;}
+  .user-option{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12.5px;}
+  .user-option:hover{background:var(--bg);}
+  .user-option.selected{background:var(--accent-tint);color:var(--accent);font-weight:600;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+  .empty-list{padding:40px 20px;text-align:center;color:var(--text-tertiary);font-size:13px;border:1px dashed var(--border-strong);border-radius:var(--radius);}
+</style>
+</head>
+<body>
+<div class="demo-bar">
+  <span class="demo-tag">DEMO 控件</span>
+  <span>（非产品界面，仅用于切换账号类型演示默认落地页 / 权限隔离，不代表最终登录方式）</span>
+  <span class="demo-sep">|</span>
+  <span>当前账号类型:</span>
+  <div class="role-group" id="roleGroup">
+    <button class="role-btn" data-role="admin">Admin（无 Event 归属）</button>
+    <button class="role-btn" data-role="owner">Study Owner（AZE2001-301）</button>
+    <button class="role-btn" data-role="member">Event Team Member</button>
+  </div>
+</div>
+<div class="app" id="appRoot"></div>
+
+<script>
+const TA_LIST = ['Oncology','Cardiology','Neurology'];
+const USERS = [
+  {id:'u_you', name:'You'},
+  {id:'u_tom', name:'Tom'},
+  {id:'u_mia', name:'Mia'},
+  {id:'u_alex', name:'Alex'},
+  {id:'u_jin', name:'Jin'},
+];
+function userName(id){ return (USERS.find(u=>u.id===id)||{}).name || '—'; }
+function initials(name){ return name.slice(0,1).toUpperCase(); }
+
+let DATA = {
+  projects: [
+    { id:'PRO001', name:'PRO001', status:'enabled', studies:[
+      { id:'AZE2001-301', ta:'Oncology', owner:'u_you', status:'enabled', events:5 },
+      { id:'AZE2002-105', ta:'Oncology', owner:'u_mia', status:'enabled', events:2 },
+    ]},
+    { id:'PRO002', name:'PRO002', status:'enabled', studies:[
+      { id:'CVD3001-201', ta:'Cardiology', owner:'u_alex', status:'enabled', events:2 },
+      { id:'CVD3002-110', ta:'Neurology', owner:'u_jin', status:'disabled', events:1 },
+    ]}
+  ]
+};
+
+const SAMPLE_EVENTS = [
+  { name:'CSR Interim Analysis', projectId:'PRO001', studyId:'AZE2001-301', status:'progress', by:'Tom', date:'2025-11-11' },
+  { name:'DSMB Q1 Report', projectId:'PRO001', studyId:'AZE2001-301', status:'done', by:'Tom', date:'2025-11-11' },
+  { name:'Interim CSR Draft', projectId:'PRO001', studyId:'AZE2002-105', status:'progress', by:'Mia', date:'2025-10-02' },
+  { name:'Annual Safety Update', projectId:'PRO002', studyId:'CVD3001-201', status:'done', by:'Alex', date:'2025-08-30' },
+  { name:'Final Statistical Report', projectId:'PRO002', studyId:'CVD3002-110', status:'todo', by:'Jin', date:'2025-07-01' },
+];
+const RECENTS_BY_ROLE = {
+  owner: [
+    {name:'CSR Interim Analysis',projectId:'PRO001',studyId:'AZE2001-301',status:'progress'},
+    {name:'DSMB Q1 Report',projectId:'PRO001',studyId:'AZE2001-301',status:'done'},
+  ],
+  member: [
+    {name:'Interim CSR Draft',projectId:'PRO001',studyId:'AZE2002-105',status:'progress'},
+  ],
+  admin: []
+};
+
+let state = {
+  role: 'admin',
+  page: 'management',
+  modal: null,          // null | {type:'newProject'} | {type:'newStudy', projectId} | {type:'editOwner', studyId}
+  pickedOwner: null,
+};
+
+function canAccessManagement(role){ return role==='admin' || role==='owner'; }
+function defaultPageForRole(role){ return role==='admin' ? 'management' : 'events'; }
+
+function roleLabel(role){
+  return role==='admin' ? 'Admin' : role==='owner' ? 'Study Owner (You)' : 'Event Team Member (You)';
+}
+
+/* ---------------- SIDEBAR ---------------- */
+function sidebarHTML(){
+  if(state.page==='management'){
+    return `
+      <div class="logo">ATLAS</div>
+      <div class="back-row" id="backToEvents"><span>&larr;</span><span>Events</span></div>
+      <div class="sidebar-section-label" style="margin-top:10px;">Management</div>
+      <div class="mgmt-nav-item"><span>&#128193;</span><span>Projects &amp; Studies</span></div>
+      <div class="sidebar-footer">
+        <div class="avatar-dot">${initials(roleLabel(state.role))}</div>
+        <div class="footer-role-label">${roleLabel(state.role)}</div>
+      </div>
+    `;
+  }
+  const recents = RECENTS_BY_ROLE[state.role] || [];
+  const recentHtml = recents.length ? recents.map(r=>{
+    const meta = statusMeta(r.status);
+    return `<div class="recent-row" data-recent="${r.name}"><div class="recent-row-top"><span class="dot ${meta.dot}"></span><span>${r.name}</span></div><div class="recent-row-path">${r.projectId} / ${r.studyId}</div></div>`;
+  }).join('') : `<div class="empty-recent">${state.role==='admin' ? '暂无最近访问记录 — Admin 默认不参与 Event 协作' : '暂无最近访问记录'}</div>`;
+  return `
+    <div class="logo">ATLAS</div>
+    <div class="sidebar-section-label">Recent</div>
+    ${recentHtml}
+    <div class="sidebar-footer">
+      <div class="avatar-dot">${initials(roleLabel(state.role))}</div>
+      <div class="footer-role-label">${roleLabel(state.role)}</div>
+      ${canAccessManagement(state.role) ? `<div class="footer-icon-btn" id="gotoManagement" title="Projects &amp; Studies 管理">&#9881;</div>` : ''}
+    </div>
+  `;
+}
+
+/* ---------------- EVENTS PAGE ---------------- */
+function statusMeta(status){
+  switch(status){
+    case 'progress': return {cls:'progress',dot:'progress',label:'In Progress'};
+    case 'done': return {cls:'done',dot:'done',label:'Completed'};
+    case 'todo': return {cls:'todo',dot:'todo',label:'To Do'};
+    default: return {cls:'todo',dot:'todo',label:status};
+  }
+}
+function eventsPageHTML(){
+  const hasCollabAccess = state.role !== 'admin';
+  const rows = SAMPLE_EVENTS.map(ev=>{
+    const meta = statusMeta(ev.status);
+    return `
+      <tr>
+        <td><b>${ev.name}</b></td>
+        <td style="color:var(--text-secondary);font-size:12px;">${ev.projectId} / ${ev.studyId}</td>
+        <td><div class="cell-status ${meta.cls}"><span class="dot ${meta.dot}"></span>${meta.label}</div></td>
+        <td class="cell-owner">${ev.by}</td>
+        <td class="cell-date">${ev.date}</td>
+        <td>${hasCollabAccess
+          ? `<div class="icon-row"><span title="Edit">&#9998;</span><span title="Members">&#128101;</span><span title="Download">&#8681;</span></div>`
+          : `<div class="icon-row disabled">只读（无 Team 关系）</div>`}</td>
+      </tr>
+    `;
+  }).join('');
+  return `
+    <div class="main">
+      <div class="page-header"><h1 class="page-title">Events</h1><button class="btn-primary" ${state.role==='admin'?'disabled style="opacity:.4;cursor:not-allowed;"':''}>+ New Event</button></div>
+      <div class="note-banner"><span>&#9432;</span><span>${
+        state.role==='admin'
+          ? '<b>Baseline 可见性：</b>Admin 作为任意已登录用户，本来就能查看全部 Event 的基本信息 / Shell / 最后保存 Code（PERM-07），但不会自动获得下载、Copilot 或编辑权限——这些需要 Event Team 关系。'
+          : '<b>当前视角：</b>' + roleLabel(state.role) + '，可对本人所属 Event 的内容进行协作操作。'
+      }</span></div>
+      <table class="event-table">
+        <thead><tr><th>Event</th><th>Study / Project</th><th>状态</th><th>Owner</th><th>创建时间</th><th>操作</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* ---------------- MANAGEMENT PAGE ---------------- */
+function visibleProjectsForRole(){
+  if(state.role==='admin') return DATA.projects.map(p=>({project:p, studies:p.studies, restricted:false}));
+  if(state.role==='owner'){
+    return DATA.projects
+      .map(p=>({project:p, studies:p.studies.filter(s=>s.owner==='u_you'), restricted:true, allStudies:p.studies}))
+      .filter(x=>x.studies.length>0);
+  }
+  return [];
+}
+
+function studyActionsHTML(study){
+  if(state.role==='admin'){
+    return `
+      <span class="row-action" data-edit-owner="${study.id}">Owner</span>
+      <span class="row-action" data-toggle-study="${study.id}">${study.status==='enabled'?'Disable':'Enable'}</span>
+    `;
+  }
+  if(state.role==='owner' && study.owner==='u_you'){
+    return `<span class="row-action" data-edit-owner="${study.id}">Transfer Owner</span>`;
+  }
+  return '';
+}
+
+function managementPageHTML(){
+  const groups = visibleProjectsForRole();
+  const noteText = state.role==='admin'
+    ? '<b>当前视角：</b>Admin，可查看并管理全部 Project / Study；下方为全量数据。'
+    : '<b>当前视角：</b>Study Owner，仅展示你负责的 Study，及其所属 Project 的基本信息（该 Project 下其他 Study 按权限隐藏）。你只能维护自己负责 Study 的 Owner 信息，不能创建 Project / Study。';
+
+  let rowsHtml = '';
+  if(groups.length===0){
+    rowsHtml = `<tr><td colspan="5"><div class="empty-list">没有你有权限访问的 Project / Study</div></td></tr>`;
+  }
+  groups.forEach(({project, studies, restricted})=>{
+    rowsHtml += `
+      <tr class="group-row">
+        <td colspan="5">
+          <span class="group-label">${project.name}</span>
+          <span class="group-sub">${studies.length} ${restricted ? '(仅显示你负责的 Study)' : 'Study'}</span>
+        </td>
+      </tr>
+    `;
+    studies.forEach(study=>{
+      rowsHtml += `
+        <tr class="study-row">
+          <td><b>${study.id}</b><span class="ta-tag">${study.ta}</span></td>
+          <td><span class="owner-chip"><span class="owner-avatar">${initials(userName(study.owner))}</span>${userName(study.owner)}</span></td>
+          <td><span class="badge ${study.status}">${study.status==='enabled' ? 'Enabled' : 'Disabled'}</span></td>
+          <td style="color:var(--text-secondary);">${study.events} events</td>
+          <td>${studyActionsHTML(study)}</td>
+        </tr>
+      `;
+    });
+    if(state.role==='admin'){
+      rowsHtml += `<tr class="project-actions-row"><td colspan="5"><span class="btn-add-study" data-new-study="${project.id}">+ New Study</span></td></tr>`;
+    }
+  });
+
+  return `
+    <div class="main">
+      <div class="page-header">
+        <h1 class="page-title">Projects &amp; Studies</h1>
+        ${state.role==='admin' ? `<button class="btn-primary" id="btnNewProject">+ New Project</button>` : ''}
+      </div>
+      <div class="note-banner"><span>&#9432;</span><span>${noteText}</span></div>
+      <table class="mgmt-table">
+        <thead><tr><th>Study / Project</th><th>Owner</th><th>状态</th><th>Events</th><th>操作</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* ---------------- MODALS ---------------- */
+function modalHTML(){
+  if(!state.modal) return '';
+  if(state.modal.type==='newProject'){
+    return `
+      <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+          <h3>New Project</h3>
+          <div class="modal-sub">创建后可在该 Project 下添加 Study。（LSAF 接口对接暂缓，先仅需 Project Name）</div>
+          <div class="field" id="fieldProjectName">
+            <label>Project Name<span class="required-mark"> *</span></label>
+            <input id="inputProjectName" placeholder="e.g. PRO003" />
+            <div class="field-error">Project Name 不能为空</div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-secondary" data-close-modal>Cancel</button>
+            <button class="btn-primary" id="submitNewProject">Create</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  if(state.modal.type==='newStudy'){
+    const project = DATA.projects.find(p=>p.id===state.modal.projectId);
+    return `
+      <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+          <h3>New Study</h3>
+          <div class="modal-sub">将创建在 <b>${project.name}</b> 下。</div>
+          <div class="field" id="fieldStudyName">
+            <label>Study Name<span class="required-mark"> *</span></label>
+            <input id="inputStudyName" placeholder="e.g. AZE2003-401" />
+            <div class="field-error">Study Name 不能为空</div>
+          </div>
+          <div class="field" id="fieldStudyTA">
+            <label>TA (Therapeutic Area)<span class="required-mark"> *</span></label>
+            <select id="inputStudyTA">
+              <option value="">Select TA...</option>
+              ${TA_LIST.map(ta=>`<option value="${ta}">${ta}</option>`).join('')}
+            </select>
+            <div class="field-error">请选择 TA</div>
+          </div>
+          <div class="field" id="fieldStudyOwner">
+            <label>Study Owner<span class="required-mark"> *</span></label>
+            <div class="user-picker">
+              ${USERS.map(u=>`<div class="user-option ${state.pickedOwner===u.id?'selected':''}" data-pick-owner="${u.id}">${u.name}</div>`).join('')}
+            </div>
+            <div class="field-error">请指定 Study Owner</div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-secondary" data-close-modal>Cancel</button>
+            <button class="btn-primary" id="submitNewStudy">Create</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  if(state.modal.type==='editOwner'){
+    const study = DATA.projects.flatMap(p=>p.studies).find(s=>s.id===state.modal.studyId);
+    return `
+      <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+          <h3>${state.role==='admin' ? 'Maintain Study Owner' : 'Transfer Study Owner'}</h3>
+          <div class="modal-sub">Study: <b>${study.id}</b> · 当前 Owner: ${userName(study.owner)}</div>
+          <div class="field">
+            <label>New Owner<span class="required-mark"> *</span></label>
+            <div class="user-picker">
+              ${USERS.map(u=>`<div class="user-option ${state.pickedOwner===u.id?'selected':''}" data-pick-owner="${u.id}">${u.name}</div>`).join('')}
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-secondary" data-close-modal>Cancel</button>
+            <button class="btn-primary" id="submitEditOwner">Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  return '';
+}
+
+/* ---------------- RENDER + BIND ---------------- */
+function render(){
+  const root = document.getElementById('appRoot');
+  root.innerHTML = `
+    <div class="sidebar">${sidebarHTML()}</div>
+    ${state.page==='management' ? managementPageHTML() : eventsPageHTML()}
+    ${modalHTML()}
+  `;
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.toggle('active', b.dataset.role===state.role));
+  bind();
+}
+
+function bind(){
+  const goMgmt = document.getElementById('gotoManagement');
+  if(goMgmt) goMgmt.addEventListener('click', ()=>{ state.page='management'; render(); });
+  const goBack = document.getElementById('backToEvents');
+  if(goBack) goBack.addEventListener('click', ()=>{ state.page='events'; render(); });
+
+  const btnNewProject = document.getElementById('btnNewProject');
+  if(btnNewProject) btnNewProject.addEventListener('click', ()=>{ state.modal={type:'newProject'}; render(); });
+
+  document.querySelectorAll('[data-new-study]').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.modal={type:'newStudy', projectId:el.dataset.newStudy}; state.pickedOwner=null; render(); });
+  });
+  document.querySelectorAll('[data-edit-owner]').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.modal={type:'editOwner', studyId:el.dataset.editOwner}; state.pickedOwner=null; render(); });
+  });
+  document.querySelectorAll('[data-toggle-study]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const study = DATA.projects.flatMap(p=>p.studies).find(s=>s.id===el.dataset.toggleStudy);
+      study.status = study.status==='enabled' ? 'disabled' : 'enabled';
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-close-modal]').forEach(el=>el.addEventListener('click', ()=>{ state.modal=null; render(); }));
+  const overlay = document.getElementById('modalOverlay');
+  if(overlay) overlay.addEventListener('click', (e)=>{ if(e.target===overlay){ state.modal=null; render(); } });
+
+  document.querySelectorAll('[data-pick-owner]').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.pickedOwner = el.dataset.pickOwner; render(); });
+  });
+
+  const submitProject = document.getElementById('submitNewProject');
+  if(submitProject) submitProject.addEventListener('click', ()=>{
+    const val = document.getElementById('inputProjectName').value.trim();
+    document.getElementById('fieldProjectName').classList.toggle('has-error', !val);
+    if(!val) return;
+    DATA.projects.push({ id:val, name:val, status:'enabled', studies:[] });
+    state.modal=null; render();
+  });
+
+  const submitStudy = document.getElementById('submitNewStudy');
+  if(submitStudy) submitStudy.addEventListener('click', ()=>{
+    const name = document.getElementById('inputStudyName').value.trim();
+    const ta = document.getElementById('inputStudyTA').value;
+    const owner = state.pickedOwner;
+    document.getElementById('fieldStudyName').classList.toggle('has-error', !name);
+    document.getElementById('fieldStudyTA').classList.toggle('has-error', !ta);
+    document.getElementById('fieldStudyOwner').classList.toggle('has-error', !owner);
+    if(!name || !ta || !owner) return;
+    const project = DATA.projects.find(p=>p.id===state.modal.projectId);
+    project.studies.push({ id:name, ta, owner, status:'enabled', events:0 });
+    state.modal=null; state.pickedOwner=null; render();
+  });
+
+  const submitOwner = document.getElementById('submitEditOwner');
+  if(submitOwner) submitOwner.addEventListener('click', ()=>{
+    if(!state.pickedOwner) return;
+    const study = DATA.projects.flatMap(p=>p.studies).find(s=>s.id===state.modal.studyId);
+    study.owner = state.pickedOwner;
+    state.modal=null; state.pickedOwner=null; render();
+  });
+
+  document.querySelectorAll('.role-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      state.role = b.dataset.role;
+      state.page = defaultPageForRole(state.role);
+      state.modal = null;
+      render();
+    });
+  });
+}
+
+render();
+</script>
+</body>
+</html>

@@ -38,6 +38,7 @@ export interface TFLRow {
   id: string;
   type?: TFLType;
   title: string;
+  program: string;
   status: "ai-processing" | "in-progress" | "completed" | "to-do" | "error";
   programmer: string | null;
 }
@@ -344,7 +345,7 @@ function ProgrammerCell({
             {filteredTeam.length > 0 && (
               <>
                 <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">Team</span>
+                  <span className="text-[11px] font-medium text-text-secondary">In Team</span>
                 </div>
                 {filteredTeam.map((m) => {
                   const isSelected = value === m.name;
@@ -385,11 +386,11 @@ function ProgrammerCell({
               </>
             )}
 
-            {/* Add & Assign section - people not in team */}
+            {/* Out of Team section - people not in team */}
             {filteredNew.length > 0 && (
               <>
                 <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">Add &amp; Assign</span>
+                  <span className="text-[11px] font-medium text-text-secondary">Out of Team</span>
                 </div>
                 {filteredNew.map((u) => {
                   const isCurrentUser = u.name === CURRENT_USER;
@@ -565,7 +566,7 @@ function BatchAssignDropdown({
             {filteredTeam.length > 0 && (
               <>
                 <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">Team</span>
+                  <span className="text-[11px] font-medium text-text-secondary">In Team</span>
                 </div>
                 {filteredTeam.map((m) => {
                   const isCurrentUser = m.name === CURRENT_USER;
@@ -597,11 +598,11 @@ function BatchAssignDropdown({
               </>
             )}
 
-            {/* Add & Assign section */}
+            {/* Out of Team section */}
             {filteredNew.length > 0 && (
               <>
                 <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">Add &amp; Assign</span>
+                  <span className="text-[11px] font-medium text-text-secondary">Out of Team</span>
                 </div>
                 {filteredNew.map((u) => {
                   const isCurrentUser = u.name === CURRENT_USER;
@@ -668,7 +669,7 @@ export function AssignmentTab({
     }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
-      rows = rows.filter((r) => r.title.toLowerCase().includes(q));
+      rows = rows.filter((r) => r.title.toLowerCase().includes(q) || (r.program && r.program.toLowerCase().includes(q)));
     }
     return rows;
   }, [tflRows, filterTab, search]);
@@ -772,8 +773,8 @@ export function AssignmentTab({
         <div className="flex-1 overflow-auto w-full">
           <table className="w-full border-collapse text-left table-fixed">
             <thead>
-              <tr className="border-b border-graphite-10 bg-bg-panel h-[40px] text-[12px] font-medium text-text-secondary select-none sticky top-0 z-10">
-                <th className="pl-[16px] pr-[16px] py-[10px] font-medium">
+              <tr className="border-b border-graphite-10 bg-bg-panel h-[40px] select-none sticky top-0 z-10">
+                <th className="pl-[16px] pr-[16px] py-[10px]">
                   <div className="flex items-center gap-[6px]">
                     <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                       <Checkbox
@@ -783,18 +784,25 @@ export function AssignmentTab({
                         size={16}
                       />
                     </div>
-                    <span>TFL Title</span>
+                    <span className="t-small-medium text-text-secondary whitespace-nowrap">TFL Title</span>
                   </div>
                 </th>
-                <th className="px-[16px] py-[10px] font-medium w-[150px]">Status</th>
-                <th className="px-[16px] py-[10px] font-medium w-[210px]">Programmer</th>
+                <th className="px-[16px] py-[10px] w-[150px]">
+                  <span className="t-small-medium text-text-secondary whitespace-nowrap">Program</span>
+                </th>
+                <th className="px-[16px] py-[10px] w-[130px]">
+                  <span className="t-small-medium text-text-secondary whitespace-nowrap">Status</span>
+                </th>
+                <th className="px-[16px] py-[10px] w-[180px]">
+                  <span className="t-small-medium text-text-secondary whitespace-nowrap">Programmer</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-graphite-10">
               {filteredRows.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="px-[16px] py-[48px] text-center">
-                    <p className="text-[13px] text-text-secondary">
+                  <td colSpan={4} className="px-[16px] py-[48px] text-center">
+                    <p className="t-small text-text-secondary">
                       {search ? `No TFLs matching "${search}"` : "No unassigned TFLs."}
                     </p>
                     {(search || filterTab !== "all") && (
@@ -850,12 +858,20 @@ export function AssignmentTab({
                           )}
                         </div>
                         <span
-                          className="text-[13px] text-text-primary truncate flex-1 min-w-0 select-none"
+                          className="t-small text-text-primary truncate flex-1 min-w-0 select-none"
                           title={row.title}
                         >
                           {row.title}
                         </span>
                       </div>
+                    </td>
+                    <td className="px-[16px] py-[10px] min-w-0">
+                      <span
+                        className="t-code text-text-secondary truncate block select-none"
+                        title={row.program}
+                      >
+                        {row.program || "—"}
+                      </span>
                     </td>
                     <td className="px-[16px] py-[10px] whitespace-nowrap">
                       <StatusTag status={row.status} />
@@ -874,7 +890,7 @@ export function AssignmentTab({
               {/* Spacer row to prevent floating bar from obscuring last item when scrolled to bottom */}
               {selectedIds.size > 0 && (
                 <tr className="h-[48px] border-none">
-                  <td colSpan={3} className="p-0 border-none pointer-events-none" />
+                  <td colSpan={4} className="p-0 border-none pointer-events-none" />
                 </tr>
               )}
             </tbody>
@@ -1209,8 +1225,8 @@ function TeamMembersTab({
                   {addCandidates.length > 0 && (
                     <>
                       <div className="px-[8px] pt-[6px] pb-[2px]">
-                        <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">
-                          Add to team
+                        <span className="text-[11px] font-medium text-text-secondary">
+                          Out of Team
                         </span>
                       </div>
                       {addCandidates.map((u) => {
@@ -1246,8 +1262,8 @@ function TeamMembersTab({
                   {addAlreadyIn.length > 0 && (
                     <>
                       <div className="px-[8px] pt-[8px] pb-[2px]">
-                        <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">
-                          In team
+                        <span className="text-[11px] font-medium text-text-secondary">
+                          In Team
                         </span>
                       </div>
                       {addAlreadyIn.map((u) => {
@@ -1297,17 +1313,25 @@ function TeamMembersTab({
             <div className="flex-1 overflow-auto w-full">
               <table className="w-full border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-graphite-10 bg-bg-panel h-[40px] text-[12px] font-medium text-text-secondary select-none sticky top-0 z-10">
-                    <th className="px-[16px] py-[10px] font-medium">Member</th>
-                    <th className="px-[16px] py-[10px] font-medium w-[150px]">Assigned TFLs</th>
-                    <th className="px-[16px] py-[10px] font-medium w-[120px]">Added by</th>
-                    <th className="px-[16px] py-[10px] font-medium w-[140px] text-right">Actions</th>
+                  <tr className="border-b border-graphite-10 bg-bg-panel h-[40px] select-none sticky top-0 z-10">
+                    <th className="px-[16px] py-[10px]">
+                      <span className="t-small-medium text-text-secondary whitespace-nowrap">Member</span>
+                    </th>
+                    <th className="px-[16px] py-[10px] w-[150px]">
+                      <span className="t-small-medium text-text-secondary whitespace-nowrap">Assigned TFLs</span>
+                    </th>
+                    <th className="px-[16px] py-[10px] w-[120px]">
+                      <span className="t-small-medium text-text-secondary whitespace-nowrap">Added by</span>
+                    </th>
+                    <th className="px-[16px] py-[10px] w-[140px] text-right">
+                      <span className="t-small-medium text-text-secondary whitespace-nowrap">Actions</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-graphite-10">
                   {teamMembers.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-[16px] py-[40px] text-center text-[13px] text-text-secondary">
+                      <td colSpan={4} className="px-[16px] py-[40px] text-center t-small text-text-secondary">
                         No team members yet. Click "Add Member" to get started.
                       </td>
                     </tr>
@@ -1329,7 +1353,7 @@ function TeamMembersTab({
                         <td className="px-[16px] py-[10px]">
                           <div className="flex items-center gap-[8px]">
                             <MemberAvatar name={m.name} initials={initials} color={color} size={24} />
-                            <span className="text-[13px] text-text-primary font-medium">{m.name}</span>
+                            <span className="t-small text-text-primary">{m.name}</span>
                             {sideLabel && (
                               <span
                                 className={`text-[10px] font-medium px-[6px] py-[1px] rounded-[3px] shrink-0 ${
@@ -1343,18 +1367,18 @@ function TeamMembersTab({
                         </td>
                         <td className="px-[16px] py-[10px]">
                           {totalAssigned > 0 ? (
-                            <span className="text-[13px] text-text-primary tabular-nums">
-                              <span className="font-medium">{completedCount}</span>
+                            <span className="t-small text-text-primary tabular-nums">
+                              <span>{completedCount}</span>
                               <span className="text-text-secondary">/{totalAssigned} completed</span>
                             </span>
                           ) : (
-                            <span className="text-[13px] text-text-secondary tabular-nums">
+                            <span className="t-small text-text-secondary tabular-nums">
                               0 assigned
                             </span>
                           )}
                         </td>
                         <td className="px-[16px] py-[10px]">
-                          <span className="text-[13px] text-text-secondary">{m.addedBy ?? "—"}</span>
+                          <span className="t-small text-text-secondary">{m.addedBy ?? "—"}</span>
                         </td>
                         <td className="px-[16px] py-[10px] text-right">
                           <div className="flex items-center justify-end gap-[6px]">
@@ -1364,7 +1388,7 @@ function TeamMembersTab({
                                   ref={ownerButtonRef}
                                   type="button"
                                   onClick={() => setOwnerPopoverOpen((v) => !v)}
-                                  className="text-[12px] text-text-secondary hover:text-text-primary transition-colors px-[8px] py-[4px] rounded-[4px] hover:bg-black/5 cursor-pointer"
+                                  className="t-small text-text-secondary hover:text-text-primary transition-colors px-[8px] py-[4px] rounded-[4px] hover:bg-black/5 cursor-pointer"
                                 >
                                   Change Owner
                                 </button>
@@ -1406,8 +1430,8 @@ function TeamMembersTab({
                                       {nonOwners.length > 0 && (
                                         <>
                                           <div className="px-[8px] pt-[6px] pb-[2px]">
-                                            <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">
-                                              Team members
+                                            <span className="text-[11px] font-medium text-text-secondary">
+                                              In Team
                                             </span>
                                           </div>
                                           {nonOwners.map((cand) => {
@@ -1445,8 +1469,8 @@ function TeamMembersTab({
                                       {outsideUsers.length > 0 && (
                                         <>
                                           <div className="px-[8px] pt-[8px] pb-[2px]">
-                                            <span className="text-[10px] font-medium text-text-secondary uppercase tracking-wider">
-                                              Other users (Auto-add)
+                                            <span className="text-[11px] font-medium text-text-secondary">
+                                              Out of Team
                                             </span>
                                           </div>
                                           {outsideUsers.map((u) => {
@@ -1498,7 +1522,7 @@ function TeamMembersTab({
                               <button
                                 type="button"
                                 onClick={() => setRemovingMember(m)}
-                                className="text-[12px] text-[#CC2C3C] hover:text-[#b02232] transition-colors px-[8px] py-[4px] rounded-[4px] hover:bg-[#CC2C3C]/5 cursor-pointer"
+                                className="t-small text-status-error hover:opacity-80 transition-colors px-[8px] py-[4px] rounded-[4px] hover:bg-status-error/5 cursor-pointer"
                               >
                                 Remove
                               </button>
@@ -1532,14 +1556,70 @@ function TeamMembersTab({
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
 export const MOCK_TFL_ROWS: TFLRow[] = [
-  { id: "t1", type: "table",   title: "14.1.1 Demographics",               status: "completed",     programmer: "Sarah Chen" },
-  { id: "t2", type: "table",   title: "14.1.2 Baseline Characteristics",   status: "in-progress",   programmer: "James Park" },
-  { id: "t3", type: "listing", title: "14.1.3 Medical History",            status: "to-do",         programmer: null },
-  { id: "t4", type: "table",   title: "14.2.1 Primary Efficacy Analysis",  status: "ai-processing", programmer: "Tom Chen" },
-  { id: "t5", type: "figure",  title: "14.2.3 KM Survival Curve",          status: "in-progress",   programmer: "Sarah Chen" },
-  { id: "t6", type: "table",   title: "14.3.1 Adverse Event Summary",      status: "to-do",         programmer: null },
-  { id: "t7", type: "listing", title: "14.1.4 Concomitant Medications",    status: "to-do",         programmer: null },
-  { id: "t8", type: "table",   title: "14.1.5 Laboratory Abnormalities",   status: "error",         programmer: "James Park" },
+  {
+    id: "t1",
+    type: "table",
+    title: "14.1.1 Demographic and Baseline Disease Characteristics (Safety analysis set)",
+    program: "t_dm_14_1_1",
+    status: "completed",
+    programmer: "Sarah Chen",
+  },
+  {
+    id: "t2",
+    type: "table",
+    title: "14.2.2.1.2 Best objective response based on confirmed response by investigator assessment (Full analysis set)",
+    program: "t_eff_14_2_212",
+    status: "in-progress",
+    programmer: "James Park",
+  },
+  {
+    id: "t3",
+    type: "figure",
+    title: "14.2.3.2.1 Kaplan - Meier plot for duration of objective response by ICR assessment (Full analysis set)",
+    program: "f_km_14_2_321",
+    status: "to-do",
+    programmer: null,
+  },
+  {
+    id: "t4",
+    type: "table",
+    title: "14.3.2.4 Adverse events by maximum CTCAE grade on preferred term level (Safety analysis set)",
+    program: "t_ae_14_3_24",
+    status: "ai-processing",
+    programmer: "Tom Chen",
+  },
+  {
+    id: "t5",
+    type: "figure",
+    title: "14.2.3 KM Survival Curve for Overall Survival (Full analysis set)",
+    program: "f_km_14_2_3",
+    status: "in-progress",
+    programmer: "Sarah Chen",
+  },
+  {
+    id: "t6",
+    type: "table",
+    title: "14.3.1 Summary of Treatment-Emergent Adverse Events by System Organ Class (Safety analysis set)",
+    program: "t_ae_14_3_1",
+    status: "to-do",
+    programmer: null,
+  },
+  {
+    id: "t7",
+    type: "listing",
+    title: "16.2.4 Concomitant Medications Prior and Concomitant to Study Treatment",
+    program: "l_cm_16_2_4",
+    status: "to-do",
+    programmer: null,
+  },
+  {
+    id: "t8",
+    type: "table",
+    title: "14.3.5.1 Laboratory Abnormalities by CTC Grade Shift from Baseline",
+    program: "t_lb_14_3_51",
+    status: "error",
+    programmer: "James Park",
+  },
 ];
 
 export const MOCK_TEAM_MEMBERS: TeamMember[] = [
@@ -1655,7 +1735,7 @@ export default function EventTeamMemberModal({
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
         className="relative bg-white rounded-[8px] shadow-elevation-modal flex flex-col overflow-hidden border border-graphite-10"
-        style={{ width: 840, height: 600, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 40px)" }}
+        style={{ width: 960, height: 600, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100vh - 40px)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

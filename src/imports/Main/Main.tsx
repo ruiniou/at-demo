@@ -42,6 +42,7 @@ import dashboardIconUrl from "../../icons/dashboard-3-line.svg";
 import taskIconUrl from "../../icons/task-line.svg";
 import stackIconUrl from "../../icons/stack-line.svg";
 import capsuleIconUrl from "../../icons/capsule-line.svg";
+import informationIconUrl from "../../icons/information-line.svg";
 import microscopeIconUrl from "../../icons/microscope-line.svg";
 import homeIconUrl from "../../icons/home-5-line.svg";
 import teamIconUrl from "../../icons/team-line.svg";
@@ -73,6 +74,11 @@ import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal"
 import { KMPlot } from "./components/KMPlot";
 import { CopilotScopeHeader } from "./components/CopilotScopeHeader";
 import { Button } from "../../components/ui/Button";
+import { ProjectStudyManagementView } from "./components/ProjectStudyManagementView";
+import { NewProjectModal } from "./components/NewProjectModal";
+import { NewStudyModal } from "./components/NewStudyModal";
+import { MaintainOwnerModal } from "./components/MaintainOwnerModal";
+import { ProjectItem, StudyItem, UserRole, INITIAL_PROJECTS, SYSTEM_USERS } from "./types/management";
 import { Tooltip } from "../../components/ui/Tooltip";
 import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
@@ -13348,6 +13354,17 @@ function HomePage({
   onOpenDeleteModal,
   onOpenTeamModal,
   onLogout,
+  projects,
+  currentRole,
+  activeNav,
+  currentUserName,
+  onSwitchRole,
+  onSelectNav,
+  onOpenNewProject,
+  onOpenNewStudy,
+  onOpenMaintainOwner,
+  onToggleProjectStatus,
+  onToggleStudyStatus,
 }: {
   onEventClick: () => void;
   onCreateEvent: () => void;
@@ -13361,6 +13378,17 @@ function HomePage({
   onOpenDeleteModal?: (event: EventCardData) => void;
   onOpenTeamModal?: (event: EventCardData) => void;
   onLogout?: () => void;
+  projects: ProjectItem[];
+  currentRole: UserRole;
+  activeNav: 'events' | 'management';
+  currentUserName: string;
+  onSwitchRole: (role: UserRole) => void;
+  onSelectNav: (nav: 'events' | 'management') => void;
+  onOpenNewProject: () => void;
+  onOpenNewStudy: (projectId?: string) => void;
+  onOpenMaintainOwner: (projectId: string, study: StudyItem) => void;
+  onToggleProjectStatus: (projectId: string) => void;
+  onToggleStudyStatus: (projectId: string, studyId: string) => void;
 }) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedTA, setSelectedTA] = useState<string>('All');
@@ -13566,7 +13594,7 @@ function HomePage({
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-bg-panel">
+    <div className="flex h-screen w-full overflow-hidden bg-bg-panel relative">
       <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         {/* Tree list sidebar (no custom right-border; separation is managed by WorkspaceDivider) */}
         <div
@@ -13592,47 +13620,71 @@ function HomePage({
               </TooltipText>
             </div>
 
-            {/* Recents section (5 most recent events, name only) */}
-            <div className="flex flex-col gap-[2px] px-[8px] pt-[4px] pb-[6px]">
-              <span className="text-[12px] font-medium text-text-secondary px-[8px] py-[3px]">
-                Recents
-              </span>
-              <div className="flex flex-col gap-[1px]">
-                {recentEvents.map((rec) => (
-                  <div
-                    key={rec.id}
-                    onClick={onEventClick}
-                    className="group flex h-[28px] items-center rounded-[4px] px-[8px] hover:bg-black/5 cursor-pointer transition-colors"
-                    title={`${rec.name} (${rec.project} / ${rec.study})`}
-                  >
-                    <span className="t-small truncate text-text-primary group-hover:text-brand-1 font-normal">
-                      {rec.name}
-                    </span>
-                  </div>
-                ))}
+            {/* Top Navigation: Projects & Studies (Admin & Study Owner only) */}
+            {(currentRole === 'admin' || currentRole === 'owner') && (
+              <div className="px-[8px] pt-[2px] pb-[6px] border-b border-border-default/60">
+                <button
+                  type="button"
+                  onClick={() => onSelectNav('management')}
+                  className={`flex h-[32px] w-full items-center gap-[8px] rounded-[6px] px-[8px] text-[13px] transition-colors cursor-pointer ${
+                    activeNav === 'management'
+                      ? 'bg-az-secondary text-brand-1 font-semibold'
+                      : 'text-text-primary hover:bg-black/5 font-medium'
+                  }`}
+                >
+                  <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color={activeNav === 'management' ? '#830051' : '#888E8E'} />
+                  <span>Projects &amp; Studies</span>
+                </button>
               </div>
-            </div>
+            )}
 
-            {/* Events Tree section */}
+            {/* Events section: Events nav, Recents, and 3-tier hierarchy tree all grouped together */}
             <div className="flex min-h-0 flex-1 flex-col pt-[4px]">
-              <div className="px-[8px] pb-[3px]">
-                <span className="text-[12px] font-medium text-text-secondary px-[8px] py-[3px]">
-                  Events
-                </span>
-              </div>
-              {/* All Events primary entry */}
-              <div className="px-[8px] mb-[6px]">
+              {/* Events Primary Nav Button */}
+              <div className="px-[8px] pb-[4px]">
                 <button
                   type="button"
                   onClick={() => {
+                    onSelectNav('events');
                     setSelectedTA('All');
                     setSearchValue('');
                   }}
-                  className="flex h-[32px] w-full items-center gap-[6px] rounded-[4px] px-[8px] bg-az-secondary text-brand-1 font-medium cursor-pointer transition-colors"
+                  className={`flex h-[32px] w-full items-center gap-[8px] rounded-[6px] px-[8px] text-[13px] transition-colors cursor-pointer ${
+                    activeNav === 'events'
+                      ? 'bg-az-secondary text-brand-1 font-semibold'
+                      : 'text-text-primary hover:bg-black/5 font-medium'
+                  }`}
                 >
-                  <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px]" color="#830051" />
-                  <span className="t-small-medium font-medium text-brand-1">All Events</span>
+                  <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px] shrink-0" color={activeNav === 'events' ? '#830051' : '#888E8E'} />
+                  <span>Events</span>
                 </button>
+              </div>
+
+              {/* Recents section (5 most recent events, name only) */}
+              <div className="flex flex-col gap-[2px] px-[8px] pt-[4px] pb-[6px]">
+                <span className="text-[12px] font-medium text-text-secondary px-[8px] py-[2px]">
+                  Recents
+                </span>
+                <div className="flex flex-col gap-[1px]">
+                  {recentEvents.length > 0 ? (
+                    recentEvents.map((rec) => (
+                      <div
+                        key={rec.id}
+                        onClick={onEventClick}
+                        className="group flex h-[28px] items-center rounded-[4px] px-[8px] hover:bg-black/5 cursor-pointer transition-colors"
+                        title={`${rec.name} (${rec.project} / ${rec.study})`}
+                      >
+                        <span className="t-small truncate text-text-primary group-hover:text-brand-1 font-normal">
+                          {rec.name}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-[8px] py-[4px] text-[11px] text-text-tertiary italic">
+                      No recent events
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* 3-tier Tree List (Directly browse Project -> Study -> Event) */}
@@ -13713,9 +13765,62 @@ function HomePage({
               </div>
             </div>
 
-            {/* User account */}
-            <div className="px-[6px] pb-[8px] shrink-0 border-t border-border-default pt-[4px]">
-              <AccountMenu onLogout={onLogout} />
+            {/* Bottom-left: Demo Role Switcher + User account */}
+            <div className="px-[8px] pb-[8px] shrink-0 border-t border-border-default/80 pt-[8px] flex flex-col gap-[6px]">
+              {/* Demo Role Switcher */}
+              <div className="rounded-[6px] bg-bg-app border border-border-default/60 p-[6px] flex flex-col gap-[4px]">
+                <div className="flex items-center justify-between px-[2px]">
+                  <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
+                    Role Switcher
+                  </span>
+                  <span className="text-[10px] font-medium text-brand-1">
+                    {currentRole === 'admin' ? 'Admin' : currentRole === 'owner' ? 'Study Owner' : 'Member'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-[3px]">
+                  <button
+                    type="button"
+                    onClick={() => onSwitchRole('admin')}
+                    className={`py-[3px] rounded-[4px] text-[11px] font-medium transition-all text-center cursor-pointer ${
+                      currentRole === 'admin'
+                        ? 'bg-brand-1 text-white font-semibold shadow-2xs'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
+                    }`}
+                  >
+                    Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSwitchRole('owner')}
+                    className={`py-[3px] rounded-[4px] text-[11px] font-medium transition-all text-center cursor-pointer ${
+                      currentRole === 'owner'
+                        ? 'bg-brand-1 text-white font-semibold shadow-2xs'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
+                    }`}
+                  >
+                    Owner
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSwitchRole('member')}
+                    className={`py-[3px] rounded-[4px] text-[11px] font-medium transition-all text-center cursor-pointer ${
+                      currentRole === 'member'
+                        ? 'bg-brand-1 text-white font-semibold shadow-2xs'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
+                    }`}
+                  >
+                    Member
+                  </button>
+                </div>
+              </div>
+
+              {/* User account */}
+              <AccountMenu
+                onLogout={onLogout}
+                userName={currentUserName}
+                avatarLetter={currentUserName.slice(0, 1).toUpperCase()}
+                roleBadge={currentRole === 'admin' ? 'Admin' : currentRole === 'owner' ? 'Study Owner' : 'Member'}
+              />
             </div>
           </div>
         </div>
@@ -13747,27 +13852,93 @@ function HomePage({
               </div>
             )}
 
-            {/* Top Header Row: Events title with filled-circle icon + New Event button on the right */}
-            <div className="flex items-center justify-between px-[16px] sm:px-[28px] pt-[20px] pb-[16px]">
-              <div className="flex items-center gap-[10px]">
-                <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-az-secondary shrink-0">
-                  <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px]" color="#830051" />
-                </div>
-                <h1 className="text-[22px] font-bold text-text-primary tracking-tight leading-[28px]">
-                  Events
-                </h1>
+            {/* Floating Demo Role Switcher when Tree List is collapsed */}
+            {!treeListOpen && (
+              <div className="fixed bottom-[14px] left-[14px] z-50 flex items-center gap-[4px] rounded-[8px] bg-white/95 px-[10px] py-[6px] shadow-lg border border-border-default backdrop-blur-md text-[11px] select-none">
+                <span className="text-text-secondary font-medium mr-[2px]">Role:</span>
+                <button
+                  type="button"
+                  onClick={() => onSwitchRole('admin')}
+                  className={`px-[8px] py-[2px] rounded-[4px] transition-all cursor-pointer ${
+                    currentRole === 'admin'
+                      ? 'bg-brand-1 text-white font-semibold shadow-2xs'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
+                  }`}
+                >
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSwitchRole('owner')}
+                  className={`px-[8px] py-[2px] rounded-[4px] transition-all cursor-pointer ${
+                    currentRole === 'owner'
+                      ? 'bg-brand-1 text-white font-semibold shadow-2xs'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
+                  }`}
+                >
+                  Owner
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSwitchRole('member')}
+                  className={`px-[8px] py-[2px] rounded-[4px] transition-all cursor-pointer ${
+                    currentRole === 'member'
+                      ? 'bg-brand-1 text-white font-semibold shadow-2xs'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
+                  }`}
+                >
+                  Member
+                </button>
               </div>
+            )}
 
-              {/* New Event Button on the far right using local Button component */}
-              <Button
-                variant="primary"
-                onClick={onCreateEvent}
-                className="gap-[6px] px-[14px] py-[6px] whitespace-nowrap shrink-0"
-              >
-                <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
-                <span>New Event</span>
-              </Button>
-            </div>
+            {activeNav === 'management' ? (
+              <ProjectStudyManagementView
+                currentRole={currentRole}
+                currentUserName={currentUserName}
+                projects={projects}
+                onOpenNewProject={onOpenNewProject}
+                onOpenNewStudy={onOpenNewStudy}
+                onOpenMaintainOwner={onOpenMaintainOwner}
+                onToggleProjectStatus={onToggleProjectStatus}
+                onToggleStudyStatus={onToggleStudyStatus}
+              />
+            ) : (
+              <>
+                {/* Top Header Row: Events title with filled-circle icon + New Event button on the right */}
+                <div className="flex items-center justify-between px-[16px] sm:px-[28px] pt-[20px] pb-[16px]">
+                  <div className="flex items-center gap-[10px]">
+                    <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-az-secondary shrink-0">
+                      <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px]" color="#830051" />
+                    </div>
+                    <h1 className="text-[22px] font-bold text-text-primary tracking-tight leading-[28px]">
+                      Events
+                    </h1>
+                  </div>
+
+                  {/* New Event Button on the far right using local Button component */}
+                  <TooltipText
+                    label={
+                      currentRole === 'admin'
+                        ? 'Admin cannot create Events. Requires Study Owner permission.'
+                        : currentRole === 'member'
+                        ? 'Team Members cannot create Events. Requires Study Owner permission.'
+                        : 'Create new Event'
+                    }
+                  >
+                    <Button
+                      variant="primary"
+                      onClick={currentRole === 'owner' ? onCreateEvent : undefined}
+                      disabled={currentRole !== 'owner'}
+                      className={`gap-[6px] px-[14px] py-[6px] whitespace-nowrap shrink-0 ${
+                        currentRole !== 'owner' ? 'opacity-40 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
+                      <span>New Event</span>
+                    </Button>
+                  </TooltipText>
+                </div>
 
             {/* Event list content area */}
             <div className="flex min-h-0 flex-1 flex-col gap-[14px] px-[16px] sm:px-[28px] pt-[4px] pb-[16px]">
@@ -14222,10 +14393,12 @@ function HomePage({
                 )}
               </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
+  </div>
+</div>
   );
 }
 
@@ -14241,6 +14414,85 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [teamModalOpen, setTeamModalOpen] = useState(false);
   const [selectedTeamEvent, setSelectedTeamEvent] = useState<EventCardData | null>(null);
   const [events, setEvents] = useState<EventCardData[]>(homeEvents);
+  const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
+  const [currentRole, setCurrentRole] = useState<UserRole>('admin');
+  const [activeNav, setActiveNav] = useState<'events' | 'management'>('management');
+  const [currentUserName, setCurrentUserName] = useState<string>('Administrator');
+
+  const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
+  const [newStudyModalOpen, setNewStudyModalOpen] = useState(false);
+  const [selectedProjectForStudy, setSelectedProjectForStudy] = useState<string | undefined>();
+  const [maintainOwnerModalOpen, setMaintainOwnerModalOpen] = useState(false);
+  const [selectedStudyForOwner, setSelectedStudyForOwner] = useState<{ projectId: string; study: StudyItem } | null>(null);
+
+  const handleSwitchRole = (role: UserRole) => {
+    setCurrentRole(role);
+    if (role === 'admin') {
+      setActiveNav('management');
+      setCurrentUserName('Administrator');
+    } else if (role === 'owner') {
+      setActiveNav('events');
+      setCurrentUserName('Sarah Chen');
+    } else {
+      setActiveNav('events');
+      setCurrentUserName('Alex Kim');
+    }
+  };
+
+  const handleToggleProjectStatus = (projectId: string) => {
+    setProjects(prev =>
+      prev.map(p => (p.id === projectId ? { ...p, status: p.status === 'enabled' ? 'disabled' : 'enabled' } : p))
+    );
+  };
+
+  const handleToggleStudyStatus = (projectId: string, studyId: string) => {
+    setProjects(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        return {
+          ...p,
+          studies: p.studies.map(s => (s.id === studyId ? { ...s, status: s.status === 'enabled' ? 'disabled' : 'enabled' } : s)),
+        };
+      })
+    );
+  };
+
+  const handleCreateProject = (projectName: string) => {
+    const newProj: ProjectItem = {
+      id: projectName,
+      name: projectName,
+      status: 'enabled',
+      studies: [],
+    };
+    setProjects(prev => [...prev, newProj]);
+  };
+
+  const handleCreateStudy = (data: { projectId: string; studyName: string; ta: string; owner: string }) => {
+    setProjects(prev =>
+      prev.map(p => {
+        if (p.id !== data.projectId) return p;
+        return {
+          ...p,
+          studies: [
+            ...p.studies,
+            { id: data.studyName, ta: data.ta, owner: data.owner, status: 'enabled', eventsCount: 0 },
+          ],
+        };
+      })
+    );
+  };
+
+  const handleSaveOwner = (projectId: string, studyId: string, newOwner: string) => {
+    setProjects(prev =>
+      prev.map(p => {
+        if (p.id !== projectId) return p;
+        return {
+          ...p,
+          studies: p.studies.map(s => (s.id === studyId ? { ...s, owner: newOwner } : s)),
+        };
+      })
+    );
+  };
 
   const handleOpenDownload = (event?: EventCardData) => {
     setSelectedDownloadEvent(event ? event.name : undefined);
@@ -14268,8 +14520,8 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
       version: '1.0',
       project: eventData.project,
       study: eventData.study,
-      creator: 'Sarah Chen',
-      owner: 'Sarah Chen',
+      creator: currentUserName,
+      owner: currentUserName,
       createdDate: new Date().toISOString().split('T')[0],
       status: 'ai-processing',
     };
@@ -14296,6 +14548,23 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           onOpenDeleteModal={handleOpenDelete}
           onOpenTeamModal={handleOpenTeam}
           onLogout={onLogout}
+          projects={projects}
+          currentRole={currentRole}
+          activeNav={activeNav}
+          currentUserName={currentUserName}
+          onSwitchRole={handleSwitchRole}
+          onSelectNav={setActiveNav}
+          onOpenNewProject={() => setNewProjectModalOpen(true)}
+          onOpenNewStudy={(projId) => {
+            setSelectedProjectForStudy(projId);
+            setNewStudyModalOpen(true);
+          }}
+          onOpenMaintainOwner={(projId, study) => {
+            setSelectedStudyForOwner({ projectId: projId, study });
+            setMaintainOwnerModalOpen(true);
+          }}
+          onToggleProjectStatus={handleToggleProjectStatus}
+          onToggleStudyStatus={handleToggleStudyStatus}
         />
       ) : (
         <WorkspaceContent
@@ -14317,6 +14586,9 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         isOpen={createEventModalOpen}
         onClose={() => setCreateEventModalOpen(false)}
         onCreateEvent={handleCreateEvent}
+        projectsList={projects}
+        currentRole={currentRole}
+        currentUserName={currentUserName}
       />
       <DownloadSasProgramsModal
         isOpen={downloadModalOpen}
@@ -14332,6 +14604,27 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         isOpen={teamModalOpen}
         onClose={() => setTeamModalOpen(false)}
         eventName={selectedTeamEvent?.name ?? ''}
+      />
+      <NewProjectModal
+        isOpen={newProjectModalOpen}
+        onClose={() => setNewProjectModalOpen(false)}
+        onCreateProject={handleCreateProject}
+        existingProjectNames={projects.map(p => p.name)}
+      />
+      <NewStudyModal
+        isOpen={newStudyModalOpen}
+        onClose={() => setNewStudyModalOpen(false)}
+        projects={projects}
+        defaultProjectId={selectedProjectForStudy}
+        onCreateStudy={handleCreateStudy}
+      />
+      <MaintainOwnerModal
+        isOpen={maintainOwnerModalOpen}
+        onClose={() => setMaintainOwnerModalOpen(false)}
+        study={selectedStudyForOwner?.study ?? null}
+        projectId={selectedStudyForOwner?.projectId ?? ''}
+        isStudyOwnerRole={currentRole === 'owner'}
+        onSaveOwner={handleSaveOwner}
       />
     </div>
   );

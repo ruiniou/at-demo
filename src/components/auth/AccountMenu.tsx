@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 export interface AccountMenuProps {
   userName?: string;
   avatarLetter?: string;
+  roleBadge?: string;
   onLogout?: () => void;
   className?: string;
 }
@@ -10,6 +11,7 @@ export interface AccountMenuProps {
 export const AccountMenu: React.FC<AccountMenuProps> = ({
   userName = "User account",
   avatarLetter = "U",
+  roleBadge,
   onLogout,
   className = "",
 }) => {
@@ -57,17 +59,24 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="true"
         aria-expanded={isOpen}
-        className="flex items-center gap-[8px] w-full px-[8px] py-[6px] rounded-[6px] transition-colors text-left bg-transparent hover:bg-black/5 active:bg-black/10 focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 cursor-pointer group"
+        className="flex items-center gap-[8px] w-full px-[8px] py-[6px] rounded-[6px] transition-colors text-left bg-transparent hover:bg-black/5 active:bg-black/10 focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 cursor-pointer group min-w-0"
       >
         <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#9DB0AC] text-white text-[12px] font-medium shadow-2xs">
           {avatarLetter}
         </div>
-        <span
-          className="font-normal text-text-primary truncate flex-1"
-          style={{ fontSize: "14px", lineHeight: "20px" }}
-        >
-          {userName}
-        </span>
+        <div className="flex items-center flex-nowrap gap-[6px] min-w-0 flex-1 overflow-hidden">
+          <span
+            className="font-normal text-text-primary truncate shrink min-w-0"
+            style={{ fontSize: "13px", lineHeight: "20px" }}
+          >
+            {userName}
+          </span>
+          {roleBadge && (
+            <span className="shrink-0 text-[10px] px-[6px] py-[1.5px] rounded-full bg-az-secondary text-brand-1 font-medium whitespace-nowrap leading-none">
+              {roleBadge}
+            </span>
+          )}
+        </div>
       </button>
 
       {/* Popover Menu with only 'Log out' option */}

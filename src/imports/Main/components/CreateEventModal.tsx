@@ -273,16 +273,24 @@ const STUDY_HISTORICAL_EVENTS: Record<
   },
 };
 
+import { ProjectItem, UserRole } from "../types/management";
+
 // ==================== Main Modal ====================
 
 export default function CreateEventModal({
   isOpen,
   onClose,
   onCreateEvent,
+  projectsList,
+  currentRole,
+  currentUserName,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onCreateEvent: (eventData: { name: string; project: string; study: string }) => void;
+  projectsList?: ProjectItem[];
+  currentRole?: UserRole;
+  currentUserName?: string;
 }) {
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -376,16 +384,38 @@ export default function CreateEventModal({
     { label: "Neurology", value: "neurology" }, { label: "Immunology", value: "immunology" },
     { label: "Infectious Disease", value: "infectious" },
   ];
-  const projectOptions = [
-    { label: "PRO001 - Breast Cancer Study", value: "pro001" },
-    { label: "PRO002 - NSCLC Trial", value: "pro002" },
-    { label: "PRO003 - Diabetes Study", value: "pro003" },
-  ];
-  const studyOptions = [
-    { label: "AZE2001-301", value: "aze2001-301" },
-    { label: "AZE2001-302", value: "aze2001-302" },
-    { label: "AZE2001-303", value: "aze2001-303" },
-  ];
+  const projectOptions = useMemo(() => {
+    if (!projectsList || projectsList.length === 0) {
+      return [
+        { label: "PRO001 - Breast Cancer Study", value: "pro001" },
+        { label: "PRO002 - NSCLC Trial", value: "pro002" },
+        { label: "PRO003 - Diabetes Study", value: "pro003" },
+      ];
+    }
+    return projectsList
+      .filter((p) => p.status === "enabled")
+      .map((p) => ({ label: p.name, value: p.id }));
+  }, [projectsList]);
+
+  const studyOptions = useMemo(() => {
+    if (!projectsList || projectsList.length === 0) {
+      return [
+        { label: "AZE2001-301", value: "aze2001-301" },
+        { label: "AZE2001-302", value: "aze2001-302" },
+        { label: "AZE2001-303", value: "aze2001-303" },
+      ];
+    }
+    const proj = projectsList.find(
+      (p) => p.id.toLowerCase() === (projectCode || "").toLowerCase()
+    );
+    if (!proj || proj.status === "disabled") return [];
+
+    let studies = proj.studies.filter((s) => s.status === "enabled");
+    if (currentRole === "owner" && currentUserName) {
+      studies = studies.filter((s) => s.owner === currentUserName);
+    }
+    return studies.map((s) => ({ label: s.id, value: s.id }));
+  }, [projectsList, projectCode, currentRole, currentUserName]);
   const ogemOptions: DropdownOption[] = [
     { label: "12.8", value: "12.8" },
     { label: "12.7", value: "12.7" },
@@ -506,7 +536,7 @@ export default function CreateEventModal({
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <button className="absolute inset-0 bg-black/40" aria-label="Close modal" onClick={onClose} />
-      <div ref={modalRef} className="relative flex h-[740px] max-h-[calc(100vh-40px)] w-[840px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.15)]" style={currentStep === 2 && step1Height ? { height: `${step1Height}px` } : undefined}>
+      <div ref={modalRef} className="relative flex h-[740px] max-h-[calc(100vh-40px)] w-[960px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.15)]" style={currentStep === 2 && step1Height ? { height: `${step1Height}px` } : undefined}>
         {/* Header */}
         <div className="flex shrink-0 items-center gap-[16px] px-[20px] pb-[12px] pt-[16px]">
           <div className="flex min-w-0 flex-1 items-center gap-[10px]">
