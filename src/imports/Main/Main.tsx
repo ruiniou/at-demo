@@ -30,6 +30,7 @@ import unlockIconUrl from "../../icons/Unlock.svg";
 import saveIconUrl from "../../icons/save-line.svg";
 import fileInfoIconUrl from "../../icons/file-info-line.svg";
 import arrowRightIconUrl from "../../icons/arrow-right-s-line.svg";
+import arrowDownIconUrl from "../../icons/arrow-down-s-line.svg";
 import batchMicroIconUrl from "../../icons/batch-micro.svg";
 import aiProcessingIconUrl from "../../icons/Status label/Status=AI Processing.svg";
 import wipStatusIconUrl from "../../icons/Status label/Status=WIP.svg";
@@ -63,6 +64,8 @@ import fileIconUrl from "../../icons/file-icon.svg";
 import CreateEventModal from "./components/CreateEventModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
+import EventTeamMemberModal from "./components/EventTeamMemberModal";
+import type { TeamMember } from "./components/EventTeamMemberModal";
 import AccountMenu from "../../components/auth/AccountMenu";
 import { TreeFilterPopover, OwnerAvatar } from "./components/TreeFilterPopover";
 import { FacetedSearchBar } from "./components/FacetedSearchBar";
@@ -2688,106 +2691,6 @@ function AICopilotPanel({
     }
   };
 
-  // Header More Options & Session Management (Rename, Delete)
-  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
-  const [moreMenuPos, setMoreMenuPos] = useState<{ top: number; right: number } | null>(null);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [renamePos, setRenamePos] = useState<{ top: number; right: number } | null>(null);
-  const [renameValue, setRenameValue] = useState("");
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const renameInputRef = useRef<HTMLInputElement>(null);
-  const moreMenuRef = useRef<HTMLDivElement>(null);
-
-  const currentSessionTitle = isEventCopilot
-    ? (activeEventSession?.name || eventSessions[0]?.name || "Event Copilot")
-    : (sessionOptions.find((s) => s.id === selectedSession)?.name || sessionOptions[0]?.name || "Session");
-
-  const handleToggleMoreMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMoreMenuPos({
-      top: rect.bottom + 4,
-      right: window.innerWidth - rect.right,
-    });
-    setMoreMenuOpen((prev) => !prev);
-  };
-
-  const handleStartRename = () => {
-    setMoreMenuOpen(false);
-    if (moreMenuPos) {
-      setRenamePos(moreMenuPos);
-    }
-    setRenameValue(currentSessionTitle);
-    setIsRenaming(true);
-  };
-
-  const handleConfirmRename = () => {
-    const trimmed = renameValue.trim();
-    if (trimmed) {
-      if (isEventCopilot) {
-        const activeId = activeEventSession?.id || eventSessions[0]?.id;
-        if (activeId) {
-          onUpdateEventSession?.(activeId, { name: trimmed });
-        }
-      } else {
-        handleRenameTflSession(selectedSession, trimmed);
-      }
-    }
-    setIsRenaming(false);
-  };
-
-  const handleCancelRename = () => {
-    setIsRenaming(false);
-  };
-
-  const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleConfirmRename();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      handleCancelRename();
-    }
-  };
-
-  const handleStartDelete = () => {
-    setMoreMenuOpen(false);
-    setDeleteModalOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (isEventCopilot) {
-      const activeId = activeEventSession?.id || eventSessions[0]?.id;
-      if (activeId) {
-        onDeleteEventSession?.(activeId);
-      }
-    } else {
-      handleDeleteTflSession(selectedSession);
-    }
-    setDeleteModalOpen(false);
-  };
-
-  useEffect(() => {
-    if (isRenaming) {
-      const timer = setTimeout(() => {
-        if (renameInputRef.current) {
-          renameInputRef.current.focus();
-          renameInputRef.current.select();
-        }
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isRenaming]);
-
-  useEffect(() => {
-    if (!moreMenuOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMoreMenuOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [moreMenuOpen]);
-
   const isSubmitDisabled = isEventCopilot
     ? (isPending || (activeProgressData ? !activeProgressData.isCompleted : false))
     : (isPending || isExecutingInEventCopilot || metaUpdateProcessing || (hasPendingCodeChanges && ((metaDiffItems?.length ?? 0) > 0)));
@@ -3434,10 +3337,14 @@ function AICopilotPanel({
                 selectedEventSessionId={activeEventSession?.id || null}
                 onSelectEventSession={(session) => onSelectEventSession?.(session)}
                 onNewEventSession={onNewEventSession}
+                onRenameEventSession={(id, newName) => onUpdateEventSession?.(id, { name: newName })}
+                onDeleteEventSession={(id) => onDeleteEventSession?.(id)}
                 tflSessions={sessionOptions}
                 selectedTflSessionId={selectedSession}
                 onSelectTflSession={handleSelectTflSession}
                 onNewTflSession={handleNewTflSession}
+                onRenameTflSession={handleRenameTflSession}
+                onDeleteTflSession={handleDeleteTflSession}
               />
             }
             actions={
@@ -3450,16 +3357,6 @@ function AICopilotPanel({
                     className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer"
                   >
                     <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-                  </button>
-                </TooltipText>
-                <TooltipText label="More Options" disabled={moreMenuOpen}>
-                  <button
-                    type="button"
-                    onClick={handleToggleMoreMenu}
-                    aria-label="More Options"
-                    className={`w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer ${moreMenuOpen ? 'bg-black/5' : ''}`}
-                  >
-                    <MoreIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
                   </button>
                 </TooltipText>
                 <TooltipText label="Collapse AI Copilot">
@@ -3487,10 +3384,14 @@ function AICopilotPanel({
             selectedEventSessionId={activeEventSession?.id || null}
             onSelectEventSession={(session) => onSelectEventSession?.(session)}
             onNewEventSession={onNewEventSession}
+            onRenameEventSession={(id, newName) => onUpdateEventSession?.(id, { name: newName })}
+            onDeleteEventSession={(id) => onDeleteEventSession?.(id)}
             tflSessions={sessionOptions}
             selectedTflSessionId={selectedSession}
             onSelectTflSession={handleSelectTflSession}
             onNewTflSession={handleNewTflSession}
+            onRenameTflSession={handleRenameTflSession}
+            onDeleteTflSession={handleDeleteTflSession}
           />
           <div className="flex items-center gap-[4px]">
             <TooltipText label={isEventCopilot ? "New Event Session" : "New TFL Session"}>
@@ -3501,16 +3402,6 @@ function AICopilotPanel({
                 className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer after:content-[''] after:absolute after:-inset-[8px]"
               >
                 <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-              </button>
-            </TooltipText>
-            <TooltipText label="More Options" disabled={moreMenuOpen}>
-              <button
-                type="button"
-                onClick={handleToggleMoreMenu}
-                aria-label="More Options"
-                className={`relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer after:content-[''] after:absolute after:-inset-[8px] ${moreMenuOpen ? 'bg-black/5' : ''}`}
-              >
-                <MoreIcon className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
               </button>
             </TooltipText>
             <TooltipText label="Collapse AI Copilot">
@@ -3682,90 +3573,6 @@ function AICopilotPanel({
           {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
         </div>
       </div>
-
-      {/* More Options Dropdown Menu */}
-      {moreMenuOpen && moreMenuPos && createPortal(
-        <>
-          <div
-            className="fixed inset-0 z-[9998] bg-transparent"
-            onClick={() => setMoreMenuOpen(false)}
-          />
-          <div
-            ref={moreMenuRef}
-            style={{
-              position: "fixed",
-              top: moreMenuPos.top,
-              right: Math.max(12, moreMenuPos.right),
-              zIndex: 9999,
-              width: 160,
-            }}
-            className="bg-white rounded-[8px] p-[4px] border border-border-default shadow-[0px_4px_16px_rgba(0,0,0,0.12)] overflow-hidden animate-in fade-in zoom-in-95 duration-100"
-          >
-            <button
-              type="button"
-              onClick={handleStartRename}
-              className="w-full flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] text-left hover:bg-bg-panel active:scale-[0.98] transition-all cursor-pointer"
-            >
-              <LocalIcon src={editIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
-              <span className="text-[13px] text-text-primary font-normal">Rename Session</span>
-            </button>
-            <div className="h-[1px] bg-[#E5E8E8] my-[3px]" />
-            <button
-              type="button"
-              onClick={handleStartDelete}
-              className="w-full flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] text-left hover:bg-[#fff5f5] active:scale-[0.98] transition-all cursor-pointer"
-            >
-              <LocalIcon src={deleteBinIconUrl} className="w-[14px] h-[14px]" color="#CC2C3C" />
-              <span className="text-[13px] text-status-error font-normal">Delete Session</span>
-            </button>
-          </div>
-        </>,
-        document.body
-      )}
-
-      {/* Rename Popover (点空白处取消，回车则命名成功) */}
-      {isRenaming && renamePos && createPortal(
-        <>
-          <div
-            className="fixed inset-0 z-[9998] bg-transparent"
-            onClick={handleCancelRename}
-          />
-          <div
-            style={{
-              position: "fixed",
-              top: renamePos.top,
-              right: Math.max(12, renamePos.right),
-              zIndex: 9999,
-              width: 240,
-            }}
-            className="bg-white rounded-[6px] p-[4px] border border-border-default shadow-[0px_4px_16px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-100"
-          >
-            <input
-              ref={renameInputRef}
-              type="text"
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              onKeyDown={handleRenameKeyDown}
-              className="w-full h-[32px] px-[8px] text-[13px] border border-brand-1 rounded-[4px] outline-none focus:ring-1 focus:ring-brand-1 text-text-primary bg-white transition-all"
-              placeholder="Session name"
-            />
-          </div>
-        </>,
-        document.body
-      )}
-
-      {/* Delete Confirmation Modal (二次拦截Modal) */}
-      <WorkspaceModal
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        title="Delete Session"
-        description={`Are you sure you want to delete "${currentSessionTitle}"? This action cannot be undone and all messages in this session will be lost.`}
-        primaryLabel="Delete"
-        secondaryLabel="Cancel"
-        dangerPrimary={true}
-        onSecondary={() => setDeleteModalOpen(false)}
-        onPrimary={handleConfirmDelete}
-      />
     </div>
   );
 }
@@ -4250,6 +4057,7 @@ function ViewToggleBar({
   groupViewOpen,
   onToggleGroupView,
   onOpenDownloadModal,
+  onOpenTeamModal,
   onOpenAICopilot,
   aiCopilotOpen = false,
 }: {
@@ -4268,6 +4076,7 @@ function ViewToggleBar({
   groupViewOpen?: boolean;
   onToggleGroupView?: () => void;
   onOpenDownloadModal?: () => void;
+  onOpenTeamModal?: () => void;
   onOpenAICopilot?: () => void;
   aiCopilotOpen?: boolean;
 }) {
@@ -4275,7 +4084,7 @@ function ViewToggleBar({
 
   const rightControls = (
     <div className="flex items-center">
-      {/* 1. Left Icon Buttons: Group Code & Download (gap: 4px, borderless & transparent in default) */}
+      {/* 1. Left Icon Buttons: Group Code, Team & Download (gap: 4px, borderless & transparent in default) */}
       <div className="flex items-center gap-[4px]">
         {onToggleGroupView && (
           <TooltipText label={groupViewOpen ? "Close Group Code" : "Open Group Code"}>
@@ -11421,6 +11230,8 @@ function WorkspaceContent({
   treeListWidth,
   setTreeListWidth,
   onOpenDownloadModal,
+  onOpenTeamModal,
+  onOpenEditEventModal,
   onLogout,
 }: {
   onNavigateHome: () => void;
@@ -11429,6 +11240,8 @@ function WorkspaceContent({
   treeListWidth: number;
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
   onOpenDownloadModal?: () => void;
+  onOpenTeamModal?: () => void;
+  onOpenEditEventModal?: () => void;
   onLogout?: () => void;
 }) {
   const [aiLayoutVariant, setAiLayoutVariant] = useState<'drawer' | 'incard'>('incard');
@@ -11924,6 +11737,58 @@ function WorkspaceContent({
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
   const [selectedSection, setSelectedSection] = useState<string>('all');
   const filterButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Event settings dropdown state
+  const [eventMenuOpen, setEventMenuOpen] = useState(false);
+  const eventMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const eventMenuRef = useRef<HTMLDivElement>(null);
+  const [eventMenuPos, setEventMenuPos] = useState<{ top: number; left: number } | null>(null);
+
+  const updateEventMenuPosition = useCallback(() => {
+    if (!eventMenuButtonRef.current) return;
+    const rect = eventMenuButtonRef.current.getBoundingClientRect();
+    const menuWidth = 240;
+    let left = rect.left;
+    if (left + menuWidth > window.innerWidth - 8) {
+      left = Math.max(8, window.innerWidth - menuWidth - 8);
+    }
+    const top = rect.bottom + 6;
+    setEventMenuPos({ top, left });
+  }, []);
+
+  useEffect(() => {
+    if (!eventMenuOpen) return;
+    updateEventMenuPosition();
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        eventMenuButtonRef.current &&
+        !eventMenuButtonRef.current.contains(target) &&
+        eventMenuRef.current &&
+        !eventMenuRef.current.contains(target)
+      ) {
+        setEventMenuOpen(false);
+      }
+    };
+
+    const handleScrollOrResize = () => updateEventMenuPosition();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setEventMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("resize", handleScrollOrResize);
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", handleScrollOrResize);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [eventMenuOpen, updateEventMenuPosition]);
 
   const handleToggleStatus = (status: string) => {
     setSelectedStatuses((prev) => {
@@ -12453,22 +12318,28 @@ function WorkspaceContent({
                   <LocalIcon src={homeIconUrl} className="hidden h-[16px] w-[16px] group-hover:block" color="var(--color-text-secondary)" />
                 </button>
               </TooltipText>
-              <div className="min-w-0 flex-1">
-                <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
-                <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
+              <div className="flex min-w-0 flex-1 items-center gap-[2px]">
+                <div className="min-w-0 flex-1">
+                  <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
+                  <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
+                </div>
+                <TooltipText label="Event Settings">
+                  <button
+                    ref={eventMenuButtonRef}
+                    onClick={() => setEventMenuOpen((prev) => !prev)}
+                    className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors"
+                    aria-label="Event settings"
+                    aria-haspopup="true"
+                    aria-expanded={eventMenuOpen}
+                  >
+                    <LocalIcon src={arrowDownIconUrl} className="h-[14px] w-[14px]" color="var(--color-text-secondary)" />
+                  </button>
+                </TooltipText>
               </div>
-              <TooltipText label="Event Information">
-                <button
-                  className="flex h-[28px] w-[28px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                  aria-label="Event information"
-                >
-                  <InfoIcon />
-                </button>
-              </TooltipText>
               <TooltipText label="Collapse Tree List">
                 <button
                   onClick={() => setTreeListOpen(false)}
-                  className="flex h-[28px] w-[28px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                  className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                   aria-label="Collapse tree list"
                 >
                   <LocalIcon src={collapseIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
@@ -12555,6 +12426,49 @@ function WorkspaceContent({
                   totalCount={totalTablesCount}
                 />
               </>
+            )}
+
+            {/* Event Settings Dropdown Menu Portal */}
+            {eventMenuOpen && eventMenuPos && createPortal(
+              <div
+                ref={eventMenuRef}
+                style={{
+                  position: "fixed",
+                  top: eventMenuPos.top,
+                  left: eventMenuPos.left,
+                  width: 180,
+                  zIndex: 10050,
+                }}
+                className="rounded-[8px] border border-border-default bg-white p-[4px] shadow-elevation-overlay flex flex-col gap-[2px] animate-fade-in select-none"
+              >
+                {onOpenEditEventModal && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEventMenuOpen(false);
+                      onOpenEditEventModal();
+                    }}
+                    className="flex items-center gap-[8px] w-full px-[8px] py-[7px] rounded-[4px] text-[13px] font-normal text-text-primary hover:bg-black/5 active:bg-black/10 transition-colors text-left cursor-pointer"
+                  >
+                    <LocalIcon src={fileInfoIconUrl} className="h-[15px] w-[15px] shrink-0" color="var(--color-text-secondary)" />
+                    <span className="flex-1 truncate">Event Information</span>
+                  </button>
+                )}
+                {onOpenTeamModal && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEventMenuOpen(false);
+                      onOpenTeamModal();
+                    }}
+                    className="flex items-center gap-[8px] w-full px-[8px] py-[7px] rounded-[4px] text-[13px] font-normal text-text-primary hover:bg-black/5 active:bg-black/10 transition-colors text-left cursor-pointer"
+                  >
+                    <LocalIcon src={teamIconUrl} className="h-[15px] w-[15px] shrink-0" color="var(--color-text-secondary)" />
+                    <span className="flex-1 truncate">Event Team</span>
+                  </button>
+                )}
+              </div>,
+              document.body
             )}
 
             <div className="min-h-0 flex-1 overflow-auto">
@@ -12661,6 +12575,7 @@ function WorkspaceContent({
               groupViewOpen={groupViewOpen}
               onToggleGroupView={() => setGroupViewOpen(v => !v)}
               onOpenDownloadModal={onOpenDownloadModal}
+              onOpenTeamModal={onOpenTeamModal}
               onOpenAICopilot={handleOpenAICopilot}
               aiCopilotOpen={aiCopilotOpen}
             />
@@ -13011,6 +12926,8 @@ interface EventCardData {
   progress?: { completed: number; total: number };
   errorMessage?: string;
   ta?: string;
+  owner: string;
+  teamMembers?: TeamMember[];
 }
 
 const homeEvents: EventCardData[] = [
@@ -13021,6 +12938,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO001',
     study: 'AZE2001-301',
     creator: 'Tom',
+    owner: 'Tom Chen',
     createdDate: '2025-11-11',
     status: 'ai-processing',
     ta: 'Oncology',
@@ -13032,6 +12950,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO001',
     study: 'AZE2001-301',
     creator: 'Tom',
+    owner: 'Tom Chen',
     createdDate: '2025-11-11',
     status: 'in-progress',
     progress: { completed: 14, total: 15 },
@@ -13044,6 +12963,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO001',
     study: 'AZE2001-301',
     creator: 'Tom',
+    owner: 'Tom Chen',
     createdDate: '2025-11-11',
     status: 'completed',
     progress: { completed: 8, total: 8 },
@@ -13056,6 +12976,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO001',
     study: 'AZE2001-301',
     creator: 'Tom',
+    owner: 'James Park',
     createdDate: '2025-11-11',
     status: 'to-do',
     progress: { completed: 0, total: 12 },
@@ -13068,6 +12989,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO001',
     study: 'AZE2001-301',
     creator: 'Tom',
+    owner: 'Tom Chen',
     createdDate: '2025-11-11',
     status: 'error',
     errorMessage: 'Shell file parsing failed.',
@@ -13080,6 +13002,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO002',
     study: 'AZE2001-302',
     creator: 'Sarah',
+    owner: 'Sarah Chen',
     createdDate: '2025-11-09',
     status: 'in-progress',
     progress: { completed: 6, total: 20 },
@@ -13092,6 +13015,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO002',
     study: 'AZE2001-302',
     creator: 'Sarah',
+    owner: 'Sarah Chen',
     createdDate: '2025-11-08',
     status: 'completed',
     progress: { completed: 12, total: 12 },
@@ -13104,6 +13028,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO003',
     study: 'AZE2001-303',
     creator: 'James',
+    owner: 'James Park',
     createdDate: '2025-11-07',
     status: 'ai-processing',
     ta: 'Cardiology',
@@ -13115,6 +13040,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO003',
     study: 'AZE2001-303',
     creator: 'James',
+    owner: 'James Park',
     createdDate: '2025-11-05',
     status: 'to-do',
     progress: { completed: 0, total: 8 },
@@ -13127,6 +13053,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO001',
     study: 'AZE2001-301',
     creator: 'Tom',
+    owner: 'Emily Liu',
     createdDate: '2025-11-03',
     status: 'in-progress',
     progress: { completed: 3, total: 10 },
@@ -13139,6 +13066,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO004',
     study: 'AZE2001-401',
     creator: 'Emily',
+    owner: 'Emily Liu',
     createdDate: '2025-11-01',
     status: 'completed',
     progress: { completed: 15, total: 15 },
@@ -13151,6 +13079,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO004',
     study: 'AZE2001-401',
     creator: 'Emily',
+    owner: 'Emily Liu',
     createdDate: '2025-10-28',
     status: 'error',
     errorMessage: 'SAS macro execution failed.',
@@ -13163,6 +13092,7 @@ const homeEvents: EventCardData[] = [
     project: 'PRO001',
     study: 'AZE2001-301',
     creator: 'Tom',
+    owner: 'Tom Chen',
     createdDate: '2025-11-12',
     status: 'error',
     errorMessage: 'Critical validation failed: The database structure does not conform to CDISC SDTM IG v3.2. Columns USUBJID, AGE, and SEX are missing or formatted incorrectly in the DM domain file. Please check files and try again.',
@@ -13416,6 +13346,7 @@ function HomePage({
   setTreeListWidth,
   onOpenDownloadModal,
   onOpenDeleteModal,
+  onOpenTeamModal,
   onLogout,
 }: {
   onEventClick: () => void;
@@ -13428,6 +13359,7 @@ function HomePage({
   setTreeListWidth: React.Dispatch<React.SetStateAction<number>>;
   onOpenDownloadModal?: (event: EventCardData) => void;
   onOpenDeleteModal?: (event: EventCardData) => void;
+  onOpenTeamModal?: (event: EventCardData) => void;
   onLogout?: () => void;
 }) {
   const [searchValue, setSearchValue] = useState('');
@@ -14012,7 +13944,7 @@ function HomePage({
                                           const isMenuOpen = openActionMenuId === `table-${ev.id}`;
                                           const actionButtons = [
                                             { icon: toolCallIconUrl, label: 'AI edit' },
-                                            { icon: teamIconUrl, label: 'Team' },
+                                            { icon: teamIconUrl, label: 'Team', onClick: () => onOpenTeamModal?.(ev) },
                                             { icon: barChartIconUrl, label: 'View charts' },
                                             { icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) },
                                             { icon: deleteBinIconUrl, label: 'Delete', onClick: () => onOpenDeleteModal?.(ev) },
@@ -14051,8 +13983,8 @@ function HomePage({
                                               {/* Event Owner */}
                                               <td className="px-[16px] py-[10px] text-text-secondary whitespace-nowrap">
                                                 <div className="flex items-center gap-[6px]">
-                                                  <OwnerAvatar owner={ev.creator} size={18} />
-                                                  <span className="text-[13px] text-text-primary">{ev.creator}</span>
+                                                  <OwnerAvatar owner={ev.owner} size={18} />
+                                                  <span className="text-[13px] text-text-primary">{ev.owner}</span>
                                                 </div>
                                               </td>
 
@@ -14181,7 +14113,7 @@ function HomePage({
                                           const isMenuOpen = openActionMenuId === `card-${ev.id}`;
                                           const actionButtons = [
                                             { icon: toolCallIconUrl, label: 'AI edit' },
-                                            { icon: teamIconUrl, label: 'Team' },
+                                            { icon: teamIconUrl, label: 'Team', onClick: () => onOpenTeamModal?.(ev) },
                                             { icon: barChartIconUrl, label: 'View charts' },
                                             { icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) },
                                             { icon: deleteBinIconUrl, label: 'Delete', onClick: () => onOpenDeleteModal?.(ev) },
@@ -14217,9 +14149,9 @@ function HomePage({
 
                                                 <div className="flex items-center justify-between pt-[4px]">
                                                   <div className="flex items-center gap-[6px]">
-                                                    <OwnerAvatar owner={ev.creator} size={16} />
+                                                    <OwnerAvatar owner={ev.owner} size={16} />
                                                     <span className="text-[12px] text-text-secondary">
-                                                      {ev.creator}
+                                                      {ev.owner}
                                                     </span>
                                                   </div>
                                                   {/* Actions - Collapsed into Ellipsis (...) */}
@@ -14306,6 +14238,8 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [selectedDownloadEvent, setSelectedDownloadEvent] = useState<string | undefined>(undefined);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDeleteEvent, setSelectedDeleteEvent] = useState<EventCardData | null>(null);
+  const [teamModalOpen, setTeamModalOpen] = useState(false);
+  const [selectedTeamEvent, setSelectedTeamEvent] = useState<EventCardData | null>(null);
   const [events, setEvents] = useState<EventCardData[]>(homeEvents);
 
   const handleOpenDownload = (event?: EventCardData) => {
@@ -14316,6 +14250,11 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const handleOpenDelete = (event: EventCardData) => {
     setSelectedDeleteEvent(event);
     setDeleteModalOpen(true);
+  };
+
+  const handleOpenTeam = (event: EventCardData) => {
+    setSelectedTeamEvent(event);
+    setTeamModalOpen(true);
   };
 
   const handleConfirmDelete = (eventId: string) => {
@@ -14329,7 +14268,8 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
       version: '1.0',
       project: eventData.project,
       study: eventData.study,
-      creator: 'User',
+      creator: 'Sarah Chen',
+      owner: 'Sarah Chen',
       createdDate: new Date().toISOString().split('T')[0],
       status: 'ai-processing',
     };
@@ -14354,6 +14294,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           setTreeListWidth={setTreeListWidth}
           onOpenDownloadModal={handleOpenDownload}
           onOpenDeleteModal={handleOpenDelete}
+          onOpenTeamModal={handleOpenTeam}
           onLogout={onLogout}
         />
       ) : (
@@ -14364,6 +14305,11 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           treeListWidth={treeListWidth}
           setTreeListWidth={setTreeListWidth}
           onOpenDownloadModal={() => handleOpenDownload()}
+          onOpenTeamModal={() => {
+            const current = events.find(e => e.id === 'e1') || events[0];
+            if (current) handleOpenTeam(current);
+          }}
+          onOpenEditEventModal={() => setCreateEventModalOpen(true)}
           onLogout={onLogout}
         />
       )}
@@ -14381,6 +14327,11 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         onClose={() => setDeleteModalOpen(false)}
         onConfirmDelete={handleConfirmDelete}
         event={selectedDeleteEvent}
+      />
+      <EventTeamMemberModal
+        isOpen={teamModalOpen}
+        onClose={() => setTeamModalOpen(false)}
+        eventName={selectedTeamEvent?.name ?? ''}
       />
     </div>
   );
