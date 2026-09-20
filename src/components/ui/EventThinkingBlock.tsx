@@ -53,7 +53,9 @@ export function formatDurationShort(seconds: number = 4): string {
   return remSec > 0 ? `${minutes}m${remSec}s` : `${minutes}m`;
 }
 
-const STAGES = [700, 900, 1400, 1800];
+// Keep each phase readable instead of treating the trace as a decorative loader.
+// Search occupies the first two stages; reasoning uses the remaining two.
+const STAGES = [1800, 2200, 2800, 3200];
 
 function useSequence(steps: number[], isRunning: boolean) {
   const [stage, setStage] = useState(isRunning ? 0 : steps.length);
@@ -368,10 +370,10 @@ export function EventThinkingBlock({
             strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-text-secondary group-hover:text-text-primary transition-colors duration-150 shrink-0"
-            style={{ transform: searchExpanded ? "rotate(180deg)" : "rotate(0)" }}
+            className="text-text-secondary group-hover:text-text-primary transition-[color,transform] duration-150 shrink-0"
+            style={{ transform: searchExpanded ? "rotate(90deg)" : "rotate(0)" }}
           >
-            <path d="M6 9l6 6 6-6" />
+            <path d="M9 6l6 6-6 6" />
           </svg>
         </button>
 
@@ -437,7 +439,7 @@ export function EventThinkingBlock({
                     key={row.tflId || row.name || i}
                     className="flex h-[22px] shrink-0 w-full max-w-full items-center gap-2 px-2 text-left"
                     style={{
-                      animation: `fade-up 320ms cubic-bezier(0.23,1,0.32,1) ${i * 40}ms both`,
+                      animation: `fade-up 380ms cubic-bezier(0.23,1,0.32,1) ${i * 90}ms both`,
                     }}
                   >
                     {getScanItemIcon(row)}
@@ -516,10 +518,10 @@ export function EventThinkingBlock({
             strokeWidth="2.2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-text-secondary group-hover:text-text-primary transition-colors duration-150 shrink-0"
-            style={{ transform: reasoningExpanded ? "rotate(180deg)" : "rotate(0)" }}
+            className="text-text-secondary group-hover:text-text-primary transition-[color,transform] duration-150 shrink-0"
+            style={{ transform: reasoningExpanded ? "rotate(90deg)" : "rotate(0)" }}
           >
-            <path d="M6 9l6 6 6-6" />
+            <path d="M9 6l6 6-6 6" />
           </svg>
         </button>
 
@@ -555,7 +557,9 @@ export function EventThinkingBlock({
                     key={i}
                     className="flex shrink-0 w-full max-w-full px-2 text-left"
                     style={{
-                      animation: `fade-up 320ms cubic-bezier(0.23,1,0.32,1) ${i * 60}ms both`,
+                      animation: reasoningExpanded
+                        ? `fade-up 420ms cubic-bezier(0.23,1,0.32,1) ${i * 140}ms both`
+                        : undefined,
                     }}
                   >
                     <p className="min-w-0 text-[13px] leading-[19px] whitespace-normal break-words text-text-secondary font-normal m-0">
@@ -581,6 +585,3 @@ export function EventThinkingBlock({
 }
 
 export default EventThinkingBlock;
-
-
-

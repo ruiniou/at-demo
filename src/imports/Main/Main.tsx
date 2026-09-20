@@ -3423,6 +3423,7 @@ function AICopilotPanel({
             type: "event_thinking_block" as const,
             thinkingCardData: {
               status: "completed",
+              durationSeconds: 10,
               query: userContent.length > 30 ? userContent.slice(0, 28) + "..." : userContent,
               scannedCount: 42,
               matchedCount: 14,
@@ -3505,7 +3506,7 @@ function AICopilotPanel({
                 {
                   tflId: "t8",
                   name: "14.1.8 Medical History by SOC",
-                  reason: "TRTA referenced in adverse event merge · affects TRTA metadata (Locked by batch EVT-0916)",
+                  reason: "Locked by batch EVT-0916 · Resource in use",
                   itemStatus: "locked",
                   isExcluded: false,
                 },
@@ -3520,14 +3521,21 @@ function AICopilotPanel({
             },
           };
 
-          const finalMsgs = [...msgsWithUser, completedThinkingMsg, aiMsg, scopeMsg];
-          setMessages(finalMsgs);
-          setIsPending(false);
-          updateEventSessionMessages(finalMsgs, {
-            status: "idle",
-          });
-        }, 1100);
-      }, 700);
+          // Give the completed state its own beat before the result and scope card
+          // arrive, so it remains legible during a live product demo.
+          const completedMsgs = [...msgsWithUser, completedThinkingMsg];
+          setMessages(completedMsgs);
+
+          setTimeout(() => {
+            const finalMsgs = [...completedMsgs, aiMsg, scopeMsg];
+            setMessages(finalMsgs);
+            setIsPending(false);
+            updateEventSessionMessages(finalMsgs, {
+              status: "idle",
+            });
+          }, 2000);
+        }, 10300);
+      }, 900);
       return;
     }
 
@@ -4000,7 +4008,7 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
           items: [
             { tflId: 't1', name: '14.1.1 Disposition', reason: 'TRTA referenced in 2 strata derivations · affects ARM, ARMCD metadata', isExcluded: false },
             { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', reason: 'TRTA used in 3 summary table steps · affects TRTPN metadata', itemStatus: 'pending', isExcluded: false },
-            { tflId: 't8', name: '14.1.8 Medical History by SOC', reason: 'TRTA referenced in adverse event merge · affects TRTA metadata (Locked by batch EVT-0916)', itemStatus: 'locked', isExcluded: false },
+            { tflId: 't8', name: '14.1.8 Medical History by SOC', reason: 'Locked by batch EVT-0916 · Resource in use', itemStatus: 'locked', isExcluded: false },
             { tflId: 't5', name: '14.1.5 Baseline Characteristics', reason: 'TRTA referenced in continuous variable stats · affects TRTA metadata', isExcluded: false },
           ],
         },
