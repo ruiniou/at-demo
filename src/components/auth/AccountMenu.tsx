@@ -6,7 +6,6 @@ import React, { useState, useRef } from "react";
 export interface AccountMenuProps {
   userName?: string;
   avatarLetter?: string;
-  roleBadge?: string;
   onLogout?: () => void;
   className?: string;
 }
@@ -14,7 +13,6 @@ export interface AccountMenuProps {
 export const AccountMenu: React.FC<AccountMenuProps> = ({
   userName = "User account",
   avatarLetter = "U",
-  roleBadge,
   onLogout,
   className = "",
 }) => {
@@ -48,11 +46,6 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
           >
             {userName}
           </span>
-          {roleBadge && (
-            <span className="shrink-0 text-[10px] px-[6px] py-[1.5px] rounded-full bg-az-secondary text-brand-1 font-medium whitespace-nowrap leading-none">
-              {roleBadge}
-            </span>
-          )}
         </div>
       </button>
 

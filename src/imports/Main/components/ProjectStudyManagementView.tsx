@@ -1,44 +1,115 @@
-import { Avatar } from "../../../components/ui/Avatar";
-import React, { useState, useMemo } from 'react';
-import { ProjectItem, StudyItem, UserRole } from '../types/management';
-
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Avatar } from '../../../components/ui/Avatar';
 import { Button } from '../../../components/ui/Button';
 import { SearchBar } from '../../../components/ui/SearchBar';
 import { FilterChip } from '../../../components/ui/FilterChip';
+import { Switch } from '../../../components/ui/Switch';
+import { Tag } from '../../../components/ui/Tag';
+import { Tooltip } from '../../../components/ui/Tooltip';
+import { ProjectItem, StudyItem, SYSTEM_USERS, UserRole } from '../types/management';
 import databaseIconUrl from '../../../icons/database-2-line.svg';
-import informationIconUrl from '../../../icons/information-line.svg';
 import capsuleIconUrl from '../../../icons/capsule-line.svg';
 import stackIconUrl from '../../../icons/stack-line.svg';
+import searchIconUrl from '../../../icons/search-line.svg';
+import checkIconUrl from '../../../icons/check-line.svg';
+import addIconUrl from '../../../icons/add-line.svg';
+import microscopeIconUrl from '../../../icons/microscope-line.svg';
 
-// Local SVG icons
-function ChevronRightTreeIcon({ isExpanded, color = '#888E8E' }: { isExpanded: boolean; color?: string }) {
+function ChevronRightTreeIcon({ isExpanded }: { isExpanded: boolean }) {
   return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="transition-transform duration-150"
-      style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
-    >
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-150" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }} aria-hidden="true">
       <polyline points="9 18 15 12 9 6" />
     </svg>
   );
 }
 
-function CapsuleIcon({ color = '#888E8E' }: { color?: string }) {
+function MaskIcon({ src, className }: { src: string; className: string }) {
+  const mask = `url("${src}") center / contain no-repeat`;
+  return <span aria-hidden="true" className={`inline-block shrink-0 bg-current ${className}`} style={{ mask, WebkitMask: mask }} />;
+}
+
+function AvailabilitySwitch({ checked, disabled = false, label, onChange }: { checked: boolean; disabled?: boolean; label: string; onChange?: () => void }) {
   return (
-    <img src={capsuleIconUrl} alt="" className="h-[15px] w-[15px] shrink-0" style={{ filter: color === '#A1A1AA' ? 'grayscale(1) opacity(0.5)' : undefined }} />
+    <div className="flex items-center gap-[8px]">
+      <span className={`min-w-[52px] text-[12px] ${checked ? 'text-text-primary' : 'text-text-secondary'}`}>{checked ? 'Available' : 'Disabled'}</span>
+      <Switch checked={checked} disabled={disabled} ariaLabel={label} onChange={() => onChange?.()} />
+    </div>
   );
 }
 
-function StackIcon({ color = '#888E8E' }: { color?: string }) {
+function OwnerPicker({ value, onSelect, disabledAppearance = false }: { value: string; onSelect: (owner: string) => void; disabledAppearance?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const currentUser = SYSTEM_USERS.find((user) => user.name === value);
+  const filteredUsers = SYSTEM_USERS.filter((user) => {
+    const query = search.trim().toLowerCase();
+    return user.name.toLowerCase().includes(query) || user.email.toLowerCase().includes(query);
+  });
+
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const width = 260;
+    const estimatedHeight = 250;
+    const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
+    const openAbove = window.innerHeight - rect.bottom < estimatedHeight && rect.top > estimatedHeight;
+    setPosition({ left, top: openAbove ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4 });
+  }, []);
+
+  useEffect(() => {
+    if (!open) { setSearch(''); return; }
+    updatePosition();
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!buttonRef.current?.contains(target) && !popoverRef.current?.contains(target)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setOpen(false); buttonRef.current?.focus(); }
+    };
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    requestAnimationFrame(() => inputRef.current?.focus());
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open, updatePosition]);
+
   return (
-    <img src={stackIconUrl} alt="" className="h-[14px] w-[14px] shrink-0" style={{ filter: color === '#A1A1AA' ? 'grayscale(1) opacity(0.5)' : undefined }} />
+    <div className="relative min-w-0">
+      <button ref={buttonRef} type="button" onClick={() => setOpen((current) => !current)} aria-haspopup="dialog" aria-expanded={open} className="flex min-h-[40px] w-full min-w-0 items-center gap-[6px] rounded-[4px] px-[6px] text-left hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-1/20">
+        <Avatar name={value || undefined} initials={currentUser?.initials} color={currentUser?.color} level="modal" disabled={disabledAppearance} />
+        <span className={`truncate text-[12px] ${disabledAppearance ? 'text-graphite-40' : value ? 'text-text-primary' : 'text-text-secondary'}`}>{value || 'No Assignee'}</span>
+      </button>
+      {open && position && createPortal(
+        <div ref={popoverRef} role="dialog" aria-label="Select Study Owner" style={{ position: 'fixed', top: position.top, left: position.left, width: 260, zIndex: 9999 }} className="flex flex-col gap-[6px] rounded-[8px] border border-graphite-10 bg-white p-[4px] shadow-elevation-overlay">
+          <div className="flex h-[32px] items-center gap-[6px] rounded-[4px] border border-border-default px-[8px] focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1/20">
+            <img src={searchIconUrl} alt="" className="h-[13px] w-[13px] opacity-40" />
+            <input ref={inputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search people..." className="min-w-0 flex-1 bg-transparent text-[12px] text-text-primary outline-none placeholder:text-text-secondary" />
+          </div>
+          <div className="max-h-[210px] overflow-y-auto">
+            {filteredUsers.length === 0 ? <div className="px-[8px] py-[12px] text-center text-[12px] text-text-tertiary">No matching users</div> : filteredUsers.map((user) => {
+              const selected = user.name === value;
+              return (
+                <button key={user.id} type="button" onClick={() => { if (!selected) onSelect(user.name); setOpen(false); buttonRef.current?.focus(); }} className={`flex min-h-[32px] w-full items-center gap-[8px] rounded-[4px] px-[8px] py-[6px] text-left transition-colors ${selected ? 'bg-az-secondary/60 text-brand-1 font-medium' : 'text-text-primary hover:bg-bg-panel'}`}>
+                  <Avatar name={user.name} initials={user.initials} color={user.color} level="menu" />
+                  <span className="min-w-0 flex-1 truncate text-[12px]">{user.name}</span>
+                  {selected && <img src={checkIconUrl} alt="" className="h-[14px] w-[14px] shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>, document.body)}
+    </div>
   );
 }
 
@@ -48,410 +119,119 @@ interface ProjectStudyManagementViewProps {
   projects: ProjectItem[];
   onOpenNewProject: () => void;
   onOpenNewStudy: (projectId?: string) => void;
-  onOpenMaintainOwner: (projectId: string, study: StudyItem) => void;
+  onChangeOwner: (projectId: string, studyId: string, owner: string) => void;
   onToggleProjectStatus: (projectId: string) => void;
   onToggleStudyStatus: (projectId: string, studyId: string) => void;
 }
 
-export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProps> = ({
-  currentRole,
-  currentUserName,
-  projects,
-  onOpenNewProject,
-  onOpenNewStudy,
-  onOpenMaintainOwner,
-  onToggleProjectStatus,
-  onToggleStudyStatus,
-}) => {
+export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProps> = ({ currentRole, currentUserName, projects, onOpenNewProject, onOpenNewStudy, onChangeOwner, onToggleProjectStatus, onToggleStudyStatus }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
-  const [taFilter, setTaFilter] = useState<string>('All');
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
-    () => new Set(projects.map((p) => p.id))
-  );
+  const [taFilter, setTaFilter] = useState('All');
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => new Set(projects.map((project) => project.id)));
+  const previousStudyCounts = useRef(new Map(projects.map((project) => [project.id, project.studies.length])));
 
-  const toggleProject = (id: string) => {
-    setExpandedProjects((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  useEffect(() => {
+    setExpandedProjects((current) => {
+      const next = new Set(current);
+      projects.forEach((project) => {
+        const previousCount = previousStudyCounts.current.get(project.id);
+        if (previousCount === undefined || project.studies.length > previousCount) next.add(project.id);
+      });
       return next;
     });
-  };
+    previousStudyCounts.current = new Map(projects.map((project) => [project.id, project.studies.length]));
+  }, [projects]);
 
-  // Filter projects & studies based on role and filters
   const visibleGroups = useMemo(() => {
-    const q = search.trim().toLowerCase();
-
-    return projects
-      .map((proj) => {
-        // Study Owner data isolation: Only show studies owned by current user
-        let relevantStudies = proj.studies;
-        if (currentRole === 'owner') {
-          relevantStudies = relevantStudies.filter((s) => s.owner === currentUserName);
-        }
-
-        // TA filter
-        if (taFilter !== 'All') {
-          relevantStudies = relevantStudies.filter((s) => s.ta === taFilter);
-        }
-
-        // Status filter
-        if (statusFilter !== 'all') {
-          relevantStudies = relevantStudies.filter((s) => {
-            const isEffectiveEnabled = proj.status === 'enabled' && s.status === 'enabled';
-            return statusFilter === 'enabled' ? isEffectiveEnabled : !isEffectiveEnabled;
-          });
-        }
-
-        // Search filter
-        if (q) {
-          const matchProj = proj.name.toLowerCase().includes(q) || proj.id.toLowerCase().includes(q);
-          if (!matchProj) {
-            relevantStudies = relevantStudies.filter(
-              (s) =>
-                s.id.toLowerCase().includes(q) ||
-                s.owner.toLowerCase().includes(q) ||
-                s.ta.toLowerCase().includes(q)
-            );
-          }
-        }
-
-        // If Study Owner role and has no studies in this project, hide the project entirely
-        if (currentRole === 'owner' && relevantStudies.length === 0) {
-          return null;
-        }
-
-        // If Admin search filter and no studies and proj doesn't match, hide
-        if (q && relevantStudies.length === 0 && !proj.name.toLowerCase().includes(q)) {
-          return null;
-        }
-
-        return {
-          project: proj,
-          studies: relevantStudies,
-          totalStudiesInProject: proj.studies.length,
-        };
-      })
-      .filter((g): g is { project: ProjectItem; studies: StudyItem[]; totalStudiesInProject: number } => g !== null);
+    const query = search.trim().toLowerCase();
+    return projects.map((project) => {
+      let studies = currentRole === 'owner' ? project.studies.filter((study) => study.owner === currentUserName) : project.studies;
+      if (taFilter !== 'All') studies = studies.filter((study) => study.ta === taFilter);
+      if (statusFilter !== 'all') studies = studies.filter((study) => {
+        const enabled = project.status === 'enabled' && study.status === 'enabled';
+        return statusFilter === 'enabled' ? enabled : !enabled;
+      });
+      const projectMatches = project.name.toLowerCase().includes(query) || project.id.toLowerCase().includes(query);
+      if (query && !projectMatches) studies = studies.filter((study) => study.id.toLowerCase().includes(query) || study.owner.toLowerCase().includes(query) || study.ta.toLowerCase().includes(query));
+      if (currentRole === 'owner' && studies.length === 0) return null;
+      if (query && studies.length === 0 && !projectMatches) return null;
+      return { project, studies };
+    }).filter((group): group is { project: ProjectItem; studies: StudyItem[] } => group !== null);
   }, [projects, currentRole, currentUserName, search, statusFilter, taFilter]);
 
   const isAdmin = currentRole === 'admin';
   const isStudyOwner = currentRole === 'owner';
-
+  const hasActiveFilters = search.trim().length > 0 || taFilter !== 'All' || statusFilter !== 'all';
+  const resetFilters = () => {
+    setSearch('');
+    setTaFilter('All');
+    setStatusFilter('all');
+  };
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-[14px] px-[16px] sm:px-[28px] pt-[20px] pb-[20px] overflow-hidden">
-      {/* Page Header */}
-      <div className="flex items-center justify-between shrink-0">
+    <div className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-hidden px-[16px] pb-[20px] pt-[20px] sm:px-[28px]">
+      <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-[10px]">
-          <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-az-secondary shrink-0">
-            <img src={databaseIconUrl} alt="" className="h-[16px] w-[16px]" />
-          </div>
-          <div>
-            <h1 className="text-[22px] font-bold text-text-primary tracking-tight leading-[28px]">
-              Projects &amp; Studies
-            </h1>
-          </div>
+          <div className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-az-secondary text-brand-1"><MaskIcon src={databaseIconUrl} className="h-[16px] w-[16px]" /></div>
+          <h1 className="text-[22px] font-bold leading-[28px] tracking-tight text-text-primary">Projects &amp; Studies</h1>
         </div>
-
-        {/* Action Button: Admin only */}
-        {isAdmin && (
-          <Button
-            variant="primary"
-            onClick={onOpenNewProject}
-            className="gap-[6px] px-[14px] py-[6px] whitespace-nowrap shrink-0"
-          >
-            <span>+ New Project</span>
-          </Button>
-        )}
+        {isAdmin && <Button variant="primary" onClick={onOpenNewProject} className="shrink-0 whitespace-nowrap px-[14px] py-[6px]">+ New Project</Button>}
       </div>
-
-      {/* Note Banner for Role awareness */}
-      <div className="flex items-start gap-[8px] rounded-[8px] border border-az-secondary-border bg-az-secondary/60 px-[12px] py-[8px] text-[12.5px] text-text-primary shrink-0">
-        <img src={informationIconUrl} alt="" className="h-[15px] w-[15px] shrink-0 mt-[1px]" />
-        <div className="flex-1">
-          {isAdmin ? (
-            <span>
-              <b>Admin View:</b> View and manage all Projects and Studies. Disabling a Project cascades to all its Studies and restricts new Event creation. Historical Events remain accessible.
-            </span>
-          ) : (
-            <span>
-              <b>Study Owner View:</b> Data is strictly isolated to Studies you own, along with their parent Project information (other Studies in the same Project are hidden). You can transfer ownership, but cannot create or disable Projects and Studies.
-            </span>
-          )}
+      <div className="flex shrink-0 flex-col justify-between gap-[12px] sm:flex-row sm:items-center">
+        <div className="flex max-w-[620px] flex-1 items-center gap-[10px]">
+          <SearchBar value={search} onChange={setSearch} placeholder="Search Project/Study" background="light" className="w-full shrink-0 sm:w-[300px] md:w-[340px]" icon={<MaskIcon src={searchIconUrl} className="h-[16px] w-[16px] text-text-secondary" />} />
+          <FilterChip type="Dropdown" variant="filter" label={taFilter === 'All' ? 'All TA' : `TA: ${taFilter}`} value={taFilter} onChange={setTaFilter} icon={<MaskIcon src={microscopeIconUrl} className="h-[16px] w-[16px]" />} options={[{ label: 'All TA', value: 'All' }, { label: 'Oncology', value: 'Oncology' }, { label: 'Cardiology', value: 'Cardiology' }, { label: 'Neurology', value: 'Neurology' }, { label: 'Immunology', value: 'Immunology' }]} />
+          <FilterChip type="Dropdown" variant="filter" showIcon={false} label={statusFilter === 'all' ? 'All Status' : statusFilter === 'enabled' ? 'Available' : 'Disabled'} value={statusFilter} onChange={(value) => setStatusFilter(value as typeof statusFilter)} options={[{ label: 'All Status', value: 'all' }, { label: 'Available', value: 'enabled' }, { label: 'Disabled', value: 'disabled' }]} />
         </div>
       </div>
-
-      {/* Toolbar: Search + FilterChip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-[12px] shrink-0">
-        <div className="flex items-center gap-[10px] flex-1 max-w-[620px]">
-          <SearchBar
-            value={search}
-            onChange={setSearch}
-            placeholder="Search Project / Study / Owner..."
-            background="light"
-            className="w-full sm:w-[300px] md:w-[340px] shrink-0"
-          />
-
-          <FilterChip
-            type="Dropdown"
-            variant="filter"
-            label={taFilter === 'All' ? 'All TA' : `TA: ${taFilter}`}
-            value={taFilter}
-            onChange={setTaFilter}
-            options={[
-              { label: 'All TA', value: 'All' },
-              { label: 'Oncology', value: 'Oncology' },
-              { label: 'Cardiology', value: 'Cardiology' },
-              { label: 'Neurology', value: 'Neurology' },
-              { label: 'Immunology', value: 'Immunology' },
-            ]}
-          />
-
-          <FilterChip
-            type="Dropdown"
-            variant="filter"
-            label={
-              statusFilter === 'all'
-                ? 'All Status'
-                : statusFilter === 'enabled'
-                ? 'Enabled'
-                : 'Disabled'
-            }
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val as any)}
-            options={[
-              { label: 'All Status', value: 'all' },
-              { label: 'Enabled Only', value: 'enabled' },
-              { label: 'Disabled Only', value: 'disabled' },
-            ]}
-          />
-        </div>
-
-        <div className="text-[12px] text-text-secondary shrink-0">
-          Showing {visibleGroups.reduce((acc, g) => acc + g.studies.length, 0)} studies across{' '}
-          {visibleGroups.length} projects
-        </div>
-      </div>
-
-      {/* Hierarchical Table Container */}
-      <div className="flex-1 overflow-auto rounded-[6px] border border-graphite-10 bg-white">
-        {visibleGroups.length === 0 ? (
-          <div className="flex h-[240px] flex-col items-center justify-center gap-[6px] text-center text-text-muted">
-            <img src={databaseIconUrl} alt="" className="h-[28px] w-[28px] opacity-40" />
-            <span className="text-[13px] font-medium">No matching projects or studies found</span>
-            <span className="text-[12px] text-text-tertiary">
-              {isStudyOwner
-                ? 'You currently do not own any studies matching this criteria'
-                : 'Try adjusting your search or filters'}
-            </span>
-          </div>
-        ) : (
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-graphite-10 bg-bg-app text-[12px] font-normal text-text-secondary tracking-normal sticky top-0 z-10">
-                <th className="px-[16px] py-[10px] font-normal">Project / Study Name</th>
-                <th className="px-[16px] py-[10px] font-normal w-[200px]">Owner</th>
-                <th className="px-[16px] py-[10px] font-normal w-[150px]">Status</th>
-                <th className="px-[16px] py-[10px] font-normal w-[120px]">Events</th>
-                <th className="px-[16px] py-[10px] font-normal text-right w-[180px]">Actions</th>
-              </tr>
-            </thead>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-graphite-10 bg-white">
+        <table className="w-full table-fixed border-collapse text-left">
+          <colgroup><col /><col className="w-[240px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
+          <thead><tr className="border-b border-graphite-10 bg-bg-app text-[12px] text-text-secondary"><th className="px-[16px] py-[10px] font-normal">Project / Study</th><th className="px-[16px] py-[10px] font-normal">Study Owner</th><th className="px-[16px] py-[10px] font-normal">Status</th><th className="px-[16px] py-[10px]" aria-label="Actions" /></tr></thead>
+        </table>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+        {visibleGroups.length === 0 ? <div className="flex h-full min-h-[240px] flex-col items-center justify-center text-center text-text-muted"><img src={databaseIconUrl} alt="" className="mb-[6px] h-[28px] w-[28px] opacity-40" /><span className="text-[13px] font-medium">No matching projects or studies found</span>{hasActiveFilters && <button type="button" onClick={resetFilters} className="mt-[8px] cursor-pointer text-[12px] font-medium text-brand-1 hover:underline">Reset Filters</button>}</div> : (
+          <table className="w-full table-fixed border-collapse text-left">
+            <colgroup><col /><col className="w-[240px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
             <tbody className="divide-y divide-graphite-10 text-[13px]">
-              {visibleGroups.map(({ project, studies, totalStudiesInProject }) => {
-                const isExpanded = expandedProjects.has(project.id);
-                const isProjectDisabled = project.status === 'disabled';
-
-                return (
-                  <React.Fragment key={project.id}>
-                    {/* Level 1: Project Header Row */}
-                    <tr
-                      onClick={() => toggleProject(project.id)}
-                      className="bg-bg-app/80 hover:bg-black/[0.03] cursor-pointer transition-colors select-none group"
-                    >
-                      {/* Name & Arrow */}
-                      <td className="py-[9px] pl-[16px] pr-[16px]">
-                        <div className="flex items-center gap-[8px]">
-                          <span className="flex h-[16px] w-[16px] items-center justify-center text-text-secondary shrink-0">
-                            <ChevronRightTreeIcon isExpanded={isExpanded} color="#888E8E" />
-                          </span>
-                          <CapsuleIcon color={isProjectDisabled ? '#A1A1AA' : '#888E8E'} />
-                          <span
-                            className={`text-[13px] font-semibold ${
-                              isProjectDisabled ? 'text-text-secondary line-through' : 'text-text-primary'
-                            }`}
-                          >
-                            {project.name}
-                          </span>
-                          <span className="text-[11px] text-text-tertiary ml-[2px]">
-                            ({studies.length}
-                            {isStudyOwner && studies.length < totalStudiesInProject
-                              ? ` of ${totalStudiesInProject} owned`
-                              : ' studies'}
-                            )
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Project Owner: Not applicable in Atlas PRD */}
-                      <td className="px-[16px] py-[9px] text-[12px] text-text-tertiary">
-                        —
-                      </td>
-
-                      {/* Project Status */}
-                      <td className="px-[16px] py-[9px]">
-                        {isProjectDisabled ? (
-                          <span className="inline-flex items-center px-[8px] py-[1px] rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                            Disabled
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-[8px] py-[1px] rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Enabled
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Events column for Project */}
-                      <td className="px-[16px] py-[9px] text-[12px] text-text-secondary">
-                        {studies.reduce((sum, s) => sum + (s.eventsCount || 0), 0)} events
-                      </td>
-
-                      {/* Project Actions */}
-                      <td
-                        className="px-[16px] py-[9px] text-right"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {isAdmin && (
-                          <div className="flex items-center justify-end gap-[10px]">
-                            {!isProjectDisabled && (
-                              <button
-                                type="button"
-                                onClick={() => onOpenNewStudy(project.id)}
-                                className="text-[12px] font-medium text-brand-1 hover:underline cursor-pointer"
-                              >
-                                + Add Study
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => onToggleProjectStatus(project.id)}
-                              className={`text-[12px] font-medium cursor-pointer transition-colors ${
-                                isProjectDisabled
-                                  ? 'text-emerald-700 hover:text-emerald-800'
-                                  : 'text-status-error hover:underline'
-                              }`}
-                            >
-                              {isProjectDisabled ? 'Enable Project' : 'Disable Project'}
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-
-                    {/* Level 2: Studies under Project */}
-                    {isExpanded &&
-                      studies.map((std) => {
-                        const isStudyDisabled = std.status === 'disabled';
-                        const isCascadedDisabled = isProjectDisabled;
-
-                        return (
-                          <tr
-                            key={std.id}
-                            className="bg-[#FCFCFC] hover:bg-black/[0.02] transition-colors"
-                          >
-                            {/* Study Name & TA */}
-                            <td className="py-[8px] pl-[44px] pr-[16px]">
-                              <div className="flex items-center gap-[8px]">
-                                <StackIcon color={isStudyDisabled || isCascadedDisabled ? '#A1A1AA' : '#888E8E'} />
-                                <span
-                                  className={`text-[13px] font-medium ${
-                                    isStudyDisabled || isCascadedDisabled
-                                      ? 'text-text-secondary line-through'
-                                      : 'text-text-primary'
-                                  }`}
-                                >
-                                  {std.id}
-                                </span>
-                                <span className="text-[10px] px-[6px] py-[0.5px] rounded-full bg-black/5 text-text-secondary border border-graphite-10">
-                                  {std.ta}
-                                </span>
-                              </div>
-                            </td>
-
-                            {/* Study Owner */}
-                            <td className="px-[16px] py-[8px]">
-                              <div className="flex items-center gap-[6px]">
-                                <Avatar name={std.owner} level="page" />
-                                <span className="text-[13px] text-text-primary font-medium">
-                                  {std.owner}
-                                </span>
-                              </div>
-                            </td>
-
-                            {/* Study Status */}
-                            <td className="px-[16px] py-[8px]">
-                              {isCascadedDisabled ? (
-                                <span
-                                  className="inline-flex items-center px-[8px] py-[1px] rounded-full text-[11px] font-medium bg-gray-100 text-gray-500 border border-gray-200"
-                                  title="Inherited from disabled parent Project"
-                                >
-                                  Project Disabled
-                                </span>
-                              ) : isStudyDisabled ? (
-                                <span className="inline-flex items-center px-[8px] py-[1px] rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
-                                  Disabled
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-[8px] py-[1px] rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  Enabled
-                                </span>
-                              )}
-                            </td>
-
-                            {/* Events Count */}
-                            <td className="px-[16px] py-[8px] text-[12px] text-text-secondary">
-                              {std.eventsCount || 0} events
-                            </td>
-
-                            {/* Study Actions */}
-                            <td className="px-[16px] py-[8px] text-right">
-                              <div className="flex items-center justify-end gap-[12px]">
-                                {/* Maintain / Transfer Owner */}
-                                {(isAdmin || (isStudyOwner && std.owner === currentUserName)) && (
-                                  <button
-                                    type="button"
-                                    onClick={() => onOpenMaintainOwner(project.id, std)}
-                                    className="text-[12px] font-medium text-text-secondary hover:text-brand-1 cursor-pointer transition-colors"
-                                  >
-                                    {isStudyOwner ? 'Transfer Owner' : 'Maintain Owner'}
-                                  </button>
-                                )}
-
-                                {/* Disable/Enable Study (Admin only; hidden if Project is disabled per PRD) */}
-                                {isAdmin && !isCascadedDisabled && (
-                                  <button
-                                    type="button"
-                                    onClick={() => onToggleStudyStatus(project.id, std.id)}
-                                    className={`text-[12px] font-medium cursor-pointer transition-colors ${
-                                      isStudyDisabled
-                                        ? 'text-emerald-700 hover:text-emerald-800'
-                                        : 'text-status-error hover:underline'
-                                    }`}
-                                  >
-                                    {isStudyDisabled ? 'Enable' : 'Disable'}
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </React.Fragment>
-                );
+              {visibleGroups.map(({ project, studies }) => {
+                const expanded = expandedProjects.has(project.id);
+                const projectDisabled = project.status === 'disabled';
+                return <React.Fragment key={project.id}>
+                  <tr className="group/project h-[48px] bg-bg-panel hover:bg-graphite-10/60">
+                    <td className="py-0 pl-[16px] pr-[16px]"><div className="flex h-[48px] items-center gap-[16px]">
+                      <button type="button" onClick={() => setExpandedProjects((current) => { const next = new Set(current); next.has(project.id) ? next.delete(project.id) : next.add(project.id); return next; })} aria-expanded={expanded} className="flex h-[48px] min-w-0 flex-1 items-center gap-[8px] text-left text-text-secondary">
+                        <span className="flex h-[16px] w-[16px] shrink-0 items-center justify-center"><ChevronRightTreeIcon isExpanded={expanded} /></span><MaskIcon src={capsuleIconUrl} className={`h-[16px] w-[16px] text-text-secondary ${projectDisabled ? 'opacity-50' : ''}`} /><span className={`truncate font-semibold ${projectDisabled ? 'text-text-secondary' : 'text-text-primary'}`}>{project.name}</span>
+                      </button>
+                    </div></td>
+                    <td className="px-[16px] py-0" />
+                    <td className="px-[16px] py-0"><AvailabilitySwitch checked={!projectDisabled} disabled={!isAdmin} label={`${project.name} availability`} onChange={() => onToggleProjectStatus(project.id)} /></td>
+                    <td className="w-[80px] px-[16px] py-0 text-right">
+                      {isAdmin && !projectDisabled && (
+                        <Tooltip label="Add Study">
+                          <Button variant="icon" size="icon" type="button" onClick={() => onOpenNewStudy(project.id)} aria-label={`Add study to ${project.name}`} className="text-brand-1 opacity-0 pointer-events-none transition-[opacity,background-color,transform] duration-150 hover:bg-az-secondary hover:text-brand-1 active:scale-[0.96] focus-visible:opacity-100 group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto">
+                            <MaskIcon src={addIconUrl} className="h-[14px] w-[14px]" />
+                          </Button>
+                        </Tooltip>
+                      )}
+                    </td>
+                  </tr>
+                  {expanded && studies.map((study) => {
+                    const effectiveDisabled = projectDisabled || study.status === 'disabled';
+                    const canMaintainOwner = isAdmin || (isStudyOwner && study.owner === currentUserName);
+                    return <tr key={study.id} className="h-[48px] bg-white hover:bg-black/[0.02]">
+                      <td className="py-0 pl-[40px] pr-[16px]"><div className="flex h-[48px] items-center gap-[8px]"><MaskIcon src={stackIconUrl} className={`h-[16px] w-[16px] text-text-secondary ${effectiveDisabled ? 'opacity-50' : ''}`} /><span className={`font-medium ${effectiveDisabled ? 'text-graphite-40' : 'text-text-primary'}`}>{study.id}</span><Tag className={`h-[20px] py-0 pointer-events-none ${effectiveDisabled ? 'opacity-50' : ''}`}>{study.ta}</Tag></div></td>
+                      <td className="px-[10px] py-[4px]">{canMaintainOwner ? <OwnerPicker value={study.owner} disabledAppearance={effectiveDisabled} onSelect={(owner) => onChangeOwner(project.id, study.id, owner)} /> : <div className="flex min-h-[40px] items-center gap-[6px] px-[6px]"><Avatar name={study.owner || undefined} level="modal" disabled={effectiveDisabled} /><span className={`truncate text-[12px] ${effectiveDisabled ? 'text-graphite-40' : study.owner ? 'text-text-primary' : 'text-text-secondary'}`}>{study.owner || 'No Assignee'}</span></div>}</td>
+                      <td className="px-[16px] py-0"><AvailabilitySwitch checked={!effectiveDisabled} disabled={!isAdmin || projectDisabled} label={`${study.id} availability`} onChange={() => onToggleStudyStatus(project.id, study.id)} /></td>
+                      <td className="w-[80px] px-[16px] py-0" />
+                    </tr>;
+                  })}
+                </React.Fragment>;
               })}
             </tbody>
           </table>
         )}
+        </div>
       </div>
     </div>
   );

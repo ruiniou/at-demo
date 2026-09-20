@@ -34,6 +34,7 @@ export function SearchBar({
   }, [autoFocus]);
 
   const hasValue = value.length > 0;
+  const searchIconMask = `url("${searchIconUrl}") center / contain no-repeat`;
 
   // Outer wrapper styles by state
   let outerClasses = `flex ${size === "compact" ? "h-8" : "h-[36px]"} items-stretch rounded-[8px] p-[2px] gap-[6px] border-[0.6px]`;
@@ -63,7 +64,13 @@ export function SearchBar({
       <div className={innerClasses}>
         {/* Search icon + input */}
         <div className="flex flex-1 items-center gap-[6px] min-w-0">
-          {icon ?? <img src={searchIconUrl} alt="" className="h-[16px] w-[16px] shrink-0" />}
+          {icon ?? (
+            <span
+              aria-hidden="true"
+              className={`h-[16px] w-[16px] shrink-0 bg-current ${background === "light" ? "text-text-secondary" : "text-text-primary"}`}
+              style={{ mask: searchIconMask, WebkitMask: searchIconMask }}
+            />
+          )}
           <div className="flex flex-1 items-center min-w-0">
             <input
               ref={inputRef}

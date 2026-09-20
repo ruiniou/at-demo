@@ -4,6 +4,25 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 
+/* Shared Switch: antd behavior with Atlas design tokens. */
+.atlas-switch.ant-switch {
+  width: 28px;
+  min-width: 28px;
+}
+.atlas-switch.ant-switch-checked,
+.atlas-switch.ant-switch-checked:hover:not(.ant-switch-disabled) {
+  background: var(--color-brand-1);
+}
+.atlas-switch.ant-switch-checked:active:not(.ant-switch-disabled) {
+  background: var(--color-dark-mulberry);
+}
+.atlas-switch.ant-switch:not(.ant-switch-checked):not(.ant-switch-disabled) {
+  background: var(--color-graphite-50);
+}
+.atlas-switch.ant-switch-disabled:not(.ant-switch-checked) {
+  background: var(--color-graphite-20);
+}
+
 /* Fade transition for Ask User */
 .q-fade {
   transition: opacity 0.25s ease, transform 0.25s ease;

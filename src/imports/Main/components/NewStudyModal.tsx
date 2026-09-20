@@ -1,7 +1,12 @@
 import { Avatar } from "../../../components/ui/Avatar";
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '../../../components/ui/Button';
-import { ProjectItem, SYSTEM_USERS, TA_OPTIONS, SystemUser } from '../types/management';
+import { Dropdown } from '../../../components/ui/Dropdown';
+import { FormInputField } from '../../../components/ui/FormInputField';
+import { FormItem } from '../../../components/ui/FormItem';
+import { SearchBar } from '../../../components/ui/SearchBar';
+import { ProjectItem, SYSTEM_USERS, TA_OPTIONS } from '../types/management';
 import closeLineIconUrl from '../../../icons/close-line.svg';
 import checkLineIconUrl from '../../../icons/check-line.svg';
 
@@ -49,6 +54,15 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
     }
   }, [isOpen, defaultProjectId, projects]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const filteredUsers = SYSTEM_USERS.filter(
@@ -56,6 +70,7 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
       u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.email.toLowerCase().includes(userSearch.toLowerCase())
   );
+  const isFormComplete = Boolean(projectId && studyName.trim() && ta && selectedOwner);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,9 +83,11 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
     if (!selectedOwner) newErrors.owner = 'Please assign a Study Owner';
 
     // Duplicate check
-    const currentProj = projects.find((p) => p.id === projectId);
-    if (currentProj && currentProj.studies.some((s) => s.id.toLowerCase() === trimmedStudy.toLowerCase())) {
-      newErrors.study = `Study "${trimmedStudy}" already exists under ${projectId}`;
+    const duplicateStudy = projects.some((project) =>
+      project.studies.some((study) => study.id.toLowerCase() === trimmedStudy.toLowerCase())
+    );
+    if (duplicateStudy) {
+      newErrors.study = `Study Code "${trimmedStudy}" already exists`;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -87,120 +104,70 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-[16px] animate-fade-in">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity" onClick={onClose} aria-label="Close modal overlay" />
       <div
-        className="w-full max-w-[480px] rounded-[10px] border border-graphite-10 bg-white p-[24px] shadow-card-mulberry animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-study-dialog-title"
+        className="relative flex max-h-[90vh] w-[480px] max-w-[95vw] flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-[0px_8px_24px_rgba(0,0,0,0.14)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between pb-[14px] border-b border-border-default shrink-0">
-          <div>
-            <h2 className="text-[17px] font-semibold text-text-primary">New Study</h2>
-            <p className="text-[12px] text-text-secondary mt-[2px]">
-              Add a study and assign its sole Study Owner.
-            </p>
-          </div>
+        <div className="flex shrink-0 items-center justify-between px-[20px] pb-[14px] pt-[18px]">
+          <h2 id="new-study-dialog-title" className="text-[16px] font-semibold leading-[22px] text-text-primary">New Study</h2>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] text-text-secondary hover:bg-black/5 hover:text-text-primary transition-colors cursor-pointer"
+            className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] transition-colors hover:bg-black/5 active:scale-[0.96]"
             aria-label="Close"
           >
-            <img src={closeLineIconUrl} alt="" className="h-[14px] w-[14px]" />
+            <img src={closeLineIconUrl} alt="" className="h-[14px] w-[14px] opacity-70" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="pt-[16px] flex flex-col gap-[14px] overflow-y-auto min-h-0 flex-1 pr-[2px]">
-          {/* Project Select */}
-          <div className="flex flex-col gap-[5px]">
-            <label className="text-[12px] font-medium text-text-secondary">
-              Belongs to Project <span className="text-status-error">*</span>
-            </label>
-            <select
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-y-auto px-[20px] py-[12px]">
+            <Dropdown
+              label="Belongs to Project"
+              required
               value={projectId}
-              onChange={(e) => {
-                setProjectId(e.target.value);
-                if (errors.project) setErrors((prev) => ({ ...prev, project: '' }));
+              onChange={(value) => {
+                setProjectId(value);
+                if (errors.project) setErrors((previous) => ({ ...previous, project: '' }));
               }}
-              className="h-[36px] w-full rounded-[6px] border border-border-default px-[10px] text-[13px] text-text-primary bg-white outline-none focus:border-brand-1 focus:ring-1 focus:ring-brand-1"
-            >
-              {availableProjects.length === 0 ? (
-                <option value="">No enabled projects available</option>
-              ) : (
-                availableProjects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))
-              )}
-            </select>
-            {errors.project && <span className="text-[11px] text-status-error">{errors.project}</span>}
-          </div>
+              placeholder="Select a project"
+              options={availableProjects.map((project) => ({ label: project.name, value: project.id }))}
+            />
 
-          {/* Study Name */}
-          <div className="flex flex-col gap-[5px]">
-            <label className="text-[12px] font-medium text-text-secondary">
-              Study Name <span className="text-status-error">*</span>
-            </label>
-            <input
-              type="text"
+            <FormInputField
+              label="Study Name"
+              required
               value={studyName}
-              onChange={(e) => {
-                setStudyName(e.target.value);
-                if (errors.study) setErrors((prev) => ({ ...prev, study: '' }));
+              error={errors.study || undefined}
+              onChange={(event) => {
+                setStudyName(event.target.value);
+                if (errors.study) setErrors((previous) => ({ ...previous, study: '' }));
               }}
               placeholder="e.g. AZE2001-305"
-              className={`h-[36px] w-full rounded-[6px] border px-[12px] text-[13px] text-text-primary outline-none transition-colors ${
-                errors.study
-                  ? 'border-status-error focus:border-status-error'
-                  : 'border-border-default focus:border-brand-1 focus:ring-1 focus:ring-brand-1'
-              }`}
             />
-            {errors.study && <span className="text-[11px] text-status-error">{errors.study}</span>}
-          </div>
 
-          {/* Therapeutic Area (TA) */}
-          <div className="flex flex-col gap-[5px]">
-            <label className="text-[12px] font-medium text-text-secondary">
-              Therapeutic Area (TA) <span className="text-status-error">*</span>
-            </label>
-            <select
+            <Dropdown
+              label="Therapeutic Area (TA)"
+              required
               value={ta}
-              onChange={(e) => {
-                setTa(e.target.value);
-                if (errors.ta) setErrors((prev) => ({ ...prev, ta: '' }));
+              onChange={(value) => {
+                setTa(value);
+                if (errors.ta) setErrors((previous) => ({ ...previous, ta: '' }));
               }}
-              className="h-[36px] w-full rounded-[6px] border border-border-default px-[10px] text-[13px] text-text-primary bg-white outline-none focus:border-brand-1 focus:ring-1 focus:ring-brand-1"
-            >
-              {TA_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-            {errors.ta && <span className="text-[11px] text-status-error">{errors.ta}</span>}
-          </div>
-
-          {/* Study Owner Picker */}
-          <div className="flex flex-col gap-[6px]">
-            <div className="flex items-center justify-between">
-              <label className="text-[12px] font-medium text-text-secondary">
-                Assign Study Owner <span className="text-status-error">*</span>
-              </label>
-              <span className="text-[11px] text-text-tertiary">1 owner per study</span>
-            </div>
-
-            {/* Quick search input */}
-            <input
-              type="text"
-              placeholder="Search user by name or email..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
-              className="h-[32px] w-full rounded-[6px] border border-border-default px-[10px] text-[12px] text-text-primary placeholder:text-text-tertiary outline-none focus:border-brand-1"
+              placeholder="Select a therapeutic area"
+              options={TA_OPTIONS.map((option) => ({ label: option, value: option }))}
             />
 
-            {/* User List */}
-            <div className="flex flex-col gap-[2px] rounded-[6px] border border-border-default p-[4px] max-h-[140px] overflow-y-auto">
+            <FormItem label="Assign Study Owner" labelClassName="t-small-medium" required error={errors.owner || undefined}>
+              <div className="flex flex-col gap-[6px]">
+                <SearchBar value={userSearch} onChange={setUserSearch} placeholder="Search user by name or email..." background="light" size="compact" />
+                <div className="flex max-h-[140px] flex-col gap-[2px] overflow-y-auto rounded-[4px] border border-form-border p-[4px]">
               {filteredUsers.length === 0 ? (
                 <div className="p-[12px] text-center text-[12px] text-text-tertiary">
                   No matching users
@@ -209,13 +176,14 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
                 filteredUsers.map((u) => {
                   const isSelected = selectedOwner === u.name;
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={u.id}
                       onClick={() => {
                         setSelectedOwner(u.name);
                         if (errors.owner) setErrors((prev) => ({ ...prev, owner: '' }));
                       }}
-                      className={`flex items-center justify-between px-[8px] py-[6px] rounded-[4px] cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between rounded-[4px] px-[8px] py-[6px] text-left transition-colors ${
                         isSelected
                           ? 'bg-az-secondary text-brand-1 font-medium'
                           : 'hover:bg-bg-panel text-text-primary'
@@ -229,25 +197,27 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
                       {isSelected && (
                         <img src={checkLineIconUrl} alt="" className="h-[14px] w-[14px] shrink-0" />
                       )}
-                    </div>
+                    </button>
                   );
                 })
               )}
-            </div>
-            {errors.owner && <span className="text-[11px] text-status-error">{errors.owner}</span>}
+                </div>
+              </div>
+            </FormItem>
           </div>
 
-          <div className="mt-[16px] flex items-center justify-end gap-[10px] pt-[8px] border-t border-border-default shrink-0">
-            <Button variant="secondary" size="md" onClick={onClose} type="button">
+          <div className="flex shrink-0 items-center justify-end gap-[10px] border-t border-graphite-10 bg-white px-[20px] py-[14px]">
+            <Button variant="ghost" size="default" onClick={onClose} type="button">
               Cancel
             </Button>
-            <Button variant="primary" size="md" type="submit">
+            <Button variant="primary" size="default" type="submit" disabled={!isFormComplete}>
               Create Study
             </Button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

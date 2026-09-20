@@ -256,3 +256,31 @@
 * **经验教训 (Takeaways)**：
   1. **多态状态机流转严禁简化为布尔二值开关**：当实体具备多种状态（`completed` / `pending` / `locked` / `error` 等）时，不可随意用 `a ? b : c` 做二元翻转，必须明确每个状态被切换时的前置条件与预期归宿。
   2. **锁定（Freeze/Lock）的本质是冻结而非待定**：业务心智中代码锁定通常发生于交付物已定稿/已完成之后，解锁操作恢复的应是其基线正常态（`completed`），不应凭空制造“待定变更”。
+
+---
+
+### [2026-09-20] TreeList 与 Events 表格行 Hover 导致名称文字错误变为品牌色
+
+* **现象 (Symptom)**：
+  鼠标移入 TreeList 的 Recent/Event 条目或 Events 表格的 Event 行时，名称文字由 `text-primary` 变为品牌色；预期仅显示行背景反馈，文字颜色保持不变。
+* **根本原因 (Root Cause)**：
+  名称文本节点显式添加了 Tailwind 规则 `group-hover:text-brand-1`。父级行使用 `group` 后，任意行 Hover 都会触发该规则，覆盖名称原有的 `text-text-primary`。
+* **解决方案 (Solution)**：
+  移除 TreeList Recent、TreeList Event 和 Events 表格 Event 名称上的 `group-hover:text-brand-1`，保留父级行的 `hover:bg-*` 背景反馈。
+* **经验教训 (Takeaways)**：
+  1. 列表行 Hover 应优先通过容器背景表达，除非设计规范明确要求，否则不要同时改变主标签文字颜色。
+  2. 使用 Tailwind `group-hover` 前应检查其作用域，避免父级整行状态意外覆盖子元素的语义色。
+
+---
+
+### [2026-09-20] Events 页开启 Assigned to me 筛选后因变量暂时性死区导致白屏
+
+* **现象 (Symptom)**：
+  点击 Events 页的 `Assigned to me` 筛选器后页面白屏，用户无法查看空结果或恢复筛选条件。
+* **根本原因 (Root Cause)**：
+  `hierarchicalProjects` 的 `useMemo` 在 `assignedToMeOnly` 分支中通过 `owner` 计算 Study Owner，但 `owner` 使用 `const` 声明在该分支之后。开启筛选时访问处于 Temporal Dead Zone 的变量，触发运行时 `ReferenceError`。
+* **解决方案 (Solution)**：
+  在每个 Event 开始过滤前先计算 `studyOwner`，筛选判断、搜索匹配和分组数据统一使用该变量；同时将筛选器重命名为无图标的 `My Events`，并为零结果增加 `Reset Filters` 空状态。
+* **经验教训 (Takeaways)**：
+  1. `useMemo` 内的过滤和分组应先集中派生共享字段，再进入条件分支，避免 `const` 暂时性死区与重复计算。
+  2. 所有可能返回零结果的筛选器都应提供明确空状态和恢复入口，不能依赖空白容器表达结果。

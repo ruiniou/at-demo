@@ -81,8 +81,7 @@ import { Button } from "../../components/ui/Button";
 import { ProjectStudyManagementView } from "./components/ProjectStudyManagementView";
 import { NewProjectModal } from "./components/NewProjectModal";
 import { NewStudyModal } from "./components/NewStudyModal";
-import { MaintainOwnerModal } from "./components/MaintainOwnerModal";
-import { ProjectItem, StudyItem, UserRole, INITIAL_PROJECTS, SYSTEM_USERS } from "./types/management";
+import { ProjectItem, UserRole, INITIAL_PROJECTS, SYSTEM_USERS } from "./types/management";
 import { Tooltip } from "../../components/ui/Tooltip";
 import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
@@ -99,6 +98,7 @@ import { AIUpdatedBlock } from "../../components/ui/AI-UpdatedBlock";
 import ChatBox from "./components/ChatBox";
 import type { AttachmentItem, MentionOption } from "./components/ChatBox";
 import { SearchBar } from "../../components/ui/SearchBar";
+import { Tag as DesignTag } from "../../components/ui/Tag";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { OptionLabel } from "../../components/ui/OptionLabel";
 import { FormInputField as Input } from "../../components/ui/FormInputField";
@@ -3639,27 +3639,15 @@ function AICopilotPanel({
                 onSelectEventSession={(session) => onSelectEventSession?.(session)}
                 onNewEventSession={onNewEventSession}
                 onRenameEventSession={(id, newName) => onUpdateEventSession?.(id, { name: newName })}
-                onDeleteEventSession={(id) => onDeleteEventSession?.(id)}
                 tflSessions={sessionOptions}
                 selectedTflSessionId={selectedSession}
                 onSelectTflSession={handleSelectTflSession}
                 onNewTflSession={handleNewTflSession}
                 onRenameTflSession={handleRenameTflSession}
-                onDeleteTflSession={handleDeleteTflSession}
               />
             }
             actions={
               <div className="flex items-center gap-[4px]">
-                <TooltipText label={isEventCopilot ? "New Event Session" : "New TFL Session"}>
-                  <button
-                    type="button"
-                    onClick={isEventCopilot ? onNewEventSession : handleNewTflSession}
-                    aria-label="New Session"
-                    className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer"
-                  >
-                    <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-                  </button>
-                </TooltipText>
                 <TooltipText label="Collapse AI Copilot">
                   <button
                     type="button"
@@ -3686,25 +3674,13 @@ function AICopilotPanel({
             onSelectEventSession={(session) => onSelectEventSession?.(session)}
             onNewEventSession={onNewEventSession}
             onRenameEventSession={(id, newName) => onUpdateEventSession?.(id, { name: newName })}
-            onDeleteEventSession={(id) => onDeleteEventSession?.(id)}
             tflSessions={sessionOptions}
             selectedTflSessionId={selectedSession}
             onSelectTflSession={handleSelectTflSession}
             onNewTflSession={handleNewTflSession}
             onRenameTflSession={handleRenameTflSession}
-            onDeleteTflSession={handleDeleteTflSession}
           />
           <div className="flex items-center gap-[4px]">
-            <TooltipText label={isEventCopilot ? "New Event Session" : "New TFL Session"}>
-              <button
-                type="button"
-                onClick={isEventCopilot ? onNewEventSession : handleNewTflSession}
-                aria-label="New Session"
-                className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer after:content-[''] after:absolute after:-inset-[8px]"
-              >
-                <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
-              </button>
-            </TooltipText>
             <TooltipText label="Collapse AI Copilot">
               <button
                 type="button"
@@ -4167,6 +4143,17 @@ function LocalIcon({
   return <img src={src} alt="" aria-hidden="true" className={`${className} block shrink-0`} style={filter ? { filter } : undefined} />;
 }
 
+function ReadOnlyOwner({ name }: { name?: string }) {
+  return (
+    <div className="flex min-h-[40px] min-w-0 items-center gap-[6px] px-[6px]">
+      <Avatar name={name} level="modal" />
+      <span className={`truncate text-[12px] font-normal ${name ? 'text-text-primary' : 'text-text-secondary'}`}>
+        {name || 'No Assignee'}
+      </span>
+    </div>
+  );
+}
+
 function LockTreeIcon({ className = "w-[16px] h-[16px]", color = "#3F4444" }) {
   return <LocalIcon src={lockIconUrl} className={className} color={color} />;
 }
@@ -4609,12 +4596,13 @@ function TreeStatusControl({
     );
   }
 
-  if (item.status === 'modified' && 'pendingChanges' in item) {
+  if (item.status === 'modified' || item.status === 'pending') {
+    const pendingCount = 'pendingChanges' in item ? item.pendingChanges : undefined;
     return (
-      <TooltipText label={`${item.pendingChanges || 0} Pending changes`}>
+      <TooltipText label={pendingCount && pendingCount > 0 ? `${pendingCount} Pending changes` : 'Pending changes'}>
         <span className="cursor-help">
           <CodeStatusSlot>
-            <CodeStatusDot color="#F0AB00" />
+            <CodeStatusDot color="var(--color-status-warning-icon)" />
           </CodeStatusSlot>
         </span>
       </TooltipText>
@@ -4693,6 +4681,7 @@ function TreeItem({
   onToggleLock,
   onToggleExpand,
   onShowLockedModal,
+  hasPendingCodeChanges,
 }: {
   program: ProgramItem;
   selectedId: string | null;
@@ -4700,6 +4689,7 @@ function TreeItem({
   onToggleLock: (programId: string, tableId?: string) => void;
   onToggleExpand: (programId: string) => void;
   onShowLockedModal: (programName: string) => void;
+  hasPendingCodeChanges?: boolean;
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const isProgramHovered = hoveredId === program.id;
@@ -4749,7 +4739,12 @@ function TreeItem({
           {program.tables.map((table) => {
             const isTableHovered = hoveredId === table.id;
             const isTableSelected = selectedId === table.id;
-            const effectiveItem: TableItem = isProgramLocked ? { ...table, status: 'locked' } : table;
+            const isCurrentTablePending = table.id === selectedId && hasPendingCodeChanges;
+            const effectiveItem: TableItem = isProgramLocked
+              ? { ...table, status: 'locked' }
+              : isCurrentTablePending
+                ? { ...table, status: 'modified' }
+                : table;
 
             const isQueued = table.docType === 'figure' && table.status === 'queued';
 
@@ -12854,6 +12849,7 @@ function WorkspaceContent({
                       onToggleLock={handleToggleLock}
                       onToggleExpand={handleToggleExpand}
                       onShowLockedModal={(programName) => setModalState({ type: 'locked-by-parent', programName })}
+                      hasPendingCodeChanges={hasPendingCodeChanges}
                     />
                   ))
                 ) : (
@@ -13544,7 +13540,6 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
   };
 
   const actionButtons = [
-    { icon: toolCallIconUrl, label: 'AI edit' },
     { icon: barChartIconUrl, label: 'View charts' },
     { icon: downloadIconUrl, label: 'Download', onClick: onOpenDownload },
     { icon: deleteBinIconUrl, label: 'Delete', onClick: onDelete },
@@ -13726,7 +13721,7 @@ function HomePage({
   onSelectNav,
   onOpenNewProject,
   onOpenNewStudy,
-  onOpenMaintainOwner,
+  onChangeOwner,
   onToggleProjectStatus,
   onToggleStudyStatus,
 }: {
@@ -13750,7 +13745,7 @@ function HomePage({
   onSelectNav: (nav: 'events' | 'management') => void;
   onOpenNewProject: () => void;
   onOpenNewStudy: (projectId?: string) => void;
-  onOpenMaintainOwner: (projectId: string, study: StudyItem) => void;
+  onChangeOwner: (projectId: string, studyId: string, owner: string) => void;
   onToggleProjectStatus: (projectId: string) => void;
   onToggleStudyStatus: (projectId: string, studyId: string) => void;
 }) {
@@ -13876,6 +13871,7 @@ function HomePage({
 
     events.forEach((ev) => {
       const studyTA = ev.ta || 'Oncology';
+      const studyOwner = studyOwnerMap[ev.study] || ev.creator || 'Tom';
       // Study TA Filter
       if (selectedTA !== 'All' && studyTA !== selectedTA) {
         return;
@@ -13886,7 +13882,7 @@ function HomePage({
         const u = currentUserName.toLowerCase();
         const evOwner = (ev.owner || '').toLowerCase();
         const evCreator = (ev.creator || '').toLowerCase();
-        const stdOwner = (owner || '').toLowerCase();
+        const stdOwner = studyOwner.toLowerCase();
         const isMember = ev.teamMembers?.some(m => m.name.toLowerCase().includes(u) || u.includes(m.name.toLowerCase()));
         const isAssigned = evOwner.includes(u) || u.includes(evOwner) ||
                            evCreator.includes(u) || u.includes(evCreator) ||
@@ -13901,9 +13897,8 @@ function HomePage({
         map.set(ev.project, new Map());
       }
       const sMap = map.get(ev.project)!;
-      const owner = studyOwnerMap[ev.study] || ev.creator || 'Tom';
       if (!sMap.has(ev.study)) {
-        sMap.set(ev.study, { ta: studyTA, owner, events: [] });
+        sMap.set(ev.study, { ta: studyTA, owner: studyOwner, events: [] });
       }
 
       const matchSearch =
@@ -13912,7 +13907,7 @@ function HomePage({
         ev.project.toLowerCase().includes(q) ||
         ev.study.toLowerCase().includes(q) ||
         ev.creator.toLowerCase().includes(q) ||
-        owner.toLowerCase().includes(q);
+        studyOwner.toLowerCase().includes(q);
 
       if (matchSearch) {
         sMap.get(ev.study)!.events.push(ev);
@@ -14055,7 +14050,7 @@ function HomePage({
                         className="group flex h-[28px] items-center rounded-[4px] px-[8px] hover:bg-black/5 cursor-pointer transition-colors"
                         title={`${rec.name} (${rec.project} / ${rec.study})`}
                       >
-                        <span className="t-small truncate text-text-primary group-hover:text-brand-1 font-normal">
+                        <span className="t-small truncate font-normal text-text-primary">
                           {rec.name}
                         </span>
                       </div>
@@ -14085,7 +14080,7 @@ function HomePage({
                               <span className="flex h-[16px] w-[16px] items-center justify-center shrink-0">
                                 <ChevronRightTreeIcon isExpanded={isProjExpanded} color="#888E8E" />
                               </span>
-                              <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
+                              <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px] shrink-0" color="var(--color-text-secondary)" />
                               <span className="t-small-medium font-medium truncate text-text-primary">
                                 {proj.projectId}
                               </span>
@@ -14108,7 +14103,7 @@ function HomePage({
                                         <span className="flex h-[16px] w-[16px] items-center justify-center shrink-0">
                                           <ChevronRightTreeIcon isExpanded={isStdExpanded} color="#888E8E" />
                                         </span>
-                                        <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
+                                        <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color="var(--color-text-secondary)" />
                                         <span className="t-small-medium font-medium truncate text-text-primary">
                                           {std.studyId}
                                         </span>
@@ -14128,7 +14123,7 @@ function HomePage({
                                             className="group flex h-[28px] items-center rounded-[4px] pl-[80px] pr-[8px] hover:bg-black/5 cursor-pointer transition-colors"
                                             title={ev.name}
                                           >
-                                            <span className="t-small truncate text-text-primary group-hover:text-brand-1 font-normal">
+                                            <span className="t-small truncate font-normal text-text-primary">
                                               {ev.name}
                                             </span>
                                           </div>
@@ -14202,7 +14197,6 @@ function HomePage({
                 onLogout={onLogout}
                 userName={currentUserName}
                 avatarLetter={currentUserName.slice(0, 1).toUpperCase()}
-                roleBadge={currentRole === 'admin' ? 'Admin' : currentRole === 'owner' ? 'Study Owner' : 'Member'}
               />
             </div>
           </div>
@@ -14282,14 +14276,14 @@ function HomePage({
                 projects={projects}
                 onOpenNewProject={onOpenNewProject}
                 onOpenNewStudy={onOpenNewStudy}
-                onOpenMaintainOwner={onOpenMaintainOwner}
+                onChangeOwner={onChangeOwner}
                 onToggleProjectStatus={onToggleProjectStatus}
                 onToggleStudyStatus={onToggleStudyStatus}
               />
             ) : (
               <>
                 {/* Top Header Row: Events title with filled-circle icon + New Event button on the right */}
-                <div className="flex items-center justify-between px-[16px] sm:px-[28px] pt-[20px] pb-[16px]">
+                <div className="flex items-center justify-between px-[16px] pt-[20px] sm:px-[28px]">
                   <div className="flex items-center gap-[10px]">
                     <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-az-secondary shrink-0">
                       <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px]" color="#830051" />
@@ -14324,7 +14318,7 @@ function HomePage({
                 </div>
 
             {/* Event list content area */}
-            <div className="flex min-h-0 flex-1 flex-col gap-[14px] px-[16px] sm:px-[28px] pt-[4px] pb-[16px]">
+            <div className="flex min-h-0 flex-1 flex-col gap-[14px] px-[16px] pb-[20px] pt-[14px] sm:px-[28px]">
               {/* Toolbar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-[12px]">
                 {/* Left: Search bar + FilterChip placed adjacently */}
@@ -14334,7 +14328,7 @@ function HomePage({
                     onChange={setSearchValue}
                     placeholder="Search Project / Study / Event"
                     background="light"
-                    className="w-full sm:w-[320px] md:w-[360px] shrink-0"
+                    className="w-full shrink-0 sm:w-[300px] md:w-[340px]"
                   />
 
                   {/* TA FilterChip dropdown adjacent to Search bar */}
@@ -14357,32 +14351,50 @@ function HomePage({
                   <FilterChip
                     type="Toggle"
                     variant="filter"
-                    label="Assigned to me"
+                    label="My Events"
                     active={assignedToMeOnly}
                     onClick={() => setAssignedToMeOnly((prev) => !prev)}
-                    icon={<LocalIcon src={teamIconUrl} className="size-[16px]" color="currentColor" />}
+                    showIcon={false}
                   />
                 </div>
               </div>
 
               {/* Main List Display: Hierarchical Table View */}
-              <div className="flex-1 overflow-auto">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-graphite-10 bg-white">
+                <table className="w-full table-fixed border-collapse text-left">
+                  <colgroup><col /><col className="w-[180px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
+                  <thead>
+                    <tr className="border-b border-graphite-10 bg-bg-app text-[12px] font-normal tracking-normal text-text-secondary">
+                      <th className="px-[16px] py-[10px] font-normal">Event Name</th>
+                      <th className="px-[16px] py-[10px] font-normal">Status</th>
+                      <th className="px-[16px] py-[10px] font-normal">Owner</th>
+                      <th className="px-[16px] py-[10px] text-right font-normal">Actions</th>
+                    </tr>
+                  </thead>
+                </table>
+                <div className="min-h-0 flex-1 overflow-y-auto">
                 {hierarchicalProjects.length === 0 ? (
-                  <div className="flex h-[240px] items-center justify-center rounded-[6px] border border-dashed border-graphite-10 text-[13px] text-text-muted">
-                    No matching projects, studies or events found
+                  <div className="flex h-full min-h-[240px] flex-col items-center justify-center text-[13px] text-text-muted">
+                    <span>No matching projects, studies or events found</span>
+                    {(searchValue.trim() || selectedTA !== 'All' || assignedToMeOnly) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchValue('');
+                          setSelectedTA('All');
+                          setAssignedToMeOnly(false);
+                        }}
+                        className="mt-[8px] cursor-pointer text-[12px] font-medium text-brand-1 hover:underline"
+                      >
+                        Reset Filters
+                      </button>
+                    )}
                   </div>
                 ) : (
                   /* Hierarchical Table (List) View */
-                  <div className="min-w-full overflow-hidden rounded-[6px] border border-graphite-10 bg-white">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-graphite-10 bg-bg-app text-[12px] font-normal text-text-secondary tracking-normal">
-                          <th className="px-[16px] py-[10px] font-normal">Event Name</th>
-                          <th className="px-[16px] py-[10px] font-normal w-[180px]">Status</th>
-                          <th className="px-[16px] py-[10px] font-normal w-[180px]">Owner</th>
-                          <th className="px-[16px] py-[10px] font-normal text-right w-[80px]">Actions</th>
-                        </tr>
-                      </thead>
+                  <div className="min-w-full">
+                    <table className="w-full table-fixed border-collapse text-left">
+                      <colgroup><col /><col className="w-[180px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
                       <tbody className="divide-y divide-graphite-10 text-[13px]">
                         {hierarchicalProjects.map((proj) => {
                           const isProjExpanded = panelExpandedProjects.has(proj.projectId);
@@ -14391,15 +14403,15 @@ function HomePage({
                               {/* Level 1: Project Header Row (pl-[16px]: Arrow at 16px, Icon at 40px, Name at 64px) */}
                               <tr
                                 onClick={() => togglePanelProject(proj.projectId)}
-                                className="bg-bg-app/80 hover:bg-black/[0.03] cursor-pointer transition-colors select-none"
+                                className="h-[48px] cursor-pointer select-none bg-bg-panel transition-colors hover:bg-graphite-10/60"
                               >
-                                <td colSpan={4} className="py-[8px] pl-[16px] pr-[16px]">
+                                <td colSpan={4} className="py-0 pl-[16px] pr-[16px]">
                                   <div className="flex items-center gap-[8px]">
                                     <span className="flex h-[16px] w-[16px] items-center justify-center text-text-secondary shrink-0">
                                       <ChevronRightTreeIcon isExpanded={isProjExpanded} color="#888E8E" />
                                     </span>
-                                    <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
-                                    <span className="text-[13px] font-medium text-text-primary">
+                              <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px] shrink-0" color="var(--color-text-secondary)" />
+                                    <span className="text-[13px] font-semibold text-text-primary">
                                       Project: {proj.projectId}
                                     </span>
                                   </div>
@@ -14415,46 +14427,32 @@ function HomePage({
                                       {/* Study Header Row (pl-[40px]: Arrow at 40px [under Proj Icon], Icon at 64px [under Proj Name], Name at 88px) */}
                                       <tr
                                         onClick={() => togglePanelStudy(std.studyId)}
-                                        className="bg-[#FCFCFC] hover:bg-black/[0.02] cursor-pointer transition-colors select-none"
+                                        className="h-[48px] cursor-pointer select-none bg-white transition-colors hover:bg-black/[0.02]"
                                       >
                                         {/* Study Name & TA tag */}
-                                        <td className="py-[8px] pl-[40px] pr-[16px]">
+                                        <td className="py-0 pl-[40px] pr-[16px]">
                                           <div className="flex items-center gap-[8px]">
                                             <span className="flex h-[16px] w-[16px] items-center justify-center text-text-secondary shrink-0">
                                               <ChevronRightTreeIcon isExpanded={isStdExpanded} color="#888E8E" />
                                             </span>
-                                            <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
+                                            <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color="var(--color-text-secondary)" />
                                             <span className="text-[13px] font-medium text-text-primary">
                                               {std.studyId}
                                             </span>
-                                            <TooltipText label={`Filter by ${std.ta}`}>
-                                              <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setSelectedTA(std.ta);
-                                                }}
-                                                className="text-[10px] px-[6px] py-[0.5px] rounded-full bg-black/5 hover:bg-brand-1/10 hover:text-brand-1 text-text-secondary border border-graphite-10 transition-colors cursor-pointer"
-                                              >
-                                                {std.ta}
-                                              </button>
-                                            </TooltipText>
+                                            <DesignTag className="pointer-events-none h-[20px] py-0">{std.ta}</DesignTag>
                                           </div>
                                         </td>
 
                                         {/* Status Column: Empty for Study */}
-                                        <td className="px-[16px] py-[8px]"></td>
+                                        <td className="px-[16px] py-0"></td>
 
                                         {/* Owner Column: Study Owner */}
-                                        <td className="px-[16px] py-[8px] text-text-secondary whitespace-nowrap">
-                                          <div className="flex items-center gap-[6px]">
-                                            <Avatar name={std.owner} level="page" />
-                                            <span className="text-[13px] text-text-primary font-medium">{std.owner}</span>
-                                          </div>
+                                        <td className="px-[10px] py-[4px] whitespace-nowrap">
+                                          <ReadOnlyOwner name={std.owner} />
                                         </td>
 
                                         {/* Actions Column: Empty for Study */}
-                                        <td className="px-[16px] py-[8px] text-right"></td>
+                                        <td className="w-[80px] px-[16px] py-0 text-right"></td>
                                       </tr>
 
                                       {/* Level 3: Events under Study */}
@@ -14462,7 +14460,6 @@ function HomePage({
                                         std.events.map((ev) => {
                                           const isMenuOpen = openActionMenuId === `table-${ev.id}`;
                                           const actionButtons = [
-                                            { icon: toolCallIconUrl, label: 'AI edit' },
                                             { icon: barChartIconUrl, label: 'View charts' },
                                             { icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) },
                                             { icon: deleteBinIconUrl, label: 'Delete', onClick: () => onOpenDeleteModal?.(ev) },
@@ -14472,12 +14469,12 @@ function HomePage({
                                             <tr
                                               key={ev.id}
                                               onClick={onEventClick}
-                                              className="group hover:bg-black/[0.02] cursor-pointer transition-colors"
+                                              className="group h-[48px] cursor-pointer transition-colors hover:bg-black/[0.02]"
                                             >
                                               {/* Event Name (pl-[88px]: Event Name starts at 88px, exactly aligned under Study Name at 88px) */}
                                               <td className="py-[10px] pl-[88px] pr-[16px] max-w-[280px]">
                                                 <div className="flex items-center gap-[6px] min-w-0">
-                                                  <span className="font-normal text-text-primary group-hover:text-brand-1 truncate" title={ev.name}>
+                                                  <span className="truncate font-normal text-text-primary" title={ev.name}>
                                                     {ev.name}
                                                   </span>
                                                   <span className="flex h-[16px] items-center justify-center rounded-[2px] border border-graphite-10 px-[5px] text-[10px] leading-[12px] text-text-secondary shrink-0 tabular-nums">
@@ -14499,11 +14496,8 @@ function HomePage({
                                               </td>
 
                                               {/* Event Owner */}
-                                              <td className="px-[16px] py-[10px] text-text-secondary whitespace-nowrap">
-                                                <div className="flex items-center gap-[6px]">
-                                                  <Avatar name={ev.owner} level="page" />
-                                                  <span className="text-[13px] text-text-primary">{ev.owner}</span>
-                                                </div>
+                                              <td className="px-[10px] py-[4px] whitespace-nowrap">
+                                                <ReadOnlyOwner name={ev.owner} />
                                               </td>
 
                                               {/* Actions - Collapsed into Ellipsis (...) */}
@@ -14562,6 +14556,7 @@ function HomePage({
                     </table>
                   </div>
                 )}
+                </div>
               </div>
             </div>
           </>
@@ -14593,8 +14588,6 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
   const [newStudyModalOpen, setNewStudyModalOpen] = useState(false);
   const [selectedProjectForStudy, setSelectedProjectForStudy] = useState<string | undefined>();
-  const [maintainOwnerModalOpen, setMaintainOwnerModalOpen] = useState(false);
-  const [selectedStudyForOwner, setSelectedStudyForOwner] = useState<{ projectId: string; study: StudyItem } | null>(null);
 
   const handleSwitchRole = (role: UserRole) => {
     setCurrentRole(role);
@@ -14635,7 +14628,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
       status: 'enabled',
       studies: [],
     };
-    setProjects(prev => [...prev, newProj]);
+    setProjects(prev => [newProj, ...prev]);
   };
 
   const handleCreateStudy = (data: { projectId: string; studyName: string; ta: string; owner: string }) => {
@@ -14645,8 +14638,8 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         return {
           ...p,
           studies: [
-            ...p.studies,
             { id: data.studyName, ta: data.ta, owner: data.owner, status: 'enabled', eventsCount: 0 },
+            ...p.studies,
           ],
         };
       })
@@ -14730,10 +14723,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
             setSelectedProjectForStudy(projId);
             setNewStudyModalOpen(true);
           }}
-          onOpenMaintainOwner={(projId, study) => {
-            setSelectedStudyForOwner({ projectId: projId, study });
-            setMaintainOwnerModalOpen(true);
-          }}
+          onChangeOwner={handleSaveOwner}
           onToggleProjectStatus={handleToggleProjectStatus}
           onToggleStudyStatus={handleToggleStudyStatus}
         />
@@ -14788,14 +14778,6 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         projects={projects}
         defaultProjectId={selectedProjectForStudy}
         onCreateStudy={handleCreateStudy}
-      />
-      <MaintainOwnerModal
-        isOpen={maintainOwnerModalOpen}
-        onClose={() => setMaintainOwnerModalOpen(false)}
-        study={selectedStudyForOwner?.study ?? null}
-        projectId={selectedStudyForOwner?.projectId ?? ''}
-        isStudyOwnerRole={currentRole === 'owner'}
-        onSaveOwner={handleSaveOwner}
       />
     </div>
   );

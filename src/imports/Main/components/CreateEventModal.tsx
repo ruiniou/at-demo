@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Checkbox } from "../../../components/ui/Checkbox";
 import { Badge } from "../../../components/ui/Badge";
 import { UploadCard, UploadStatus } from "../../../components/ui/UploadCard";
@@ -22,15 +22,7 @@ import linkIconUrl from "../../../icons/link.svg";
 import searchIconUrl from "../../../icons/search-line.svg";
 import checkIconUrl from "../../../icons/check-line.svg";
 import arrowDownIconUrl from "../../../icons/arrow-down-s-line.svg";
-import { PrimaryButton, SecondaryButton } from "./Button";
-import {
-  AssignmentTab,
-  TFLRow,
-  TeamMember,
-  MOCK_TFL_ROWS,
-  MOCK_TEAM_MEMBERS,
-  MOCK_USER_POOL,
-} from "./EventTeamMemberModal";
+import { PrimaryButton } from "./Button";
 
 // ==================== Icons ====================
 
@@ -188,48 +180,6 @@ function OptionalSection() {
   );
 }
 
-// ==================== Stepper ====================
-
-function Stepper({ currentStep }: { currentStep: 1 | 2 }) {
-  const step1Active = currentStep === 1;
-  const step2Active = !step1Active;
-
-  const renderStep = (num: number, label: string, active: boolean) => (
-    <div className="flex gap-[6px]" style={{ alignItems: "center" }}>
-      <div
-        className="flex rounded-[10px]"
-        style={{
-          width: 20, height: 20,
-          alignItems: "center", justifyContent: "center",
-          backgroundColor: active ? "var(--color-brand-1)" : "#FFFFFF",
-          border: active ? "none" : "1px solid var(--color-graphite-10)",
-        }}
-      >
-        <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 11, color: active ? "#FFFFFF" : "#888E8E" }}>{num}</span>
-      </div>
-      <span style={{
-        fontFamily: "'PingFang SC', sans-serif",
-        fontWeight: active ? 600 : 400,
-        fontSize: 12,
-        lineHeight: "20px",
-        color: active ? "#3C4242" : "#888E8E",
-      }}>
-        {label}
-      </span>
-    </div>
-  );
-
-  return (
-    <div className="flex gap-[8px]" style={{ alignItems: "center" }}>
-      {renderStep(1, "Upload Specs & Configs", step1Active)}
-      <div style={{ width: 32, height: 0, borderTop: "1px solid var(--color-graphite-10)" }} />
-      {renderStep(2, "Task Assignment", step2Active)}
-    </div>
-  );
-}
-
-
-
 // ==================== Historical Events Mock per Study ====================
 const STUDY_HISTORICAL_EVENTS: Record<
   string,
@@ -292,9 +242,6 @@ export default function CreateEventModal({
   currentRole?: UserRole;
   currentUserName?: string;
 }) {
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
-  const modalRef = useRef<HTMLDivElement>(null);
-  const [step1Height, setStep1Height] = useState<number | null>(null);
   const [taValue, setTaValue] = useState<string | null>(null);
   const [projectCode, setProjectCode] = useState<string | null>(null);
   const [isProjectNew, setIsProjectNew] = useState(false);
@@ -324,62 +271,6 @@ export default function CreateEventModal({
 
   const [customShellStatus, setCustomShellStatus] = useState<UploadStatus>("pending");
   const [customShellFile, setCustomShellFile] = useState("");
-
-  // Task assignment state for Step 2
-  const [tflRows, setTflRows] = useState<TFLRow[]>(MOCK_TFL_ROWS);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(MOCK_TEAM_MEMBERS);
-
-  const membersWithCounts = useMemo(
-    () =>
-      teamMembers.map((m) => ({
-        ...m,
-        assignedTFLs: tflRows.filter((r) => r.programmer === m.name).length,
-      })),
-    [teamMembers, tflRows]
-  );
-
-  const handleUpdateProgrammer = (id: string, programmer: string | null) => {
-    if (programmer && !teamMembers.find((m) => m.name === programmer)) {
-      const poolUser = MOCK_USER_POOL.find((u) => u.name === programmer);
-      if (poolUser) {
-        setTeamMembers((prev) => [
-          ...prev,
-          {
-            name: poolUser.name,
-            initials: poolUser.initials,
-            color: poolUser.color,
-            email: poolUser.email,
-            isOwner: false,
-            assignedTFLs: 0,
-            addedBy: "Sarah Chen",
-          },
-        ]);
-      }
-    }
-    setTflRows((prev) => prev.map((r) => (r.id === id ? { ...r, programmer } : r)));
-  };
-
-  const handleBatchUpdateProgrammer = (ids: string[], programmer: string | null) => {
-    const idSet = new Set(ids);
-    if (programmer && !teamMembers.find((m) => m.name === programmer)) {
-      const poolUser = MOCK_USER_POOL.find((u) => u.name === programmer);
-      if (poolUser) {
-        setTeamMembers((prev) => [
-          ...prev,
-          {
-            name: poolUser.name,
-            initials: poolUser.initials,
-            color: poolUser.color,
-            email: poolUser.email,
-            isOwner: false,
-            assignedTFLs: 0,
-            addedBy: "Sarah Chen",
-          },
-        ]);
-      }
-    }
-    setTflRows((prev) => prev.map((r) => (idSet.has(r.id) ? { ...r, programmer } : r)));
-  };
 
   const taOptions: DropdownOption[] = [
     { label: "Oncology", value: "oncology" }, { label: "Cardiology", value: "cardiology" },
@@ -464,26 +355,6 @@ export default function CreateEventModal({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
-  // Reset to step 1 and mock rows when modal closes
-  useEffect(() => {
-    if (!isOpen) { 
-      setCurrentStep(1); 
-      setStep1Height(null); 
-      setTflRows(MOCK_TFL_ROWS);
-      setTeamMembers(MOCK_TEAM_MEMBERS);
-    }
-  }, [isOpen]);
-
-  // Capture Step 1 modal height to maintain consistent height in Step 2
-  useEffect(() => {
-    if (!isOpen || currentStep !== 1 || !modalRef.current) return;
-    const observer = new ResizeObserver(() => {
-      if (modalRef.current) setStep1Height(modalRef.current.offsetHeight);
-    });
-    observer.observe(modalRef.current);
-    return () => observer.disconnect();
-  }, [isOpen, currentStep]);
-
   const fieldsFilled = !!taValue && !!projectCode && !!studyCode && !!eventName.trim() && !!ogemValue;
 
   const requiredFilesUploaded =
@@ -527,9 +398,6 @@ export default function CreateEventModal({
     setTifoFile("");
     setCustomShellStatus("pending");
     setCustomShellFile("");
-    setTflRows(MOCK_TFL_ROWS);
-    setTeamMembers(MOCK_TEAM_MEMBERS);
-    setCurrentStep(1);
     onClose();
   };
 
@@ -538,7 +406,7 @@ export default function CreateEventModal({
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <button className="absolute inset-0 bg-black/40" aria-label="Close modal" onClick={onClose} />
-      <div ref={modalRef} className="relative flex h-[740px] max-h-[calc(100vh-40px)] w-[960px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.15)]" style={currentStep === 2 && step1Height ? { height: `${step1Height}px` } : undefined}>
+      <div className="relative flex h-[740px] max-h-[calc(100vh-40px)] w-[960px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[8px] bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.15)]">
         {/* Header */}
         <div className="flex shrink-0 items-center gap-[16px] px-[20px] pb-[12px] pt-[16px]">
           <div className="flex min-w-0 flex-1 items-center gap-[10px]">
@@ -551,13 +419,7 @@ export default function CreateEventModal({
 
         {/* Body */}
         <div className="flex min-h-0 flex-1 flex-col gap-[8px]">
-          <div className="flex shrink-0 flex-col items-center gap-[10px] px-[20px] py-[8px]">
-            <Stepper currentStep={currentStep} />
-          </div>
-
-          {currentStep === 1 ? (
-            /* Step 1 - Upload Specs & Configs */
-            <div className="flex min-h-0 flex-1 border-t border-graphite-10">
+          <div className="flex min-h-0 flex-1 border-t border-graphite-10">
               {/* Left column */}
               <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto border-r border-graphite-10 p-[20px]">
                 <Dropdown label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} />
@@ -669,35 +531,13 @@ export default function CreateEventModal({
                   onFileSelect={setCustomShellFile}
                 />
               </div>
-            </div>
-          ) : (
-            /* Step 2 - Task Assignment */
-            <div className="flex min-h-0 flex-1 flex-col border-t border-graphite-10 relative overflow-hidden">
-              <AssignmentTab
-                tflRows={tflRows}
-                teamMembers={membersWithCounts}
-                onUpdateProgrammer={handleUpdateProgrammer}
-                onBatchUpdateProgrammer={handleBatchUpdateProgrammer}
-              />
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Footer */}
-        {currentStep === 1 ? (
-          <div className="flex shrink-0 items-center justify-end gap-[8px] border-t border-graphite-10 px-[20px] py-[14px]">
-            <SecondaryButton onClick={() => setCurrentStep(2)}>Next</SecondaryButton>
-            <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
-          </div>
-        ) : (
-          <div className="flex shrink-0 items-center justify-between border-t border-graphite-10 px-[20px] py-[14px]">
-            <SecondaryButton onClick={() => setCurrentStep(1)}>Back</SecondaryButton>
-            <div className="flex items-center gap-[8px]">
-              <SecondaryButton onClick={onClose}>Assign Later</SecondaryButton>
-              <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
-            </div>
-          </div>
-        )}
+        <div className="flex shrink-0 items-center justify-end border-t border-graphite-10 px-[20px] py-[14px]">
+          <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
+        </div>
       </div>
     </div>,
     document.body
