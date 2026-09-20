@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { twMerge } from "tailwind-merge";
 
 export interface PopoverProps {
   open: boolean;
@@ -93,7 +94,7 @@ export function Popover({ open, onOpenChange, anchorRef, children, id, label,
   if (!open) return null;
   return createPortal(<div ref={panelRef} id={id} role={role} aria-label={label} tabIndex={-1}
     style={{ position: "fixed", zIndex: 10050, ...position }}
-    className={`overflow-y-auto rounded-[4px] border border-form-border bg-white p-1 shadow-elevation-overlay ${className}`}>
+    className={twMerge("overflow-y-auto rounded-[4px] border border-form-border bg-white p-1 shadow-elevation-overlay", className)}>
     {children}
   </div>, document.body);
 }

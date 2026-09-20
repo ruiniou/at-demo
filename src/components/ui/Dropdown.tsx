@@ -129,7 +129,7 @@ export function Dropdown({
         </span>
       )}
 
-      <Popover open={isOpen && !disabled} onOpenChange={setIsOpen} anchorRef={triggerRef} id={popoverId} label={label || placeholder}>
+      <Popover open={isOpen && !disabled} onOpenChange={setIsOpen} anchorRef={triggerRef} id={popoverId} label={label || placeholder} className="shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
 
           <div className="flex max-h-[200px] flex-col gap-[2px] overflow-y-auto">
             {options.length === 0 && <DropdownEmpty />}

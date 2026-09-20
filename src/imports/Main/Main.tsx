@@ -1131,6 +1131,7 @@ export type EventProgressItem = {
   name: string;
   status: 'queued' | 'running' | 'done' | 'blocked' | 'failed' | 'needs_action' | 'skipped';
   itemStatus?: 'normal' | 'pending' | 'locked' | 'error';
+  reason?: string;
   isRetrying?: boolean;
 };
 
@@ -1144,6 +1145,7 @@ export type EventSummaryItem = {
   tflId: string;
   name: string;
   status?: 'updated' | 'blocked' | 'failed' | 'skipped' | 'needs_action';
+  reason?: string;
   isRetrying?: boolean;
 };
 
@@ -1351,7 +1353,7 @@ function EventScopeCard({
                         </span>
                       </button>
                     ) : (
-                      <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px] mt-[2px] shrink-0 text-text-secondary" />
+                      <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px] mt-[2px] shrink-0" color="var(--color-text-secondary)" />
                     )}
 
                     <div className="flex flex-col min-w-0 flex-1">
@@ -1392,7 +1394,8 @@ function EventScopeCard({
                     )}
                     <LocalIcon
                       src={arrowRightIconUrl}
-                      className="w-[12px] h-[12px] opacity-0 group-hover:opacity-60 transition-opacity text-text-secondary"
+                      className="w-[12px] h-[12px] opacity-0 group-hover:opacity-60 transition-opacity"
+                      color="var(--color-text-secondary)"
                     />
                   </div>
                 </div>
@@ -1531,7 +1534,7 @@ function EventProgressCard({
                       <SpinnerIcon className="w-[14px] h-[14px]" />
                     )}
                     {isDone && (
-                      <LocalIcon src={checkIconUrl} className="w-[12px] h-[12px]" color="#059669" />
+                      <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
                     )}
                     {isBlocked && (
                       <LocalIcon src={alertIconUrl} className="w-[14px] h-[14px] shrink-0" color="#B25E00" />
@@ -1621,19 +1624,18 @@ function EventSummaryCard({
   const updatedCount = data.items.filter((i) => !i.status || i.status === "updated").length;
   const blockedCount = data.items.filter((i) => i.status === "blocked" || i.status === "needs_action").length;
   const failedCount = data.items.filter((i) => i.status === "failed").length;
-  const skippedCount = data.items.filter((i) => i.status === "skipped").length;
 
-  const parts: string[] = [];
-  if (updatedCount > 0) parts.push(`${updatedCount} Updated`);
-  if (blockedCount > 0) parts.push(`${blockedCount} Blocked`);
-  if (failedCount > 0) parts.push(`${failedCount} Failed`);
-  if (skippedCount > 0) parts.push(`${skippedCount} Skipped`);
-
-  const defaultTitle = parts.length > 0 ? parts.join(" · ") : `Updated ${updatedCount} TFLs`;
+  // Single concise title line: "Edited N Files, N Blocked"
+  const fileWord = updatedCount === 1 ? "File" : "Files";
+  const defaultHeaderTitle = blockedCount > 0
+    ? `Edited ${updatedCount} ${fileWord}, ${blockedCount} Blocked`
+    : failedCount > 0
+    ? `Edited ${updatedCount} ${fileWord}, ${failedCount} Failed`
+    : `Edited ${updatedCount} ${fileWord}`;
 
   return (
     <div className="flex flex-col bg-white border border-graphite-10 rounded-[8px] overflow-hidden w-full my-[2px]">
-      {/* Header */}
+      {/* Header: Direct single title, no separate subtitle */}
       <div
         className="flex items-center justify-between px-[12px] py-[9px] border-b border-graphite-10"
         style={{ borderBottomWidth: "0.6px" }}
@@ -1642,31 +1644,30 @@ function EventSummaryCard({
           className="text-[13px] font-semibold text-text-primary truncate"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          {data.title || defaultTitle}
-        </span>
-        <span className="text-[11px] text-text-secondary font-medium">
-          {data.items.length} total
+          {data.title || defaultHeaderTitle}
         </span>
       </div>
 
-      {/* Deliverable list: 6.5 items max height */}
-      <div className="p-[4px] flex flex-col gap-[2px] max-h-[228px] overflow-y-auto">
+      {/* Deliverable list: Normal items are clean single lines; only abnormal items display error reason */}
+      <div className="flex flex-col max-h-[228px] overflow-y-auto divide-y divide-graphite-10">
         {data.items.map((item) => {
           const isBlocked = item.status === "blocked" || item.status === "needs_action";
           const isFailed = item.status === "failed";
           const isSkipped = item.status === "skipped";
           const isUpdated = !isBlocked && !isFailed && !isSkipped;
+          const hasErrorReason = (isBlocked || isFailed) && !!item.reason;
 
           return (
             <div
               key={item.tflId}
               onClick={() => onJumpToTfl?.(item.tflId)}
-              className="flex items-center justify-between gap-[8px] px-[8px] py-[6px] rounded-[6px] hover:bg-bg-panel cursor-pointer transition-colors group select-none"
+              className="group flex items-start justify-between gap-[10px] px-[12px] py-[8px] transition-colors cursor-pointer hover:bg-bg-panel select-none"
+              title="Click to navigate to this TFL"
             >
-              <div className="flex items-center gap-[8px] min-w-0 flex-1">
-                <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
+              <div className="flex items-start gap-[8px] min-w-0 flex-1">
+                <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center mt-[1px]">
                   {isUpdated && (
-                    <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px] opacity-70 text-text-secondary" />
+                    <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
                   )}
                   {isBlocked && (
                     <LocalIcon src={alertIconUrl} className="w-[14px] h-[14px] shrink-0" color="#B25E00" />
@@ -1678,34 +1679,56 @@ function EventSummaryCard({
                     <div className="w-[10px] h-[1.5px] rounded bg-graphite-30" />
                   )}
                 </div>
-                <span className={`text-[13px] truncate flex-1 transition-colors ${
-                  isSkipped
-                    ? "text-text-secondary line-through opacity-70"
-                    : "text-text-primary group-hover:text-brand-1 font-medium"
-                }`}>
-                  {item.name}
-                </span>
+
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span
+                    className={`text-[13px] leading-[18px] truncate transition-colors ${
+                      isSkipped
+                        ? "text-text-secondary line-through opacity-70"
+                        : isBlocked
+                        ? "text-text-primary font-medium group-hover:text-brand-1"
+                        : isFailed
+                        ? "text-status-error font-medium group-hover:underline"
+                        : "text-text-primary font-medium group-hover:text-brand-1"
+                    }`}
+                  >
+                    {item.name}
+                  </span>
+
+                  {/* Only abnormal (blocked / failed) items show the specific failure reason */}
+                  {hasErrorReason && (
+                    <Tooltip label={item.reason!} placement="topLeft" maxWidth={320}>
+                      <span
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[11px] leading-[15px] text-text-secondary line-clamp-1 truncate mt-[1px] cursor-help"
+                      >
+                        {item.reason}
+                      </span>
+                    </Tooltip>
+                  )}
+                </div>
               </div>
 
-              {/* Event-side low density: only badge + retry for problem items; NO badge for success! */}
-              <div className="flex items-center gap-[6px] shrink-0">
+              {/* Action column: Design System Button (variant="secondary", size="sm") */}
+              <div className="flex items-center gap-[6px] shrink-0 self-center">
                 {isBlocked && (
-                  <>
-                    <EventStatusBadge status="blocked" />
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onRetryItem?.(item.tflId);
-                      }}
-                      disabled={item.isRetrying}
-                      className="h-[22px] px-[6px] py-0 text-[11px] font-medium gap-[3px] rounded-[4px] cursor-pointer"
-                    >
-                      <LocalIcon src={resetRightIconUrl} className="w-[11px] h-[11px]" />
-                      <span>{item.isRetrying ? "Retrying…" : "Retry"}</span>
-                    </Button>
-                  </>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRetryItem?.(item.tflId);
+                    }}
+                    disabled={item.isRetrying}
+                    className="h-[24px] px-[8px] py-0 text-[11px] font-medium gap-[4px] rounded-[4px] cursor-pointer"
+                  >
+                    <LocalIcon
+                      src={resetRightIconUrl}
+                      className={`w-[12px] h-[12px] ${item.isRetrying ? "animate-spin" : ""}`}
+                      color="#3F4444"
+                    />
+                    <span>{item.isRetrying ? "Retrying…" : "Retry"}</span>
+                  </Button>
                 )}
 
                 {isFailed && (
@@ -1718,8 +1741,7 @@ function EventSummaryCard({
 
                 <LocalIcon
                   src={arrowRightIconUrl}
-                  className="w-[14px] h-[14px] opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                  color="#888E8E"
+                  className="w-[12px] h-[12px] opacity-0 group-hover:opacity-60 transition-opacity text-text-secondary shrink-0"
                 />
               </div>
             </div>
@@ -1867,10 +1889,6 @@ function EventDispatchedTaskCard({
   const targetVar = data?.targetVar || "TRT01P";
   const commandText = data?.description || `Replace clinical variable ${sourceVar} with ${targetVar} across analysis datasets and reporting steps as specified in amended protocol SAP v2.1.`;
 
-  const bubbleStyle = variant === 'incard'
-    ? "bg-bg-panel border border-graphite-15"
-    : "bg-white border-[0.6px] border-graphite-20";
-
   return (
     <div className="flex flex-col gap-[6px] w-full">
       {/* Sender & Header row: outlined Event badge + jump icon on the right */}
@@ -1898,16 +1916,10 @@ function EventDispatchedTaskCard({
         )}
       </div>
 
-      {/* User-style dialogue bubble: identical style to user prompts, showing command text */}
+      {/* Event dispatched message bubble: Brand-color-1 bg, White text, No stroke */}
       <div className="w-full">
-        <div
-          className={[
-            bubbleStyle,
-            "rounded-[8px] px-[10px] py-[8px]",
-            "flex flex-col gap-[4px] w-full",
-          ].join(" ")}
-        >
-          <div className="t-body text-text-secondary break-words whitespace-pre-wrap">
+        <div className="bg-brand-1 rounded-[8px] px-[10px] py-[8px] flex flex-col gap-[4px] w-full shadow-sm">
+          <div className="t-body text-white break-words whitespace-pre-wrap">
             {commandText}
           </div>
         </div>
@@ -3041,6 +3053,7 @@ function AICopilotPanel({
         name: liveTable?.name || t.name,
         status,
         itemStatus: effectiveStatus,
+        reason: t.reason,
       };
     });
 
@@ -3074,6 +3087,7 @@ function AICopilotPanel({
             tflId: it.tflId,
             name: it.name,
             status: outcome,
+            reason: it.reason,
           };
         });
 
@@ -3088,7 +3102,12 @@ function AICopilotPanel({
         if (failedCount > 0) parts.push(`${failedCount} Failed`);
         if (skippedCount > 0) parts.push(`${skippedCount} Skipped`);
 
-        const summaryTitle = parts.length > 0 ? parts.join(" · ") : `Updated ${updatedCount} TFLs`;
+        const fileWord = updatedCount === 1 ? "File" : "Files";
+        const summaryTitle = blockedCount > 0
+          ? `Edited ${updatedCount} ${fileWord}, ${blockedCount} Blocked`
+          : failedCount > 0
+          ? `Edited ${updatedCount} ${fileWord}, ${failedCount} Failed`
+          : `Edited ${updatedCount} ${fileWord}`;
 
         const summaryMsg: Message = {
           type: "event_summary_card" as const,
@@ -3185,33 +3204,79 @@ function AICopilotPanel({
   };
 
   const handleRetrySummaryItem = (tflId: string) => {
-    setMessages((prevMsgs) => {
-      const summaryMsgIdx = prevMsgs.findIndex((m) => m.type === 'event_summary_card' && m.summaryCardData);
-      if (summaryMsgIdx === -1) return prevMsgs;
+    // 1. Mark item as retrying in current summary card
+    const summaryMsgIdx = messages.findIndex((m) => m.type === 'event_summary_card' && m.summaryCardData);
+    if (summaryMsgIdx === -1) return;
 
-      const summaryMsg = prevMsgs[summaryMsgIdx];
-      if (!summaryMsg.summaryCardData) return prevMsgs;
+    const summaryMsg = messages[summaryMsgIdx];
+    if (!summaryMsg.summaryCardData) return;
 
-      const retryingItems = summaryMsg.summaryCardData.items.map((it) => {
-        if (it.tflId === tflId) {
-          return { ...it, isRetrying: true };
-        }
-        return it;
+    const targetSummaryItem = summaryMsg.summaryCardData.items.find((it) => it.tflId === tflId);
+    const liveTable = programs ? findTableItem(programs, tflId) : null;
+    const retryItemName = liveTable?.name || targetSummaryItem?.name || tflId;
+
+    const sessionId = activeEventSession?.id || "event";
+    const sessionTitle = activeEventSession?.name || "Variable Replacement";
+
+    // Set item isRetrying state
+    const retryingItems = summaryMsg.summaryCardData.items.map((it) => {
+      if (it.tflId === tflId) {
+        return { ...it, isRetrying: true };
+      }
+      return it;
+    });
+
+    const retryingSummaryMsg: Message = {
+      ...summaryMsg,
+      summaryCardData: {
+        ...summaryMsg.summaryCardData,
+        items: retryingItems,
+      },
+    };
+
+    const updatedWithRetry = [...messages];
+    updatedWithRetry[summaryMsgIdx] = retryingSummaryMsg;
+    setMessages(updatedWithRetry);
+    updateEventSessionMessages(updatedWithRetry, { status: "processing" });
+
+    // 2. Notify parent that retry dispatch execution has started for this TFL
+    onStartEventExecution?.(sessionId, sessionTitle, [tflId]);
+
+    // 3. Mount docked progress card for this retried task
+    const retryProgressItem: EventProgressItem = {
+      tflId,
+      name: retryItemName,
+      status: 'running',
+      itemStatus: 'normal',
+      reason: targetSummaryItem?.reason,
+    };
+
+    setDockedProgressData({
+      title: "Retrying Update",
+      items: [retryProgressItem],
+      isCompleted: false,
+    });
+    setIsPending(true);
+
+    // 4. Run retry execution steps: running -> done -> update summary card
+    stepTimerRef.current = setTimeout(() => {
+      // Step 4a: mark as done in progress
+      setDockedProgressData({
+        title: "Retrying Update",
+        items: [{ ...retryProgressItem, status: 'done' }],
+        isCompleted: true,
       });
 
-      const retryingSummaryMsg: Message = {
-        ...summaryMsg,
-        summaryCardData: {
-          ...summaryMsg.summaryCardData,
-          items: retryingItems,
-        },
-      };
+      // Notify parent of TFL completion
+      onCompleteTflExecution?.(tflId);
 
-      const updatedWithRetry = [...prevMsgs];
-      updatedWithRetry[summaryMsgIdx] = retryingSummaryMsg;
-
-      // Re-probe lock state: simulate lock release after 1200ms
+      // Step 4b: after brief delay, close progress and update summary card
       setTimeout(() => {
+        setIsPending(false);
+        setDockedProgressData(null);
+        onCloseEventProgress?.();
+        onFinishEventExecution?.(sessionId, [tflId]);
+
         setMessages((latestMsgs) => {
           const sIdx = latestMsgs.findIndex((m) => m.type === 'event_summary_card' && m.summaryCardData);
           if (sIdx === -1) return latestMsgs;
@@ -3231,13 +3296,12 @@ function AICopilotPanel({
           const failedCount = updatedItems.filter((i) => i.status === "failed").length;
           const skippedCount = updatedItems.filter((i) => i.status === "skipped").length;
 
-          const parts: string[] = [];
-          if (updatedCount > 0) parts.push(`${updatedCount} Updated`);
-          if (blockedCount > 0) parts.push(`${blockedCount} Blocked`);
-          if (failedCount > 0) parts.push(`${failedCount} Failed`);
-          if (skippedCount > 0) parts.push(`${skippedCount} Skipped`);
-
-          const newTitle = parts.length > 0 ? parts.join(" · ") : `Updated ${updatedCount} TFLs`;
+          const fileWord = updatedCount === 1 ? "File" : "Files";
+          const newTitle = blockedCount > 0
+            ? `Edited ${updatedCount} ${fileWord}, ${blockedCount} Blocked`
+            : failedCount > 0
+            ? `Edited ${updatedCount} ${fileWord}, ${failedCount} Failed`
+            : `Edited ${updatedCount} ${fileWord}`;
 
           const resolvedSummaryMsg: Message = {
             ...sMsg,
@@ -3252,10 +3316,8 @@ function AICopilotPanel({
           updateEventSessionMessages(finalMsgs, { status: "completed" });
           return finalMsgs;
         });
-      }, 1200);
-
-      return updatedWithRetry;
-    });
+      }, 700);
+    }, 1400);
   };
 
   const handleSubmit = (text: string, attachments?: AttachmentItem[]) => {
@@ -3981,11 +4043,11 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
           {
             role: 'assistant',
             summaryCardData: {
-              title: '1 Updated · 1 Blocked · 1 Failed',
+              title: 'Edited 1 File, 1 Blocked',
               items: [
                 { tflId: 't5', name: '14.1.5 Baseline Characteristics', status: 'updated' },
-                { tflId: 't8', name: '14.1.8 Medical History by SOC', status: 'blocked' },
-                { tflId: 't12', name: '14.1.12 Concomitant Medication by ATC', status: 'failed' },
+                { tflId: 't8', name: '14.1.8 Medical History by SOC', status: 'blocked', reason: 'Locked by batch EVT-0916 · Resource in use' },
+                { tflId: 't12', name: '14.1.12 Concomitant Medication by ATC', status: 'failed', reason: 'Compilation syntax barrier · TRTA macro unbound' },
               ],
             },
           },
@@ -14006,82 +14068,84 @@ function HomePage({
                 </div>
               </div>
 
-              {/* 3-tier Tree List (Directly browse Project -> Study -> Event) */}
-              <div className="flex-1 overflow-auto px-[6px]">
-                <div className="flex flex-col gap-[2px] pb-[12px]">
-                  {projectGroups.map((proj) => {
-                    const isProjExpanded = expandedProjects.has(proj.projectId);
-                    return (
-                      <div key={proj.projectId} className="flex flex-col gap-[1px]">
-                        {/* Project Node (pl-[8px]: Arrow at 8px, Icon at 32px, Name at 56px) */}
-                        <div
-                          className="group flex h-[28px] items-center justify-between rounded-[4px] px-[8px] hover:bg-black/5 cursor-pointer select-none transition-colors"
-                          onClick={() => toggleProject(proj.projectId)}
-                        >
-                          <div className="flex items-center gap-[8px] min-w-0 flex-1">
-                            <span className="flex h-[16px] w-[16px] items-center justify-center shrink-0">
-                              <ChevronRightTreeIcon isExpanded={isProjExpanded} color="#888E8E" />
-                            </span>
-                            <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
-                            <span className="t-small-medium font-medium truncate text-text-primary">
-                              {proj.projectId}
-                            </span>
+              {/* 3-tier Tree List (Directly browse Project -> Study -> Event) - Temporarily hidden */}
+              {false && (
+                <div className="flex-1 overflow-auto px-[6px]">
+                  <div className="flex flex-col gap-[2px] pb-[12px]">
+                    {projectGroups.map((proj) => {
+                      const isProjExpanded = expandedProjects.has(proj.projectId);
+                      return (
+                        <div key={proj.projectId} className="flex flex-col gap-[1px]">
+                          {/* Project Node (pl-[8px]: Arrow at 8px, Icon at 32px, Name at 56px) */}
+                          <div
+                            className="group flex h-[28px] items-center justify-between rounded-[4px] px-[8px] hover:bg-black/5 cursor-pointer select-none transition-colors"
+                            onClick={() => toggleProject(proj.projectId)}
+                          >
+                            <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                              <span className="flex h-[16px] w-[16px] items-center justify-center shrink-0">
+                                <ChevronRightTreeIcon isExpanded={isProjExpanded} color="#888E8E" />
+                              </span>
+                              <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
+                              <span className="t-small-medium font-medium truncate text-text-primary">
+                                {proj.projectId}
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Studies under Project */}
-                        {isProjExpanded && (
-                          <div className="flex flex-col gap-[1px]">
-                            {proj.studies.map((std) => {
-                              const isStdExpanded = expandedStudies.has(std.studyId);
-                              return (
-                                <div key={std.studyId} className="flex flex-col gap-[1px]">
-                                  {/* Study Node (pl-[32px]: Arrow at 32px [under Proj Icon], Icon at 56px [under Proj Name], Name at 80px) */}
-                                  <div
-                                    className="group flex h-[28px] items-center justify-between rounded-[4px] pl-[32px] pr-[8px] hover:bg-black/5 cursor-pointer select-none transition-colors"
-                                    onClick={() => toggleStudy(std.studyId)}
-                                  >
-                                    <div className="flex items-center gap-[8px] min-w-0 flex-1">
-                                      <span className="flex h-[16px] w-[16px] items-center justify-center shrink-0">
-                                        <ChevronRightTreeIcon isExpanded={isStdExpanded} color="#888E8E" />
-                                      </span>
-                                      <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
-                                      <span className="t-small-medium font-medium truncate text-text-primary">
-                                        {std.studyId}
-                                      </span>
-                                      <span className="text-[10px] px-[5px] py-[0.5px] rounded-full bg-black/5 text-text-secondary border border-border-default shrink-0 ml-[2px]">
-                                        {std.ta}
-                                      </span>
+                          {/* Studies under Project */}
+                          {isProjExpanded && (
+                            <div className="flex flex-col gap-[1px]">
+                              {proj.studies.map((std) => {
+                                const isStdExpanded = expandedStudies.has(std.studyId);
+                                return (
+                                  <div key={std.studyId} className="flex flex-col gap-[1px]">
+                                    {/* Study Node (pl-[32px]: Arrow at 32px [under Proj Icon], Icon at 56px [under Proj Name], Name at 80px) */}
+                                    <div
+                                      className="group flex h-[28px] items-center justify-between rounded-[4px] pl-[32px] pr-[8px] hover:bg-black/5 cursor-pointer select-none transition-colors"
+                                      onClick={() => toggleStudy(std.studyId)}
+                                    >
+                                      <div className="flex items-center gap-[8px] min-w-0 flex-1">
+                                        <span className="flex h-[16px] w-[16px] items-center justify-center shrink-0">
+                                          <ChevronRightTreeIcon isExpanded={isStdExpanded} color="#888E8E" />
+                                        </span>
+                                        <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color="#888E8E" />
+                                        <span className="t-small-medium font-medium truncate text-text-primary">
+                                          {std.studyId}
+                                        </span>
+                                        <span className="text-[10px] px-[5px] py-[0.5px] rounded-full bg-black/5 text-text-secondary border border-border-default shrink-0 ml-[2px]">
+                                          {std.ta}
+                                        </span>
+                                      </div>
                                     </div>
+
+                                    {/* Events under Study (pl-[80px]: text aligns directly under Study Name at 80px) */}
+                                    {isStdExpanded && (
+                                      <div className="flex flex-col gap-[1px]">
+                                        {std.events.map((ev) => (
+                                          <div
+                                            key={ev.id}
+                                            onClick={onEventClick}
+                                            className="group flex h-[28px] items-center rounded-[4px] pl-[80px] pr-[8px] hover:bg-black/5 cursor-pointer transition-colors"
+                                            title={ev.name}
+                                          >
+                                            <span className="t-small truncate text-text-primary group-hover:text-brand-1 font-normal">
+                                              {ev.name}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
-
-                                  {/* Events under Study (pl-[80px]: text aligns directly under Study Name at 80px) */}
-                                  {isStdExpanded && (
-                                    <div className="flex flex-col gap-[1px]">
-                                      {std.events.map((ev) => (
-                                        <div
-                                          key={ev.id}
-                                          onClick={onEventClick}
-                                          className="group flex h-[28px] items-center rounded-[4px] pl-[80px] pr-[8px] hover:bg-black/5 cursor-pointer transition-colors"
-                                          title={ev.name}
-                                        >
-                                          <span className="t-small truncate text-text-primary group-hover:text-brand-1 font-normal">
-                                            {ev.name}
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Bottom-left: Demo Role Switcher + User account */}
