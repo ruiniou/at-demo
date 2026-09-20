@@ -15,6 +15,10 @@ export function AIThinkingStatus({
   status = "loading",
   className = "",
 }: AIThinkingStatusProps) {
+  if (status === "completed") {
+    return null;
+  }
+
   const renderIcon = () => {
     if (status === "loading") {
       return (

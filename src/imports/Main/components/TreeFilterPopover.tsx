@@ -1,3 +1,4 @@
+import { Avatar } from "../../../components/ui/Avatar";
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import closeIconUrl from "../../../icons/close-line.svg";
@@ -8,39 +9,6 @@ import wipStatusIconUrl from "../../../icons/Status label/Status=WIP.svg";
 import completedStatusIconUrl from "../../../icons/Status label/Status=Completed.svg";
 import untouchedStatusIconUrl from "../../../icons/Status label/Status=Untouched.svg";
 import errorStatusIconUrl from "../../../icons/Status label/Status=Error.svg";
-
-export const OWNER_META: Record<string, { color: string; initials: string }> = {
-  "Sarah Chen": { color: "#f0ab00", initials: "SC" },
-  "James Park": { color: "#830051", initials: "JP" },
-  "Priya Sharma": { color: "#d0006f", initials: "PS" },
-  "Tom": { color: "#2d72d2", initials: "TM" },
-  "Alex Kim": { color: "#7c8db0", initials: "AK" },
-};
-
-export function OwnerAvatar({ owner, size = 16 }: { owner: string; size?: number }) {
-  const meta = OWNER_META[owner] ?? {
-    color: "#8c8f8f",
-    initials: owner.slice(0, 2).toUpperCase(),
-  };
-  return (
-    <div
-      className="relative rounded-full shrink-0 flex items-center justify-center select-none"
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: meta.color,
-        border: "0.8px solid #ececec",
-      }}
-    >
-      <span
-        className="text-white font-medium relative leading-none"
-        style={{ fontSize: Math.max(6, Math.round(size * 0.42)) }}
-      >
-        {meta.initials}
-      </span>
-    </div>
-  );
-}
 
 export interface TreeFilterPopoverProps {
   buttonRef: React.RefObject<HTMLButtonElement>;
@@ -253,13 +221,13 @@ export function TreeFilterPopover({
         <button
           type="button"
           onClick={() => onToggleAssignee("Sarah Chen")}
-          className={`flex items-center gap-[6px] px-[8px] py-[4px] rounded-[4px] border text-left transition-colors cursor-pointer w-full ${
+          className={`flex items-center gap-[6px] px-[8px] py-[5px] rounded-[4px] border text-left transition-colors cursor-pointer w-full ${
             selectedAssignees.has("Sarah Chen")
               ? "bg-[#F4E8EE] border-[#830051] text-brand-1 font-medium"
               : "bg-white border-border-default hover:bg-graphite-10 text-text-primary"
           }`}
         >
-          <OwnerAvatar owner="Sarah Chen" size={14} />
+          <Avatar name="Sarah Chen" level="menu" />
           <span className="text-[11px] flex-1">Assigned to me</span>
           <span className="text-[10px] text-text-secondary">(Sarah)</span>
           {selectedAssignees.has("Sarah Chen") && (
@@ -283,7 +251,7 @@ export function TreeFilterPopover({
                 key={assignee}
                 className="bg-graphite-10 rounded-[3px] shrink-0 flex items-center gap-[4px] px-[4px] py-[1px]"
               >
-                <OwnerAvatar owner={assignee} size={12} />
+                <Avatar name={assignee} level="menu" />
                 <span className="text-[11px] text-text-primary whitespace-nowrap">
                   {assignee}
                 </span>
@@ -328,13 +296,13 @@ export function TreeFilterPopover({
                 key={assignee}
                 type="button"
                 onClick={() => onToggleAssignee(assignee)}
-                className={`flex items-center gap-[6px] px-[6px] py-[4px] rounded-[3px] w-full text-left transition-colors cursor-pointer ${
+                className={`flex items-center gap-[6px] px-[6px] py-[6px] rounded-[3px] w-full text-left transition-colors cursor-pointer ${
                   isSelected
                     ? "bg-[#F4E8EE] text-brand-1 font-medium"
                     : "hover:bg-bg-panel text-text-primary"
                 }`}
               >
-                <OwnerAvatar owner={assignee} size={14} />
+                <Avatar name={assignee} level="menu" />
                 <span className="text-[11px] flex-1 truncate">{assignee}</span>
                 {assignee === "Sarah Chen" && (
                   <span className="text-[10px] text-text-secondary shrink-0">

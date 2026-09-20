@@ -193,7 +193,7 @@ export function FigureRenderPreviewModal({
           {/* Footer Disclaimer Text */}
           <div className="mt-[8px] shrink-0 text-center">
             <p className="text-[10px] leading-[14px] text-[#888E8E] whitespace-nowrap overflow-hidden text-ellipsis font-normal">
-              预览图与 Code 最终跑出的结果会有差异
+              Preview may differ from the final code execution results
             </p>
           </div>
         </div>

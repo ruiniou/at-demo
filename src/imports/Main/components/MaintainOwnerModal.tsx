@@ -1,3 +1,4 @@
+import { Avatar } from "../../../components/ui/Avatar";
 import React, { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { SYSTEM_USERS, StudyItem } from '../types/management';
@@ -128,19 +129,14 @@ export const MaintainOwnerModal: React.FC<MaintainOwnerModalProps> = ({
                         setSelectedOwner(u.name);
                         if (error) setError(null);
                       }}
-                      className={`flex items-center justify-between px-[8px] py-[7px] rounded-[4px] cursor-pointer transition-colors ${
+                      className={`flex items-center justify-between px-[8px] py-[6px] rounded-[4px] cursor-pointer transition-colors ${
                         isSelected
                           ? 'bg-az-secondary text-brand-1 font-medium'
                           : 'hover:bg-bg-panel text-text-primary'
                       }`}
                     >
                       <div className="flex items-center gap-[8px] min-w-0">
-                        <div
-                          className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full text-white text-[11px] font-medium"
-                          style={{ backgroundColor: u.color }}
-                        >
-                          {u.initials}
-                        </div>
+                        <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
                         <span className="text-[13px] truncate">{u.name}</span>
                         <span className="text-[11px] text-text-secondary truncate">({u.email})</span>
                         {isCurrent && (

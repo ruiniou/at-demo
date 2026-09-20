@@ -147,7 +147,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
     const hasActiveFilterValue = isFilterMode && (
       multiSelect
         ? (values !== undefined && values.length > 0 && (!options || values.length < options.length))
-        : (value !== undefined && value !== "All" && value !== "")
+        : (value !== undefined && value.toLowerCase() !== "all" && value.toLowerCase() !== "all sections" && value !== "")
     );
     const isActive = active || stateProp === "Active" || hasActiveFilterValue;
     const isHoveredOrOpen = (stateProp === "Hover" || isOpen) && !isActive && !isDisabled;

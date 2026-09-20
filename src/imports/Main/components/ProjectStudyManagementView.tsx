@@ -1,6 +1,7 @@
+import { Avatar } from "../../../components/ui/Avatar";
 import React, { useState, useMemo } from 'react';
 import { ProjectItem, StudyItem, UserRole } from '../types/management';
-import { OwnerAvatar } from './TreeFilterPopover';
+
 import { Button } from '../../../components/ui/Button';
 import { SearchBar } from '../../../components/ui/SearchBar';
 import { FilterChip } from '../../../components/ui/FilterChip';
@@ -380,7 +381,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
                             {/* Study Owner */}
                             <td className="px-[16px] py-[8px]">
                               <div className="flex items-center gap-[6px]">
-                                <OwnerAvatar owner={std.owner} size={18} />
+                                <Avatar name={std.owner} level="page" />
                                 <span className="text-[13px] text-text-primary font-medium">
                                   {std.owner}
                                 </span>

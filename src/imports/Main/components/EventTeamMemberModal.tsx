@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
-import emptyAssigneeUrl from "../../../icons/empty-assignee.svg";
+import { Avatar, AvatarGroup } from "../../../components/ui/Avatar";
 import checkIconUrl from "../../../icons/check-line.svg";
 import closeIconUrl from "../../../icons/close-line.svg";
 import addLineIconUrl from "../../../icons/add-line.svg";
@@ -10,13 +10,16 @@ import listingIconUrl from "../../../icons/Listing.svg";
 import figureIconUrl from "../../../icons/Figure.svg";
 import aiProcessingIconUrl from "../../../icons/Status label/Status=AI Processing.svg";
 import wipStatusIconUrl from "../../../icons/Status label/Status=WIP.svg";
-import completedStatusIconUrl from "../../../icons/Status label/Status=Completed.svg";
+import lockedStatusIconUrl from "../../../icons/Lock.svg";
+import { Tooltip } from "../../../components/ui/Tooltip";
 import untouchedStatusIconUrl from "../../../icons/Status label/Status=Untouched.svg";
 import errorStatusIconUrl from "../../../icons/Status label/Status=Error.svg";
 import arrowDownIconUrl from "../../../icons/arrow-down-s-line.svg";
 import teamLineIconUrl from "../../../icons/team-line.svg";
 import deleteBinIconUrl from "../../../icons/delete-bin-line.svg";
 import { Checkbox } from "../../../components/ui/Checkbox";
+import { FilterChip, FilterChipOption } from "../../../components/ui/FilterChip";
+import { SearchBar } from "../../../components/ui/SearchBar";
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
@@ -29,6 +32,7 @@ export interface TeamMember {
   name: string;
   initials: string;
   color: string;
+  email: string;
   isOwner: boolean;
   assignedTFLs: number;
   addedBy?: string;
@@ -39,36 +43,23 @@ export interface TFLRow {
   type?: TFLType;
   title: string;
   program: string;
-  status: "ai-processing" | "in-progress" | "completed" | "to-do" | "error";
+  status: "ai-processing" | "in-progress" | "completed" | "locked" | "to-do" | "error";
   programmer: string | null;
 }
 
+const isTflLocked = (row: TFLRow) => row.status === "completed" || row.status === "locked";
+const LOCKED_ASSIGNMENT_MESSAGE = "TFL cannot be assigned because it is locked.";
+
 export const MOCK_USER_POOL: Omit<TeamMember, "isOwner" | "assignedTFLs" | "addedBy">[] = [
-  { name: "Sarah Chen",   initials: "SC", color: "#f0ab00" },
-  { name: "James Park",   initials: "JP", color: "#830051" },
-  { name: "Priya Sharma", initials: "PS", color: "#d0006f" },
-  { name: "Alex Kim",     initials: "AK", color: "#7c8db0" },
-  { name: "Tom Chen",     initials: "TC", color: "#0077b6" },
-  { name: "Emily Liu",    initials: "EL", color: "#2d6a4f" },
+  { name: "Sarah Chen",   initials: "SC", color: "#f0ab00", email: "sarah.chen@astrazeneca.com" },
+  { name: "James Park",   initials: "JP", color: "#830051", email: "james.park@astrazeneca.com" },
+  { name: "Priya Sharma", initials: "PS", color: "#d0006f", email: "priya.sharma@astrazeneca.com" },
+  { name: "Alex Kim",     initials: "AK", color: "#7c8db0", email: "alex.kim@astrazeneca.com" },
+  { name: "Tom Chen",     initials: "TC", color: "#0077b6", email: "tom.chen@astrazeneca.com" },
+  { name: "Emily Liu",    initials: "EL", color: "#2d6a4f", email: "emily.liu@astrazeneca.com" },
 ];
 
 // ─── Tiny Helpers ─────────────────────────────────────────────────────────────
-
-function MemberAvatar({ name, initials, color, size = 20 }: {
-  name: string; initials: string; color: string; size?: number;
-}) {
-  return (
-    <div
-      className="shrink-0 flex items-center justify-center rounded-full select-none"
-      style={{ width: size, height: size, background: color, border: "1px solid rgba(0,0,0,0.08)" }}
-      title={name}
-    >
-      <span className="text-white font-medium leading-none" style={{ fontSize: Math.max(6, Math.round(size * 0.42)) }}>
-        {initials}
-      </span>
-    </div>
-  );
-}
 
 function WarningIcon({ size = 18 }: { size?: number }) {
   return (
@@ -88,78 +79,17 @@ function WarningIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function AvatarStack({ members, max = 5, size = 24 }: { members: TeamMember[]; max?: number; size?: number }) {
-  const visible = members.slice(0, max);
-  const remaining = members.length - max;
-  return (
-    <div className="flex items-center select-none">
-      {visible.map((m, idx) => {
-        const poolUser = MOCK_USER_POOL.find((u) => u.name === m.name);
-        const initials = poolUser?.initials ?? m.name.slice(0, 2).toUpperCase();
-        const color = poolUser?.color ?? "#8c8f8f";
-        return (
-          <div
-            key={m.name}
-            className="rounded-full ring-[2px] ring-white shadow-sm shrink-0 flex items-center justify-center"
-            style={{
-              width: size,
-              height: size,
-              background: color,
-              marginLeft: idx === 0 ? 0 : -6,
-              zIndex: visible.length - idx,
-            }}
-            title={m.name}
-          >
-            <span
-              className="text-white font-medium leading-none"
-              style={{ fontSize: Math.max(8, Math.round(size * 0.38)) }}
-            >
-              {initials}
-            </span>
-          </div>
-        );
-      })}
-      {remaining > 0 && (
-        <div
-          className="rounded-full ring-[2px] ring-white bg-[#F0F2F2] border border-graphite-20 text-text-secondary font-medium shrink-0 flex items-center justify-center shadow-sm"
-          style={{
-            width: size,
-            height: size,
-            marginLeft: -6,
-            fontSize: 11,
-            zIndex: 0,
-          }}
-          title={`${remaining} more members`}
-        >
-          +{remaining}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function EmptyAssigneeAvatar({ size = 20 }: { size?: number }) {
-  return (
-    <div className="shrink-0 flex items-center justify-center" style={{ width: size, height: size }}>
-      <img src={emptyAssigneeUrl} alt="No Assignee" style={{ width: size, height: size, opacity: 0.45 }} />
-    </div>
-  );
-}
-
-const MULBERRY_100_FILTER =
-  "brightness(0) saturate(100%) invert(13%) sepia(85%) saturate(2902%) hue-rotate(309deg) brightness(77%) contrast(111%)";
-
 function TflTypeIcon({ type }: { type?: TFLType }) {
   const iconSrc =
     type === "listing" ? listingIconUrl : type === "figure" ? figureIconUrl : tableIconUrl;
   const label = type === "listing" ? "Listing" : type === "figure" ? "Figure" : "Table";
   return (
-    <img
-      src={iconSrc}
-      alt={label}
+    <span
+      role="img"
+      aria-label={label}
       title={label}
-      className="w-[16px] h-[16px] shrink-0"
-      style={{ filter: MULBERRY_100_FILTER }}
+      className="size-4 shrink-0 bg-text-secondary"
+      style={{ mask: `url("${iconSrc}") center / contain no-repeat` }}
     />
   );
 }
@@ -172,14 +102,19 @@ function StatusTag({ status }: { status: TFLRow["status"] }) {
   const map: Record<TFLRow["status"], { icon: string; label: string }> = {
     "ai-processing": { icon: aiProcessingIconUrl, label: "AI Processing" },
     "in-progress":   { icon: wipStatusIconUrl,    label: "In Progress"   },
-    "completed":     { icon: completedStatusIconUrl, label: "Completed"  },
+    "completed":     { icon: lockedStatusIconUrl, label: "Locked" },
+    "locked":        { icon: lockedStatusIconUrl, label: "Locked" },
     "to-do":         { icon: untouchedStatusIconUrl, label: "To do"      },
     "error":         { icon: errorStatusIconUrl,  label: "Error"         },
   };
   const c = map[status];
   return (
     <div className="flex items-center gap-[4px]">
-      <img src={c.icon} alt="" className="w-[16px] h-[16px] shrink-0" />
+      {status === "completed" || status === "locked" ? (
+        <span aria-hidden="true" className="size-4 shrink-0 bg-text-secondary" style={{ mask: `url("${c.icon}") center / contain no-repeat` }} />
+      ) : (
+        <img src={c.icon} alt="" className="w-[16px] h-[16px] shrink-0" />
+      )}
       <span className="text-[12px] text-text-primary whitespace-nowrap">{c.label}</span>
     </div>
   );
@@ -188,11 +123,13 @@ function StatusTag({ status }: { status: TFLRow["status"] }) {
 // ─── Programmer Inline Dropdown ───────────────────────────────────────────────
 
 function ProgrammerCell({
+  disabled = false,
   value,
   teamMembers,
   allUsers,
   onSelect,
 }: {
+  disabled?: boolean;
   value: string | null;
   teamMembers: TeamMember[];
   allUsers: typeof MOCK_USER_POOL;
@@ -264,16 +201,29 @@ function ProgrammerCell({
   }, [open, updatePosition]);
 
   const teamNames = new Set(teamMembers.map((m) => m.name));
+  const trimmedSearch = search.trim().toLowerCase();
+  const matchesNoAssignee = !trimmedSearch || "no assignee".includes(trimmedSearch);
   const filteredTeam = teamMembers.filter((m) =>
-    m.name.toLowerCase().includes(search.toLowerCase())
+    m.name.toLowerCase().includes(trimmedSearch)
   );
   const filteredNew = allUsers.filter(
-    (u) => !teamNames.has(u.name) && u.name.toLowerCase().includes(search.toLowerCase())
+    (u) => !teamNames.has(u.name) && u.name.toLowerCase().includes(trimmedSearch)
   );
 
   const currentMeta =
     teamMembers.find((m) => m.name === value) ??
     MOCK_USER_POOL.find((u) => u.name === value);
+
+  if (disabled) {
+    return (
+      <Tooltip label={LOCKED_ASSIGNMENT_MESSAGE}>
+        <div tabIndex={0} role="button" aria-disabled="true" aria-label={`${value ?? "No Assignee"}. ${LOCKED_ASSIGNMENT_MESSAGE}`} className="flex items-center gap-[6px] rounded-[4px] px-[6px] py-[4px] w-full min-w-0 cursor-not-allowed text-graphite-40">
+          <Avatar name={value ?? undefined} initials={currentMeta?.initials} color={currentMeta?.color} level="modal" disabled />
+          <span className="text-[12px] truncate text-graphite-40">{value ?? "No Assignee"}</span>
+        </div>
+      </Tooltip>
+    );
+  }
 
   return (
     <div className="relative">
@@ -285,12 +235,12 @@ function ProgrammerCell({
       >
         {value && currentMeta ? (
           <>
-            <MemberAvatar name={currentMeta.name} initials={(currentMeta as any).initials} color={(currentMeta as any).color} size={18} />
+            <Avatar name={currentMeta.name} initials={(currentMeta as any).initials} color={(currentMeta as any).color} level="modal" />
             <span className="text-[12px] text-text-primary truncate">{currentMeta.name}</span>
           </>
         ) : (
           <>
-            <EmptyAssigneeAvatar size={18} />
+            <Avatar level="modal" />
             <span className="text-[12px] text-text-secondary">No Assignee</span>
           </>
         )}
@@ -326,20 +276,22 @@ function ProgrammerCell({
           </div>
 
           <div className="flex flex-col gap-[1px] max-h-[210px] overflow-y-auto w-full">
-            {/* No Assignee */}
-            <button
-              type="button"
-              onClick={() => { onSelect(null); setOpen(false); }}
-              className={`flex items-center gap-[8px] px-[8px] py-[5px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
-                value === null ? "bg-az-secondary/60 text-brand-1 font-medium" : "hover:bg-bg-panel text-text-primary"
-              }`}
-            >
-              <EmptyAssigneeAvatar size={16} />
-              <span className="text-[12px] flex-1 text-text-secondary">No Assignee</span>
-              {value === null && (
-                <img src={checkIconUrl} alt="" className="w-[14px] h-[14px] shrink-0 opacity-90" />
-              )}
-            </button>
+            {/* No Assignee — only shown when search matches 'no assignee' or is empty */}
+            {matchesNoAssignee && (
+              <button
+                type="button"
+                onClick={() => { onSelect(null); setOpen(false); }}
+                className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
+                  value === null ? "bg-az-secondary/60 text-brand-1 font-medium" : "hover:bg-bg-panel text-text-primary"
+                }`}
+              >
+                <Avatar level="menu" />
+                <span className="text-[12px] flex-1 text-text-secondary">No Assignee</span>
+                {value === null && (
+                  <img src={checkIconUrl} alt="" className="w-[14px] h-[14px] shrink-0 opacity-90" />
+                )}
+              </button>
+            )}
 
             {/* Team Members */}
             {filteredTeam.length > 0 && (
@@ -357,11 +309,11 @@ function ProgrammerCell({
                       key={m.name}
                       type="button"
                       onClick={() => { onSelect(m.name); setOpen(false); }}
-                      className={`flex items-center gap-[8px] px-[8px] py-[5px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
+                      className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
                         isSelected ? "bg-az-secondary/60 text-brand-1 font-medium" : "hover:bg-bg-panel text-text-primary"
                       }`}
                     >
-                      <MemberAvatar name={m.name} initials={m.initials} color={m.color} size={16} />
+                      <Avatar name={m.name} initials={m.initials} color={m.color} level="menu" />
                       <div className="flex items-center gap-[6px] min-w-0 flex-1">
                         <span className="text-[12px] truncate">{m.name}</span>
                         {sideLabel && (
@@ -390,7 +342,7 @@ function ProgrammerCell({
             {filteredNew.length > 0 && (
               <>
                 <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[11px] font-medium text-text-secondary">Out of Team</span>
+                  <span className="text-[11px] font-medium text-text-secondary">Out of Team (Invite and Add)</span>
                 </div>
                 {filteredNew.map((u) => {
                   const isCurrentUser = u.name === CURRENT_USER;
@@ -399,9 +351,9 @@ function ProgrammerCell({
                       key={u.name}
                       type="button"
                       onClick={() => { onSelect(u.name); setOpen(false); }}
-                      className="flex items-center gap-[8px] px-[8px] py-[5px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
+                      className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
                     >
-                      <MemberAvatar name={u.name} initials={u.initials} color={u.color} size={16} />
+                      <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
                       <div className="flex items-center gap-[6px] min-w-0 flex-1">
                         <span className="text-[12px] truncate text-text-primary">{u.name}</span>
                         {isCurrentUser && (
@@ -410,16 +362,13 @@ function ProgrammerCell({
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[1px] rounded-[3px] shrink-0">
-                        + Add
-                      </span>
                     </button>
                   );
                 })}
               </>
             )}
 
-            {filteredTeam.length === 0 && filteredNew.length === 0 && (
+            {!matchesNoAssignee && filteredTeam.length === 0 && filteredNew.length === 0 && (
               <p className="text-[12px] text-text-secondary px-[8px] py-[6px]">No results</p>
             )}
           </div>
@@ -576,9 +525,9 @@ function BatchAssignDropdown({
                       key={m.name}
                       type="button"
                       onClick={() => { onSelect(m.name); setOpen(false); }}
-                      className="flex items-center gap-[8px] px-[8px] py-[5px] rounded-[4px] w-full text-left transition-colors cursor-pointer hover:bg-bg-panel text-text-primary"
+                      className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left transition-colors cursor-pointer hover:bg-bg-panel text-text-primary"
                     >
-                      <MemberAvatar name={m.name} initials={m.initials} color={m.color} size={16} />
+                      <Avatar name={m.name} initials={m.initials} color={m.color} level="menu" />
                       <div className="flex items-center gap-[6px] min-w-0 flex-1">
                         <span className="text-[12px] truncate">{m.name}</span>
                         {sideLabel && (
@@ -602,7 +551,7 @@ function BatchAssignDropdown({
             {filteredNew.length > 0 && (
               <>
                 <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[11px] font-medium text-text-secondary">Out of Team</span>
+                  <span className="text-[11px] font-medium text-text-secondary">Out of Team (Invite and Add)</span>
                 </div>
                 {filteredNew.map((u) => {
                   const isCurrentUser = u.name === CURRENT_USER;
@@ -611,9 +560,9 @@ function BatchAssignDropdown({
                       key={u.name}
                       type="button"
                       onClick={() => { onSelect(u.name); setOpen(false); }}
-                      className="flex items-center gap-[8px] px-[8px] py-[5px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
+                      className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
                     >
-                      <MemberAvatar name={u.name} initials={u.initials} color={u.color} size={16} />
+                      <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
                       <div className="flex items-center gap-[6px] min-w-0 flex-1">
                         <span className="text-[12px] truncate text-text-primary">{u.name}</span>
                         {isCurrentUser && (
@@ -622,9 +571,6 @@ function BatchAssignDropdown({
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[1px] rounded-[3px] shrink-0">
-                        + Add
-                      </span>
                     </button>
                   );
                 })}
@@ -657,7 +603,25 @@ export function AssignmentTab({
 }) {
   const [search, setSearch] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "unassigned">("all");
+  const [selectedSection, setSelectedSection] = useState<string>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Dynamically extract unique section prefixes from TFL titles (e.g., '14.1', '14.2', '14.3', '16.2')
+  const sectionOptions: FilterChipOption[] = useMemo(() => {
+    const sectionSet = new Set<string>();
+    tflRows.forEach((r) => {
+      const match = r.title.match(/^(\d+\.\d+)/);
+      if (match) sectionSet.add(match[1]);
+    });
+    const sorted = Array.from(sectionSet).sort();
+    return [
+      { label: "All Sections", value: "all" },
+      ...sorted.map((sec) => ({
+        label: `Section ${sec}`,
+        value: sec,
+      })),
+    ];
+  }, [tflRows]);
 
   const totalCount = tflRows.length;
   const unassignedCount = useMemo(() => tflRows.filter((r) => r.programmer === null).length, [tflRows]);
@@ -667,21 +631,25 @@ export function AssignmentTab({
     if (filterTab === "unassigned") {
       rows = rows.filter((r) => r.programmer === null);
     }
+    if (selectedSection !== "all") {
+      rows = rows.filter((r) => r.title.startsWith(selectedSection));
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       rows = rows.filter((r) => r.title.toLowerCase().includes(q) || (r.program && r.program.toLowerCase().includes(q)));
     }
     return rows;
-  }, [tflRows, filterTab, search]);
+  }, [tflRows, filterTab, selectedSection, search]);
 
-  const allFilteredSelected = filteredRows.length > 0 && filteredRows.every((r) => selectedIds.has(r.id));
-  const someFilteredSelected = filteredRows.some((r) => selectedIds.has(r.id));
+  const selectableRows = filteredRows.filter((row) => !isTflLocked(row));
+  const allFilteredSelected = selectableRows.length > 0 && selectableRows.every((r) => selectedIds.has(r.id));
+  const someFilteredSelected = selectableRows.some((r) => selectedIds.has(r.id));
 
   const handleToggleSelectAll = (checked: boolean) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (checked) {
-        filteredRows.forEach((r) => next.add(r.id));
+        selectableRows.forEach((r) => next.add(r.id));
       } else {
         filteredRows.forEach((r) => next.delete(r.id));
       }
@@ -690,6 +658,7 @@ export function AssignmentTab({
   };
 
   const handleToggleRow = (id: string, checked: boolean) => {
+    if (tflRows.some((row) => row.id === id && isTflLocked(row))) return;
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (checked) {
@@ -706,7 +675,7 @@ export function AssignmentTab({
   };
 
   const handleBatchAssign = (programmer: string | null) => {
-    const ids = Array.from(selectedIds);
+    const ids = tflRows.filter((row) => selectedIds.has(row.id) && !isTflLocked(row)).map((row) => row.id);
     if (ids.length === 0) return;
     if (onBatchUpdateProgrammer) {
       onBatchUpdateProgrammer(ids, programmer);
@@ -719,52 +688,58 @@ export function AssignmentTab({
   return (
     <div className="flex flex-col flex-1 min-h-0 p-[16px] gap-[10px] relative">
       {/* Top Toolbar: Search on left, Filter tabs on right */}
-      <div className="flex items-center justify-between w-full h-[32px] shrink-0">
+      <div className="flex items-center justify-between w-full h-8 shrink-0">
         {/* Search */}
-        <div className="flex items-center h-[28px] w-[220px] rounded-[4px] border border-graphite-20/70 bg-white px-[8px] gap-[6px] focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1/20 transition-all">
-          <img src={searchLineIconUrl} alt="" className="w-[13px] h-[13px] opacity-40 shrink-0" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search TFLs..."
-            className="min-w-0 flex-1 text-[12px] text-text-primary placeholder:text-text-secondary bg-transparent outline-none"
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search TFLs..."
+          size="compact"
+          icon={<span aria-hidden="true" className="size-4 shrink-0 bg-text-secondary" style={{ mask: `url("${searchLineIconUrl}") center / contain no-repeat` }} />}
+          background="light"
+          className="w-[240px]"
+        />
+
+        {/* Right controls: Section FilterChip + All / Unassigned Tabs */}
+        <div className="flex items-center gap-[8px]">
+          {/* Section FilterChip */}
+          <FilterChip
+            type="Dropdown"
+            variant="filter"
+            active={selectedSection !== "all"}
+            label={selectedSection === "all" ? "Section" : `Section ${selectedSection}`}
+            options={sectionOptions}
+            value={selectedSection}
+            onChange={(val) => setSelectedSection(val)}
+            showIcon={false}
+            style={{ height: "calc(var(--spacing) * 8)" }}
           />
-          {search && (
+
+          {/* Filter Tabs */}
+          <div className="flex h-8 items-stretch gap-[2px] bg-bg-panel p-[2px] rounded-[6px] border border-graphite-10">
             <button
               type="button"
-              onClick={() => setSearch("")}
-              className="w-[14px] h-[14px] flex items-center justify-center rounded-[2px] hover:bg-black/10 text-text-secondary cursor-pointer"
-              aria-label="Clear search"
+              onClick={() => setFilterTab("all")}
+              className={`px-[10px] py-0 rounded-[4px] text-[12px] font-medium transition-colors cursor-pointer ${
+                filterTab === "all"
+                  ? "bg-white text-text-primary shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
             >
-              <CloseIcon size={11} />
+              All <span className="text-[11px] opacity-75 font-normal">({totalCount})</span>
             </button>
-          )}
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-[2px] bg-bg-panel p-[2px] rounded-[6px] border border-graphite-10">
-          <button
-            type="button"
-            onClick={() => setFilterTab("all")}
-            className={`px-[10px] py-[3px] rounded-[4px] text-[12px] font-medium transition-colors cursor-pointer ${
-              filterTab === "all"
-                ? "bg-white text-text-primary shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            All <span className="text-[11px] opacity-75 font-normal">({totalCount})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilterTab("unassigned")}
-            className={`px-[10px] py-[3px] rounded-[4px] text-[12px] font-medium transition-colors cursor-pointer ${
-              filterTab === "unassigned"
-                ? "bg-white text-text-primary shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            Unassigned <span className="text-[11px] opacity-75 font-normal">({unassignedCount})</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setFilterTab("unassigned")}
+              className={`px-[10px] py-0 rounded-[4px] text-[12px] font-medium transition-colors cursor-pointer ${
+                filterTab === "unassigned"
+                  ? "bg-white text-text-primary shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              Unassigned <span className="text-[11px] opacity-75 font-normal">({unassignedCount})</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -778,6 +753,7 @@ export function AssignmentTab({
                   <div className="flex items-center gap-[6px]">
                     <div className="w-[16px] h-[16px] flex items-center justify-center shrink-0">
                       <Checkbox
+                        disabled={selectableRows.length === 0}
                         checked={allFilteredSelected}
                         indeterminate={someFilteredSelected && !allFilteredSelected}
                         onChange={handleToggleSelectAll}
@@ -803,12 +779,20 @@ export function AssignmentTab({
                 <tr>
                   <td colSpan={4} className="px-[16px] py-[48px] text-center">
                     <p className="t-small text-text-secondary">
-                      {search ? `No TFLs matching "${search}"` : "No unassigned TFLs."}
+                      {search
+                        ? `No TFLs matching "${search}"`
+                        : selectedSection !== "all"
+                        ? `No TFLs found in Section ${selectedSection}.`
+                        : "No unassigned TFLs."}
                     </p>
-                    {(search || filterTab !== "all") && (
+                    {(search || filterTab !== "all" || selectedSection !== "all") && (
                       <button
                         type="button"
-                        onClick={() => { setSearch(""); setFilterTab("all"); }}
+                        onClick={() => {
+                          setSearch("");
+                          setFilterTab("all");
+                          setSelectedSection("all");
+                        }}
                         className="mt-[8px] text-[12px] text-brand-1 hover:underline cursor-pointer"
                       >
                         Reset filters
@@ -830,13 +814,13 @@ export function AssignmentTab({
                       <div className="flex items-center gap-[6px] min-w-0">
                         {/* Hover on Icon transforms into Checkbox; when selected, stays Checkbox */}
                         <div
-                          className="w-[16px] h-[16px] flex items-center justify-center shrink-0 cursor-pointer"
+                          className={`w-[16px] h-[16px] flex items-center justify-center shrink-0 ${isTflLocked(row) ? "cursor-default" : "cursor-pointer"}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleToggleRow(row.id, !isSelected);
                           }}
                         >
-                          {isSelected ? (
+                          {isTflLocked(row) ? <TflTypeIcon type={row.type} /> : isSelected ? (
                             <Checkbox
                               checked={true}
                               onChange={(val) => handleToggleRow(row.id, val)}
@@ -878,6 +862,7 @@ export function AssignmentTab({
                     </td>
                     <td className="px-[10px] py-[6px]">
                       <ProgrammerCell
+                        disabled={isTflLocked(row)}
                         value={row.programmer}
                         teamMembers={teamMembers}
                         allUsers={MOCK_USER_POOL}
@@ -993,11 +978,11 @@ function RemoveConfirmDialog({
           {/* Member Context Pill */}
           <div className="flex items-center justify-between rounded-[4px] bg-bg-panel border border-graphite-10 px-[12px] py-[10px]">
             <div className="flex items-center gap-[8px] min-w-0">
-              <MemberAvatar
+              <Avatar
                 name={member.name}
                 initials={member.initials}
                 color={member.color}
-                size={22}
+                level="modal"
               />
               <span className="text-[13px] font-medium text-text-primary truncate">
                 {member.name}
@@ -1047,13 +1032,11 @@ function RemoveConfirmDialog({
 
 function TeamMembersTab({
   teamMembers,
-  tflRows,
   onRemove,
   onChangeOwner,
   onAddMember,
 }: {
   teamMembers: TeamMember[];
-  tflRows: TFLRow[];
   onRemove: (name: string) => void;
   onChangeOwner: (newOwner: string) => void;
   onAddMember: (user: typeof MOCK_USER_POOL[0]) => void;
@@ -1167,11 +1150,11 @@ function TeamMembersTab({
 
   return (
     <>
-      <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex flex-col flex-1 min-h-0 p-[16px] gap-[10px]">
         {/* Toolbar */}
-        <div className="flex items-center justify-between px-[20px] py-[10px] border-b border-graphite-10 shrink-0 bg-white">
+        <div className="flex items-center justify-between w-full h-8 shrink-0 bg-white">
           <div className="flex items-center gap-[12px]">
-            <AvatarStack members={teamMembers} max={5} size={24} />
+            <AvatarGroup members={teamMembers} />
             <span className="text-[12px] text-text-secondary">
               <span className="font-medium text-text-primary">{teamMembers.length}</span> member{teamMembers.length !== 1 ? "s" : ""}
             </span>
@@ -1182,7 +1165,7 @@ function TeamMembersTab({
             <button
               type="button"
               onClick={() => setAddPopoverOpen((v) => !v)}
-              className={`flex items-center gap-[5px] px-[10px] py-[5px] rounded-[4px] text-[12px] font-medium transition-colors ${
+              className={`flex h-8 items-center gap-[5px] px-[10px] rounded-[4px] text-[12px] font-medium transition-colors ${
                 addPopoverOpen
                   ? "bg-az-secondary text-brand-1"
                   : "bg-brand-1 text-white hover:bg-brand-1/90"
@@ -1203,7 +1186,7 @@ function TeamMembersTab({
 
             {/* Standard Popover Panel matching OwnerDropdown */}
             {addPopoverOpen && (
-              <div className="absolute right-0 top-[32px] z-[200] bg-white rounded-[8px] border border-graphite-10 shadow-elevation-overlay w-[240px] p-[4px] flex flex-col gap-[6px] animate-fade-in">
+              <div className="absolute right-0 top-full mt-1 z-[200] bg-white rounded-[8px] border border-graphite-10 shadow-elevation-overlay w-[240px] p-[4px] flex flex-col gap-[6px] animate-fade-in">
                 {/* Search box matching standard styling */}
                 <div className="bg-white rounded-[4px] relative shrink-0 w-full border border-border-default focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1/20 transition-all">
                   <div className="p-[2px] flex items-center size-full">
@@ -1226,7 +1209,7 @@ function TeamMembersTab({
                     <>
                       <div className="px-[8px] pt-[6px] pb-[2px]">
                         <span className="text-[11px] font-medium text-text-secondary">
-                          Out of Team
+                          Out of Team (Invite and Add)
                         </span>
                       </div>
                       {addCandidates.map((u) => {
@@ -1239,9 +1222,9 @@ function TeamMembersTab({
                               onAddMember(u);
                               setAddPopoverOpen(false);
                             }}
-                            className="flex items-center gap-[8px] px-[8px] py-[5px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
+                            className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
                           >
-                            <MemberAvatar name={u.name} initials={u.initials} color={u.color} size={16} />
+                            <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
                             <div className="flex items-center gap-[6px] min-w-0 flex-1">
                               <span className="text-[12px] truncate text-text-primary">{u.name}</span>
                               {isCurrentUser && (
@@ -1250,9 +1233,6 @@ function TeamMembersTab({
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[1px] rounded-[3px] shrink-0">
-                              + Add
-                            </span>
                           </button>
                         );
                       })}
@@ -1274,9 +1254,9 @@ function TeamMembersTab({
                         return (
                           <div
                             key={u.name}
-                            className="flex items-center gap-[8px] px-[8px] py-[5px] rounded-[4px] opacity-55"
+                            className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] opacity-55"
                           >
-                            <MemberAvatar name={u.name} initials={u.initials} color={u.color} size={16} />
+                            <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
                             <div className="flex items-center gap-[6px] min-w-0 flex-1">
                               <span className="text-[12px] truncate text-text-primary">{u.name}</span>
                               {sideLabel && (
@@ -1308,22 +1288,28 @@ function TeamMembersTab({
         </div>
 
         {/* Table Container */}
-        <div className="flex flex-1 min-h-0 overflow-hidden p-[16px]">
+        <div className="flex flex-1 min-h-0 overflow-hidden">
           <div className="border border-graphite-10 flex flex-col items-start rounded-[4px] w-full flex-1 min-h-0 overflow-hidden bg-white">
             <div className="flex-1 overflow-auto w-full">
-              <table className="w-full border-collapse text-left">
+              <table className="w-full min-w-[720px] table-fixed border-collapse text-left">
+                <colgroup>
+                  <col className="w-[26%]" />
+                  <col />
+                  <col className="w-[140px]" />
+                  <col className="w-[144px]" />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-graphite-10 bg-bg-panel h-[40px] select-none sticky top-0 z-10">
                     <th className="px-[16px] py-[10px]">
                       <span className="t-small-medium text-text-secondary whitespace-nowrap">Member</span>
                     </th>
-                    <th className="px-[16px] py-[10px] w-[150px]">
-                      <span className="t-small-medium text-text-secondary whitespace-nowrap">Assigned TFLs</span>
+                    <th className="px-[16px] py-[10px]">
+                      <span className="t-small-medium text-text-secondary whitespace-nowrap">Email</span>
                     </th>
-                    <th className="px-[16px] py-[10px] w-[120px]">
+                    <th className="px-[16px] py-[10px]">
                       <span className="t-small-medium text-text-secondary whitespace-nowrap">Added by</span>
                     </th>
-                    <th className="px-[16px] py-[10px] w-[140px] text-right">
+                    <th className="px-[16px] py-[10px] text-right">
                       <span className="t-small-medium text-text-secondary whitespace-nowrap">Actions</span>
                     </th>
                   </tr>
@@ -1343,17 +1329,12 @@ function TeamMembersTab({
                     const isCurrentUser = m.name === CURRENT_USER;
                     const sideLabel = m.isOwner ? "Owner" : isCurrentUser ? "You" : null;
 
-                    // Compute completed vs total assigned TFLs for this member
-                    const memberTFLs = tflRows.filter((r) => r.programmer === m.name);
-                    const totalAssigned = memberTFLs.length;
-                    const completedCount = memberTFLs.filter((r) => r.status === "completed").length;
-
                     return (
                       <tr key={m.name} className="hover:bg-bg-panel/50 transition-colors">
                         <td className="px-[16px] py-[10px]">
-                          <div className="flex items-center gap-[8px]">
-                            <MemberAvatar name={m.name} initials={initials} color={color} size={24} />
-                            <span className="t-small text-text-primary">{m.name}</span>
+                          <div className="flex min-w-0 items-center gap-[8px]">
+                            <Avatar name={m.name} initials={initials} color={color} level="modal" />
+                            <span className="t-small text-text-primary min-w-0 truncate" title={m.name}>{m.name}</span>
                             {sideLabel && (
                               <span
                                 className={`text-[10px] font-medium px-[6px] py-[1px] rounded-[3px] shrink-0 ${
@@ -1366,19 +1347,10 @@ function TeamMembersTab({
                           </div>
                         </td>
                         <td className="px-[16px] py-[10px]">
-                          {totalAssigned > 0 ? (
-                            <span className="t-small text-text-primary tabular-nums">
-                              <span>{completedCount}</span>
-                              <span className="text-text-secondary">/{totalAssigned} completed</span>
-                            </span>
-                          ) : (
-                            <span className="t-small text-text-secondary tabular-nums">
-                              0 assigned
-                            </span>
-                          )}
+                          <span className="t-small text-text-primary block truncate" title={m.email}>{m.email}</span>
                         </td>
                         <td className="px-[16px] py-[10px]">
-                          <span className="t-small text-text-secondary">{m.addedBy ?? "—"}</span>
+                          <span className="t-small text-text-secondary block truncate" title={m.addedBy}>{m.addedBy ?? "—"}</span>
                         </td>
                         <td className="px-[16px] py-[10px] text-right">
                           <div className="flex items-center justify-end gap-[6px]">
@@ -1444,13 +1416,13 @@ function TeamMembersTab({
                                                   onChangeOwner(cand.name);
                                                   setOwnerPopoverOpen(false);
                                                 }}
-                                                className="flex items-center gap-[8px] px-[8px] py-[5px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
+                                                className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
                                               >
-                                                <MemberAvatar
+                                                <Avatar
                                                   name={cand.name}
                                                   initials={cand.initials}
                                                   color={cand.color}
-                                                  size={16}
+                                                  level="menu"
                                                 />
                                                 <span className="text-[12px] text-text-primary flex-1 truncate">
                                                   {cand.name}
@@ -1470,7 +1442,7 @@ function TeamMembersTab({
                                         <>
                                           <div className="px-[8px] pt-[8px] pb-[2px]">
                                             <span className="text-[11px] font-medium text-text-secondary">
-                                              Out of Team
+                                              Out of Team (Invite and Add)
                                             </span>
                                           </div>
                                           {outsideUsers.map((u) => {
@@ -1483,13 +1455,13 @@ function TeamMembersTab({
                                                   onChangeOwner(u.name);
                                                   setOwnerPopoverOpen(false);
                                                 }}
-                                                className="flex items-center gap-[8px] px-[8px] py-[5px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
+                                                className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
                                               >
-                                                <MemberAvatar
+                                                <Avatar
                                                   name={u.name}
                                                   initials={u.initials}
                                                   color={u.color}
-                                                  size={16}
+                                                  level="menu"
                                                 />
                                                 <span className="text-[12px] text-text-primary flex-1 truncate">
                                                   {u.name}
@@ -1499,9 +1471,6 @@ function TeamMembersTab({
                                                     You
                                                   </span>
                                                 )}
-                                                <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[1px] rounded-[3px] shrink-0">
-                                                  + Add
-                                                </span>
                                               </button>
                                             );
                                           })}
@@ -1623,9 +1592,9 @@ export const MOCK_TFL_ROWS: TFLRow[] = [
 ];
 
 export const MOCK_TEAM_MEMBERS: TeamMember[] = [
-  { name: "Tom Chen",   initials: "TC", color: "#0077b6", isOwner: true,  assignedTFLs: 1, addedBy: "System"   },
-  { name: "Sarah Chen", initials: "SC", color: "#f0ab00", isOwner: false, assignedTFLs: 2, addedBy: "Tom Chen" },
-  { name: "James Park", initials: "JP", color: "#830051", isOwner: false, assignedTFLs: 2, addedBy: "Tom Chen" },
+  { name: "Tom Chen",   initials: "TC", color: "#0077b6", email: "tom.chen@astrazeneca.com",   isOwner: true,  assignedTFLs: 1, addedBy: "System"   },
+  { name: "Sarah Chen", initials: "SC", color: "#f0ab00", email: "sarah.chen@astrazeneca.com", isOwner: false, assignedTFLs: 2, addedBy: "Tom Chen" },
+  { name: "James Park", initials: "JP", color: "#830051", email: "james.park@astrazeneca.com", isOwner: false, assignedTFLs: 2, addedBy: "Tom Chen" },
 ];
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
@@ -1673,36 +1642,38 @@ export default function EventTeamMemberModal({
   );
 
   const handleUpdateProgrammer = (id: string, programmer: string | null) => {
+    if (!tflRows.some((row) => row.id === id && !isTflLocked(row))) return;
     // If assigning someone not in team, add them
     if (programmer && !teamMembers.find((m) => m.name === programmer)) {
       const poolUser = MOCK_USER_POOL.find((u) => u.name === programmer);
       if (poolUser) {
         setTeamMembers((prev) => [...prev, {
-          name: poolUser.name, initials: poolUser.initials, color: poolUser.color,
+          name: poolUser.name, initials: poolUser.initials, color: poolUser.color, email: poolUser.email,
           isOwner: false, assignedTFLs: 0, addedBy: "Sarah Chen",
         }]);
       }
     }
-    setTflRows((prev) => prev.map((r) => r.id === id ? { ...r, programmer } : r));
+    setTflRows((prev) => prev.map((r) => r.id === id && !isTflLocked(r) ? { ...r, programmer } : r));
   };
 
   const handleBatchUpdateProgrammer = (ids: string[], programmer: string | null) => {
-    const idSet = new Set(ids);
+    const idSet = new Set(tflRows.filter((row) => ids.includes(row.id) && !isTflLocked(row)).map((row) => row.id));
+    if (idSet.size === 0) return;
     if (programmer && !teamMembers.find((m) => m.name === programmer)) {
       const poolUser = MOCK_USER_POOL.find((u) => u.name === programmer);
       if (poolUser) {
         setTeamMembers((prev) => [...prev, {
-          name: poolUser.name, initials: poolUser.initials, color: poolUser.color,
+          name: poolUser.name, initials: poolUser.initials, color: poolUser.color, email: poolUser.email,
           isOwner: false, assignedTFLs: 0, addedBy: "Sarah Chen",
         }]);
       }
     }
-    setTflRows((prev) => prev.map((r) => idSet.has(r.id) ? { ...r, programmer } : r));
+    setTflRows((prev) => prev.map((r) => idSet.has(r.id) && !isTflLocked(r) ? { ...r, programmer } : r));
   };
 
   const handleRemoveMember = (name: string) => {
     setTeamMembers((prev) => prev.filter((m) => m.name !== name));
-    setTflRows((prev) => prev.map((r) => r.programmer === name ? { ...r, programmer: null } : r));
+    setTflRows((prev) => prev.map((r) => r.programmer === name && !isTflLocked(r) ? { ...r, programmer: null } : r));
   };
 
   const handleChangeOwner = (newOwnerName: string) => {
@@ -1712,7 +1683,7 @@ export default function EventTeamMemberModal({
       const withNewOwner = prev.map((m) => ({ ...m, isOwner: m.name === newOwnerName }));
       if (isNewToTeam && poolUser) {
         return [...withNewOwner.map((m) => ({ ...m, isOwner: false })), {
-          name: poolUser.name, initials: poolUser.initials, color: poolUser.color,
+          name: poolUser.name, initials: poolUser.initials, color: poolUser.color, email: poolUser.email,
           isOwner: true, assignedTFLs: 0, addedBy: "Auto-added",
         }];
       }
@@ -1723,7 +1694,7 @@ export default function EventTeamMemberModal({
   const handleAddMember = (user: typeof MOCK_USER_POOL[0]) => {
     if (teamMembers.find((m) => m.name === user.name)) return;
     setTeamMembers((prev) => [...prev, {
-      name: user.name, initials: user.initials, color: user.color,
+      name: user.name, initials: user.initials, color: user.color, email: user.email,
       isOwner: false, assignedTFLs: 0, addedBy: "Sarah Chen",
     }]);
   };
@@ -1775,7 +1746,6 @@ export default function EventTeamMemberModal({
           ) : (
             <TeamMembersTab
               teamMembers={membersWithCounts}
-              tflRows={tflRows}
               onRemove={handleRemoveMember}
               onChangeOwner={handleChangeOwner}
               onAddMember={handleAddMember}

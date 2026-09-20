@@ -1,3 +1,4 @@
+import { Avatar } from "../../../components/ui/Avatar";
 import React, { useState, useEffect } from 'react';
 import { Button } from '../../../components/ui/Button';
 import { ProjectItem, SYSTEM_USERS, TA_OPTIONS, SystemUser } from '../types/management';
@@ -221,12 +222,7 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
                       }`}
                     >
                       <div className="flex items-center gap-[8px] min-w-0">
-                        <div
-                          className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-white text-[10px] font-medium"
-                          style={{ backgroundColor: u.color }}
-                        >
-                          {u.initials}
-                        </div>
+                        <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
                         <span className="text-[13px] truncate">{u.name}</span>
                         <span className="text-[11px] text-text-secondary truncate">({u.email})</span>
                       </div>

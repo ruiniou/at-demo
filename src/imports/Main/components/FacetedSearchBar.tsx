@@ -1,3 +1,4 @@
+import { Avatar } from "../../../components/ui/Avatar";
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import searchIconUrl from "../../../icons/search-line.svg";
@@ -10,7 +11,7 @@ import completedStatusIconUrl from "../../../icons/Status label/Status=Completed
 import untouchedStatusIconUrl from "../../../icons/Status label/Status=Untouched.svg";
 import errorStatusIconUrl from "../../../icons/Status label/Status=Error.svg";
 import { Tag } from "../../../components/ui/Tag";
-import { OwnerAvatar } from "./TreeFilterPopover";
+
 
 export interface FacetedSearchBarProps {
   searchQuery: string;
@@ -215,7 +216,7 @@ export function FacetedSearchBar({
               className="shrink-0 h-[24px] !py-0 flex items-center select-none"
             >
               <span className="flex items-center gap-[4px] max-w-[130px] truncate">
-                <OwnerAvatar owner={assignee} size={14} />
+                <Avatar name={assignee} level="menu" />
                 <span className="truncate font-medium">{assignee === "Sarah Chen" ? "Sarah (You)" : assignee}</span>
               </span>
             </Tag>
@@ -405,7 +406,7 @@ export function FacetedSearchBar({
                         : "hover:bg-bg-panel text-text-primary"
                     }`}
                   >
-                    <OwnerAvatar owner={assignee} size={16} />
+                    <Avatar name={assignee} level="menu" />
                     <span className="t-small flex-1 truncate">{assignee}</span>
                     {assignee === "Sarah Chen" && (
                       <span className="t-small text-text-secondary shrink-0">

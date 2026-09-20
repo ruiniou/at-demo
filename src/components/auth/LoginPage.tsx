@@ -128,9 +128,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             type="button"
             onClick={() => onLoginSuccess?.(email.trim() || "ruini.ou@taimei.com")}
             className="px-2 py-0.5 rounded font-medium text-brand-1 hover:bg-brand-1/10 transition flex items-center gap-1"
-            title="快捷跳过登录直接进入系统"
+            title="Quickly skip login to enter Home"
           >
-            <span>进入 Home</span>
+            <span>Enter Home</span>
             <span>→</span>
           </button>
           <button

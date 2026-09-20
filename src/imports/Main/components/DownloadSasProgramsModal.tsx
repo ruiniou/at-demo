@@ -1,3 +1,4 @@
+import { Avatar } from "../../../components/ui/Avatar";
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Checkbox } from "../../../components/ui/Checkbox";
@@ -140,38 +141,6 @@ export const DEFAULT_PROGRAMS: ProgramItem[] = [
     locked: false,
   },
 ];
-
-const OWNER_META: Record<string, { color: string; initials: string }> = {
-  "Sarah Chen": { color: "#f0ab00", initials: "SC" },
-  "James Park": { color: "#830051", initials: "JP" },
-  "Priya Sharma": { color: "#d0006f", initials: "PS" },
-  "Alex Kim": { color: "#7c8db0", initials: "AK" },
-};
-
-function OwnerAvatar({ owner, size = 16 }: { owner: string; size?: number }) {
-  const meta = OWNER_META[owner] ?? {
-    color: "#8c8f8f",
-    initials: owner.slice(0, 2).toUpperCase(),
-  };
-  return (
-    <div
-      className="relative rounded-full shrink-0 flex items-center justify-center select-none"
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: meta.color,
-        border: "0.8px solid #ececec",
-      }}
-    >
-      <span
-        className="text-white font-medium relative leading-none"
-        style={{ fontSize: Math.max(6, Math.round(size * 0.42)) }}
-      >
-        {meta.initials}
-      </span>
-    </div>
-  );
-}
 
 function MacroTag({
   macro,
@@ -389,7 +358,7 @@ function OwnerDropdown({ allOwners, selectedOwners, onChange }: OwnerDropdownPro
                     key={owner}
                     className="bg-graphite-10 rounded-[4px] shrink-0 flex items-center gap-[4px] px-[6px] py-[2px]"
                   >
-                    <OwnerAvatar owner={owner} size={14} />
+                    <Avatar name={owner} level="menu" />
                     <span className="t-small text-text-primary whitespace-nowrap">
                       {owner}
                     </span>
@@ -434,14 +403,14 @@ function OwnerDropdown({ allOwners, selectedOwners, onChange }: OwnerDropdownPro
                 <button
                   key={owner}
                   type="button"
-                  className={`flex items-center gap-[8px] px-[6px] py-[5px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
+                  className={`flex items-center gap-[8px] px-[6px] py-[6px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
                     isSelected
                       ? "bg-az-secondary/60 text-brand-1 font-medium"
                       : "hover:bg-bg-panel text-text-primary"
                   }`}
                   onClick={() => toggle(owner)}
                 >
-                  <OwnerAvatar owner={owner} size={16} />
+                  <Avatar name={owner} level="menu" />
                   <span className="t-small flex-1 truncate">{owner}</span>
                   {owner === "Sarah Chen" && (
                     <span className="t-small text-text-secondary shrink-0">
@@ -738,7 +707,7 @@ export default function DownloadSasProgramsModal({
                           </div>
                           {/* Owner */}
                           <div className="flex flex-1 gap-[6px] items-center pl-[12px] pr-[8px] h-full min-w-0 overflow-hidden">
-                            <OwnerAvatar owner={p.owner} size={16} />
+                            <Avatar name={p.owner} level="modal" />
                             <span
                               className="t-small text-text-secondary truncate"
                               title={p.owner}

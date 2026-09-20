@@ -1,3 +1,4 @@
+import { Avatar } from "../ui/Avatar";
 import React, { useState, useRef, useEffect } from "react";
 
 export interface AccountMenuProps {
@@ -61,9 +62,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
         aria-expanded={isOpen}
         className="flex items-center gap-[8px] w-full px-[8px] py-[6px] rounded-[6px] transition-colors text-left bg-transparent hover:bg-black/5 active:bg-black/10 focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 cursor-pointer group min-w-0"
       >
-        <div className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#9DB0AC] text-white text-[12px] font-medium shadow-2xs">
-          {avatarLetter}
-        </div>
+        <Avatar name={userName} initials={avatarLetter} level="page" />
         <div className="flex items-center flex-nowrap gap-[6px] min-w-0 flex-1 overflow-hidden">
           <span
             className="font-normal text-text-primary truncate shrink min-w-0"

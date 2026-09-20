@@ -1,3 +1,4 @@
+import { Avatar } from "../../components/ui/Avatar";
 // AI Copilot Chat Window - Design Tokens & Visual Specs
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
@@ -61,14 +62,17 @@ import barChartBoxAiIconUrl from "../../icons/bar-chart-box-ai-line.svg";
 import imageAiLineIconUrl from "../../icons/image-ai-line.svg";
 import chatAiFillIconUrl from "../../icons/chat-ai-4-fill.svg";
 import gitBranchIconUrl from "../../icons/git-branch-line.svg";
+import resetRightIconUrl from "../../icons/reset-right-line.svg";
 import fileIconUrl from "../../icons/file-icon.svg";
+import { EventThinkingBlock, type EventThinkingData } from "../../components/ui/EventThinkingBlock";
+import { EventStatusBadge } from "../../components/ui/EventStatusBadge";
 import CreateEventModal from "./components/CreateEventModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
 import EventTeamMemberModal from "./components/EventTeamMemberModal";
 import type { TeamMember } from "./components/EventTeamMemberModal";
 import AccountMenu from "../../components/auth/AccountMenu";
-import { TreeFilterPopover, OwnerAvatar } from "./components/TreeFilterPopover";
+import { TreeFilterPopover } from "./components/TreeFilterPopover";
 import { FacetedSearchBar } from "./components/FacetedSearchBar";
 import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal";
 import { KMPlot } from "./components/KMPlot";
@@ -1113,7 +1117,7 @@ export type EventScopeItem = {
   name: string;
   reason?: string;
   isExcluded?: boolean;
-  itemStatus?: 'normal' | 'pending' | 'locked';
+  itemStatus?: 'normal' | 'pending' | 'locked' | 'error';
 };
 
 export type EventScopeCardData = {
@@ -1125,8 +1129,9 @@ export type EventScopeCardData = {
 export type EventProgressItem = {
   tflId: string;
   name: string;
-  status: 'queued' | 'running' | 'done' | 'failed' | 'needs_action' | 'skipped';
-  itemStatus?: 'normal' | 'pending' | 'locked';
+  status: 'queued' | 'running' | 'done' | 'blocked' | 'failed' | 'needs_action' | 'skipped';
+  itemStatus?: 'normal' | 'pending' | 'locked' | 'error';
+  isRetrying?: boolean;
 };
 
 export type EventProgressCardData = {
@@ -1138,7 +1143,8 @@ export type EventProgressCardData = {
 export type EventSummaryItem = {
   tflId: string;
   name: string;
-  status?: 'updated' | 'needs_action' | 'skipped';
+  status?: 'updated' | 'blocked' | 'failed' | 'skipped' | 'needs_action';
+  isRetrying?: boolean;
 };
 
 export type EventSummaryCardData = {
@@ -1183,6 +1189,7 @@ type Message = {
     | 'ai_update_complete'
     | 'ai_update_accepted'
     | 'meta_update_card'
+    | 'event_thinking_block'
     | 'event_search_block'
     | 'event_scope_card'
     | 'event_progress_card'
@@ -1199,6 +1206,7 @@ type Message = {
   isProcessing?: boolean;
   /** Images submitted alongside the user message */
   attachments?: AttachmentItem[];
+  thinkingCardData?: EventThinkingData;
   searchCardData?: EventSearchCardData;
   scopeCardData?: EventScopeCardData;
   progressCardData?: EventProgressCardData;
@@ -1231,12 +1239,18 @@ function EventScopeCard({
   onCancel?: () => void;
   onJumpToTfl?: (tflId: string) => void;
 }) {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [headerHovered, setHeaderHovered] = useState(false);
-  const includedCount = data.items.filter((i) => !i.isExcluded).length;
   const isConfirmed = data.status === "confirmed";
   const isCancelled = data.status === "cancelled";
   const isPending = !isConfirmed && !isCancelled;
+  const [isExpanded, setIsExpanded] = useState(!isConfirmed);
+  const [headerHovered, setHeaderHovered] = useState(false);
+  const includedCount = data.items.filter((i) => !i.isExcluded).length;
+
+  useEffect(() => {
+    if (isConfirmed) {
+      setIsExpanded(false);
+    }
+  }, [isConfirmed]);
 
   return (
     <div className={`flex flex-col bg-white border border-graphite-10 rounded-[8px] overflow-hidden w-full my-[2px] transition-opacity ${
@@ -1266,7 +1280,7 @@ function EventScopeCard({
             />
           </svg>
           <span className="text-[13px] font-semibold text-text-primary">
-            {data.title || (data.items?.length === 1 ? "Target TFL" : "Target TFLs")}
+            {data.title || (data.items?.length === 1 ? "Affected TFL" : "Affected TFLs")}
           </span>
           <span className="flex items-center justify-center h-[16px] min-w-[16px] px-[5px] rounded-[10px] bg-graphite-10 text-[10px] font-medium text-text-secondary">
             {includedCount}
@@ -1291,15 +1305,7 @@ function EventScopeCard({
       {/* Body */}
       {isExpanded && (
         <div className="flex flex-col">
-          {isPending && (
-            <div className="px-[12px] pt-[8px] pb-[4px]">
-              <p className="t-small text-text-secondary">
-                Select TFLs to apply updates:
-              </p>
-            </div>
-          )}
-
-          <div className="flex flex-col max-h-[220px] overflow-y-auto divide-y divide-graphite-10">
+          <div className="flex flex-col max-h-[228px] overflow-y-auto divide-y divide-graphite-10">
             {data.items.map((item) => {
               const isSelected = !item.isExcluded;
               const liveTable = programs ? findTableItem(programs, item.tflId) : null;
@@ -1412,7 +1418,7 @@ function EventScopeCard({
                 disabled={includedCount === 0}
                 className="h-[28px] px-[12px]"
               >
-                Apply
+                Apply Changes
               </Button>
             </div>
           )}
@@ -1501,16 +1507,17 @@ function EventProgressCard({
         </div>
       </div>
 
-      {/* Progress Items List */}
+      {/* Progress Items List: 6.5 items max height */}
       {isExpanded && (
-        <div className="flex flex-col p-[4px] divide-y divide-graphite-10 max-h-[240px] overflow-y-auto">
+        <div className="flex flex-col p-[4px] divide-y divide-graphite-10 max-h-[228px] overflow-y-auto">
           {data.items.map((item) => {
             const isRunning = item.status === "running";
             const isDone = item.status === "done";
             const isQueued = item.status === "queued";
-            const isNeedsAction = item.status === "needs_action";
+            const isBlocked = item.status === "blocked" || item.status === "needs_action";
+            const isFailed = item.status === "failed";
             const isSkipped = item.status === "skipped";
-            const canSkip = isQueued || isNeedsAction;
+            const canSkip = isQueued || isBlocked;
 
             return (
               <div
@@ -1526,8 +1533,11 @@ function EventProgressCard({
                     {isDone && (
                       <LocalIcon src={checkIconUrl} className="w-[12px] h-[12px]" color="#059669" />
                     )}
-                    {isNeedsAction && (
+                    {isBlocked && (
                       <LocalIcon src={alertIconUrl} className="w-[14px] h-[14px] shrink-0" color="#B25E00" />
+                    )}
+                    {isFailed && (
+                      <LocalIcon src={closeCircleIconUrl} className="w-[14px] h-[14px] shrink-0" color="#CC2C3C" />
                     )}
                     {isSkipped && (
                       <div className="w-[10px] h-[1.5px] rounded bg-graphite-30" />
@@ -1544,8 +1554,10 @@ function EventProgressCard({
                           ? "text-brand-1 font-medium"
                           : isDone
                           ? "text-text-primary font-medium"
-                          : isNeedsAction
+                          : isBlocked
                           ? "text-text-primary font-medium"
+                          : isFailed
+                          ? "text-status-error font-medium"
                           : isSkipped
                           ? "text-text-secondary line-through opacity-70"
                           : "text-text-secondary"
@@ -1558,8 +1570,10 @@ function EventProgressCard({
                         ? "Updating SAS code & metadata…"
                         : isDone
                         ? "Completed"
-                        : isNeedsAction
-                        ? "Action required"
+                        : isBlocked
+                        ? "Queue conflict (Blocked)"
+                        : isFailed
+                        ? "Code barrier (Failed)"
                         : isSkipped
                         ? "Skipped by user"
                         : "Queued"}
@@ -1598,22 +1612,24 @@ function EventProgressCard({
 function EventSummaryCard({
   data,
   onJumpToTfl,
+  onRetryItem,
 }: {
   data: EventSummaryCardData;
   onJumpToTfl?: (tflId: string) => void;
+  onRetryItem?: (tflId: string) => void;
 }) {
   const updatedCount = data.items.filter((i) => !i.status || i.status === "updated").length;
-  const needsActionCount = data.items.filter((i) => i.status === "needs_action").length;
+  const blockedCount = data.items.filter((i) => i.status === "blocked" || i.status === "needs_action").length;
+  const failedCount = data.items.filter((i) => i.status === "failed").length;
   const skippedCount = data.items.filter((i) => i.status === "skipped").length;
 
-  let defaultTitle = `Updated ${updatedCount} ${updatedCount === 1 ? 'TFL' : 'TFLs'}`;
-  if (needsActionCount > 0 && skippedCount > 0) {
-    defaultTitle = `${updatedCount} Updated · ${needsActionCount} Action Required · ${skippedCount} Skipped`;
-  } else if (needsActionCount > 0) {
-    defaultTitle = `${updatedCount} Updated · ${needsActionCount} Action Required`;
-  } else if (skippedCount > 0) {
-    defaultTitle = `${updatedCount} Updated · ${skippedCount} Skipped`;
-  }
+  const parts: string[] = [];
+  if (updatedCount > 0) parts.push(`${updatedCount} Updated`);
+  if (blockedCount > 0) parts.push(`${blockedCount} Blocked`);
+  if (failedCount > 0) parts.push(`${failedCount} Failed`);
+  if (skippedCount > 0) parts.push(`${skippedCount} Skipped`);
+
+  const defaultTitle = parts.length > 0 ? parts.join(" · ") : `Updated ${updatedCount} TFLs`;
 
   return (
     <div className="flex flex-col bg-white border border-graphite-10 rounded-[8px] overflow-hidden w-full my-[2px]">
@@ -1633,12 +1649,13 @@ function EventSummaryCard({
         </span>
       </div>
 
-      {/* Deliverable list */}
-      <div className="p-[4px] flex flex-col gap-[2px] max-h-[220px] overflow-y-auto">
+      {/* Deliverable list: 6.5 items max height */}
+      <div className="p-[4px] flex flex-col gap-[2px] max-h-[228px] overflow-y-auto">
         {data.items.map((item) => {
-          const isUpdated = !item.status || item.status === "updated";
-          const isNeedsAction = item.status === "needs_action";
+          const isBlocked = item.status === "blocked" || item.status === "needs_action";
+          const isFailed = item.status === "failed";
           const isSkipped = item.status === "skipped";
+          const isUpdated = !isBlocked && !isFailed && !isSkipped;
 
           return (
             <div
@@ -1649,10 +1666,13 @@ function EventSummaryCard({
               <div className="flex items-center gap-[8px] min-w-0 flex-1">
                 <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
                   {isUpdated && (
-                    <LocalIcon src={checkIconUrl} className="w-[14px] h-[14px]" color="#059669" />
+                    <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px] opacity-70 text-text-secondary" />
                   )}
-                  {isNeedsAction && (
+                  {isBlocked && (
                     <LocalIcon src={alertIconUrl} className="w-[14px] h-[14px] shrink-0" color="#B25E00" />
+                  )}
+                  {isFailed && (
+                    <LocalIcon src={closeCircleIconUrl} className="w-[14px] h-[14px] shrink-0" color="#CC2C3C" />
                   )}
                   {isSkipped && (
                     <div className="w-[10px] h-[1.5px] rounded bg-graphite-30" />
@@ -1667,17 +1687,35 @@ function EventSummaryCard({
                 </span>
               </div>
 
+              {/* Event-side low density: only badge + retry for problem items; NO badge for success! */}
               <div className="flex items-center gap-[6px] shrink-0">
-                {isNeedsAction && (
-                  <span className="px-[6px] py-[1px] rounded-[4px] bg-[#FFF8E6] text-[#B25E00] text-[11px] font-medium leading-[14px]">
-                    Action Required
-                  </span>
+                {isBlocked && (
+                  <>
+                    <EventStatusBadge status="blocked" />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRetryItem?.(item.tflId);
+                      }}
+                      disabled={item.isRetrying}
+                      className="h-[22px] px-[6px] py-0 text-[11px] font-medium gap-[3px] rounded-[4px] cursor-pointer"
+                    >
+                      <LocalIcon src={resetRightIconUrl} className="w-[11px] h-[11px]" />
+                      <span>{item.isRetrying ? "Retrying…" : "Retry"}</span>
+                    </Button>
+                  </>
                 )}
+
+                {isFailed && (
+                  <EventStatusBadge status="failed" />
+                )}
+
                 {isSkipped && (
-                  <span className="px-[6px] py-[1px] rounded-[4px] bg-graphite-10 text-text-secondary text-[11px] font-medium leading-[14px]">
-                    Skipped
-                  </span>
+                  <EventStatusBadge status="skipped" />
                 )}
+
                 <LocalIcon
                   src={arrowRightIconUrl}
                   className="w-[14px] h-[14px] opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
@@ -1929,6 +1967,7 @@ function ChatConversation({
   onConfirmScope,
   onCancelScope,
   onSkipProgressItem,
+  onRetrySummaryItem,
   programs,
   isExecutingInEventCopilot = false,
   onJumpToEvent,
@@ -1950,6 +1989,7 @@ function ChatConversation({
   onConfirmScope?: (msgIndex: number) => void;
   onCancelScope?: (msgIndex: number) => void;
   onSkipProgressItem?: (tflId: string) => void;
+  onRetrySummaryItem?: (tflId: string) => void;
   programs?: ProgramItem[];
   isExecutingInEventCopilot?: boolean;
   onJumpToEvent?: () => void;
@@ -2055,10 +2095,37 @@ function ChatConversation({
               </div>
             )}
 
+            {msg.type === 'event_thinking_block' && msg.thinkingCardData && (
+              <div className="w-full relative">
+                <EventThinkingBlock
+                  data={msg.thinkingCardData}
+                  onJumpToTfl={onJumpToTfl}
+                />
+              </div>
+            )}
+
             {msg.type === 'event_search_block' && msg.searchCardData && (
               <div className="w-full relative">
-                <EventSearchBlock
-                  data={msg.searchCardData}
+                <EventThinkingBlock
+                  data={{
+                    status: msg.searchCardData.status === 'searching' ? 'thinking' : 'completed',
+                    query: msg.searchCardData.query,
+                    scannedCount: msg.searchCardData.items?.length || 18,
+                    matchedCount: msg.searchCardData.items?.filter((i) => i.found !== false).length || 4,
+                    steps: [
+                      {
+                        id: 's1',
+                        phase: 'search',
+                        title: 'Scanning candidate TFLs',
+                        details: msg.searchCardData.items?.map((it) => ({
+                          tflId: it.tflId,
+                          name: it.name,
+                          reason: it.reason,
+                          isSuspicious: it.found === false,
+                        })),
+                      },
+                    ],
+                  }}
                   onJumpToTfl={onJumpToTfl}
                 />
               </div>
@@ -2092,13 +2159,13 @@ function ChatConversation({
                 <EventSummaryCard
                   data={msg.summaryCardData}
                   onJumpToTfl={onJumpToTfl}
+                  onRetryItem={onRetrySummaryItem}
                 />
               </div>
             )}
 
             {msg.type === 'ai_complete' && (
               <div className="flex flex-col gap-[12px] w-full relative">
-                <AIThinkingStatus status="completed" />
                 <div className="flex flex-col w-full relative gap-[12px]">
                   {msg.content ? (
                     <div className="flex flex-col w-full px-[10px]">
@@ -2330,7 +2397,6 @@ function ChatConversation({
             )}
             {(msg.type === 'ai_update_complete' || msg.type === 'ai_update_accepted') && (
               <div className="flex flex-col gap-[12px] w-full relative">
-                <AIThinkingStatus status="completed" />
                 <div className="flex flex-col w-full relative gap-[8px]">
                   <div className="flex flex-col gap-[4px] px-[10px]">
                     <p className="t-body text-text-primary leading-relaxed">
@@ -2473,6 +2539,9 @@ function AICopilotPanel({
     if (m.summaryCardData) {
       return { type: 'event_summary_card', summaryCardData: m.summaryCardData, content: m.content };
     }
+    if (m.thinkingCardData) {
+      return { type: 'event_thinking_block', thinkingCardData: m.thinkingCardData, content: m.content };
+    }
     if (m.searchCardData) {
       return { type: 'event_search_block', searchCardData: m.searchCardData, content: m.content };
     }
@@ -2495,6 +2564,9 @@ function AICopilotPanel({
     }
     if (m.type === 'event_summary_card' && m.summaryCardData) {
       return { role: 'assistant', summaryCardData: m.summaryCardData, content: m.content };
+    }
+    if (m.type === 'event_thinking_block' && m.thinkingCardData) {
+      return { role: 'assistant', thinkingCardData: m.thinkingCardData, content: m.content };
     }
     if (m.type === 'event_search_block' && m.searchCardData) {
       return { role: 'assistant', searchCardData: m.searchCardData, content: m.content };
@@ -2731,7 +2803,7 @@ function AICopilotPanel({
       }));
     }
 
-    // In Single TFL Copilot: default context is the current TFL (所在的 TFL).
+    // In Single TFL Copilot: default context is the current TFL.
     // The current table is ALREADY the default scope, so it is excluded from the @ list.
     // The @ menu is strictly used to diffuse to @Event or other TFLs.
     const list: MentionOption[] = [
@@ -2956,15 +3028,18 @@ function AICopilotPanel({
     const initialProgressItems: EventProgressItem[] = targetItems.map((t, idx) => {
       const liveTable = programs ? findTableItem(programs, t.tflId) : null;
       const effectiveStatus = liveTable
-        ? (liveTable.status === 'locked' ? 'locked' : liveTable.status === 'pending' ? 'pending' : 'normal')
+        ? (liveTable.status === 'locked' ? 'locked' : liveTable.status === 'error' ? 'error' : liveTable.status === 'pending' ? 'pending' : 'normal')
         : (t.itemStatus || 'normal');
-      const isConflicted = effectiveStatus === "pending" || effectiveStatus === "locked";
+      const isLocked = effectiveStatus === "locked";
+      const isError = effectiveStatus === "error";
+      let status: EventProgressItem['status'] = 'queued';
+      if (idx === 0) {
+        status = isLocked ? 'blocked' : isError ? 'failed' : 'running';
+      }
       return {
         tflId: t.tflId,
         name: liveTable?.name || t.name,
-        status: idx === 0 
-          ? (isConflicted ? ("needs_action" as const) : ("running" as const)) 
-          : ("queued" as const),
+        status,
         itemStatus: effectiveStatus,
       };
     });
@@ -2991,9 +3066,10 @@ function AICopilotPanel({
         onCloseEventProgress?.();
 
         const summaryItems: EventSummaryItem[] = activeProgressItemsRef.current.map((it) => {
-          let outcome: "updated" | "needs_action" | "skipped" = "updated";
+          let outcome: "updated" | "blocked" | "failed" | "skipped" = "updated";
           if (it.status === "skipped") outcome = "skipped";
-          else if (it.status === "needs_action") outcome = "needs_action";
+          else if (it.status === "blocked" || it.itemStatus === "locked" || it.status === "needs_action") outcome = "blocked";
+          else if (it.status === "failed" || it.itemStatus === "error") outcome = "failed";
           return {
             tflId: it.tflId,
             name: it.name,
@@ -3001,18 +3077,18 @@ function AICopilotPanel({
           };
         });
 
-        const updatedCount = summaryItems.filter((i) => i.status === "updated").length;
-        const needsActionCount = summaryItems.filter((i) => i.status === "needs_action").length;
+        const updatedCount = summaryItems.filter((i) => !i.status || i.status === "updated").length;
+        const blockedCount = summaryItems.filter((i) => i.status === "blocked").length;
+        const failedCount = summaryItems.filter((i) => i.status === "failed").length;
         const skippedCount = summaryItems.filter((i) => i.status === "skipped").length;
 
-        let summaryTitle = `Updated ${updatedCount} ${updatedCount === 1 ? "TFL" : "TFLs"}`;
-        if (needsActionCount > 0 && skippedCount > 0) {
-          summaryTitle = `${updatedCount} Updated · ${needsActionCount} Action Required · ${skippedCount} Skipped`;
-        } else if (needsActionCount > 0) {
-          summaryTitle = `${updatedCount} Updated · ${needsActionCount} Action Required`;
-        } else if (skippedCount > 0) {
-          summaryTitle = `${updatedCount} Updated · ${skippedCount} Skipped`;
-        }
+        const parts: string[] = [];
+        if (updatedCount > 0) parts.push(`${updatedCount} Updated`);
+        if (blockedCount > 0) parts.push(`${blockedCount} Blocked`);
+        if (failedCount > 0) parts.push(`${failedCount} Failed`);
+        if (skippedCount > 0) parts.push(`${skippedCount} Skipped`);
+
+        const summaryTitle = parts.length > 0 ? parts.join(" · ") : `Updated ${updatedCount} TFLs`;
 
         const summaryMsg: Message = {
           type: "event_summary_card" as const,
@@ -3043,15 +3119,16 @@ function AICopilotPanel({
       const activeItem = targetItems[currentIdx];
       const liveTable = programs ? findTableItem(programs, activeItem.tflId) : null;
       const effectiveStatus = liveTable
-        ? (liveTable.status === 'locked' ? 'locked' : liveTable.status === 'pending' ? 'pending' : 'normal')
+        ? (liveTable.status === 'locked' ? 'locked' : liveTable.status === 'error' ? 'error' : liveTable.status === 'pending' ? 'pending' : 'normal')
         : (activeItem.itemStatus || 'normal');
-      const isConflicted = effectiveStatus === "pending" || effectiveStatus === "locked";
+      const isLocked = effectiveStatus === "locked";
+      const isError = effectiveStatus === "error";
 
-      if (isConflicted) {
-        // Mark as needs_action
+      if (isLocked || isError) {
+        const itemStatus: EventProgressItem['status'] = isLocked ? "blocked" : "failed";
         activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
           if (idx === currentIdx && it.status !== "skipped") {
-            return { ...it, status: "needs_action" as const };
+            return { ...it, status: itemStatus };
           }
           return it;
         });
@@ -3060,12 +3137,12 @@ function AICopilotPanel({
           return { ...prev, items: activeProgressItemsRef.current };
         });
 
-        // Allow 3.5s for user to click Skip; if not clicked, keep needs_action and proceed to next item
+        // Advance to next after showing blocked/failed state
         stepTimerRef.current = setTimeout(() => {
           currentIdx++;
           currentIdxRef.current = currentIdx;
           runStep();
-        }, 3500);
+        }, 2200);
       } else {
         // Normal item running
         activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
@@ -3080,25 +3157,21 @@ function AICopilotPanel({
         });
 
         stepTimerRef.current = setTimeout(() => {
-          if (activeProgressItemsRef.current[currentIdx]?.status !== "skipped") {
-            onCompleteTflExecution?.(activeItem.tflId);
-
-            activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
-              if (idx === currentIdx && it.status !== "skipped") {
-                return { ...it, status: "done" as const };
-              }
-              return it;
-            });
-            setDockedProgressData((prev) => {
-              if (!prev) return prev;
-              return { ...prev, items: activeProgressItemsRef.current };
-            });
-          }
+          activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
+            if (idx === currentIdx && it.status !== "skipped") {
+              return { ...it, status: "done" as const };
+            }
+            return it;
+          });
+          setDockedProgressData((prev) => {
+            if (!prev) return prev;
+            return { ...prev, items: activeProgressItemsRef.current };
+          });
 
           currentIdx++;
           currentIdxRef.current = currentIdx;
           runStep();
-        }, 1800);
+        }, 1200);
       }
     };
 
@@ -3109,8 +3182,80 @@ function AICopilotPanel({
     };
 
     setTimeout(runStep, 400);
+  };
 
-    setTimeout(runStep, 400);
+  const handleRetrySummaryItem = (tflId: string) => {
+    setMessages((prevMsgs) => {
+      const summaryMsgIdx = prevMsgs.findIndex((m) => m.type === 'event_summary_card' && m.summaryCardData);
+      if (summaryMsgIdx === -1) return prevMsgs;
+
+      const summaryMsg = prevMsgs[summaryMsgIdx];
+      if (!summaryMsg.summaryCardData) return prevMsgs;
+
+      const retryingItems = summaryMsg.summaryCardData.items.map((it) => {
+        if (it.tflId === tflId) {
+          return { ...it, isRetrying: true };
+        }
+        return it;
+      });
+
+      const retryingSummaryMsg: Message = {
+        ...summaryMsg,
+        summaryCardData: {
+          ...summaryMsg.summaryCardData,
+          items: retryingItems,
+        },
+      };
+
+      const updatedWithRetry = [...prevMsgs];
+      updatedWithRetry[summaryMsgIdx] = retryingSummaryMsg;
+
+      // Re-probe lock state: simulate lock release after 1200ms
+      setTimeout(() => {
+        setMessages((latestMsgs) => {
+          const sIdx = latestMsgs.findIndex((m) => m.type === 'event_summary_card' && m.summaryCardData);
+          if (sIdx === -1) return latestMsgs;
+
+          const sMsg = latestMsgs[sIdx];
+          if (!sMsg.summaryCardData) return latestMsgs;
+
+          const updatedItems = sMsg.summaryCardData.items.map((it) => {
+            if (it.tflId === tflId) {
+              return { ...it, status: 'updated' as const, isRetrying: false };
+            }
+            return it;
+          });
+
+          const updatedCount = updatedItems.filter((i) => !i.status || i.status === "updated").length;
+          const blockedCount = updatedItems.filter((i) => i.status === "blocked").length;
+          const failedCount = updatedItems.filter((i) => i.status === "failed").length;
+          const skippedCount = updatedItems.filter((i) => i.status === "skipped").length;
+
+          const parts: string[] = [];
+          if (updatedCount > 0) parts.push(`${updatedCount} Updated`);
+          if (blockedCount > 0) parts.push(`${blockedCount} Blocked`);
+          if (failedCount > 0) parts.push(`${failedCount} Failed`);
+          if (skippedCount > 0) parts.push(`${skippedCount} Skipped`);
+
+          const newTitle = parts.length > 0 ? parts.join(" · ") : `Updated ${updatedCount} TFLs`;
+
+          const resolvedSummaryMsg: Message = {
+            ...sMsg,
+            summaryCardData: {
+              title: newTitle,
+              items: updatedItems,
+            },
+          };
+
+          const finalMsgs = [...latestMsgs];
+          finalMsgs[sIdx] = resolvedSummaryMsg;
+          updateEventSessionMessages(finalMsgs, { status: "completed" });
+          return finalMsgs;
+        });
+      }, 1200);
+
+      return updatedWithRetry;
+    });
   };
 
   const handleSubmit = (text: string, attachments?: AttachmentItem[]) => {
@@ -3150,33 +3295,121 @@ function AICopilotPanel({
         status: "processing",
       });
 
-      // Phase 1: show search block in "searching" state
+      // Phase 1: show thinking block in "thinking" state (3 reasoning phases)
       setTimeout(() => {
-        const searchingMsg: Message = {
-          type: "event_search_block" as const,
-          searchCardData: {
+        const thinkingMsg: Message = {
+          type: "event_thinking_block" as const,
+          thinkingCardData: {
+            status: "thinking",
             query: userContent.length > 30 ? userContent.slice(0, 28) + "..." : userContent,
-            status: "searching",
-            items: [
-              { tflId: "t1", name: "14.1.1 Disposition", reason: "Scanning strata and analysis datasets..." },
-              { tflId: "t4", name: "14.1.4 Demographics (Full Analysis Set)", reason: "Analyzing baseline programming steps..." },
+            scannedCount: 42,
+            matchedCount: 14,
+            steps: [
+              {
+                id: "s1",
+                phase: "search",
+                title: "Scanning candidate TFLs",
+                details: [
+                  { tflId: "t1", name: "14.1.1 Disposition", type: "table" as const },
+                  { tflId: "t4", name: "14.1.4 Demographics (Full Analysis Set)", type: "table" as const },
+                  { tflId: "t5", name: "14.1.5 Baseline Characteristics", type: "table" as const },
+                  { tflId: "t8", name: "14.1.8 Medical History by SOC", type: "table" as const },
+                  { tflId: "t9", name: "14.2.1 Primary Efficacy Endpoint (ITT)", type: "table" as const },
+                  { tflId: "t10", name: "14.2.2 Secondary Efficacy Endpoint by Visit", type: "table" as const },
+                  { tflId: "f1", name: "Figure 14.2.4 Kaplan-Meier Overall Survival", type: "figure" as const },
+                  { tflId: "t12", name: "14.3.1 Summary of Adverse Events", type: "table" as const },
+                  { tflId: "t13", name: "14.3.2 Serious Adverse Events by System Organ Class", type: "table" as const },
+                  { tflId: "t14", name: "14.3.5 Treatment-Emergent Adverse Events by PT", type: "table" as const },
+                  { tflId: "f2", name: "Figure 14.3.6 Forest Plot of Hazard Ratios", type: "figure" as const },
+                  { tflId: "t16", name: "14.4.1 Vital Signs Mean Change from Baseline", type: "table" as const },
+                  { tflId: "t17", name: "14.4.3 Clinical Chemistry Panel Summary", type: "table" as const },
+                  { tflId: "l1", name: "Listing 16.2.4 Subjects Discontinued Due to AE", type: "listing" as const },
+                ],
+              },
+              {
+                id: "s2",
+                phase: "analysis",
+                title: "Context reasoning",
+                content: "Evaluating fuzzy matches across 14 candidate TFLs: Table 14.1.8 detected TRTA in historical merge step, but output column is locked to SOC code. Flagged as 'Suspected' and added to candidate Scope for user review rather than direct exclusion. Remaining candidate tables have direct variable dependencies on treatment arm definitions.",
+              },
+              {
+                id: "s3",
+                phase: "dependency",
+                title: "Dependency verification",
+                content: "Dependency check: Verified that variable replacement from ARM to TRTA does not affect unhit safety and efficacy macros (%COMP_SUMMARY, %SURV_PLOT). Dependency closure is confirmed intact across all 14 tables.",
+              },
+              {
+                id: "s4",
+                phase: "analysis",
+                title: "Cross-domain lineage audit",
+                content: "Cross-domain lineage audit: Scanned ADSL demographic strata against downstream ADAE (adverse events) and ADLB (laboratory) datasets. Re-derivation of treatment emergent flags required for FAS and Safety populations.",
+              },
+              {
+                id: "s5",
+                phase: "dependency",
+                title: "Macro parameter boundary verification",
+                content: "Macro parameter boundary verification: Confirmed that study macro %TFL_HEADER respects dynamic variable bindings and does not contain hardcoded treatment column definitions.",
+              },
             ],
           },
         };
-        setMessages([...msgsWithUser, searchingMsg]);
+        setMessages([...msgsWithUser, thinkingMsg]);
 
-        // Phase 2: complete search with all scanned items, then present target TFLs scope card
+        // Phase 2: complete thinking (auto-collapses to single-line summary), then present target TFLs scope card
         setTimeout(() => {
-          const completedSearchMsg: Message = {
-            type: "event_search_block" as const,
-            searchCardData: {
-              query: userContent.length > 30 ? userContent.slice(0, 28) + "..." : userContent,
+          const completedThinkingMsg: Message = {
+            type: "event_thinking_block" as const,
+            thinkingCardData: {
               status: "completed",
-              items: [
-                { tflId: "t1", name: "14.1.1 Disposition", reason: "Found 2 occurrences of TRTA in strata & datasets", found: true },
-                { tflId: "t4", name: "14.1.4 Demographics (Full Analysis Set)", reason: "Found 3 occurrences of TRTA in baseline table step", found: true },
-                { tflId: "t8", name: "14.1.8 Medical History by SOC", reason: "Found 1 occurrence of TRTA in dataset merge", found: true },
-                { tflId: "t5", name: "14.1.5 Baseline Characteristics", reason: "Found 2 occurrences of TRTA in summary stats", found: true },
+              query: userContent.length > 30 ? userContent.slice(0, 28) + "..." : userContent,
+              scannedCount: 42,
+              matchedCount: 14,
+              steps: [
+                {
+                  id: "s1",
+                  phase: "search",
+                  title: "Scanning candidate TFLs",
+                  details: [
+                    { tflId: "t1", name: "14.1.1 Disposition", type: "table" as const },
+                    { tflId: "t4", name: "14.1.4 Demographics (Full Analysis Set)", type: "table" as const },
+                    { tflId: "t5", name: "14.1.5 Baseline Characteristics", type: "table" as const },
+                    { tflId: "t8", name: "14.1.8 Medical History by SOC", type: "table" as const },
+                    { tflId: "t9", name: "14.2.1 Primary Efficacy Endpoint (ITT)", type: "table" as const },
+                    { tflId: "t10", name: "14.2.2 Secondary Efficacy Endpoint by Visit", type: "table" as const },
+                    { tflId: "f1", name: "Figure 14.2.4 Kaplan-Meier Overall Survival", type: "figure" as const },
+                    { tflId: "t12", name: "14.3.1 Summary of Adverse Events", type: "table" as const },
+                    { tflId: "t13", name: "14.3.2 Serious Adverse Events by System Organ Class", type: "table" as const },
+                    { tflId: "t14", name: "14.3.5 Treatment-Emergent Adverse Events by PT", type: "table" as const },
+                    { tflId: "f2", name: "Figure 14.3.6 Forest Plot of Hazard Ratios", type: "figure" as const },
+                    { tflId: "t16", name: "14.4.1 Vital Signs Mean Change from Baseline", type: "table" as const },
+                    { tflId: "t17", name: "14.4.3 Clinical Chemistry Panel Summary", type: "table" as const },
+                    { tflId: "l1", name: "Listing 16.2.4 Subjects Discontinued Due to AE", type: "listing" as const },
+                  ],
+                },
+                {
+                  id: "s2",
+                  phase: "analysis",
+                  title: "Context reasoning",
+                  content: "Evaluating fuzzy matches across 14 candidate TFLs: Table 14.1.8 detected TRTA in historical merge step, but output column is locked to SOC code. Flagged as 'Suspected' and added to candidate Scope for user review rather than direct exclusion. Remaining candidate tables have direct variable dependencies on treatment arm definitions.",
+                },
+                {
+                  id: "s3",
+                  phase: "dependency",
+                  title: "Dependency verification",
+                  content: "Dependency check: Verified that variable replacement from ARM to TRTA does not affect unhit safety and efficacy macros (%COMP_SUMMARY, %SURV_PLOT). Dependency closure is confirmed intact across all 14 tables.",
+                },
+                {
+                  id: "s4",
+                  phase: "analysis",
+                  title: "Cross-domain lineage audit",
+                  content: "Cross-domain lineage audit: Scanned ADSL demographic strata against downstream ADAE (adverse events) and ADLB (laboratory) datasets. Re-derivation of treatment emergent flags required for FAS and Safety populations.",
+                },
+                {
+                  id: "s5",
+                  phase: "dependency",
+                  title: "Macro parameter boundary verification",
+                  content: "Macro parameter boundary verification: Confirmed that study macro %TFL_HEADER respects dynamic variable bindings and does not contain hardcoded treatment column definitions.",
+                },
               ],
             },
           };
@@ -3184,13 +3417,13 @@ function AICopilotPanel({
           const aiMsg: Message = {
             type: "ai_complete" as const,
             content:
-              "Identified 4 TFLs referencing TRTA in the demographic domain. Review and select TFLs to update:",
+              "Identified 14 candidate TFLs referencing TRTA across study domains.",
           };
 
           const scopeMsg: Message = {
             type: "event_scope_card" as const,
             scopeCardData: {
-              title: "Target TFLs",
+              title: "Affected TFLs",
               status: "pending",
               items: [
                 {
@@ -3210,7 +3443,7 @@ function AICopilotPanel({
                 {
                   tflId: "t8",
                   name: "14.1.8 Medical History by SOC",
-                  reason: "TRTA referenced in adverse event merge · affects TRTA metadata",
+                  reason: "TRTA referenced in adverse event merge · affects TRTA metadata (Locked by batch EVT-0916)",
                   itemStatus: "locked",
                   isExcluded: false,
                 },
@@ -3225,13 +3458,13 @@ function AICopilotPanel({
             },
           };
 
-          const finalMsgs = [...msgsWithUser, completedSearchMsg, aiMsg, scopeMsg];
+          const finalMsgs = [...msgsWithUser, completedThinkingMsg, aiMsg, scopeMsg];
           setMessages(finalMsgs);
           setIsPending(false);
           updateEventSessionMessages(finalMsgs, {
             status: "idle",
           });
-        }, 900);
+        }, 1100);
       }, 700);
       return;
     }
@@ -3433,7 +3666,8 @@ function AICopilotPanel({
 
         <div 
           ref={chatAreaRef} 
-          className="flex-1 min-h-0 overflow-y-auto scroll-smooth scrollbar-code"
+          className="flex-1 min-h-0 overflow-y-scroll scroll-smooth scrollbar-code scrollbar-gutter-stable"
+          style={{ scrollbarGutter: 'stable' }}
         >
           {isEventCopilot && activeEventSession?.parentId && (
             <div className="flex items-center gap-[6px] px-[12px] py-[6px] mx-[8px] mt-[8px] mb-[4px] rounded-[6px] bg-graphite-5 border border-graphite-10 shrink-0">
@@ -3469,6 +3703,7 @@ function AICopilotPanel({
               onConfirmScope={handleConfirmScope}
               onCancelScope={handleCancelScope}
               onSkipProgressItem={handleSkipItem}
+              onRetrySummaryItem={handleRetrySummaryItem}
               programs={programs}
               isExecutingInEventCopilot={!isEventCopilot && isExecutingInEventCopilot}
               onJumpToEvent={!isEventCopilot ? () => onSelectScope?.('event') : undefined}
@@ -3617,6 +3852,7 @@ type EventSessionMessage = {
   role: 'user' | 'assistant';
   content?: string;
   attachments?: AttachmentItem[];
+  thinkingCardData?: EventThinkingData;
   searchCardData?: EventSearchCardData;
   scopeCardData?: EventScopeCardData;
   progressCardData?: EventProgressCardData;
@@ -3642,27 +3878,70 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
       { role: 'user', content: 'Replace variable TRTA with TRT01P across all demographic tables.' },
       {
         role: 'assistant',
-        searchCardData: {
-          query: 'TRTA in demographic domain',
+        thinkingCardData: {
           status: 'completed',
-          items: [
-            { tflId: 't1', name: '14.1.1 Disposition', reason: 'Found 2 occurrences of TRTA in strata & datasets' },
-            { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', reason: 'Found 3 occurrences of TRTA in baseline table step' },
-            { tflId: 't8', name: '14.1.8 Medical History by SOC', reason: 'Found 1 occurrence of TRTA in dataset merge' },
-            { tflId: 't5', name: '14.1.5 Baseline Characteristics', reason: 'Found 2 occurrences of TRTA in summary stats' },
+          query: 'TRTA in demographic domain',
+          scannedCount: 42,
+          matchedCount: 14,
+          steps: [
+            {
+              id: 's1',
+              phase: 'search',
+              title: 'Scanning candidate TFLs',
+              details: [
+                { tflId: 't1', name: '14.1.1 Disposition', type: 'table' as const },
+                { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', type: 'table' as const },
+                { tflId: 't5', name: '14.1.5 Baseline Characteristics', type: 'table' as const },
+                { tflId: 't8', name: '14.1.8 Medical History by SOC', type: 'table' as const },
+                { tflId: 't9', name: '14.2.1 Primary Efficacy Endpoint (ITT)', type: 'table' as const },
+                { tflId: 't10', name: '14.2.2 Secondary Efficacy Endpoint by Visit', type: 'table' as const },
+                { tflId: 'f1', name: 'Figure 14.2.4 Kaplan-Meier Overall Survival', type: 'figure' as const },
+                { tflId: 't12', name: '14.3.1 Summary of Adverse Events', type: 'table' as const },
+                { tflId: 't13', name: '14.3.2 Serious Adverse Events by System Organ Class', type: 'table' as const },
+                { tflId: 't14', name: '14.3.5 Treatment-Emergent Adverse Events by PT', type: 'table' as const },
+                { tflId: 'f2', name: 'Figure 14.3.6 Forest Plot of Hazard Ratios', type: 'figure' as const },
+                { tflId: 't16', name: '14.4.1 Vital Signs Mean Change from Baseline', type: 'table' as const },
+                { tflId: 't17', name: '14.4.3 Clinical Chemistry Panel Summary', type: 'table' as const },
+                { tflId: 'l1', name: 'Listing 16.2.4 Subjects Discontinued Due to AE', type: 'listing' as const },
+              ],
+            },
+            {
+              id: 's2',
+              phase: 'analysis',
+              title: 'Context reasoning',
+              content: 'Evaluating fuzzy matches across 14 candidate TFLs: Table 14.1.8 detected TRTA in historical merge step, but output column is locked to SOC code. Flagged as \'Suspected\' and added to candidate Scope for user review rather than direct exclusion. Remaining candidate tables have direct variable dependencies on treatment arm definitions.',
+            },
+            {
+              id: 's3',
+              phase: 'dependency',
+              title: 'Dependency verification',
+              content: 'Dependency check: Verified that variable replacement from ARM to TRTA does not affect unhit safety and efficacy macros (%COMP_SUMMARY, %SURV_PLOT). Dependency closure is confirmed intact across all 14 tables.',
+            },
+            {
+              id: 's4',
+              phase: 'analysis',
+              title: 'Cross-domain lineage audit',
+              content: 'Cross-domain lineage audit: Scanned ADSL demographic strata against downstream ADAE (adverse events) and ADLB (laboratory) datasets. Re-derivation of treatment emergent flags required for FAS and Safety populations.',
+            },
+            {
+              id: 's5',
+              phase: 'dependency',
+              title: 'Macro parameter boundary verification',
+              content: 'Macro parameter boundary verification: Confirmed that study macro %TFL_HEADER respects dynamic variable bindings and does not contain hardcoded treatment column definitions.',
+            },
           ],
         },
       },
-      { role: 'assistant', content: 'Identified 4 TFLs referencing TRTA in the demographic domain. Review and select TFLs to update:' },
+      { role: 'assistant', content: 'Identified 14 candidate TFLs referencing TRTA across study domains.' },
       {
         role: 'assistant',
         scopeCardData: {
-          title: 'Target TFLs',
+          title: 'Affected TFLs',
           status: 'pending',
           items: [
             { tflId: 't1', name: '14.1.1 Disposition', reason: 'TRTA referenced in 2 strata derivations · affects ARM, ARMCD metadata', isExcluded: false },
             { tflId: 't4', name: '14.1.4 Demographics (Full Analysis Set)', reason: 'TRTA used in 3 summary table steps · affects TRTPN metadata', itemStatus: 'pending', isExcluded: false },
-            { tflId: 't8', name: '14.1.8 Medical History by SOC', reason: 'TRTA referenced in adverse event merge · affects TRTA metadata', itemStatus: 'locked', isExcluded: false },
+            { tflId: 't8', name: '14.1.8 Medical History by SOC', reason: 'TRTA referenced in adverse event merge · affects TRTA metadata (Locked by batch EVT-0916)', itemStatus: 'locked', isExcluded: false },
             { tflId: 't5', name: '14.1.5 Baseline Characteristics', reason: 'TRTA referenced in continuous variable stats · affects TRTA metadata', isExcluded: false },
           ],
         },
@@ -3677,14 +3956,15 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
         parentName: 'Variable Replacement: TRTA → TRT01P',
         messages: [
           { role: 'user', content: 'Apply only to safety tables.' },
-          { role: 'assistant', content: 'Narrowed scope to 2 safety tables.' },
+          { role: 'assistant', content: 'Narrowed scope to 3 safety tables. Updates executed.' },
           {
             role: 'assistant',
             summaryCardData: {
-              title: 'Updated 2 TFLs',
+              title: '1 Updated · 1 Blocked · 1 Failed',
               items: [
-                { tflId: 't5', name: '14.1.5 Baseline Characteristics' },
-                { tflId: 't8', name: '14.1.8 Medical History by SOC' },
+                { tflId: 't5', name: '14.1.5 Baseline Characteristics', status: 'updated' },
+                { tflId: 't8', name: '14.1.8 Medical History by SOC', status: 'blocked' },
+                { tflId: 't12', name: '14.1.12 Concomitant Medication by ATC', status: 'failed' },
               ],
             },
           },
@@ -3786,6 +4066,8 @@ const iconFilters: Record<string, string> = {
   "var(--color-status-error)": "brightness(0) saturate(100%) invert(24%) sepia(91%) saturate(1782%) hue-rotate(336deg) brightness(89%) contrast(88%)",
   "#C5221F": "brightness(0) saturate(100%) invert(20%) sepia(85%) saturate(3015%) hue-rotate(349deg) brightness(82%) contrast(101%)",
   "#B06000": "brightness(0) saturate(100%) invert(35%) sepia(93%) saturate(1416%) hue-rotate(24deg) brightness(94%) contrast(101%)",
+  "#B25E00": "brightness(0) saturate(100%) invert(37%) sepia(85%) saturate(1200%) hue-rotate(15deg) brightness(85%) contrast(105%)",
+  "#059669": "brightness(0) saturate(100%) invert(44%) sepia(82%) saturate(548%) hue-rotate(115deg) brightness(88%) contrast(98%)",
   "#666666": "brightness(0) invert(40%)",
 };
 
@@ -10675,7 +10957,7 @@ function MetadataPanel({
         isOpen={showDepUpdateModal}
         onClose={() => setShowDepUpdateModal(false)}
         title="Update Dependency"
-        description="重新执行可能失败 (Re-executing might fail). Are you sure you want to update the dependency?"
+        description="Re-executing might fail. Are you sure you want to update the dependency?"
         primaryLabel="Update"
         secondaryLabel="Cancel"
         onSecondary={() => setShowDepUpdateModal(false)}
@@ -12191,12 +12473,12 @@ function WorkspaceContent({
         },
         {
           role: "assistant",
-          content: `Received diffusion request from ${sourceTableName}. Review and select target TFLs to update:`,
+          content: `Received diffusion request from ${sourceTableName}. Identified candidate TFLs for update:`,
         },
         {
           role: "assistant",
           scopeCardData: {
-            title: "Target TFLs",
+            title: "Affected TFLs",
             status: "pending",
             items: candidateItems,
           },
@@ -13180,7 +13462,6 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
 
   const actionButtons = [
     { icon: toolCallIconUrl, label: 'AI edit' },
-    { icon: teamIconUrl, label: 'Team' },
     { icon: barChartIconUrl, label: 'View charts' },
     { icon: downloadIconUrl, label: 'Download', onClick: onOpenDownload },
     { icon: deleteBinIconUrl, label: 'Delete', onClick: onDelete },
@@ -13392,6 +13673,7 @@ function HomePage({
 }) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedTA, setSelectedTA] = useState<string>('All');
+  const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'name-asc'>('date-desc');
   const [isResizing, setIsResizing] = useState(false);
@@ -13516,6 +13798,22 @@ function HomePage({
         return;
       }
 
+      // Assigned to me filter
+      if (assignedToMeOnly) {
+        const u = currentUserName.toLowerCase();
+        const evOwner = (ev.owner || '').toLowerCase();
+        const evCreator = (ev.creator || '').toLowerCase();
+        const stdOwner = (owner || '').toLowerCase();
+        const isMember = ev.teamMembers?.some(m => m.name.toLowerCase().includes(u) || u.includes(m.name.toLowerCase()));
+        const isAssigned = evOwner.includes(u) || u.includes(evOwner) ||
+                           evCreator.includes(u) || u.includes(evCreator) ||
+                           stdOwner.includes(u) || u.includes(stdOwner) ||
+                           Boolean(isMember);
+        if (!isAssigned) {
+          return;
+        }
+      }
+
       if (!map.has(ev.project)) {
         map.set(ev.project, new Map());
       }
@@ -13574,7 +13872,7 @@ function HomePage({
     }
 
     return result;
-  }, [events, selectedTA, searchValue, sortBy]);
+  }, [events, selectedTA, assignedToMeOnly, currentUserName, searchValue, sortBy]);
 
   const allPanelProjectIds = useMemo(() => hierarchicalProjects.map((p) => p.projectId), [hierarchicalProjects]);
   const allPanelStudyIds = useMemo(
@@ -13969,61 +14267,26 @@ function HomePage({
                       { label: 'Neurology', value: 'Neurology' },
                     ]}
                   />
-                </div>
 
-                {/* Right: View Toggle (Segmented Control - Icons only) */}
-                <div className="flex items-center justify-end shrink-0">
-
-                  {/* View Toggle: Segmented Control (Icons only) */}
-                  <div className="flex items-center rounded-[6px] border border-graphite-10 bg-bg-app p-[2px]">
-                    <TooltipText label="Table view">
-                      <button
-                        type="button"
-                        onClick={() => setViewMode('table')}
-                        className={`flex h-[28px] w-[28px] items-center justify-center rounded-[4px] transition-colors cursor-pointer ${
-                          viewMode === 'table'
-                            ? 'bg-az-secondary text-brand-1 shadow-sm'
-                            : 'text-text-secondary hover:text-text-primary'
-                        }`}
-                        aria-label="Table view"
-                      >
-                        <svg className="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="3" y1="6" x2="21" y2="6" strokeLinecap="round" />
-                          <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />
-                          <line x1="3" y1="18" x2="21" y2="18" strokeLinecap="round" />
-                        </svg>
-                      </button>
-                    </TooltipText>
-                    <TooltipText label="Gallery view">
-                      <button
-                        type="button"
-                        onClick={() => setViewMode('card')}
-                        className={`flex h-[28px] w-[28px] items-center justify-center rounded-[4px] transition-colors cursor-pointer ${
-                          viewMode === 'card'
-                            ? 'bg-az-secondary text-brand-1 shadow-sm'
-                            : 'text-text-secondary hover:text-text-primary'
-                        }`}
-                        aria-label="Gallery view"
-                      >
-                        <svg className="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="3" width="7" height="7" rx="1" />
-                          <rect x="14" y="3" width="7" height="7" rx="1" />
-                          <rect x="3" y="14" width="7" height="7" rx="1" />
-                          <rect x="14" y="14" width="7" height="7" rx="1" />
-                        </svg>
-                      </button>
-                    </TooltipText>
-                  </div>
+                  {/* Assigned to me FilterChip toggle */}
+                  <FilterChip
+                    type="Toggle"
+                    variant="filter"
+                    label="Assigned to me"
+                    active={assignedToMeOnly}
+                    onClick={() => setAssignedToMeOnly((prev) => !prev)}
+                    icon={<LocalIcon src={teamIconUrl} className="size-[16px]" color="currentColor" />}
+                  />
                 </div>
               </div>
 
-              {/* Main List Display: Hierarchical Table or Gallery (Card) */}
+              {/* Main List Display: Hierarchical Table View */}
               <div className="flex-1 overflow-auto">
                 {hierarchicalProjects.length === 0 ? (
                   <div className="flex h-[240px] items-center justify-center rounded-[6px] border border-dashed border-graphite-10 text-[13px] text-text-muted">
                     No matching projects, studies or events found
                   </div>
-                ) : viewMode === 'table' ? (
+                ) : (
                   /* Hierarchical Table (List) View */
                   <div className="min-w-full overflow-hidden rounded-[6px] border border-graphite-10 bg-white">
                     <table className="w-full text-left border-collapse">
@@ -14100,7 +14363,7 @@ function HomePage({
                                         {/* Owner Column: Study Owner */}
                                         <td className="px-[16px] py-[8px] text-text-secondary whitespace-nowrap">
                                           <div className="flex items-center gap-[6px]">
-                                            <OwnerAvatar owner={std.owner} size={18} />
+                                            <Avatar name={std.owner} level="page" />
                                             <span className="text-[13px] text-text-primary font-medium">{std.owner}</span>
                                           </div>
                                         </td>
@@ -14115,7 +14378,6 @@ function HomePage({
                                           const isMenuOpen = openActionMenuId === `table-${ev.id}`;
                                           const actionButtons = [
                                             { icon: toolCallIconUrl, label: 'AI edit' },
-                                            { icon: teamIconUrl, label: 'Team', onClick: () => onOpenTeamModal?.(ev) },
                                             { icon: barChartIconUrl, label: 'View charts' },
                                             { icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) },
                                             { icon: deleteBinIconUrl, label: 'Delete', onClick: () => onOpenDeleteModal?.(ev) },
@@ -14154,7 +14416,7 @@ function HomePage({
                                               {/* Event Owner */}
                                               <td className="px-[16px] py-[10px] text-text-secondary whitespace-nowrap">
                                                 <div className="flex items-center gap-[6px]">
-                                                  <OwnerAvatar owner={ev.owner} size={18} />
+                                                  <Avatar name={ev.owner} level="page" />
                                                   <span className="text-[13px] text-text-primary">{ev.owner}</span>
                                                 </div>
                                               </td>
@@ -14213,182 +14475,6 @@ function HomePage({
                         })}
                       </tbody>
                     </table>
-                  </div>
-                ) : (
-                  /* Hierarchical Gallery (Card) View */
-                  <div className="flex flex-col gap-[16px]">
-                    {hierarchicalProjects.map((proj) => {
-                      const isProjExpanded = panelExpandedProjects.has(proj.projectId);
-                      return (
-                        <div key={proj.projectId} className="flex flex-col rounded-[8px] border border-graphite-10 bg-white overflow-hidden">
-                          {/* Level 1: Project Header Bar */}
-                          <div
-                            onClick={() => togglePanelProject(proj.projectId)}
-                            className="flex items-center justify-between px-[16px] py-[10px] bg-bg-app/70 hover:bg-black/[0.03] cursor-pointer border-b border-graphite-10 transition-colors select-none"
-                          >
-                            <div className="flex items-center gap-[8px]">
-                              <span className="flex h-[16px] w-[16px] items-center justify-center text-text-secondary shrink-0">
-                                <ChevronRightTreeIcon isExpanded={isProjExpanded} color="#888E8E" />
-                              </span>
-                              <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px]" color="#888E8E" />
-                              <span className="text-[13px] font-medium text-text-primary">
-                                Project: {proj.projectId}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Level 2 & 3: Studies & Events */}
-                          {isProjExpanded && (
-                            <div className="flex flex-col p-[16px] gap-[14px]">
-                              {proj.studies.map((std) => {
-                                const isStdExpanded = panelExpandedStudies.has(std.studyId);
-                                return (
-                                  <div key={std.studyId} className="flex flex-col rounded-[6px] border border-graphite-10 bg-[#FAFAFA] overflow-hidden">
-                                    {/* Study Subheader Bar */}
-                                    <div
-                                      onClick={() => togglePanelStudy(std.studyId)}
-                                      className="flex flex-wrap items-center justify-between px-[14px] py-[8px] hover:bg-black/[0.02] cursor-pointer transition-colors border-b border-graphite-10 select-none gap-[8px]"
-                                    >
-                                      <div className="flex items-center gap-[8px]">
-                                        <span className="flex h-[16px] w-[16px] items-center justify-center text-text-secondary shrink-0">
-                                          <ChevronRightTreeIcon isExpanded={isStdExpanded} color="#888E8E" />
-                                        </span>
-                                        <LocalIcon src={stackIconUrl} className="h-[15px] w-[15px] shrink-0" color="#888E8E" />
-                                        <span className="text-[13px] font-medium text-text-primary">
-                                          {std.studyId}
-                                        </span>
-                                        <TooltipText label={`Filter by ${std.ta}`}>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setSelectedTA(std.ta);
-                                            }}
-                                            className="text-[10px] px-[6px] py-[0.5px] rounded-full bg-black/5 hover:bg-brand-1/10 hover:text-brand-1 text-text-secondary border border-graphite-10 transition-colors cursor-pointer"
-                                          >
-                                            {std.ta}
-                                          </button>
-                                        </TooltipText>
-                                      </div>
-
-                                      <div className="flex items-center gap-[6px]">
-                                        <OwnerAvatar owner={std.owner} size={18} />
-                                        <span className="text-[12px] text-text-primary font-medium">{std.owner}</span>
-                                      </div>
-                                    </div>
-
-                                    {/* Study Events Cards Grid */}
-                                    {isStdExpanded && (
-                                      <div className="p-[14px] grid grid-cols-1 xl:grid-cols-2 gap-[14px] bg-white">
-                                        {std.events.map((ev) => {
-                                          const isMenuOpen = openActionMenuId === `card-${ev.id}`;
-                                          const actionButtons = [
-                                            { icon: toolCallIconUrl, label: 'AI edit' },
-                                            { icon: teamIconUrl, label: 'Team', onClick: () => onOpenTeamModal?.(ev) },
-                                            { icon: barChartIconUrl, label: 'View charts' },
-                                            { icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) },
-                                            { icon: deleteBinIconUrl, label: 'Delete', onClick: () => onOpenDeleteModal?.(ev) },
-                                          ];
-
-                                          return (
-                                            <div
-                                              key={ev.id}
-                                              onClick={onEventClick}
-                                              className="group flex flex-col sm:flex-row justify-between rounded-[8px] border border-graphite-10 bg-white p-[16px] gap-[14px] hover:border-brand-1 hover:shadow-card-mulberry transition-all cursor-pointer"
-                                            >
-                                              {/* Card Left */}
-                                              <div className="flex flex-col justify-between flex-1 min-w-0 gap-[10px]">
-                                                <div className="flex flex-col gap-[4px]">
-                                                  <div className="flex items-center gap-[6px] min-w-0">
-                                                    <span className="font-semibold text-[15px] text-text-primary group-hover:text-brand-1 truncate" title={ev.name}>
-                                                      {ev.name}
-                                                    </span>
-                                                    <span className="flex h-[16px] items-center justify-center rounded-[2px] border border-graphite-10 px-[5px] text-[10px] leading-[12px] text-text-secondary shrink-0 tabular-nums">
-                                                      {ev.version}
-                                                    </span>
-                                                  </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-[8px]">
-                                                  <StatusTag status={ev.status} />
-                                                  {ev.progress && (
-                                                    <span className="text-[11px] text-text-secondary tabular-nums">
-                                                      {ev.progress.completed}/{ev.progress.total} TLF Completed
-                                                    </span>
-                                                  )}
-                                                </div>
-
-                                                <div className="flex items-center justify-between pt-[4px]">
-                                                  <div className="flex items-center gap-[6px]">
-                                                    <OwnerAvatar owner={ev.owner} size={16} />
-                                                    <span className="text-[12px] text-text-secondary">
-                                                      {ev.owner}
-                                                    </span>
-                                                  </div>
-                                                  {/* Actions - Collapsed into Ellipsis (...) */}
-                                                  <div className="relative inline-flex items-center" onClick={(e) => e.stopPropagation()}>
-                                                    <TooltipText label="More actions">
-                                                      <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          setOpenActionMenuId((prev) => (prev === `card-${ev.id}` ? null : `card-${ev.id}`));
-                                                        }}
-                                                        className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors ${
-                                                          isMenuOpen ? 'bg-black/5' : ''
-                                                        }`}
-                                                        aria-label="More actions"
-                                                      >
-                                                        <MoreIcon color="var(--color-text-secondary)" />
-                                                      </button>
-                                                    </TooltipText>
-
-                                                    {isMenuOpen && (
-                                                      <div
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="absolute right-0 bottom-[28px] bg-white border border-graphite-10 rounded-[6px] shadow-elevation-overlay py-[4px] w-[140px] z-50 animate-fade-in"
-                                                      >
-                                                        {actionButtons.map((btn, i) => (
-                                                          <button
-                                                            key={i}
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                              e.stopPropagation();
-                                                              setOpenActionMenuId(null);
-                                                              btn.onClick?.();
-                                                            }}
-                                                            className="w-full text-left px-[10px] py-[6px] text-[13px] text-text-primary hover:bg-bg-panel flex items-center gap-[8px] transition-colors cursor-pointer"
-                                                          >
-                                                            <LocalIcon src={btn.icon} className="h-[15px] w-[15px] shrink-0" color="var(--color-text-secondary)" />
-                                                            <span className="truncate">{btn.label}</span>
-                                                          </button>
-                                                        ))}
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              </div>
-
-                                              {/* Card Right: Thumbnail preview */}
-                                              <div className="hidden sm:flex w-[110px] h-[96px] rounded-[6px] bg-bg-app border border-graphite-10 shrink-0 items-center justify-center overflow-hidden">
-                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#830051" strokeWidth="1.5" className="opacity-40">
-                                                  <path d="M3 3v18h18" strokeLinecap="round" />
-                                                  <path d="M7 15l3-4 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" />
-                                                </svg>
-                                              </div>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
                   </div>
                 )}
               </div>
