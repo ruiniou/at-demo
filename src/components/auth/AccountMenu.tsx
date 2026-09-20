@@ -1,5 +1,7 @@
+import { Popover } from "../ui/Popover";
+import { MenuItem } from "../ui/MenuItem";
 import { Avatar } from "../ui/Avatar";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 
 export interface AccountMenuProps {
   userName?: string;
@@ -17,32 +19,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
   className = "",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const handleLogoutClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -53,12 +30,13 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={`relative select-none ${className}`}>
+    <div className={`relative select-none ${className}`}>
       {/* No fill Account Button */}
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-haspopup="true"
+        aria-haspopup="menu"
         aria-expanded={isOpen}
         className="flex items-center gap-[8px] w-full px-[8px] py-[6px] rounded-[6px] transition-colors text-left bg-transparent hover:bg-black/5 active:bg-black/10 focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 cursor-pointer group min-w-0"
       >
@@ -79,20 +57,9 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
       </button>
 
       {/* Popover Menu with only 'Log out' option */}
-      {isOpen && (
-        <div
-          role="menu"
-          aria-orientation="vertical"
-          className="absolute bottom-[calc(100%+6px)] left-0 w-full min-w-[150px] rounded-[8px] border border-border-default bg-white p-[4px] shadow-lg z-50 animate-in fade-in slide-in-from-bottom-2 duration-150"
-        >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleLogoutClick}
-            className="flex items-center gap-[8px] w-full px-[10px] py-[8px] rounded-[4px] text-[13px] font-normal text-status-error hover:bg-status-error-bg/30 active:bg-status-error-bg/50 transition-colors text-left cursor-pointer"
-          >
-            <svg
-              className="h-[14px] w-[14px] shrink-0 text-status-error"
+      <Popover open={isOpen} onOpenChange={setIsOpen} anchorRef={triggerRef} role="menu" label="Account actions" placement="top" offset={6} className="rounded-[8px] shadow-lg">
+          <MenuItem danger onClick={handleLogoutClick} className="px-[10px] py-[8px] text-[13px]" icon={<svg
+              className="h-[14px] w-[14px] shrink-0"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -103,11 +70,10 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            <span>Log out</span>
-          </button>
-        </div>
-      )}
+            </svg>}>
+            Log out
+          </MenuItem>
+      </Popover>
     </div>
   );
 };

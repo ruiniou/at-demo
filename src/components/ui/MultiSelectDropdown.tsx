@@ -1,3 +1,4 @@
+import { CheckboxIndicator } from "./CheckboxIndicator";
 import React, { useState, useRef, useEffect } from "react";
 import arrowIconUrl from "../../icons/arrow-down-s-line.svg";
 import { FormItem } from "./FormItem";
@@ -72,6 +73,7 @@ export function MultiSelectDropdown({
   const labelColor = disabled ? "var(--color-graphite-20)" : "var(--color-text-primary)";
 
   const handleToggleOption = (optValue: string) => {
+    if (options.find((option) => option.value === optValue)?.disabled) return;
     if (value.includes(optValue)) {
       onChange(value.filter((v) => v !== optValue));
     } else {
@@ -189,23 +191,13 @@ export function MultiSelectDropdown({
                     <button
                       key={opt.value}
                       type="button"
+                      disabled={opt.disabled}
                       onClick={() => handleToggleOption(opt.value)}
-                      className={`grid w-full grid-cols-[14px_72px_140px_1fr] items-start gap-[8px] rounded-[2px] px-[6px] py-[6px] text-left transition-colors hover:bg-bg-panel ${
-                        isSelected ? "bg-az-secondary" : ""
+                      className={`dropdown-item disabled:cursor-not-allowed grid w-full grid-cols-[14px_72px_140px_1fr] items-start gap-[8px] rounded-[2px] px-[6px] py-[6px] text-left transition-colors enabled:hover:bg-bg-panel ${
+                        isSelected && !opt.disabled ? "bg-az-secondary" : ""
                       }`}
                     >
-                      {/* Checkbox */}
-                      <span
-                        className={`mt-[2px] flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border ${
-                          isSelected ? "border-brand-1 bg-brand-1" : "border-[#D8DADA] bg-white"
-                        }`}
-                      >
-                        {isSelected && (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                            <path d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" fill="white"/>
-                          </svg>
-                        )}
-                      </span>
+                      <span className="mt-[2px] inline-flex"><CheckboxIndicator checked={isSelected} disabled={opt.disabled} size={14} /></span>
 
                       {/* Dataset */}
                       <span className="text-[11px] leading-[18px] text-graphite-40 whitespace-nowrap pt-[1px]">
@@ -246,6 +238,7 @@ export function MultiSelectDropdown({
                   <OptionLabel
                     key={opt.value}
                     label={opt.label}
+                    disabled={opt.disabled}
                     selected={isSelected}
                     type="multi"
                     onClick={() => handleToggleOption(opt.value)}

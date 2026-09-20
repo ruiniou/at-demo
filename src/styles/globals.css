@@ -321,3 +321,12 @@ html, body {
 .shadow-elevation-modal {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
+
+/* Disabled dropdown content uses a solid token, never parent opacity.
+   Monochrome icons should inherit currentColor (or use a CSS mask). */
+.dropdown-item:disabled,
+.dropdown-item:disabled *,
+.dropdown-item[aria-disabled="true"],
+.dropdown-item[aria-disabled="true"] * {
+  color: var(--color-graphite-40) !important;
+}

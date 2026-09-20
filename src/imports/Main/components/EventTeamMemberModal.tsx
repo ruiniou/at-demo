@@ -1,3 +1,4 @@
+import { DropdownGroupLabel, DropdownEmpty } from "../../../components/ui/DropdownParts";
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Avatar, AvatarGroup } from "../../../components/ui/Avatar";
@@ -296,9 +297,7 @@ function ProgrammerCell({
             {/* Team Members */}
             {filteredTeam.length > 0 && (
               <>
-                <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[11px] font-medium text-text-secondary">In Team</span>
-                </div>
+                <DropdownGroupLabel>In Team</DropdownGroupLabel>
                 {filteredTeam.map((m) => {
                   const isSelected = value === m.name;
                   const isCurrentUser = m.name === CURRENT_USER;
@@ -341,9 +340,7 @@ function ProgrammerCell({
             {/* Out of Team section - people not in team */}
             {filteredNew.length > 0 && (
               <>
-                <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[11px] font-medium text-text-secondary">Out of Team (Invite and Add)</span>
-                </div>
+                <DropdownGroupLabel>Out of Team (Invite and Add)</DropdownGroupLabel>
                 {filteredNew.map((u) => {
                   const isCurrentUser = u.name === CURRENT_USER;
                   return (
@@ -369,7 +366,7 @@ function ProgrammerCell({
             )}
 
             {!matchesNoAssignee && filteredTeam.length === 0 && filteredNew.length === 0 && (
-              <p className="text-[12px] text-text-secondary px-[8px] py-[6px]">No results</p>
+              <DropdownEmpty />
             )}
           </div>
         </div>,
@@ -514,9 +511,7 @@ function BatchAssignDropdown({
             {/* Team Members */}
             {filteredTeam.length > 0 && (
               <>
-                <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[11px] font-medium text-text-secondary">In Team</span>
-                </div>
+                <DropdownGroupLabel>In Team</DropdownGroupLabel>
                 {filteredTeam.map((m) => {
                   const isCurrentUser = m.name === CURRENT_USER;
                   const sideLabel = m.isOwner ? "Owner" : isCurrentUser ? "You" : null;
@@ -550,9 +545,7 @@ function BatchAssignDropdown({
             {/* Out of Team section */}
             {filteredNew.length > 0 && (
               <>
-                <div className="px-[8px] pt-[6px] pb-[2px]">
-                  <span className="text-[11px] font-medium text-text-secondary">Out of Team (Invite and Add)</span>
-                </div>
+                <DropdownGroupLabel>Out of Team (Invite and Add)</DropdownGroupLabel>
                 {filteredNew.map((u) => {
                   const isCurrentUser = u.name === CURRENT_USER;
                   return (
@@ -578,7 +571,7 @@ function BatchAssignDropdown({
             )}
 
             {filteredTeam.length === 0 && filteredNew.length === 0 && (
-              <p className="text-[12px] text-text-secondary px-[8px] py-[6px]">No results</p>
+              <DropdownEmpty />
             )}
           </div>
         </div>,
@@ -1207,11 +1200,7 @@ function TeamMembersTab({
                 <div className="flex flex-col gap-[1px] max-h-[220px] overflow-y-auto w-full">
                   {addCandidates.length > 0 && (
                     <>
-                      <div className="px-[8px] pt-[6px] pb-[2px]">
-                        <span className="text-[11px] font-medium text-text-secondary">
-                          Out of Team (Invite and Add)
-                        </span>
-                      </div>
+                      <DropdownGroupLabel>Out of Team (Invite and Add)</DropdownGroupLabel>
                       {addCandidates.map((u) => {
                         const isCurrentUser = u.name === CURRENT_USER;
                         return (
@@ -1254,7 +1243,8 @@ function TeamMembersTab({
                         return (
                           <div
                             key={u.name}
-                            className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] opacity-55"
+                            aria-disabled="true"
+                            className="dropdown-item flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] cursor-not-allowed"
                           >
                             <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
                             <div className="flex items-center gap-[6px] min-w-0 flex-1">
@@ -1271,7 +1261,7 @@ function TeamMembersTab({
                                 </span>
                               )}
                             </div>
-                            <img src={checkIconUrl} alt="" className="w-[13px] h-[13px] opacity-70 shrink-0" />
+                            <span aria-hidden="true" className="size-[13px] shrink-0 bg-graphite-40" style={{ mask: `url("${checkIconUrl}") center / contain no-repeat` }} />
                           </div>
                         );
                       })}
@@ -1279,7 +1269,7 @@ function TeamMembersTab({
                   )}
 
                   {addCandidates.length === 0 && addAlreadyIn.length === 0 && (
-                    <p className="text-[12px] text-text-secondary px-[8px] py-[6px]">No results</p>
+                    <DropdownEmpty />
                   )}
                 </div>
               </div>
@@ -1401,11 +1391,7 @@ function TeamMembersTab({
                                     <div className="flex flex-col gap-[1px] max-h-[220px] overflow-y-auto w-full">
                                       {nonOwners.length > 0 && (
                                         <>
-                                          <div className="px-[8px] pt-[6px] pb-[2px]">
-                                            <span className="text-[11px] font-medium text-text-secondary">
-                                              In Team
-                                            </span>
-                                          </div>
+                                          <DropdownGroupLabel>In Team</DropdownGroupLabel>
                                           {nonOwners.map((cand) => {
                                             const candIsUser = cand.name === CURRENT_USER;
                                             return (

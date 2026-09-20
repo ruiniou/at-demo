@@ -1,4 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import { Popover } from "./Popover";
+import { DropdownEmpty } from "./DropdownParts";
+import React, { useState, useRef, useId } from "react";
 import arrowIconUrl from "../../icons/arrow-down-s-line.svg";
 import { OptionLabel } from "./OptionLabel";
 import { FormItem } from "./FormItem";
@@ -6,6 +8,7 @@ import { FormItem } from "./FormItem";
 export type DropdownOption = {
   label: string;
   value: string;
+  disabled?: boolean;
   /** Optional: shown in Variable multiselect dropdown rows */
   derivation?: string;
   /** Optional: dataset name prefix shown in Variable multiselect dropdown rows */
@@ -50,18 +53,8 @@ export function Dropdown({
   badge,
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverId = useId();
 
   const selectedOption = options.find((opt) => opt.value === value);
 
@@ -92,8 +85,12 @@ export function Dropdown({
       badge={badge}
       className={className}
     >
-      <div className="relative" ref={dropdownRef}>
+      <div className="relative">
         <button
+        ref={triggerRef}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen && !disabled}
+        aria-controls={isOpen && !disabled ? popoverId : undefined}
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -132,15 +129,17 @@ export function Dropdown({
         </span>
       )}
 
-      {isOpen && !disabled && (
-        <div className="absolute left-0 right-0 top-[100%] z-[100] mt-[4px] flex flex-col gap-[2px] rounded-[4px] border border-form-border bg-white p-[4px] shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
+      <Popover open={isOpen && !disabled} onOpenChange={setIsOpen} anchorRef={triggerRef} id={popoverId} label={label || placeholder}>
+
           <div className="flex max-h-[200px] flex-col gap-[2px] overflow-y-auto">
+            {options.length === 0 && <DropdownEmpty />}
             {options.map((opt) => {
               const isSelected = opt.value === value;
               return (
                 <OptionLabel
                   key={opt.value}
                   label={opt.label}
+                  disabled={opt.disabled}
                   selected={isSelected}
                   type="single"
                   onClick={() => {
@@ -151,8 +150,7 @@ export function Dropdown({
               );
             })}
           </div>
-        </div>
-      )}
+        </Popover>
       </div>
     </FormItem>
   );

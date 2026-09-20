@@ -473,6 +473,7 @@ export interface ChatBoxProps {
   mentionOptions?: MentionOption[];
   showMention?: boolean;
   disabled?: boolean;
+  disabledTooltip?: string;
   onSkipEventProgressItem?: (tflId: string) => void;
   placeholder?: string;
   className?: string;
@@ -486,6 +487,7 @@ export default function ChatBox({
   pendingChangesCount = 3,
   submitDisabled = false,
   disabled = false,
+  disabledTooltip,
   metadataChangesCount = 0,
   metaDiffItems,
   onCloseMetadataChanges,
@@ -984,7 +986,7 @@ export default function ChatBox({
     : "Default";
 
   const placeholderText = disabled
-    ? "Historical session is read-only"
+    ? (disabledTooltip || "Historical session is read-only")
     : metadataChangesCount > 0 
     ? "Add instructions or submit directly..." 
     : (eventProgressData && !eventProgressData.isCompleted)
@@ -1529,7 +1531,7 @@ export default function ChatBox({
             <div className="flex items-center justify-between w-full pt-[4px]">
               {/* Left: Tool actions (Upload Image, Mention) */}
               <div className="flex items-center gap-[6px]">
-                <Tooltip label={disabled ? "Historical session is read-only" : canAddMore ? "Upload Image" : "Maximum 5 images reached"}>
+                <Tooltip label={disabled ? (disabledTooltip || "Historical session is read-only") : canAddMore ? "Upload Image" : "Maximum 5 images reached"}>
                   <button
                     type="button"
                     onClick={() => !disabled && fileInputRef.current?.click()}
@@ -1551,7 +1553,7 @@ export default function ChatBox({
 
                 {/* Mention @ button */}
                 {showMention && (
-                  <Tooltip label={disabled ? "Historical session is read-only" : "Mention scope or table (@)"}>
+                  <Tooltip label={disabled ? (disabledTooltip || "Historical session is read-only") : "Mention scope or table (@)"}>
                     <button
                       type="button"
                       onClick={disabled ? undefined : handleToolbarMentionClick}
@@ -1573,7 +1575,7 @@ export default function ChatBox({
               <button
                 onClick={isActuallyDisabled ? undefined : handleSend}
                 disabled={isActuallyDisabled}
-                title={disabled ? "Historical session is read-only" : hasUploadingAttachments ? "Waiting for images to finish uploading…" : undefined}
+                title={disabled ? (disabledTooltip || "Historical session is read-only") : hasUploadingAttachments ? "Waiting for images to finish uploading…" : undefined}
                 className={`${
                   isActuallyDisabled
                     ? "bg-graphite-20 cursor-not-allowed opacity-50 pointer-events-none"

@@ -3731,7 +3731,7 @@ function AICopilotPanel({
                   Updating via Event Copilot: {executingSessionTitle || "Cross-Table Update"}
                 </span>
                 <span className="text-[11px] text-text-secondary leading-[14px]">
-                  Waiting for task completion. Code editing is temporarily locked.
+                  Waiting for task completion. Instructions and code editing are temporarily locked.
                 </span>
               </div>
             </div>
@@ -3750,7 +3750,14 @@ function AICopilotPanel({
               onSubmit={handleSubmit} 
               onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
-              disabled={isHistoricalTflSession}
+              disabled={isHistoricalTflSession || (!isEventCopilot && isExecutingInEventCopilot)}
+              disabledTooltip={
+                !isEventCopilot && isExecutingInEventCopilot
+                  ? "Updating via Event Copilot. Input is locked."
+                  : isHistoricalTflSession
+                  ? "Historical session is read-only"
+                  : undefined
+              }
               metadataChangesCount={metaDiffItems.length}
               metaDiffItems={metaDiffItems}
               onCloseMetadataChanges={() => onMetaCancel?.()}
@@ -3774,7 +3781,14 @@ function AICopilotPanel({
               onSubmit={handleSubmit} 
               onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
-              disabled={isHistoricalTflSession}
+              disabled={isHistoricalTflSession || (!isEventCopilot && isExecutingInEventCopilot)}
+              disabledTooltip={
+                !isEventCopilot && isExecutingInEventCopilot
+                  ? "Updating via Event Copilot. Input is locked."
+                  : isHistoricalTflSession
+                  ? "Historical session is read-only"
+                  : undefined
+              }
               pending={true} 
               pendingChangesCount={currentTable?.pendingChanges || 3}
               onAcceptPending={handleAcceptPending}
@@ -3795,7 +3809,14 @@ function AICopilotPanel({
               onSubmit={handleSubmit} 
               onSubmitWithAttachments={handleSubmit}
               submitDisabled={isSubmitDisabled}
-              disabled={isHistoricalTflSession}
+              disabled={isHistoricalTflSession || (!isEventCopilot && isExecutingInEventCopilot)}
+              disabledTooltip={
+                !isEventCopilot && isExecutingInEventCopilot
+                  ? "Updating via Event Copilot. Input is locked."
+                  : isHistoricalTflSession
+                  ? "Historical session is read-only"
+                  : undefined
+              }
               quoteInsertRef={quoteInsertRef}
               attachFilesRef={attachFilesRef}
               eventProgressData={isEventCopilot ? activeProgressData : null}

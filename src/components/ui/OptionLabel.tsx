@@ -1,100 +1,36 @@
 import React from "react";
 import checkIconUrl from "../../icons/check-line.svg";
+import { CheckboxIndicator } from "./CheckboxIndicator";
 
 export interface OptionLabelProps {
-  /** The main label text */
   label: string;
-  /** Optional sub-label (for multi-select type) */
   sub?: string;
-  /** Whether this option is selected */
+  description?: string;
   selected?: boolean;
-  /** "single" = check icon, "multi" = checkbox, "highlight" = background highlight without check icon */
+  disabled?: boolean;
   type?: "single" | "multi" | "highlight";
-  /** Click handler */
+  leading?: React.ReactNode;
+  trailing?: React.ReactNode;
   onClick?: () => void;
   className?: string;
 }
 
-/**
- * Figma 1124:5566 — Option label component
- * Used inside Dropdown panels and option lists
- * States: Default, Hovered, Selected
- * Types: Single select (check icon), Multi-Select (checkbox square)
- */
-export function OptionLabel({
-  label,
-  sub,
-  selected = false,
-  type = "single",
-  onClick,
-  className = "",
-}: OptionLabelProps) {
-  const isSingle = type === "single";
-  const isHighlight = type === "highlight";
-  const gap = isSingle ? "gap-[6px]" : "gap-[8px]";
-
-  const highlightBg = selected ? "bg-az-secondary" : "hover:bg-bg-panel";
-  const highlightTextColor = selected ? "text-brand-1" : "text-text-primary";
-
+/** Existing 32px option row; description is opt-in and may grow past 48px. */
+export function OptionLabel({ label, sub, description, selected = false, disabled = false,
+  type = "single", leading, trailing, onClick, className = "" }: OptionLabelProps) {
+  const highlighted = type === "highlight" && selected;
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex h-[32px] w-full items-center ${gap} px-[6px] rounded-[2px] text-left transition-colors ${isHighlight ? highlightBg : 'hover:bg-bg-panel'} ${isHighlight ? 'active:scale-[0.98]' : ''} ${className}`}
-    >
-      {!isHighlight && (
-        isSingle ? (
-          /* Single select: check-line icon, visible only when selected */
-          <img
-            src={checkIconUrl}
-            alt=""
-            className="h-[16px] w-[16px] shrink-0"
-            style={{ opacity: selected ? 1 : 0 }}
-          />
-        ) : (
-          /* Multi-select: checkbox square 14x14 */
-          <span
-            className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-[2px] border ${
-              selected
-                ? "border-brand-1 bg-brand-1"
-                : "border-[#D8DADA] bg-white"
-            }`}
-          >
-            {selected && (
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                <path d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" fill="white"/>
-              </svg>
-            )}
-          </span>
-        )
-      )}
-
-      <span
-        title={label}
-        style={{
-          fontFamily: "'PingFang SC', sans-serif",
-          fontWeight: 400,
-          fontSize: 12,
-          lineHeight: "18px",
-        }}
-        className={`flex-1 min-w-0 truncate ${isHighlight ? highlightTextColor : "text-[#3F4444]"}`}
-      >
-        {label}
+    <button type="button" disabled={disabled} aria-pressed={selected} onClick={onClick}
+      className={`dropdown-item flex ${description ? "min-h-12 py-1.5" : "h-8"} w-full items-center ${type === "single" ? "gap-[6px]" : "gap-2"} px-[6px] rounded-[2px] text-left transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 ${disabled ? "text-graphite-40 cursor-not-allowed" : highlighted ? "bg-az-secondary text-brand-1" : "text-text-primary hover:bg-bg-panel"} ${className}`}>
+      {type === "single" && <span aria-hidden="true" className={`size-4 shrink-0 bg-current ${selected ? "" : "invisible"}`} style={{ mask: `url("${checkIconUrl}") center / contain no-repeat` }} />}
+      {type === "multi" && <CheckboxIndicator checked={selected} disabled={disabled} size={14} />}
+      {leading && <span className="shrink-0 inline-flex items-center">{leading}</span>}
+      <span className="flex-1 min-w-0 text-[12px] leading-[18px] font-normal">
+        <span title={label} className="block truncate">{label}</span>
+        {description && <span className={`block whitespace-normal ${disabled ? "text-graphite-40" : "text-text-secondary"}`}>{description}</span>}
       </span>
-
-      {sub && (
-        <span
-          style={{
-            fontFamily: "'PingFang SC', sans-serif",
-            fontWeight: 400,
-            fontSize: 12,
-            lineHeight: "18px",
-            color: "#888E8E",
-          }}
-        >
-          {sub}
-        </span>
-      )}
+      {sub && <span className={`shrink-0 text-[12px] leading-[18px] ${disabled ? "text-graphite-40" : "text-text-secondary"}`}>{sub}</span>}
+      {trailing && <span className="shrink-0 inline-flex items-center">{trailing}</span>}
     </button>
   );
 }
