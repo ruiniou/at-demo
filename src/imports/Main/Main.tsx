@@ -12189,7 +12189,6 @@ function WorkspaceContent({
   const [treeFilterOpen, setTreeFilterOpen] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set());
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
-  const [selectedSection, setSelectedSection] = useState<string>('all');
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   // Event settings dropdown state
@@ -12285,18 +12284,12 @@ function WorkspaceContent({
   const handleResetAllFilters = () => {
     setSelectedStatuses(new Set());
     setSelectedAssignees(new Set());
-    setSelectedSection('all');
   };
 
   const activeFilterCount =
     selectedStatuses.size +
-    selectedAssignees.size +
-    (selectedSection !== 'all' ? 1 : 0);
+    selectedAssignees.size;
   const isFilterActive = activeFilterCount > 0;
-
-  const allSections = useMemo(() => {
-    return programs.map((p) => ({ id: p.id, name: p.name }));
-  }, [programs]);
 
   const allAssignees = useMemo(() => {
     const set = new Set<string>();
@@ -12312,10 +12305,6 @@ function WorkspaceContent({
   const filteredPrograms = useMemo(() => {
     return programs
       .map((program) => {
-        if (selectedSection !== 'all' && program.id !== selectedSection && program.name !== selectedSection) {
-          return null;
-        }
-
         const filteredTables = program.tables.filter((table) => {
           const matchesCategory = categoryFilter === "all" ||
             (categoryFilter === "table" && (table.docType === "table" || !table.docType)) ||
@@ -12356,13 +12345,12 @@ function WorkspaceContent({
         };
       })
       .filter((program): program is ProgramItem => {
-        if (!program) return false;
         if (isFilterActive || Boolean(treeSearchQuery.trim())) {
           return program.tables.length > 0;
         }
         return true;
       });
-  }, [programs, categoryFilter, treeSearchQuery, selectedStatuses, selectedAssignees, selectedSection, isFilterActive]);
+  }, [programs, categoryFilter, treeSearchQuery, selectedStatuses, selectedAssignees, isFilterActive]);
 
   const totalMatchingTables = useMemo(() => {
     return filteredPrograms.reduce((acc, p) => acc + p.tables.length, 0);
@@ -12812,11 +12800,8 @@ function WorkspaceContent({
                 selectedAssignees={selectedAssignees}
                 onToggleAssignee={handleToggleAssignee}
                 onRemoveAssignee={handleRemoveAssignee}
-                selectedSection={selectedSection}
-                onSelectSection={setSelectedSection}
                 onResetAll={handleResetAllFilters}
                 allAssignees={allAssignees}
-                allSections={allSections}
                 className="mx-[8px] my-[2px]"
               />
             ) : (
@@ -12871,10 +12856,7 @@ function WorkspaceContent({
                   selectedAssignees={selectedAssignees}
                   onToggleAssignee={handleToggleAssignee}
                   onClearAssignees={handleClearAssignees}
-                  selectedSection={selectedSection}
-                  onSelectSection={setSelectedSection}
                   allAssignees={allAssignees}
-                  allSections={allSections}
                   onResetAll={handleResetAllFilters}
                   matchingCount={totalMatchingTables}
                   totalCount={totalTablesCount}
@@ -13648,7 +13630,7 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
   };
 
   const actionButtons = [
-    { icon: barChartIconUrl, label: 'View charts' },
+    { icon: barChartIconUrl, label: 'View Dashboard' },
     { icon: downloadIconUrl, label: 'Download', onClick: onOpenDownload },
     { icon: deleteBinIconUrl, label: 'Delete', onClick: onDelete },
   ];
@@ -14539,7 +14521,7 @@ function HomePage({
                                           const isEventTeamMember = isEventOwner || Boolean(ev.teamMembers?.some((member) => member.name === currentUserName));
                                           const canChangeEventOwner = currentUserName === std.owner || isEventOwner;
                                           const actionButtons = [
-                                            { icon: barChartIconUrl, label: 'View charts' },
+                                            { icon: barChartIconUrl, label: 'View Dashboard' },
                                             ...(isEventTeamMember
                                               ? [{ icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) }]
                                               : []),

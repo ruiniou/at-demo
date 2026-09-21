@@ -19,10 +19,7 @@ export interface TreeFilterPopoverProps {
   selectedAssignees: Set<string>;
   onToggleAssignee: (assignee: string) => void;
   onClearAssignees: () => void;
-  selectedSection: string;
-  onSelectSection: (section: string) => void;
   allAssignees: string[];
-  allSections: { id: string; name: string }[];
   onResetAll: () => void;
   matchingCount?: number;
   totalCount?: number;
@@ -46,10 +43,7 @@ export function TreeFilterPopover({
   selectedAssignees,
   onToggleAssignee,
   onClearAssignees,
-  selectedSection,
-  onSelectSection,
   allAssignees,
-  allSections,
   onResetAll,
   matchingCount,
   totalCount,
@@ -109,8 +103,7 @@ export function TreeFilterPopover({
 
   const hasAnyFilter =
     selectedStatuses.size > 0 ||
-    selectedAssignees.size > 0 ||
-    selectedSection !== "all";
+    selectedAssignees.size > 0;
 
   if (!isOpen || !popoverPos) return null;
 
@@ -329,25 +322,6 @@ export function TreeFilterPopover({
             </p>
           )}
         </div>
-      </div>
-
-      {/* 3. Section Filter */}
-      <div className="flex flex-col gap-[6px]">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-text-secondary">
-          Section
-        </span>
-        <select
-          value={selectedSection}
-          onChange={(e) => onSelectSection(e.target.value)}
-          className="w-full h-[28px] px-[8px] text-[12px] text-text-primary bg-white border border-border-default rounded-[4px] outline-none focus:border-brand-1 cursor-pointer"
-        >
-          <option value="all">All Sections</option>
-          {allSections.map((sec) => (
-            <option key={sec.id} value={sec.id}>
-              {sec.name}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* Footer */}

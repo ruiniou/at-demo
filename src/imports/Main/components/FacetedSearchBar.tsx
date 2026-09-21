@@ -22,11 +22,8 @@ export interface FacetedSearchBarProps {
   selectedAssignees: Set<string>;
   onToggleAssignee: (assignee: string) => void;
   onRemoveAssignee: (assignee: string) => void;
-  selectedSection: string;
-  onSelectSection: (section: string) => void;
   onResetAll: () => void;
   allAssignees: string[];
-  allSections: { id: string; name: string }[];
   className?: string;
 }
 
@@ -39,7 +36,7 @@ const STATUS_ITEMS = [
   { id: "error", label: "Error", icon: errorStatusIconUrl },
 ];
 
-type MenuLevel = "root" | "status" | "assignee" | "section";
+type MenuLevel = "root" | "status" | "assignee";
 
 export function FacetedSearchBar({
   searchQuery,
@@ -50,11 +47,8 @@ export function FacetedSearchBar({
   selectedAssignees,
   onToggleAssignee,
   onRemoveAssignee,
-  selectedSection,
-  onSelectSection,
   onResetAll,
   allAssignees,
-  allSections,
   className = "",
 }: FacetedSearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -112,9 +106,7 @@ export function FacetedSearchBar({
   // Backspace key handler on empty input: deletes last token
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace" && searchQuery === "") {
-      if (selectedSection !== "all") {
-        onSelectSection("all");
-      } else if (selectedAssignees.size > 0) {
+      if (selectedAssignees.size > 0) {
         const lastAssignee = Array.from(selectedAssignees).pop();
         if (lastAssignee) onRemoveAssignee(lastAssignee);
       } else if (selectedStatuses.size > 0) {
@@ -126,8 +118,7 @@ export function FacetedSearchBar({
 
   const hasTokens =
     selectedStatuses.size > 0 ||
-    selectedAssignees.size > 0 ||
-    selectedSection !== "all";
+    selectedAssignees.size > 0;
 
   const hasContent = hasTokens || searchQuery.length > 0;
 
@@ -153,12 +144,6 @@ export function FacetedSearchBar({
 
   const handleSelectAssigneeAndReturn = (assignee: string) => {
     onToggleAssignee(assignee);
-    setLevel("root");
-    inputRef.current?.focus();
-  };
-
-  const handleSelectSectionAndReturn = (sectionId: string) => {
-    onSelectSection(sectionId);
     setLevel("root");
     inputRef.current?.focus();
   };
@@ -221,22 +206,6 @@ export function FacetedSearchBar({
               </span>
             </Tag>
           ))}
-
-          {/* Section Tag using UI component Tag with variant="brand" */}
-          {selectedSection !== "all" && (
-            <Tag
-              variant="brand"
-              onClose={() => onSelectSection("all")}
-              className="shrink-0 h-[24px] !py-0 flex items-center select-none"
-            >
-              <span className="flex items-center gap-[3px] max-w-[130px] truncate">
-                <span className="opacity-70 font-normal shrink-0">Section:</span>
-                <span className="truncate font-medium">
-                  {allSections.find((s) => s.id === selectedSection)?.name || selectedSection}
-                </span>
-              </span>
-            </Tag>
-          )}
 
           {/* Input field */}
           <input
@@ -310,20 +279,6 @@ export function FacetedSearchBar({
                 </span>
                 <span className="t-small text-text-secondary truncate flex-1">
                   Filter by assigned member
-                </span>
-              </button>
-
-              {/* Section Dimension */}
-              <button
-                type="button"
-                onClick={() => setLevel("section")}
-                className="flex items-center gap-[10px] px-[8px] py-[6px] rounded-[4px] hover:bg-bg-panel text-left cursor-pointer transition-colors w-full group"
-              >
-                <span className="inline-block px-[8px] py-[2px] rounded-[4px] bg-[#EBECEC] text-text-primary font-medium t-small">
-                  In:
-                </span>
-                <span className="t-small text-text-secondary truncate flex-1">
-                  Filter by section
                 </span>
               </button>
 
@@ -426,35 +381,6 @@ export function FacetedSearchBar({
             </div>
           )}
 
-          {/* LEVEL 2: Section Submenu (Direct actual sections, single click auto-returns) */}
-          {level === "section" && (
-            <div className="flex flex-col gap-[1px] max-h-[220px] overflow-y-auto">
-              {allSections.map((sec) => {
-                const isSelected = selectedSection === sec.id;
-                return (
-                  <button
-                    key={sec.id}
-                    type="button"
-                    onClick={() => handleSelectSectionAndReturn(sec.id)}
-                    className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] text-left transition-colors cursor-pointer ${
-                      isSelected
-                        ? "bg-az-secondary/60 text-brand-1 font-medium"
-                        : "hover:bg-bg-panel text-text-primary"
-                    }`}
-                  >
-                    <span className="t-small flex-1 truncate">{sec.name}</span>
-                    {isSelected && (
-                      <img
-                        src={checkIconUrl}
-                        alt=""
-                        className="size-[14px] shrink-0 opacity-90"
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>,
         document.body
       )}
