@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
 import SSOPlaceholderVisual from "./SSOPlaceholderVisual";
 import atlasLogoUrl from "../../icons/Atlas-Logo-Full.svg";
+import loginThumbnailUrl from "../../img/Thumbnail-login.png";
 
 const DEFAULT_EMAIL = "user@company.com";
 
@@ -17,73 +17,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   initialEmail = DEFAULT_EMAIL,
   className = "",
 }) => {
-  const [email, setEmail] = useState(initialEmail);
+  const loginEmail = initialEmail.trim() || DEFAULT_EMAIL;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showStateTester, setShowStateTester] = useState(true);
 
-  // Email validation regex (standard work email)
-  const isValidEmailFormat = (val: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
-  };
-
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const trimmed = email.trim();
-
-    if (!trimmed) {
-      setErrorMessage("Please enter your work email to continue.");
-      return;
-    }
-
-    if (!isValidEmailFormat(trimmed)) {
-      setErrorMessage("Please enter a valid work email address.");
-      return;
-    }
-
-    // Check for simulated unconfigured domain
-    // If the domain is "unconfigured.com" or user tests unconfigured, trigger the exact error banner
-    const domain = trimmed.split("@")[1]?.toLowerCase();
-    const unconfiguredDomains = ["gmail.com", "qq.com", "163.com", "unconfigured.com", "example.com"];
 
     setIsLoading(true);
     setErrorMessage(null);
 
     setTimeout(() => {
       setIsLoading(false);
-      if (domain && unconfiguredDomains.includes(domain)) {
-        setErrorMessage("SSO is not configured for this email domain");
-      } else {
-        // Success login
-        if (onLoginSuccess) {
-          onLoginSuccess(trimmed);
-        }
-      }
+      onLoginSuccess?.(loginEmail);
     }, 900);
   };
 
   // State tester presets for design walk-through
-  const handleSetState = (state: "empty" | "sample" | "error" | "loading") => {
-    if (state === "empty") {
-      setEmail("");
-      setErrorMessage(null);
-      setIsLoading(false);
-    } else if (state === "sample") {
-      setEmail(DEFAULT_EMAIL);
+  const handleSetState = (state: "default" | "error" | "loading") => {
+    if (state === "default") {
       setErrorMessage(null);
       setIsLoading(false);
     } else if (state === "error") {
-      setEmail(DEFAULT_EMAIL);
-      setErrorMessage("SSO is not configured for this email domain");
+      setErrorMessage("We couldn’t connect to your organization’s SSO. Try again or contact your administrator.");
       setIsLoading(false);
     } else if (state === "loading") {
-      setEmail(DEFAULT_EMAIL);
       setErrorMessage(null);
       setIsLoading(true);
     }
   };
-
-  const isButtonDisabled = !email.trim() || isLoading;
 
   return (
     <div className={`relative flex h-screen w-screen overflow-hidden bg-[#FBFBFC] ${className}`}>
@@ -99,17 +62,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </span>
           <button
             type="button"
-            onClick={() => handleSetState("empty")}
-            className={`px-2 py-0.5 rounded transition ${!email && !errorMessage && !isLoading ? "bg-graphite-10 font-medium text-brand-1" : "hover:bg-graphite-10/60"}`}
+            onClick={() => handleSetState("default")}
+            className={`px-2 py-0.5 rounded transition ${!errorMessage && !isLoading ? "bg-graphite-10 font-medium text-brand-1" : "hover:bg-graphite-10/60"}`}
           >
-            Empty (Disabled)
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetState("sample")}
-            className={`px-2 py-0.5 rounded transition ${email && !errorMessage && !isLoading ? "bg-graphite-10 font-medium text-brand-1" : "hover:bg-graphite-10/60"}`}
-          >
-            Filled
+            Default
           </button>
           <button
             type="button"
@@ -123,12 +79,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             onClick={() => handleSetState("loading")}
             className={`px-2 py-0.5 rounded transition ${isLoading ? "bg-graphite-10 font-medium text-brand-1" : "hover:bg-graphite-10/60"}`}
           >
-            Loading (Opening...)
+            Loading (Redirecting…)
           </button>
           <div className="h-3 w-px bg-graphite-20 mx-0.5" />
           <button
             type="button"
-            onClick={() => onLoginSuccess?.(email.trim() || DEFAULT_EMAIL)}
+            onClick={() => onLoginSuccess?.(loginEmail)}
             className="px-2 py-0.5 rounded font-medium text-brand-1 hover:bg-brand-1/10 transition flex items-center gap-1"
             title="Quickly skip login to enter Home"
           >
@@ -168,7 +124,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               Log in with SSO
             </h1>
             <p className="mt-2 text-[14px] text-[#86909C]">
-              Enter your work email.
+              Continue securely with your organization’s single sign-on.
             </p>
           </div>
 
@@ -184,26 +140,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           )}
 
           {/* SSO Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Work Email Field */}
-            <div>
-              <Input
-                type="email"
-                name="email"
-                inputSize="lg"
-                placeholder="Email"
-                value={email}
-                hasError={!!errorMessage}
-                disabled={isLoading}
-                autoFocus
-                autoComplete="email"
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-              />
-            </div>
-
+          <form onSubmit={handleSubmit}>
             {/* Primary Action Button */}
             <div>
               <Button
@@ -211,10 +148,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 variant="primary"
                 size="xl"
                 loading={isLoading}
-                disabled={isButtonDisabled}
                 className="w-full h-[44px] rounded-[8px]"
               >
-                {isLoading ? "Opening..." : "Continue"}
+                {isLoading ? "Redirecting to SSO…" : errorMessage ? "Try again" : "Log in with SSO"}
               </Button>
             </div>
           </form>
@@ -226,7 +162,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         aria-label="Platform preview" 
         className="hidden h-full lg:flex lg:w-1/2"
       >
-        <SSOPlaceholderVisual />
+        <SSOPlaceholderVisual imageSrc={loginThumbnailUrl} />
       </section>
     </div>
   );

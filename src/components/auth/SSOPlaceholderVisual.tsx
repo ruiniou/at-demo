@@ -19,11 +19,17 @@ export const SSOPlaceholderVisual: React.FC<SSOPlaceholderVisualProps> = ({
       <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-[#4D0030]/5 blur-3xl pointer-events-none" />
 
       {imageSrc ? (
-        <img
-          src={imageSrc}
-          alt="Login visual"
-          className="relative z-10 max-h-[85%] max-w-[85%] object-contain rounded-2xl shadow-xl border border-white/60"
-        />
+        <>
+          <img
+            src={imageSrc}
+            alt="Molecular therapy illustration"
+            className="absolute inset-0 h-full w-full object-cover object-center"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.10)]"
+          />
+        </>
       ) : (
         <div className="relative z-10 flex flex-col items-center max-w-[420px] w-full text-center">
           {/* Placeholder Graphic Card */}
