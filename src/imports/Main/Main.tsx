@@ -3904,7 +3904,7 @@ type TableItem = {
 type ProgramItem = {
   id: string;
   name: string;
-  status: ItemStatus;
+  status: 'completed' | 'locked';
   isExpanded: boolean;
   tables: TableItem[];
 };
@@ -11646,7 +11646,7 @@ function WorkspaceContent({
     {
       id: 'p1',
       name: '14.1 Demographic Data',
-      status: 'pending',
+      status: 'completed',
       isExpanded: true,
       tables: [
         { id: 't1', name: '14.1.1 Disposition', status: 'completed', assignee: 'Sarah Chen' },
@@ -11661,7 +11661,7 @@ function WorkspaceContent({
     {
       id: 'p2',
       name: '14.2 Efficacy Data',
-      status: 'pending',
+      status: 'completed',
       isExpanded: true,
       tables: [
         { id: 't9', name: '14.2.1.1.1 Objective Response Rate', status: 'locked', assignee: 'Priya Sharma' },
@@ -11672,7 +11672,7 @@ function WorkspaceContent({
     {
       id: 'p3',
       name: '16.2 Patient Listings',
-      status: 'pending',
+      status: 'completed',
       isExpanded: true,
       tables: [
         { id: 'l1', name: '16.2.1 Subject Enrolment Listing', status: 'completed', docType: 'listing', assignee: 'Sarah Chen' },
