@@ -4,6 +4,8 @@ import { Button } from "../ui/Button";
 import SSOPlaceholderVisual from "./SSOPlaceholderVisual";
 import atlasLogoUrl from "../../icons/Atlas-Logo-Full.svg";
 
+const DEFAULT_EMAIL = "user@company.com";
+
 export interface LoginPageProps {
   onLoginSuccess?: (email: string) => void;
   initialEmail?: string;
@@ -12,7 +14,7 @@ export interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({
   onLoginSuccess,
-  initialEmail = "",
+  initialEmail = DEFAULT_EMAIL,
   className = "",
 }) => {
   const [email, setEmail] = useState(initialEmail);
@@ -67,15 +69,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       setErrorMessage(null);
       setIsLoading(false);
     } else if (state === "sample") {
-      setEmail("ruini.ou@taimei.com");
+      setEmail(DEFAULT_EMAIL);
       setErrorMessage(null);
       setIsLoading(false);
     } else if (state === "error") {
-      setEmail("ruini.ou@taimei.com");
+      setEmail(DEFAULT_EMAIL);
       setErrorMessage("SSO is not configured for this email domain");
       setIsLoading(false);
     } else if (state === "loading") {
-      setEmail("ruini.ou@taimei.com");
+      setEmail(DEFAULT_EMAIL);
       setErrorMessage(null);
       setIsLoading(true);
     }
@@ -126,7 +128,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           <div className="h-3 w-px bg-graphite-20 mx-0.5" />
           <button
             type="button"
-            onClick={() => onLoginSuccess?.(email.trim() || "ruini.ou@taimei.com")}
+            onClick={() => onLoginSuccess?.(email.trim() || DEFAULT_EMAIL)}
             className="px-2 py-0.5 rounded font-medium text-brand-1 hover:bg-brand-1/10 transition flex items-center gap-1"
             title="Quickly skip login to enter Home"
           >
