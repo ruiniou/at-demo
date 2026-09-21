@@ -234,6 +234,9 @@ export default function CreateEventModal({
   projectsList,
   currentRole,
   currentUserName,
+  defaultProjectId,
+  defaultStudyId,
+  defaultTherapeuticArea,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -241,6 +244,9 @@ export default function CreateEventModal({
   projectsList?: ProjectItem[];
   currentRole?: UserRole;
   currentUserName?: string;
+  defaultProjectId?: string;
+  defaultStudyId?: string;
+  defaultTherapeuticArea?: string;
 }) {
   const [taValue, setTaValue] = useState<string | null>(null);
   const [projectCode, setProjectCode] = useState<string | null>(null);
@@ -249,6 +255,7 @@ export default function CreateEventModal({
   const [isStudyNew, setIsStudyNew] = useState(false);
   const [eventName, setEventName] = useState("");
   const [ogemValue, setOgemValue] = useState<string | null>("12.8");
+  const hasStudyContext = Boolean(defaultProjectId && defaultStudyId);
 
   // UploadCard states
   const [adamStatus, setAdamStatus] = useState<UploadStatus>("pending");
@@ -304,7 +311,7 @@ export default function CreateEventModal({
     if (!proj || proj.status === "disabled") return [];
 
     let studies = proj.studies.filter((s) => s.status === "enabled");
-    if (currentRole === "owner" && currentUserName) {
+    if (currentRole === "study-owner" && currentUserName) {
       studies = studies.filter((s) => s.owner === currentUserName);
     }
     return studies.map((s) => ({ label: s.id, value: s.id }));
@@ -314,6 +321,19 @@ export default function CreateEventModal({
     { label: "12.7", value: "12.7" },
     { label: "12.6", value: "12.6" },
   ];
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setProjectCode(hasStudyContext ? defaultProjectId ?? null : null);
+    setStudyCode(hasStudyContext ? defaultStudyId ?? null : null);
+    setTaValue(
+      hasStudyContext
+        ? taOptions.find((option) => option.label === defaultTherapeuticArea)?.value ?? null
+        : null
+    );
+    setIsProjectNew(false);
+    setIsStudyNew(false);
+  }, [isOpen, hasStudyContext, defaultProjectId, defaultStudyId, defaultTherapeuticArea]);
 
   // Derive Study state: UNSELECTED | NEW | EXISTING
   const studyState: "UNSELECTED" | "NEW" | "EXISTING" = !studyCode
@@ -422,7 +442,7 @@ export default function CreateEventModal({
           <div className="flex min-h-0 flex-1 border-t border-graphite-10">
               {/* Left column */}
               <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto border-r border-graphite-10 p-[20px]">
-                <Dropdown label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} />
+                <Dropdown label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} disabled={hasStudyContext} />
                 <CreatableDropdown
                   label="Project Code"
                   required
@@ -431,6 +451,8 @@ export default function CreateEventModal({
                   value={projectCode}
                   isNew={isProjectNew}
                   createPrefix="New Project"
+                  disabled={hasStudyContext}
+                  allowClear={!hasStudyContext}
                   onChange={(val, isNew) => {
                     setProjectCode(val);
                     setIsProjectNew(isNew);
@@ -444,6 +466,8 @@ export default function CreateEventModal({
                   value={studyCode}
                   isNew={isStudyNew}
                   createPrefix="New Study"
+                  disabled={hasStudyContext}
+                  allowClear={!hasStudyContext}
                   onChange={(val, isNew) => {
                     setStudyCode(val);
                     setIsStudyNew(isNew);

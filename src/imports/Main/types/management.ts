@@ -1,6 +1,6 @@
 export type StatusType = 'enabled' | 'disabled';
 
-export type UserRole = 'admin' | 'owner' | 'member';
+export type UserRole = 'admin' | 'study-owner' | 'event-owner' | 'member';
 
 export interface StudyItem {
   id: string;

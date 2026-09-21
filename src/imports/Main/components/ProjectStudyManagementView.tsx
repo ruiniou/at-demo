@@ -146,7 +146,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
   const visibleGroups = useMemo(() => {
     const query = search.trim().toLowerCase();
     return projects.map((project) => {
-      let studies = currentRole === 'owner' ? project.studies.filter((study) => study.owner === currentUserName) : project.studies;
+      let studies = currentRole === 'study-owner' ? project.studies.filter((study) => study.owner === currentUserName) : project.studies;
       if (taFilter !== 'All') studies = studies.filter((study) => study.ta === taFilter);
       if (statusFilter !== 'all') studies = studies.filter((study) => {
         const enabled = project.status === 'enabled' && study.status === 'enabled';
@@ -154,14 +154,14 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
       });
       const projectMatches = project.name.toLowerCase().includes(query) || project.id.toLowerCase().includes(query);
       if (query && !projectMatches) studies = studies.filter((study) => study.id.toLowerCase().includes(query) || study.owner.toLowerCase().includes(query) || study.ta.toLowerCase().includes(query));
-      if (currentRole === 'owner' && studies.length === 0) return null;
+      if (currentRole === 'study-owner' && studies.length === 0) return null;
       if (query && studies.length === 0 && !projectMatches) return null;
       return { project, studies };
     }).filter((group): group is { project: ProjectItem; studies: StudyItem[] } => group !== null);
   }, [projects, currentRole, currentUserName, search, statusFilter, taFilter]);
 
   const isAdmin = currentRole === 'admin';
-  const isStudyOwner = currentRole === 'owner';
+  const isStudyOwner = currentRole === 'study-owner';
   const hasActiveFilters = search.trim().length > 0 || taFilter !== 'All' || statusFilter !== 'all';
   const resetFilters = () => {
     setSearch('');

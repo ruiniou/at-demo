@@ -69,7 +69,7 @@ import { EventStatusBadge } from "../../components/ui/EventStatusBadge";
 import CreateEventModal from "./components/CreateEventModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
-import EventTeamMemberModal, { MOCK_TEAM_MEMBERS } from "./components/EventTeamMemberModal";
+import EventTeamMemberModal from "./components/EventTeamMemberModal";
 import type { TeamMember } from "./components/EventTeamMemberModal";
 import AccountMenu from "../../components/auth/AccountMenu";
 import { TreeFilterPopover } from "./components/TreeFilterPopover";
@@ -11617,6 +11617,60 @@ ods graphics off;`;
   );
 }
 
+function DemoIdentityControls({
+  currentRole,
+  currentUserName,
+  onSwitchRole,
+  onLogout,
+}: {
+  currentRole: UserRole;
+  currentUserName: string;
+  onSwitchRole: (role: UserRole) => void;
+  onLogout?: () => void;
+}) {
+  const roleLabel = currentRole === 'admin'
+    ? 'Admin'
+    : currentRole === 'study-owner'
+    ? 'Study Owner'
+    : currentRole === 'event-owner'
+    ? 'Event Owner'
+    : 'Member';
+  const roles: Array<{ role: UserRole; label: string }> = [
+    { role: 'admin', label: 'Admin' },
+    { role: 'study-owner', label: 'Study Owner' },
+    { role: 'event-owner', label: 'Event Owner' },
+    { role: 'member', label: 'Member' },
+  ];
+
+  return (
+    <div className="px-[8px] pb-[8px] shrink-0 border-t border-border-default/80 pt-[8px] flex flex-col gap-[6px]">
+      <div className="rounded-[6px] bg-bg-app border border-border-default/60 p-[6px] flex flex-col gap-[4px]">
+        <div className="flex items-center justify-between px-[2px]">
+          <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Role Switcher</span>
+          <span className="text-[10px] font-medium text-brand-1">{roleLabel}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-[3px]">
+          {roles.map(({ role, label }) => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => onSwitchRole(role)}
+              className={`py-[3px] rounded-[4px] text-[11px] font-medium transition-all text-center cursor-pointer ${
+                currentRole === role
+                  ? 'bg-brand-1 text-white font-semibold shadow-2xs'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <AccountMenu onLogout={onLogout} userName={currentUserName} avatarLetter={currentUserName.slice(0, 1).toUpperCase()} />
+    </div>
+  );
+}
+
 function WorkspaceContent({
   onNavigateHome,
   treeListOpen,
@@ -11626,6 +11680,9 @@ function WorkspaceContent({
   onOpenDownloadModal,
   onOpenTeamModal,
   onOpenEditEventModal,
+  currentRole,
+  currentUserName,
+  onSwitchRole,
   onLogout,
 }: {
   onNavigateHome: () => void;
@@ -11636,6 +11693,9 @@ function WorkspaceContent({
   onOpenDownloadModal?: () => void;
   onOpenTeamModal?: () => void;
   onOpenEditEventModal?: () => void;
+  currentRole: UserRole;
+  currentUserName: string;
+  onSwitchRole: (role: UserRole) => void;
   onLogout?: () => void;
 }) {
   const [aiLayoutVariant, setAiLayoutVariant] = useState<'drawer' | 'incard'>('incard');
@@ -12934,10 +12994,7 @@ function WorkspaceContent({
                 />
               </div>
 
-              {/* User Account */}
-              <div className="pt-[4px] px-[2px] border-t border-border-default/60 mt-[4px]">
-                <AccountMenu onLogout={onLogout} />
-              </div>
+              <DemoIdentityControls currentRole={currentRole} currentUserName={currentUserName} onSwitchRole={onSwitchRole} onLogout={onLogout} />
             </div>
           </div>
         </div>
@@ -13744,6 +13801,7 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
 function HomePage({
   onEventClick,
   onCreateEvent,
+  onCreateEventForStudy,
   events,
   onUpdateStatus,
   treeListOpen,
@@ -13770,6 +13828,7 @@ function HomePage({
 }: {
   onEventClick: (event: EventCardData) => void;
   onCreateEvent: () => void;
+  onCreateEventForStudy: (projectId: string, studyId: string, therapeuticArea: string) => void;
   events: EventCardData[];
   onUpdateStatus: (id: string, status: EventStatus) => void;
   treeListOpen: boolean;
@@ -14043,7 +14102,7 @@ function HomePage({
             </div>
 
             {/* Top Navigation: Projects & Studies (Admin & Study Owner only) */}
-            {(currentRole === 'admin' || currentRole === 'owner') && (
+            {(currentRole === 'admin' || currentRole === 'study-owner') && (
               <div className="px-[8px] pt-[2px] pb-[6px] border-b border-border-default/60">
                 <button
                   type="button"
@@ -14189,62 +14248,7 @@ function HomePage({
               )}
             </div>
 
-            {/* Bottom-left: Demo Role Switcher + User account */}
-            <div className="px-[8px] pb-[8px] shrink-0 border-t border-border-default/80 pt-[8px] flex flex-col gap-[6px]">
-              {/* Demo Role Switcher */}
-              <div className="rounded-[6px] bg-bg-app border border-border-default/60 p-[6px] flex flex-col gap-[4px]">
-                <div className="flex items-center justify-between px-[2px]">
-                  <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
-                    Role Switcher
-                  </span>
-                  <span className="text-[10px] font-medium text-brand-1">
-                    {currentRole === 'admin' ? 'Admin' : currentRole === 'owner' ? 'Study Owner' : 'Member'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-[3px]">
-                  <button
-                    type="button"
-                    onClick={() => onSwitchRole('admin')}
-                    className={`py-[3px] rounded-[4px] text-[11px] font-medium transition-all text-center cursor-pointer ${
-                      currentRole === 'admin'
-                        ? 'bg-brand-1 text-white font-semibold shadow-2xs'
-                        : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
-                    }`}
-                  >
-                    Admin
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSwitchRole('owner')}
-                    className={`py-[3px] rounded-[4px] text-[11px] font-medium transition-all text-center cursor-pointer ${
-                      currentRole === 'owner'
-                        ? 'bg-brand-1 text-white font-semibold shadow-2xs'
-                        : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
-                    }`}
-                  >
-                    Owner
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSwitchRole('member')}
-                    className={`py-[3px] rounded-[4px] text-[11px] font-medium transition-all text-center cursor-pointer ${
-                      currentRole === 'member'
-                        ? 'bg-brand-1 text-white font-semibold shadow-2xs'
-                        : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
-                    }`}
-                  >
-                    Member
-                  </button>
-                </div>
-              </div>
-
-              {/* User account */}
-              <AccountMenu
-                onLogout={onLogout}
-                userName={currentUserName}
-                avatarLetter={currentUserName.slice(0, 1).toUpperCase()}
-              />
-            </div>
+            <DemoIdentityControls currentRole={currentRole} currentUserName={currentUserName} onSwitchRole={onSwitchRole} onLogout={onLogout} />
           </div>
         </div>
 
@@ -14292,14 +14296,25 @@ function HomePage({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onSwitchRole('owner')}
+                  onClick={() => onSwitchRole('study-owner')}
                   className={`px-[8px] py-[2px] rounded-[4px] transition-all cursor-pointer ${
-                    currentRole === 'owner'
+                    currentRole === 'study-owner'
                       ? 'bg-brand-1 text-white font-semibold shadow-2xs'
                       : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
                   }`}
                 >
-                  Owner
+                  Study Owner
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSwitchRole('event-owner')}
+                  className={`px-[8px] py-[2px] rounded-[4px] transition-all cursor-pointer ${
+                    currentRole === 'event-owner'
+                      ? 'bg-brand-1 text-white font-semibold shadow-2xs'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-black/5'
+                  }`}
+                >
+                  Event Owner
                 </button>
                 <button
                   type="button"
@@ -14342,19 +14357,19 @@ function HomePage({
                   {/* New Event Button on the far right using local Button component */}
                   <TooltipText
                     label={
-                      currentRole === 'admin'
+                      currentRole === 'study-owner'
+                        ? 'Create new Event'
+                        : currentRole === 'admin'
                         ? 'Admin cannot create Events. Requires Study Owner permission.'
-                        : currentRole === 'member'
-                        ? 'Team Members cannot create Events. Requires Study Owner permission.'
-                        : 'Create new Event'
+                        : 'Requires Study Owner permission.'
                     }
                   >
                     <Button
                       variant="primary"
-                      onClick={currentRole === 'owner' ? onCreateEvent : undefined}
-                      disabled={currentRole !== 'owner'}
+                      onClick={currentRole === 'study-owner' ? onCreateEvent : undefined}
+                      disabled={currentRole !== 'study-owner'}
                       className={`gap-[6px] px-[14px] py-[6px] whitespace-nowrap shrink-0 ${
-                        currentRole !== 'owner' ? 'opacity-40 cursor-not-allowed' : ''
+                        currentRole !== 'study-owner' ? 'opacity-40 cursor-not-allowed' : ''
                       }`}
                     >
                       <LocalIcon src={addLineIconUrl} className="h-[16px] w-[16px]" color="white" />
@@ -14473,7 +14488,7 @@ function HomePage({
                                       {/* Study Header Row (pl-[40px]: Arrow at 40px [under Proj Icon], Icon at 64px [under Proj Name], Name at 88px) */}
                                       <tr
                                         onClick={() => togglePanelStudy(std.studyId)}
-                                        className="h-[48px] cursor-pointer select-none bg-white transition-colors hover:bg-black/[0.02]"
+                                        className="group/study h-[48px] cursor-pointer select-none bg-white transition-colors hover:bg-black/[0.02]"
                                       >
                                         {/* Study Name & TA tag */}
                                         <td className="py-0 pl-[40px] pr-[16px]">
@@ -14497,19 +14512,40 @@ function HomePage({
                                           <ReadOnlyOwner name={std.owner} />
                                         </td>
 
-                                        {/* Actions Column: Empty for Study */}
-                                        <td className="w-[80px] px-[16px] py-0 text-right"></td>
+                                        {/* Study-scoped create action */}
+                                        <td className="w-[80px] px-[16px] py-0 text-right" onClick={(event) => event.stopPropagation()}>
+                                          {currentRole === 'study-owner' && std.owner === currentUserName && (
+                                            <TooltipText label="Add Event">
+                                              <Button
+                                                variant="icon"
+                                                size="icon"
+                                                type="button"
+                                                onClick={() => onCreateEventForStudy(proj.projectId, std.studyId, std.ta)}
+                                                aria-label={`Add event to ${std.studyId}`}
+                                                className="text-brand-1 opacity-0 pointer-events-none transition-[opacity,background-color,transform] duration-150 hover:bg-az-secondary hover:text-brand-1 active:scale-[0.96] focus-visible:opacity-100 group-hover/study:opacity-100 group-hover/study:pointer-events-auto group-focus-within/study:opacity-100 group-focus-within/study:pointer-events-auto"
+                                              >
+                                                <LocalIcon src={addLineIconUrl} className="h-[14px] w-[14px]" color="currentColor" />
+                                              </Button>
+                                            </TooltipText>
+                                          )}
+                                        </td>
                                       </tr>
 
                                       {/* Level 3: Events under Study */}
                                       {isStdExpanded &&
                                         std.events.map((ev) => {
                                           const isMenuOpen = openActionMenuId === `table-${ev.id}`;
-                                          const canChangeEventOwner = currentUserName === std.owner || currentUserName === ev.owner;
+                                          const isEventOwner = currentUserName === ev.owner;
+                                          const isEventTeamMember = isEventOwner || Boolean(ev.teamMembers?.some((member) => member.name === currentUserName));
+                                          const canChangeEventOwner = currentUserName === std.owner || isEventOwner;
                                           const actionButtons = [
                                             { icon: barChartIconUrl, label: 'View charts' },
-                                            { icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) },
-                                            { icon: deleteBinIconUrl, label: 'Delete', onClick: () => onOpenDeleteModal?.(ev) },
+                                            ...(isEventTeamMember
+                                              ? [{ icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) }]
+                                              : []),
+                                            ...(isEventOwner
+                                              ? [{ icon: deleteBinIconUrl, label: 'Delete', onClick: () => onOpenDeleteModal?.(ev) }]
+                                              : []),
                                           ];
 
                                           return (
@@ -14621,12 +14657,18 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [treeListOpen, setTreeListOpen] = useState(true);
   const [treeListWidth, setTreeListWidth] = useState(240);
   const [createEventModalOpen, setCreateEventModalOpen] = useState(false);
+  const [eventCreationContext, setEventCreationContext] = useState<{
+    projectId: string;
+    studyId: string;
+    therapeuticArea: string;
+  } | null>(null);
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedDownloadEvent, setSelectedDownloadEvent] = useState<string | undefined>(undefined);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDeleteEvent, setSelectedDeleteEvent] = useState<EventCardData | null>(null);
   const [teamModalOpen, setTeamModalOpen] = useState(false);
   const [selectedTeamEvent, setSelectedTeamEvent] = useState<EventCardData | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string>('e1');
   const [events, setEvents] = useState<EventCardData[]>(homeEvents);
   const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
   const [currentRole, setCurrentRole] = useState<UserRole>('admin');
@@ -14643,9 +14685,12 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     if (role === 'admin') {
       setActiveNav('management');
       setCurrentUserName('Administrator');
-    } else if (role === 'owner') {
-      setActiveNav('events');
+    } else if (role === 'study-owner') {
+      setActiveNav('management');
       setCurrentUserName('Sarah Chen');
+    } else if (role === 'event-owner') {
+      setActiveNav('events');
+      setCurrentUserName('Emily Liu');
     } else {
       setActiveNav('events');
       setCurrentUserName('Alex Kim');
@@ -14727,6 +14772,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
       ...previous,
       [currentUserName]: [event.id, ...(previous[currentUserName] ?? []).filter((eventId) => eventId !== event.id)].slice(0, 5),
     }));
+    setSelectedEventId(event.id);
     setPage('event');
   };
 
@@ -14786,12 +14832,24 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setSelectedTeamEvent((previous) => previous ? updateOwner(previous) : previous);
   };
 
+  const handleChangeEventTeam = (eventId: string, teamMembers: TeamMember[]) => {
+    setEvents((previous) => previous.map((event) => event.id === eventId ? { ...event, teamMembers } : event));
+    setSelectedTeamEvent((previous) => previous?.id === eventId ? { ...previous, teamMembers } : previous);
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {page === 'home' ? (
         <HomePage
           onEventClick={handleOpenEvent}
-          onCreateEvent={() => setCreateEventModalOpen(true)}
+          onCreateEvent={() => {
+            setEventCreationContext(null);
+            setCreateEventModalOpen(true);
+          }}
+          onCreateEventForStudy={(projectId, studyId, therapeuticArea) => {
+            setEventCreationContext({ projectId, studyId, therapeuticArea });
+            setCreateEventModalOpen(true);
+          }}
           events={events}
           onUpdateStatus={handleUpdateStatus}
           treeListOpen={treeListOpen}
@@ -14828,20 +14886,32 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           setTreeListWidth={setTreeListWidth}
           onOpenDownloadModal={() => handleOpenDownload()}
           onOpenTeamModal={() => {
-            const current = events.find(e => e.id === 'e1') || events[0];
+            const current = events.find(e => e.id === selectedEventId) || events[0];
             if (current) handleOpenTeam(current);
           }}
-          onOpenEditEventModal={() => setCreateEventModalOpen(true)}
+          onOpenEditEventModal={() => {
+            setEventCreationContext(null);
+            setCreateEventModalOpen(true);
+          }}
+          currentRole={currentRole}
+          currentUserName={currentUserName}
+          onSwitchRole={handleSwitchRole}
           onLogout={onLogout}
         />
       )}
       <CreateEventModal
         isOpen={createEventModalOpen}
-        onClose={() => setCreateEventModalOpen(false)}
+        onClose={() => {
+          setCreateEventModalOpen(false);
+          setEventCreationContext(null);
+        }}
         onCreateEvent={handleCreateEvent}
         projectsList={projects}
         currentRole={currentRole}
         currentUserName={currentUserName}
+        defaultProjectId={eventCreationContext?.projectId}
+        defaultStudyId={eventCreationContext?.studyId}
+        defaultTherapeuticArea={eventCreationContext?.therapeuticArea}
       />
       <DownloadSasProgramsModal
         isOpen={downloadModalOpen}
@@ -14858,7 +14928,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         onClose={() => setTeamModalOpen(false)}
         eventName={selectedTeamEvent?.name ?? ''}
         initialTeamMembers={selectedTeamEvent ? (() => {
-          const baseMembers = selectedTeamEvent.teamMembers?.length ? selectedTeamEvent.teamMembers : MOCK_TEAM_MEMBERS;
+          const baseMembers = selectedTeamEvent.teamMembers ?? [];
           const ownerExists = baseMembers.some((member) => member.name === selectedTeamEvent.owner);
           const normalized = baseMembers.map((member) => ({ ...member, isOwner: member.name === selectedTeamEvent.owner }));
           if (ownerExists) return normalized;
@@ -14868,6 +14938,17 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         onOwnerChange={(owner) => {
           if (selectedTeamEvent) handleChangeEventOwner(selectedTeamEvent.id, owner);
         }}
+        onTeamMembersChange={(members) => {
+          if (selectedTeamEvent) handleChangeEventTeam(selectedTeamEvent.id, members);
+        }}
+        currentUserName={currentUserName}
+        canAddMember={Boolean(selectedTeamEvent && (selectedTeamEvent.owner === currentUserName || selectedTeamEvent.teamMembers?.some((member) => member.name === currentUserName)))}
+        canRemoveMember={Boolean(selectedTeamEvent && selectedTeamEvent.owner === currentUserName)}
+        canChangeOwner={Boolean(selectedTeamEvent && (
+          selectedTeamEvent.owner === currentUserName ||
+          projects.some((project) => project.studies.some((study) => study.id === selectedTeamEvent.study && study.owner === currentUserName))
+        ))}
+        canManageAssignments={Boolean(selectedTeamEvent && selectedTeamEvent.owner === currentUserName)}
       />
       <NewProjectModal
         isOpen={newProjectModalOpen}

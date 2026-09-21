@@ -125,12 +125,14 @@ function StatusTag({ status }: { status: TFLRow["status"] }) {
 
 function ProgrammerCell({
   disabled = false,
+  disabledMessage = LOCKED_ASSIGNMENT_MESSAGE,
   value,
   teamMembers,
   allUsers,
   onSelect,
 }: {
   disabled?: boolean;
+  disabledMessage?: string;
   value: string | null;
   teamMembers: TeamMember[];
   allUsers: typeof MOCK_USER_POOL;
@@ -217,8 +219,8 @@ function ProgrammerCell({
 
   if (disabled) {
     return (
-      <Tooltip label={LOCKED_ASSIGNMENT_MESSAGE}>
-        <div tabIndex={0} role="button" aria-disabled="true" aria-label={`${value ?? "No Assignee"}. ${LOCKED_ASSIGNMENT_MESSAGE}`} className="flex items-center gap-[6px] rounded-[4px] px-[6px] py-[4px] w-full min-w-0 cursor-not-allowed text-graphite-40">
+      <Tooltip label={disabledMessage}>
+        <div tabIndex={0} role="button" aria-disabled="true" aria-label={`${value ?? "No Assignee"}. ${disabledMessage}`} className="flex items-center gap-[6px] rounded-[4px] px-[6px] py-[4px] w-full min-w-0 cursor-not-allowed text-graphite-40">
           <Avatar name={value ?? undefined} initials={currentMeta?.initials} color={currentMeta?.color} level="modal" disabled />
           <span className="text-[12px] truncate text-graphite-40">{value ?? "No Assignee"}</span>
         </div>
@@ -588,11 +590,13 @@ export function AssignmentTab({
   teamMembers,
   onUpdateProgrammer,
   onBatchUpdateProgrammer,
+  canManageAssignments = true,
 }: {
   tflRows: TFLRow[];
   teamMembers: TeamMember[];
   onUpdateProgrammer: (id: string, programmer: string | null) => void;
   onBatchUpdateProgrammer?: (ids: string[], programmer: string | null) => void;
+  canManageAssignments?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "unassigned">("all");
@@ -634,7 +638,7 @@ export function AssignmentTab({
     return rows;
   }, [tflRows, filterTab, selectedSection, search]);
 
-  const selectableRows = filteredRows.filter((row) => !isTflLocked(row));
+  const selectableRows = canManageAssignments ? filteredRows.filter((row) => !isTflLocked(row)) : [];
   const allFilteredSelected = selectableRows.length > 0 && selectableRows.every((r) => selectedIds.has(r.id));
   const someFilteredSelected = selectableRows.some((r) => selectedIds.has(r.id));
 
@@ -807,13 +811,14 @@ export function AssignmentTab({
                       <div className="flex items-center gap-[6px] min-w-0">
                         {/* Hover on Icon transforms into Checkbox; when selected, stays Checkbox */}
                         <div
-                          className={`w-[16px] h-[16px] flex items-center justify-center shrink-0 ${isTflLocked(row) ? "cursor-default" : "cursor-pointer"}`}
+                          className={`w-[16px] h-[16px] flex items-center justify-center shrink-0 ${isTflLocked(row) || !canManageAssignments ? "cursor-default" : "cursor-pointer"}`}
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (!canManageAssignments) return;
                             handleToggleRow(row.id, !isSelected);
                           }}
                         >
-                          {isTflLocked(row) ? <TflTypeIcon type={row.type} /> : isSelected ? (
+                          {isTflLocked(row) || !canManageAssignments ? <TflTypeIcon type={row.type} /> : isSelected ? (
                             <Checkbox
                               checked={true}
                               onChange={(val) => handleToggleRow(row.id, val)}
@@ -855,7 +860,8 @@ export function AssignmentTab({
                     </td>
                     <td className="px-[10px] py-[6px]">
                       <ProgrammerCell
-                        disabled={isTflLocked(row)}
+                        disabled={isTflLocked(row) || !canManageAssignments}
+                        disabledMessage={isTflLocked(row) ? LOCKED_ASSIGNMENT_MESSAGE : "Only the Event Owner can assign TFLs."}
                         value={row.programmer}
                         teamMembers={teamMembers}
                         allUsers={MOCK_USER_POOL}
@@ -1028,13 +1034,22 @@ function TeamMembersTab({
   onRemove,
   onChangeOwner,
   onAddMember,
+  currentUserName,
+  canAddMember,
+  canRemoveMember,
+  canChangeOwner,
 }: {
   teamMembers: TeamMember[];
   onRemove: (name: string) => void;
   onChangeOwner: (newOwner: string) => void;
   onAddMember: (user: typeof MOCK_USER_POOL[0]) => void;
+  currentUserName: string;
+  canAddMember: boolean;
+  canRemoveMember: boolean;
+  canChangeOwner: boolean;
 }) {
   const [removingMember, setRemovingMember] = useState<TeamMember | null>(null);
+  const showActions = canChangeOwner || canRemoveMember;
 
   // Add Member Popover state
   const [addPopoverOpen, setAddPopoverOpen] = useState(false);
@@ -1155,11 +1170,15 @@ function TeamMembersTab({
 
           {/* Add Member Button with Standard Popover */}
           <div ref={addPopoverRef} className="relative">
+            <Tooltip label={canAddMember ? undefined : "Only Event Team Members can add members."}>
             <button
               type="button"
-              onClick={() => setAddPopoverOpen((v) => !v)}
+              disabled={!canAddMember}
+              onClick={() => canAddMember && setAddPopoverOpen((v) => !v)}
               className={`flex h-8 items-center gap-[5px] px-[10px] rounded-[4px] text-[12px] font-medium transition-colors ${
-                addPopoverOpen
+                !canAddMember
+                  ? "bg-graphite-10 text-graphite-40 cursor-not-allowed"
+                  : addPopoverOpen
                   ? "bg-az-secondary text-brand-1"
                   : "bg-brand-1 text-white hover:bg-brand-1/90"
               }`}
@@ -1169,13 +1188,16 @@ function TeamMembersTab({
                 alt=""
                 className="w-[13px] h-[13px] shrink-0"
                 style={{
-                  filter: addPopoverOpen
+                  filter: !canAddMember
+                    ? "grayscale(1) opacity(0.45)"
+                    : addPopoverOpen
                     ? "brightness(0) saturate(100%) invert(13%) sepia(85%) saturate(2902%) hue-rotate(309deg) brightness(77%) contrast(111%)"
                     : "brightness(0) invert(1)",
                 }}
               />
               Add Member
             </button>
+            </Tooltip>
 
             {/* Standard Popover Panel matching OwnerDropdown */}
             {addPopoverOpen && (
@@ -1202,7 +1224,7 @@ function TeamMembersTab({
                     <>
                       <DropdownGroupLabel>Out of Team (Invite and Add)</DropdownGroupLabel>
                       {addCandidates.map((u) => {
-                        const isCurrentUser = u.name === CURRENT_USER;
+                        const isCurrentUser = u.name === currentUserName;
                         return (
                           <button
                             key={u.name}
@@ -1238,7 +1260,7 @@ function TeamMembersTab({
                       {addAlreadyIn.map((u) => {
                         const member = teamMembers.find((m) => m.name === u.name);
                         const isOwner = member?.isOwner;
-                        const isCurrentUser = u.name === CURRENT_USER;
+                        const isCurrentUser = u.name === currentUserName;
                         const sideLabel = isOwner ? "Owner" : isCurrentUser ? "You" : null;
                         return (
                           <div
@@ -1281,12 +1303,12 @@ function TeamMembersTab({
         <div className="flex flex-1 min-h-0 overflow-hidden">
           <div className="border border-graphite-10 flex flex-col items-start rounded-[4px] w-full flex-1 min-h-0 overflow-hidden bg-white">
             <div className="flex-1 overflow-auto w-full">
-              <table className="w-full min-w-[720px] table-fixed border-collapse text-left">
+              <table className={`w-full ${showActions ? "min-w-[720px]" : "min-w-[580px]"} table-fixed border-collapse text-left`}>
                 <colgroup>
                   <col className="w-[26%]" />
                   <col />
                   <col className="w-[140px]" />
-                  <col className="w-[144px]" />
+                  {showActions && <col className="w-[144px]" />}
                 </colgroup>
                 <thead>
                   <tr className="border-b border-graphite-10 bg-bg-panel h-[40px] select-none sticky top-0 z-10">
@@ -1299,15 +1321,17 @@ function TeamMembersTab({
                     <th className="px-[16px] py-[10px]">
                       <span className="t-small-medium text-text-secondary whitespace-nowrap">Added by</span>
                     </th>
-                    <th className="px-[16px] py-[10px] text-right">
-                      <span className="t-small-medium text-text-secondary whitespace-nowrap">Actions</span>
-                    </th>
+                    {showActions && (
+                      <th className="px-[16px] py-[10px] text-right">
+                        <span className="t-small-medium text-text-secondary whitespace-nowrap">Actions</span>
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-graphite-10">
                   {teamMembers.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-[16px] py-[40px] text-center t-small text-text-secondary">
+                      <td colSpan={showActions ? 4 : 3} className="px-[16px] py-[40px] text-center t-small text-text-secondary">
                         No team members yet. Click "Add Member" to get started.
                       </td>
                     </tr>
@@ -1316,7 +1340,7 @@ function TeamMembersTab({
                     const poolUser = MOCK_USER_POOL.find((u) => u.name === m.name);
                     const initials = poolUser?.initials ?? m.name.slice(0, 2).toUpperCase();
                     const color = poolUser?.color ?? "#8c8f8f";
-                    const isCurrentUser = m.name === CURRENT_USER;
+                    const isCurrentUser = m.name === currentUserName;
                     const sideLabel = m.isOwner ? "Owner" : isCurrentUser ? "You" : null;
 
                     return (
@@ -1342,15 +1366,17 @@ function TeamMembersTab({
                         <td className="px-[16px] py-[10px]">
                           <span className="t-small text-text-secondary block truncate" title={m.addedBy}>{m.addedBy ?? "—"}</span>
                         </td>
-                        <td className="px-[16px] py-[10px] text-right">
+                        {showActions && <td className="px-[16px] py-[10px] text-right">
                           <div className="flex items-center justify-end gap-[6px]">
                             {m.isOwner ? (
                               <div className="relative">
                                 <button
                                   ref={ownerButtonRef}
                                   type="button"
-                                  onClick={() => setOwnerPopoverOpen((v) => !v)}
-                                  className="t-small text-text-secondary hover:text-text-primary transition-colors px-[8px] py-[4px] rounded-[4px] hover:bg-black/5 cursor-pointer"
+                                  disabled={!canChangeOwner}
+                                  onClick={() => canChangeOwner && setOwnerPopoverOpen((v) => !v)}
+                                  title={canChangeOwner ? "Change Event Owner" : "Only the Study Owner or Event Owner can change the owner."}
+                                  className="t-small text-text-secondary hover:text-text-primary transition-colors px-[8px] py-[4px] rounded-[4px] hover:bg-black/5 cursor-pointer disabled:text-graphite-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                                 >
                                   Change Owner
                                 </button>
@@ -1393,7 +1419,7 @@ function TeamMembersTab({
                                         <>
                                           <DropdownGroupLabel>In Team</DropdownGroupLabel>
                                           {nonOwners.map((cand) => {
-                                            const candIsUser = cand.name === CURRENT_USER;
+                                            const candIsUser = cand.name === currentUserName;
                                             return (
                                               <button
                                                 key={cand.name}
@@ -1432,7 +1458,7 @@ function TeamMembersTab({
                                             </span>
                                           </div>
                                           {outsideUsers.map((u) => {
-                                            const isUser = u.name === CURRENT_USER;
+                                            const isUser = u.name === currentUserName;
                                             return (
                                               <button
                                                 key={u.name}
@@ -1473,17 +1499,18 @@ function TeamMembersTab({
                                   document.body
                                 )}
                               </div>
-                            ) : (
+                            ) : canRemoveMember ? (
                               <button
                                 type="button"
                                 onClick={() => setRemovingMember(m)}
+                                title="Remove member"
                                 className="t-small text-status-error hover:opacity-80 transition-colors px-[8px] py-[4px] rounded-[4px] hover:bg-status-error/5 cursor-pointer"
                               >
                                 Remove
                               </button>
-                            )}
+                            ) : null}
                           </div>
-                        </td>
+                        </td>}
                       </tr>
                     );
                   })}
@@ -1592,6 +1619,12 @@ export interface EventTeamMemberModalProps {
   initialTeamMembers?: TeamMember[];
   initialTFLRows?: TFLRow[];
   onOwnerChange?: (newOwner: string) => void;
+  onTeamMembersChange?: (members: TeamMember[]) => void;
+  currentUserName: string;
+  canAddMember: boolean;
+  canRemoveMember: boolean;
+  canChangeOwner: boolean;
+  canManageAssignments: boolean;
 }
 
 export default function EventTeamMemberModal({
@@ -1601,6 +1634,12 @@ export default function EventTeamMemberModal({
   initialTeamMembers = MOCK_TEAM_MEMBERS,
   initialTFLRows = MOCK_TFL_ROWS,
   onOwnerChange,
+  onTeamMembersChange,
+  currentUserName,
+  canAddMember,
+  canRemoveMember,
+  canChangeOwner,
+  canManageAssignments,
 }: EventTeamMemberModalProps) {
   const [activeTab, setActiveTab] = useState<"assignment" | "team">("assignment");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
@@ -1608,11 +1647,11 @@ export default function EventTeamMemberModal({
 
   useEffect(() => {
     if (isOpen) {
-      setActiveTab("assignment");
+      setActiveTab(canManageAssignments ? "assignment" : "team");
       setTeamMembers(initialTeamMembers);
       setTflRows(initialTFLRows);
     }
-  }, [isOpen]);
+  }, [isOpen, canManageAssignments, initialTeamMembers, initialTFLRows]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1630,6 +1669,7 @@ export default function EventTeamMemberModal({
   );
 
   const handleUpdateProgrammer = (id: string, programmer: string | null) => {
+    if (!canManageAssignments) return;
     if (!tflRows.some((row) => row.id === id && !isTflLocked(row))) return;
     // If assigning someone not in team, add them
     if (programmer && !teamMembers.find((m) => m.name === programmer)) {
@@ -1645,6 +1685,7 @@ export default function EventTeamMemberModal({
   };
 
   const handleBatchUpdateProgrammer = (ids: string[], programmer: string | null) => {
+    if (!canManageAssignments) return;
     const idSet = new Set(tflRows.filter((row) => ids.includes(row.id) && !isTflLocked(row)).map((row) => row.id));
     if (idSet.size === 0) return;
     if (programmer && !teamMembers.find((m) => m.name === programmer)) {
@@ -1660,11 +1701,15 @@ export default function EventTeamMemberModal({
   };
 
   const handleRemoveMember = (name: string) => {
-    setTeamMembers((prev) => prev.filter((m) => m.name !== name));
+    if (!canRemoveMember) return;
+    const nextMembers = teamMembers.filter((member) => member.name !== name);
+    setTeamMembers(nextMembers);
+    onTeamMembersChange?.(nextMembers);
     setTflRows((prev) => prev.map((r) => r.programmer === name && !isTflLocked(r) ? { ...r, programmer: null } : r));
   };
 
   const handleChangeOwner = (newOwnerName: string) => {
+    if (!canChangeOwner) return;
     const isNewToTeam = !teamMembers.find((m) => m.name === newOwnerName);
     const poolUser = MOCK_USER_POOL.find((u) => u.name === newOwnerName);
     setTeamMembers((prev) => {
@@ -1681,11 +1726,14 @@ export default function EventTeamMemberModal({
   };
 
   const handleAddMember = (user: typeof MOCK_USER_POOL[0]) => {
+    if (!canAddMember) return;
     if (teamMembers.find((m) => m.name === user.name)) return;
-    setTeamMembers((prev) => [...prev, {
+    const nextMembers = [...teamMembers, {
       name: user.name, initials: user.initials, color: user.color, email: user.email,
       isOwner: false, assignedTFLs: 0, addedBy: "Sarah Chen",
-    }]);
+    }];
+    setTeamMembers(nextMembers);
+    onTeamMembersChange?.(nextMembers);
   };
 
   if (!isOpen) return null;
@@ -1707,30 +1755,33 @@ export default function EventTeamMemberModal({
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-end px-[20px] border-b border-graphite-10 shrink-0 bg-white">
-          {(["assignment", "team"] as const).map((tab) => {
-            const labels = { assignment: "Assignment", team: "Team Members" };
-            const active = activeTab === tab;
-            return (
-              <button key={tab} type="button" onClick={() => setActiveTab(tab)}
-                className={`px-[2px] py-[10px] mr-[20px] text-[13px] font-medium border-b-[2px] transition-colors ${
-                  active ? "border-brand-1 text-brand-1" : "border-transparent text-text-secondary hover:text-text-primary"
-                }`}>
-                {labels[tab]}
-              </button>
-            );
-          })}
-        </div>
+        {/* Assignment is an Event Owner workspace. Other users open Team Members directly. */}
+        {canManageAssignments && (
+          <div className="flex items-end px-[20px] border-b border-graphite-10 shrink-0 bg-white">
+            {(["assignment", "team"] as const).map((tab) => {
+              const labels = { assignment: "Assignment", team: "Team Members" };
+              const active = activeTab === tab;
+              return (
+                <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+                  className={`px-[2px] py-[10px] mr-[20px] text-[13px] font-medium border-b-[2px] transition-colors ${
+                    active ? "border-brand-1 text-brand-1" : "border-transparent text-text-secondary hover:text-text-primary"
+                  }`}>
+                  {labels[tab]}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Tab Body */}
         <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
-          {activeTab === "assignment" ? (
+          {canManageAssignments && activeTab === "assignment" ? (
             <AssignmentTab
               tflRows={tflRows}
               teamMembers={membersWithCounts}
               onUpdateProgrammer={handleUpdateProgrammer}
               onBatchUpdateProgrammer={handleBatchUpdateProgrammer}
+              canManageAssignments={canManageAssignments}
             />
           ) : (
             <TeamMembersTab
@@ -1738,6 +1789,10 @@ export default function EventTeamMemberModal({
               onRemove={handleRemoveMember}
               onChangeOwner={handleChangeOwner}
               onAddMember={handleAddMember}
+              currentUserName={currentUserName}
+              canAddMember={canAddMember}
+              canRemoveMember={canRemoveMember}
+              canChangeOwner={canChangeOwner}
             />
           )}
         </div>
