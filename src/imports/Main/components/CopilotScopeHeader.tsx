@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import chatAiFillIconUrl from "../../../icons/chat-ai-4-fill.svg";
-import fileAiFillIconUrl from "../../../icons/file-ai-fill.svg";
 import gitBranchIconUrl from "../../../icons/git-branch-line.svg";
 import addLineIconUrl from "../../../icons/add-line.svg";
 import editIconUrl from "../../../icons/edit-2-line.svg";
@@ -57,7 +55,6 @@ function ChevronDownIcon({ className = "size-[12px]", color = "currentColor" }: 
 
 export interface CopilotScopeHeaderProps {
   scope: "event" | "tfl";
-  onSelectScope: (scope: "event" | "tfl") => void;
 
   // Event sessions
   eventSessions: EventSession[];
@@ -76,7 +73,6 @@ export interface CopilotScopeHeaderProps {
 
 export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
   scope,
-  onSelectScope,
   eventSessions,
   selectedEventSessionId,
   onSelectEventSession,
@@ -89,7 +85,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
   onRenameTflSession,
 }) => {
   const [openDropdown, setOpenDropdown] = useState<"event" | "tfl" | null>(null);
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; maxHeight: number } | null>(null);
 
   const eventButtonRef = useRef<HTMLButtonElement | null>(null);
   const tflButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -109,13 +105,14 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
   const updateMenuPosition = useCallback((targetBtn: HTMLButtonElement | null) => {
     if (!targetBtn) return;
     const rect = targetBtn.getBoundingClientRect();
-    const dropdownHeight = 280;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const showAbove = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+    const panel = targetBtn.closest<HTMLElement>("[data-ai-copilot-panel]");
+    const composer = panel?.querySelector<HTMLElement>("[data-ai-copilot-composer]");
+    const bottomBoundary = composer?.getBoundingClientRect().top ?? window.innerHeight - 8;
 
     setMenuPos({
-      top: showAbove ? Math.max(8, rect.top - dropdownHeight - 4) : rect.bottom + 4,
+      top: rect.bottom + 4,
       left: Math.max(8, Math.min(rect.left, window.innerWidth - 290)),
+      maxHeight: Math.max(80, bottomBoundary - rect.bottom - 12),
     });
   }, []);
 
@@ -187,30 +184,20 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
   }, [renamingSession]);
 
   const handleToggleEvent = () => {
-    if (scope !== "event") {
-      onSelectScope("event");
+    if (openDropdown === "event") {
       setOpenDropdown(null);
     } else {
-      if (openDropdown === "event") {
-        setOpenDropdown(null);
-      } else {
-        updateMenuPosition(eventButtonRef.current);
-        setOpenDropdown("event");
-      }
+      updateMenuPosition(eventButtonRef.current);
+      setOpenDropdown("event");
     }
   };
 
   const handleToggleTfl = () => {
-    if (scope !== "tfl") {
-      onSelectScope("tfl");
+    if (openDropdown === "tfl") {
       setOpenDropdown(null);
     } else {
-      if (openDropdown === "tfl") {
-        setOpenDropdown(null);
-      } else {
-        updateMenuPosition(tflButtonRef.current);
-        setOpenDropdown("tfl");
-      }
+      updateMenuPosition(tflButtonRef.current);
+      setOpenDropdown("tfl");
     }
   };
 
@@ -252,83 +239,37 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-[4px] min-w-0 max-w-[320px]">
-      {/* 1. Event Button (Left) */}
+    <div className="flex min-w-0 flex-1 items-center">
       {scope === "event" ? (
-        <Tooltip label={openDropdown === "event" ? undefined : "Event Copilot"}>
+        <Tooltip label={openDropdown === "event" ? undefined : "Select Event session"}>
           <button
             ref={eventButtonRef}
             type="button"
             onClick={handleToggleEvent}
-            className="flex h-[28px] items-center gap-[6px] rounded-[6px] bg-[#F4E8EE] text-brand-1 px-[8px] cursor-pointer max-w-[180px] shrink-0 transition-all select-none border-none outline-none"
-            aria-label="Event Copilot"
+            className="flex h-[28px] min-w-0 max-w-full items-center gap-[6px] rounded-[6px] px-[4px] text-text-primary hover:bg-black/5 cursor-pointer transition-colors select-none border-none outline-none"
+            aria-label="Select Event session"
             aria-expanded={openDropdown === "event"}
           >
-            <ScopeIcon
-              src={chatAiFillIconUrl}
-              className="h-[14px] w-[14px] shrink-0"
-              color="var(--color-brand-1)"
-            />
-            <span className="t-small-medium font-medium text-[13px] truncate text-brand-1 leading-none">
-              Event Copilot
+            <span className="t-small-medium min-w-0 truncate text-[13px] font-medium leading-none">
+              {eventSessions.flatMap((session) => [session, ...(session.branches || [])]).find((session) => session.id === selectedEventSessionId)?.name || eventSessions[0]?.name || "New Event Session"}
             </span>
-            <ChevronDownIcon className="size-[12px] shrink-0 text-brand-1 opacity-80" color="var(--color-brand-1)" />
+            <ChevronDownIcon className="size-[12px] shrink-0 text-text-secondary" color="var(--color-text-secondary)" />
           </button>
         </Tooltip>
       ) : (
-        <Tooltip label="Event Copilot">
-          <button
-            ref={eventButtonRef}
-            type="button"
-            onClick={handleToggleEvent}
-            className="w-[28px] h-[28px] flex items-center justify-center rounded-[6px] text-text-secondary hover:bg-black/5 active:scale-[0.96] transition-all cursor-pointer shrink-0 border-none outline-none"
-            aria-label="Event Copilot"
-          >
-            <ScopeIcon
-              src={chatAiFillIconUrl}
-              className="h-[14px] w-[14px] shrink-0"
-              color="var(--color-text-secondary)"
-            />
-          </button>
-        </Tooltip>
-      )}
-
-      {/* 2. TFL Button (Right) */}
-      {scope === "tfl" ? (
-        <Tooltip label={openDropdown === "tfl" ? undefined : "TFL Copilot"}>
+        <Tooltip label={openDropdown === "tfl" ? undefined : "Select TFL session"}>
           <button
             ref={tflButtonRef}
             type="button"
             onClick={handleToggleTfl}
-            className="flex h-[28px] items-center gap-[6px] rounded-[6px] bg-[#F4E8EE] text-brand-1 px-[8px] cursor-pointer max-w-[180px] shrink-0 transition-all select-none border-none outline-none"
-            aria-label="TFL Copilot"
+            className="flex h-[28px] min-w-0 max-w-full items-center gap-[6px] rounded-[6px] px-[4px] text-text-primary hover:bg-black/5 cursor-pointer transition-colors select-none border-none outline-none"
+            aria-label="Select TFL session"
             aria-expanded={openDropdown === "tfl"}
           >
-            <ScopeIcon
-              src={fileAiFillIconUrl}
-              className="h-[14px] w-[14px] shrink-0"
-              color="var(--color-brand-1)"
-            />
-            <span className="t-small-medium font-medium text-[13px] truncate text-brand-1 leading-none">
-              TFL Copilot
+            <span className="t-small-medium min-w-0 truncate text-[13px] font-medium leading-none">
+              {tflSessions.find((session) => session.id === selectedTflSessionId)?.name || tflSessions[0]?.name || "New TFL Session"}
             </span>
-            <ChevronDownIcon className="size-[12px] shrink-0 text-brand-1 opacity-80" color="var(--color-brand-1)" />
-          </button>
-        </Tooltip>
-      ) : (
-        <Tooltip label="TFL Copilot">
-          <button
-            ref={tflButtonRef}
-            type="button"
-            onClick={handleToggleTfl}
-            className="w-[28px] h-[28px] flex items-center justify-center rounded-[6px] text-text-secondary hover:bg-black/5 active:scale-[0.96] transition-all cursor-pointer shrink-0 border-none outline-none"
-            aria-label="TFL Copilot"
-          >
-            <ScopeIcon
-              src={fileAiFillIconUrl}
-              className="h-[14px] w-[14px] shrink-0"
-              color="var(--color-text-secondary)"
-            />
+            <ChevronDownIcon className="size-[12px] shrink-0 text-text-secondary" color="var(--color-text-secondary)" />
           </button>
         </Tooltip>
       )}
@@ -337,11 +278,11 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
       {openDropdown === "event" && menuPos && createPortal(
         <div
           ref={menuRef}
-          style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px` }}
-          className="fixed z-[9999] w-[280px] max-h-[280px] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, maxHeight: `${menuPos.maxHeight}px` }}
+          className="fixed z-[9999] w-[280px] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <div className="overflow-y-auto max-h-[220px] p-[6px] flex flex-col gap-[2px]">
+          <div className="min-h-0 flex-1 overflow-y-auto p-[6px] flex flex-col gap-[2px]">
             <div className="px-[8px] pt-[4px] pb-[4px]">
               <span className="text-[11px] font-semibold text-text-secondary block">
                 Sessions
@@ -412,11 +353,11 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
       {openDropdown === "tfl" && menuPos && createPortal(
         <div
           ref={menuRef}
-          style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px` }}
-          className="fixed z-[9999] w-[260px] max-h-[280px] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, maxHeight: `${menuPos.maxHeight}px` }}
+          className="fixed z-[9999] w-[260px] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <div className="overflow-y-auto max-h-[220px] p-[6px] flex flex-col gap-[2px]">
+          <div className="min-h-0 flex-1 overflow-y-auto p-[6px] flex flex-col gap-[2px]">
             {/* Latest Section */}
             {tflSessions.length > 0 && (
               <>

@@ -61,6 +61,7 @@ import focusIconUrl from "../../icons/focus-3-line.svg";
 import barChartBoxAiIconUrl from "../../icons/bar-chart-box-ai-line.svg";
 import imageAiLineIconUrl from "../../icons/image-ai-line.svg";
 import chatAiFillIconUrl from "../../icons/chat-ai-4-fill.svg";
+import fileAiFillIconUrl from "../../icons/file-ai-fill.svg";
 import gitBranchIconUrl from "../../icons/git-branch-line.svg";
 import resetRightIconUrl from "../../icons/reset-right-line.svg";
 import fileIconUrl from "../../icons/file-icon.svg";
@@ -2500,6 +2501,7 @@ function AICopilotPanel({
   eventSessions = [],
   onSelectEventSession,
   onDeleteEventSession,
+  eventPanelTinted = true,
 }: {
   variant?: 'drawer' | 'incard';
   quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
@@ -2546,7 +2548,9 @@ function AICopilotPanel({
   programs?: ProgramItem[];
   currentTableId?: string;
   onHandoffToEventCopilot?: (userPrompt: string, targetTflIds: string[], sourceTflId: string) => void;
+  eventPanelTinted?: boolean;
 }) {
+  const useEventPanelTint = isEventCopilot && eventPanelTinted;
   const mapEventSessionMessage = (m: EventSessionMessage): Message => {
     if (m.summaryCardData) {
       return { type: 'event_summary_card', summaryCardData: m.summaryCardData, content: m.content };
@@ -2735,6 +2739,14 @@ function AICopilotPanel({
     setTflSessionMessages((prev) => ({ ...prev, [newId]: [] }));
     setSelectedSession(newId);
     setMessages([]);
+  };
+
+  const handleNewSession = () => {
+    if (isEventCopilot) {
+      onNewEventSession?.();
+    } else {
+      handleNewTflSession();
+    }
   };
 
   const handleRenameTflSession = (sessionId: string, newName: string) => {
@@ -3602,7 +3614,8 @@ function AICopilotPanel({
   };
 
   return (
-    <div 
+    <div
+      data-ai-copilot-panel
       className="flex flex-col h-full w-full bg-transparent relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -3633,15 +3646,14 @@ function AICopilotPanel({
       {/* Header */}
       {variant === 'incard' ? (
         <div className={`relative z-10 shrink-0 transition-colors ${
-          isEventCopilot ? 'bg-bg-panel' : 'bg-white'
+          useEventPanelTint ? 'bg-bg-panel' : 'bg-white'
         }`}>
           <PanelHeader
             noBorder
-            className={isEventCopilot ? 'bg-bg-panel' : 'bg-white'}
+            className={useEventPanelTint ? 'bg-bg-panel' : 'bg-white'}
             title={
               <CopilotScopeHeader
                 scope={isEventCopilot ? "event" : "tfl"}
-                onSelectScope={(s) => onSelectScope?.(s)}
                 eventSessions={eventSessions}
                 selectedEventSessionId={activeEventSession?.id || null}
                 onSelectEventSession={(session) => onSelectEventSession?.(session)}
@@ -3656,6 +3668,16 @@ function AICopilotPanel({
             }
             actions={
               <div className="flex items-center gap-[4px]">
+                <TooltipText label={isEventCopilot ? "New Event Session" : "New TFL Session"}>
+                  <button
+                    type="button"
+                    onClick={handleNewSession}
+                    aria-label={isEventCopilot ? "New Event Session" : "New TFL Session"}
+                    className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer"
+                  >
+                    <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                  </button>
+                </TooltipText>
                 <TooltipText label="Collapse AI Copilot">
                   <button
                     type="button"
@@ -3672,11 +3694,10 @@ function AICopilotPanel({
         </div>
       ) : (
         <div className={`relative z-10 shrink-0 h-[48px] flex items-center justify-between px-[12px] mb-[4px] transition-colors ${
-          isEventCopilot ? 'bg-bg-panel' : 'bg-transparent'
+          useEventPanelTint ? 'bg-bg-panel' : 'bg-transparent'
         }`}>
           <CopilotScopeHeader
             scope={isEventCopilot ? "event" : "tfl"}
-            onSelectScope={(s) => onSelectScope?.(s)}
             eventSessions={eventSessions}
             selectedEventSessionId={activeEventSession?.id || null}
             onSelectEventSession={(session) => onSelectEventSession?.(session)}
@@ -3689,6 +3710,16 @@ function AICopilotPanel({
             onRenameTflSession={handleRenameTflSession}
           />
           <div className="flex items-center gap-[4px]">
+            <TooltipText label={isEventCopilot ? "New Event Session" : "New TFL Session"}>
+              <button
+                type="button"
+                onClick={handleNewSession}
+                aria-label={isEventCopilot ? "New Event Session" : "New TFL Session"}
+                className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer after:content-[''] after:absolute after:-inset-[8px]"
+              >
+                <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+              </button>
+            </TooltipText>
             <TooltipText label="Collapse AI Copilot">
               <button
                 type="button"
@@ -3707,7 +3738,7 @@ function AICopilotPanel({
       <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* Top compact fade (8px, avoids 12px scrollbar on right) */}
         <div className={`pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b z-10 ${
-          isEventCopilot ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
+          useEventPanelTint ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
         }`} />
 
         <div 
@@ -3753,20 +3784,20 @@ function AICopilotPanel({
               programs={programs}
               isExecutingInEventCopilot={!isEventCopilot && isExecutingInEventCopilot}
               onJumpToEvent={!isEventCopilot ? () => onSelectScope?.('event') : undefined}
-              panelTone={isEventCopilot ? 'panel' : 'white'}
+              panelTone={useEventPanelTint ? 'panel' : 'white'}
             />
           )}
         </div>
 
         {/* Bottom fade (16px, avoids 12px scrollbar on right) */}
         <div className={`pointer-events-none absolute bottom-0 left-0 right-[12px] h-[16px] bg-gradient-to-t z-10 ${
-          isEventCopilot ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
+          useEventPanelTint ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
         }`} />
       </div>
 
       {/* Input Area */}
-      <div className={`shrink-0 p-[8px] flex flex-col gap-[4px] relative z-10 transition-colors ${
-        isEventCopilot ? 'bg-bg-panel' : 'bg-transparent'
+      <div data-ai-copilot-composer className={`shrink-0 p-[8px] flex flex-col gap-[4px] relative z-10 transition-colors ${
+        useEventPanelTint ? 'bg-bg-panel' : 'bg-transparent'
       }`}>
         <div className="w-full flex flex-col gap-[4px] relative">
           {!isEventCopilot && isExecutingInEventCopilot && (
@@ -3820,7 +3851,7 @@ function AICopilotPanel({
               mentionOptions={mentionOptions}
               showMention={true}
               placeholder={isEventCopilot ? "Ask Event Copilot..." : "Ask TFL Copilot..."}
-              panelTone={isEventCopilot ? 'panel' : 'white'}
+              panelTone={useEventPanelTint ? 'panel' : 'white'}
             />
           ) : isCurrentTflPending ? (
             <ChatBox 
@@ -3848,7 +3879,7 @@ function AICopilotPanel({
               mentionOptions={mentionOptions}
               showMention={true}
               placeholder={isEventCopilot ? "Ask Event Copilot..." : "Ask TFL Copilot..."}
-              panelTone={isEventCopilot ? 'panel' : 'white'}
+              panelTone={useEventPanelTint ? 'panel' : 'white'}
             />
           ) : (
             <ChatBox 
@@ -3875,7 +3906,7 @@ function AICopilotPanel({
               mentionOptions={mentionOptions}
               showMention={true}
               placeholder={isEventCopilot ? "Ask Event Copilot..." : "Ask TFL Copilot..."}
-              panelTone={isEventCopilot ? 'panel' : 'white'}
+              panelTone={useEventPanelTint ? 'panel' : 'white'}
             />
           )}
           {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
@@ -4429,6 +4460,8 @@ function ViewToggleBar({
   onOpenTeamModal,
   onOpenAICopilot,
   aiCopilotOpen = false,
+  copilotScope,
+  onSelectCopilotScope,
 }: {
   treeListOpen: boolean;
   onToggleTreeList: () => void;
@@ -4451,7 +4484,19 @@ function ViewToggleBar({
   onOpenTeamModal?: () => void;
   onOpenAICopilot?: () => void;
   aiCopilotOpen?: boolean;
+  copilotScope: 'event' | 'tfl';
+  onSelectCopilotScope: (scope: 'event' | 'tfl') => void;
 }) {
+
+  const handleCopilotScopeClick = (nextScope: 'event' | 'tfl') => {
+    if (nextScope === copilotScope) {
+      onOpenAICopilot?.();
+      return;
+    }
+
+    onSelectCopilotScope(nextScope);
+    if (!aiCopilotOpen) onOpenAICopilot?.();
+  };
 
 
   const rightControls = (
@@ -4494,21 +4539,47 @@ function ViewToggleBar({
       {/* 3. Panel View Toggle & AI Button (gap: 8px) */}
       <div className="flex items-center gap-[8px]">
         <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
-        {onOpenAICopilot && (
-          <TooltipText label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}>
+        {onOpenAICopilot && !aiCopilotOpen && (
+          <TooltipText label="Open AI Copilot">
             <button
               type="button"
               onClick={onOpenAICopilot}
-              className={`relative flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] transition-colors active:scale-[0.96] ${
-                aiCopilotOpen
-                  ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover"
-                  : "bg-brand-1 text-white hover:bg-az-warning shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
-              }`}
-              aria-label={aiCopilotOpen ? "Close AI Copilot" : "Open AI Copilot"}
+              className="relative flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] bg-brand-1 text-white shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-colors hover:bg-az-warning active:scale-[0.96]"
+              aria-label="Open AI Copilot"
             >
-              <AtlasLogoIcon className="h-[16px] w-[16px] shrink-0" color={aiCopilotOpen ? "var(--color-brand-1)" : "white"} />
+              <AtlasLogoIcon className="h-[16px] w-[16px] shrink-0" color="white" />
             </button>
           </TooltipText>
+        )}
+        {onOpenAICopilot && aiCopilotOpen && (
+          <div className="flex h-[28px] shrink-0 items-center overflow-hidden rounded-[4px] border border-graphite-10 bg-bg-panel" role="group" aria-label="AI Copilot scope">
+            {(['event', 'tfl'] as const).map((scopeOption) => {
+              const isActive = copilotScope === scopeOption;
+              const label = scopeOption === 'event' ? 'Event' : 'TFL';
+              const icon = scopeOption === 'event' ? chatAiFillIconUrl : fileAiFillIconUrl;
+              return (
+                <TooltipText key={scopeOption} label={`${label} Copilot${isActive ? ' · click to close' : ''}`} className="flex h-full">
+                  <button
+                    type="button"
+                    onClick={() => handleCopilotScopeClick(scopeOption)}
+                    className={`relative flex h-full items-center justify-center rounded-[3px] transition-colors active:scale-[0.98] ${
+                      isActive
+                        ? 'gap-[4px] bg-white px-[8px] text-brand-1'
+                        : 'w-[28px] text-text-secondary hover:bg-black/5 hover:text-text-primary'
+                    }`}
+                    aria-label={`${label} Copilot${isActive ? ', open' : ''}`}
+                    aria-pressed={isActive}
+                  >
+                    {isActive && (
+                      <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[3px] border-[0.6px] border-solid border-border-default" />
+                    )}
+                    <LocalIcon src={icon} className="h-[15px] w-[15px]" color={isActive ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />
+                    {isActive && <span className="t-small-medium leading-none">{label}</span>}
+                  </button>
+                </TooltipText>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
@@ -4974,11 +5045,13 @@ function WorkspaceDivider({
   onDrag,
   onDragStart,
   onDragEnd,
+  transparentDefault = false,
   className = "",
 }: {
   onDrag: (delta: number) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  transparentDefault?: boolean;
   className?: string;
 }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -5030,7 +5103,9 @@ function WorkspaceDivider({
     >
       <div className="absolute inset-y-0 -left-[4px] -right-[4px] z-10 cursor-col-resize" />
       {/* 缝隙填充底线：扣掉 8px 长度（上下各缩进 4px，带圆角柔化），避免卡片圆角转角处露亮线 */}
-      <div className="absolute inset-x-0 top-[4px] bottom-[4px] w-full bg-bg-panel rounded-full" />
+      <div className={`absolute inset-x-0 top-[4px] bottom-[4px] w-full rounded-full transition-[background-color] duration-500 ${
+        transparentDefault ? 'bg-transparent' : 'bg-bg-panel'
+      }`} />
       <div className={`absolute inset-x-0 top-[4px] bottom-[4px] w-full bg-brand-1 rounded-full transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
@@ -5086,7 +5161,7 @@ function PanelHeader({
 }) {
   return (
     <div className={`flex h-[40px] w-full shrink-0 items-center justify-between px-[12px] py-0 ${noBorder ? '' : 'border-b border-graphite-10'} ${className || 'bg-white'}`}>
-      <div className="truncate flex items-center">{title}</div>
+      <div className="flex min-w-0 flex-1 items-center truncate">{title}</div>
       {actions && <div className="flex items-center gap-[4px]">{actions}</div>}
     </div>
   );
@@ -5161,11 +5236,13 @@ function HorizontalWorkspaceDivider({
   onDrag,
   onDragStart,
   onDragEnd,
+  transparentDefault = false,
   className = "",
 }: {
   onDrag: (delta: number) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  transparentDefault?: boolean;
   className?: string;
 }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -5217,7 +5294,9 @@ function HorizontalWorkspaceDivider({
     >
       <div className="absolute inset-x-0 -top-[4px] -bottom-[4px] z-10" />
       {/* 缝隙填充底线：扣掉 8px 长度（左右各缩进 4px，带圆角柔化），避免卡片圆角转角处露亮线 */}
-      <div className="absolute inset-y-0 left-[4px] right-[4px] h-full bg-bg-panel rounded-full" />
+      <div className={`absolute inset-y-0 left-[4px] right-[4px] h-full rounded-full transition-[background-color] duration-500 ${
+        transparentDefault ? 'bg-transparent' : 'bg-bg-panel'
+      }`} />
       <div className={`absolute inset-y-0 left-[4px] right-[4px] h-full bg-brand-1 rounded-full transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
@@ -11699,6 +11778,7 @@ function WorkspaceContent({
   onLogout?: () => void;
 }) {
   const [aiLayoutVariant, setAiLayoutVariant] = useState<'drawer' | 'incard'>('incard');
+  const [eventVisualVariant, setEventVisualVariant] = useState<'panel-tint' | 'page-gradient'>('panel-tint');
   const [metaDiffItems, setMetaDiffItems] = useState<MetaDiffItem[]>([]);
   const [metaUpdateActive, setMetaUpdateActive] = useState(false);
   const [metaUpdateProcessing, setMetaUpdateProcessing] = useState(false);
@@ -12679,6 +12759,7 @@ function WorkspaceContent({
         }}
         onUpdateEventSession={handleUpdateEventSession}
         onDeleteEventSession={handleDeleteEventSession}
+        eventPanelTinted={eventVisualVariant === 'panel-tint'}
         onStartEventExecution={handleStartEventExecution}
         onCompleteTflExecution={handleCompleteTflExecution}
         onSkipTflExecution={handleSkipTflExecution}
@@ -12737,9 +12818,20 @@ function WorkspaceContent({
     );
   };
 
+  const showEventPageGradient = aiCopilotOpen && copilotScope === 'event' && eventVisualVariant === 'page-gradient';
+
   return (
-    <div className="flex h-full min-w-0 flex-1 overflow-hidden bg-bg-panel">
-      <div ref={workspaceContainerRef} className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
+    <div className="relative flex h-full min-w-0 flex-1 overflow-hidden bg-bg-panel">
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ease-[cubic-bezier(0.2,0,0,1)] ${
+          showEventPageGradient ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          background: 'linear-gradient(180deg, var(--bg-light, #F8F7F7) 0%, var(--Light-AZ-Secondary, #F4E8EE) 45.97%, var(--Mulberry-20, #E6CCDC) 95.25%)',
+        }}
+      />
+      <div ref={workspaceContainerRef} className="relative z-10 flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         <div
           className="shrink-0 overflow-hidden"
           style={{
@@ -12748,7 +12840,9 @@ function WorkspaceContent({
             transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
           }}
         >
-          <div className="flex h-full w-full flex-col bg-bg-panel">
+          <div className={`flex h-full w-full flex-col transition-[background-color] duration-500 ease-[cubic-bezier(0.2,0,0,1)] ${
+            showEventPageGradient ? 'bg-transparent' : 'bg-bg-panel'
+          }`}>
             <div className="flex h-[52px] shrink-0 items-center gap-[8px] px-[10px]">
               <TooltipText label="Back to Home">
                 <button
@@ -12947,7 +13041,9 @@ function WorkspaceContent({
             </div>
 
             {/* Tree List Bottom-Left Controls — always visible */}
-            <div className="shrink-0 flex flex-col border-t border-graphite-10 bg-bg-panel">
+            <div className={`shrink-0 flex flex-col border-t border-graphite-10 transition-[background-color] duration-500 ease-[cubic-bezier(0.2,0,0,1)] ${
+              showEventPageGradient ? 'bg-transparent' : 'bg-bg-panel'
+            }`}>
               {/* Filter UI Switcher */}
               <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
                 <span className="text-[11px] text-text-secondary whitespace-nowrap">Filter UI</span>
@@ -12976,6 +13072,20 @@ function WorkspaceContent({
                 />
               </div>
 
+              {/* Event Copilot Visual Treatment */}
+              <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
+                <span className="text-[11px] text-text-secondary whitespace-nowrap">Event Style</span>
+                <SegmentedControl
+                  size="sm"
+                  value={eventVisualVariant}
+                  onChange={(val) => setEventVisualVariant(val as 'panel-tint' | 'page-gradient')}
+                  options={[
+                    { label: "Panel", value: "panel-tint" },
+                    { label: "Page", value: "page-gradient" },
+                  ]}
+                />
+              </div>
+
               <DemoIdentityControls currentRole={currentRole} currentUserName={currentUserName} onSwitchRole={onSwitchRole} onLogout={onLogout} />
             </div>
           </div>
@@ -12984,6 +13094,7 @@ function WorkspaceContent({
         {/* TreeList ↔ Main panel divider */}
         {treeListOpen && (
           <WorkspaceDivider
+            transparentDefault={showEventPageGradient}
             onDragStart={() => setIsResizing(true)}
             onDragEnd={() => setIsResizing(false)}
             onDrag={(delta) => setTreeListWidth((width) => clamp(width + delta, constraints.treeList.min, constraints.treeList.max))}
@@ -13015,6 +13126,8 @@ function WorkspaceContent({
               onOpenTeamModal={onOpenTeamModal}
               onOpenAICopilot={handleOpenAICopilot}
               aiCopilotOpen={aiCopilotOpen}
+              copilotScope={copilotScope}
+              onSelectCopilotScope={setCopilotScope}
             />
           </div>
 
@@ -13080,6 +13193,7 @@ function WorkspaceContent({
                   {panelView === 'both' && (
                     panelLayout === 'vertical' ? (
                       <HorizontalWorkspaceDivider
+                        transparentDefault={showEventPageGradient}
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellHeight((h) => {
@@ -13091,6 +13205,7 @@ function WorkspaceContent({
                       />
                     ) : (
                       <WorkspaceDivider
+                        transparentDefault={showEventPageGradient}
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, dynamicShellMax))}
@@ -13118,6 +13233,7 @@ function WorkspaceContent({
                 {aiLayoutVariant === 'incard' && aiCopilotOpen && (
                   <>
                     <WorkspaceDivider
+                      transparentDefault={showEventPageGradient}
                       onDragStart={() => setIsResizing(true)}
                       onDragEnd={() => setIsResizing(false)}
                       onDrag={(delta) => setAiCopilotWidth((w) => clamp(w - delta, constraints.aiCopilot.min, constraints.aiCopilot.max))}
@@ -13214,6 +13330,7 @@ function WorkspaceContent({
                   {shellPreviewOpen && codeOpen && (
                     panelLayout === 'vertical' ? (
                       <HorizontalWorkspaceDivider
+                        transparentDefault={showEventPageGradient}
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellHeight((h) => {
@@ -13225,6 +13342,7 @@ function WorkspaceContent({
                       />
                     ) : (
                       <WorkspaceDivider
+                        transparentDefault={showEventPageGradient}
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, dynamicShellMax))}
@@ -13256,6 +13374,7 @@ function WorkspaceContent({
                 {aiLayoutVariant === 'incard' && aiCopilotOpen && (
                   <>
                     <WorkspaceDivider
+                      transparentDefault={showEventPageGradient}
                       onDragStart={() => setIsResizing(true)}
                       onDragEnd={() => setIsResizing(false)}
                       onDrag={(delta) => setAiCopilotWidth((w) => clamp(w - delta, constraints.aiCopilot.min, constraints.aiCopilot.max))}
@@ -13263,7 +13382,7 @@ function WorkspaceContent({
                     <div
                       style={{ width: `${aiCopilotWidth}px` }}
                       className={`h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden shrink-0 rounded-[12px] border border-graphite-10 shadow-card-mulberry transition-colors ${
-                        copilotScope === 'event' ? 'bg-bg-panel' : 'bg-white'
+                        copilotScope === 'event' && eventVisualVariant === 'panel-tint' ? 'bg-bg-panel' : 'bg-white'
                       }`}
                     >
                       {renderAICopilotComponent('incard')}
@@ -13294,6 +13413,7 @@ function WorkspaceContent({
           <>
             {aiCopilotOpen && (
               <WorkspaceDivider
+                transparentDefault={showEventPageGradient}
                 onDragStart={() => setIsResizing(true)}
                 onDragEnd={() => setIsResizing(false)}
                 onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
@@ -13308,7 +13428,7 @@ function WorkspaceContent({
               }}
             >
               <div className={`h-full w-full flex flex-col overflow-hidden rounded-[12px] border border-graphite-10 shadow-card-mulberry transition-colors ${
-                copilotScope === 'event' ? 'bg-bg-panel' : 'bg-white'
+                copilotScope === 'event' && eventVisualVariant === 'panel-tint' ? 'bg-bg-panel' : 'bg-white'
               }`}>
                 {renderAICopilotComponent('drawer')}
               </div>
