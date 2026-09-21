@@ -11,7 +11,7 @@ export const SSOPlaceholderVisual: React.FC<SSOPlaceholderVisualProps> = ({
 }) => {
   return (
     <div
-      className={`relative h-full w-full overflow-hidden bg-gradient-to-br from-[#F8F7F7] via-[#F3EEF1] to-[#EAE2E7] flex flex-col items-center justify-center p-8 select-none border-l border-graphite-20/60 ${className}`}
+      className={`relative h-full w-full overflow-hidden bg-gradient-to-br from-[#F8F7F7] via-[#F3EEF1] to-[#EAE2E7] flex flex-col items-center justify-center p-8 select-none ${className}`}
     >
       {/* Background ambient lighting and pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(#830051_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.035] pointer-events-none" />
@@ -19,17 +19,11 @@ export const SSOPlaceholderVisual: React.FC<SSOPlaceholderVisualProps> = ({
       <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-[#4D0030]/5 blur-3xl pointer-events-none" />
 
       {imageSrc ? (
-        <>
-          <img
-            src={imageSrc}
-            alt="Molecular therapy illustration"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.10)]"
-          />
-        </>
+        <img
+          src={imageSrc}
+          alt="Molecular therapy illustration"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
       ) : (
         <div className="relative z-10 flex flex-col items-center max-w-[420px] w-full text-center">
           {/* Placeholder Graphic Card */}
