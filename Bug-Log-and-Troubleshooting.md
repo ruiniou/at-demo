@@ -284,3 +284,59 @@
 * **经验教训 (Takeaways)**：
   1. `useMemo` 内的过滤和分组应先集中派生共享字段，再进入条件分支，避免 `const` 暂时性死区与重复计算。
   2. 所有可能返回零结果的筛选器都应提供明确空状态和恢复入口，不能依赖空白容器表达结果。
+
+---
+
+### [2026-09-20] Tree List 折叠后详情页左上角 Event Settings 下拉箭头消失
+
+* **现象 (Symptom)**：
+  在详情页折叠 Tree List 后，Study/Event 标题仍显示，但标题旁的 Event Settings 下拉箭头随 Tree List 一起消失，无法从折叠态进入 Event Information 或 Event Team。
+* **根本原因 (Root Cause)**：
+  Event Settings 按钮只渲染在宽度由 `treeListOpen` 控制的 Tree List 容器内；折叠态使用独立的 `ViewToggleBar` 标题结构，但该分支仅补充了 `Open tree list` 按钮，没有透传 `eventMenuOpen`、`eventMenuButtonRef` 和菜单切换回调，因此功能入口被遗漏。
+* **解决方案 (Solution)**：
+  为 `ViewToggleBar` 增加 Event Settings 状态、切换回调和定位 ref，并在 Tree List 折叠分支的标题旁渲染同规格下拉按钮；展开态与折叠态互斥挂载按钮，共用原有菜单状态与 Portal 定位逻辑。
+* **经验教训 (Takeaways)**：
+  1. 同一工具栏存在展开/折叠两套 DOM 分支时，应建立功能入口对照清单，避免只复制标题而遗漏附属操作。
+  2. 两个互斥视图复用同一浮层定位 ref 时，按钮也应互斥挂载，避免同一个 ref 同时绑定多个 DOM 节点。
+
+---
+
+### [2026-09-21] 功能分支提交后 GitHub Pages 演示站未同步更新
+
+* **现象 (Symptom)**：
+  Event Copilot 修改已经在本地提交，但 `https://ruiniou.github.io/at-demo/` 仍加载旧版 JavaScript 和 CSS 资源，线上看不到最新交互与文案。
+* **根本原因 (Root Cause)**：
+  仓库的 Pages 站点直接发布独立的 `gh-pages` 分支；功能提交仅存在于 `sprint7/event-copilot-style2`，且该分支一度领先远端，项目也没有自动将功能分支构建产物同步到 `gh-pages` 的 workflow。
+* **解决方案 (Solution)**：
+  推送功能分支，从提交后的干净 worktree 执行 Vite production build，再将 `dist` 静态产物提交并推送到 `gh-pages`；通过远端分支 SHA、线上带缓存参数的 `index.html` 和新资源文件名确认发布生效。
+* **经验教训 (Takeaways)**：
+  1. 功能代码提交与 Pages 发布是两个独立步骤；交付演示前应同时核对功能分支和 `gh-pages` 的远端 SHA。
+  2. 发布应始终从干净提交构建，避免将工作区中未提交的其他修改混入静态站点；后续可增加自动部署 workflow 消除人工同步遗漏。
+
+---
+
+### [2026-09-21] 登录页左右分栏交界处出现多余灰色 Divider
+
+* **现象 (Symptom)**：
+  登录页桌面端左侧表单与右侧图片之间出现一条灰色竖线，但设计不需要分栏 Divider。
+* **根本原因 (Root Cause)**：
+  `SSOPlaceholderVisual` 根容器包含 `border-l border-graphite-20/60`，同时 full-bleed 图片上又叠加了 `inset 0 0 0 1px rgba(0,0,0,0.10)`，两种边缘样式在左右分栏交界处叠加形成灰线。
+* **解决方案 (Solution)**：
+  移除根容器左边框与图片 inset shadow，让 thumbnail 直接无边缘填满右侧容器。
+* **经验教训 (Takeaways)**：
+  1. Full-bleed 图片分栏不应沿用卡片图片的 outline 规则，边缘处理需要根据容器语义决定。
+  2. 排查分栏接缝时，应同时检查容器 border 和子元素 inset shadow，避免只移除其中一层。
+
+---
+
+### [2026-09-21] Tree List 的 Section 错误显示 Pending 状态圆点
+
+* **现象 (Symptom)**：
+  Tree List 中 `14.1 Demographic Data` 等 Section 标题右侧出现橙色 Pending 圆点，但 Pending 只属于具体 TFL，Section 不存在该状态。
+* **根本原因 (Root Cause)**：
+  三个 `ProgramItem` mock 数据的 `status` 被直接设置为 `'pending'`，且 `ProgramItem.status` 复用了包含 Pending 的 `ItemStatus` 联合类型；`TreeStatusControl` 因此按通用规则为 Section 渲染了 Pending 圆点。
+* **解决方案 (Solution)**：
+  将 Section 初始状态统一改为 `'completed'`，并把 `ProgramItem.status` 类型收窄为 `'completed' | 'locked'`，从数据与类型层同时阻止 Section 进入 Pending。
+* **经验教训 (Takeaways)**：
+  1. 父级容器和叶子项的状态机不同，不应为复用渲染组件而共享过宽的状态联合类型。
+  2. 业务上不存在的状态应在 TypeScript 类型层排除，而不只是依赖 UI 条件隐藏。

@@ -69,7 +69,7 @@ import { EventStatusBadge } from "../../components/ui/EventStatusBadge";
 import CreateEventModal from "./components/CreateEventModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
-import EventTeamMemberModal from "./components/EventTeamMemberModal";
+import EventTeamMemberModal, { MOCK_TEAM_MEMBERS } from "./components/EventTeamMemberModal";
 import type { TeamMember } from "./components/EventTeamMemberModal";
 import AccountMenu from "../../components/auth/AccountMenu";
 import { TreeFilterPopover } from "./components/TreeFilterPopover";
@@ -78,7 +78,7 @@ import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal"
 import { KMPlot } from "./components/KMPlot";
 import { CopilotScopeHeader } from "./components/CopilotScopeHeader";
 import { Button } from "../../components/ui/Button";
-import { ProjectStudyManagementView } from "./components/ProjectStudyManagementView";
+import { OwnerPicker, ProjectStudyManagementView } from "./components/ProjectStudyManagementView";
 import { NewProjectModal } from "./components/NewProjectModal";
 import { NewStudyModal } from "./components/NewStudyModal";
 import { ProjectItem, UserRole, INITIAL_PROJECTS, SYSTEM_USERS } from "./types/management";
@@ -4412,6 +4412,9 @@ function ViewToggleBar({
   onToggleTreeList,
   onNavigateHome,
   currentEvent,
+  eventMenuOpen,
+  onToggleEventMenu,
+  eventMenuButtonRef,
 
   panelView,
   onPanelViewChange,
@@ -4431,6 +4434,9 @@ function ViewToggleBar({
   onToggleTreeList: () => void;
   onNavigateHome: () => void;
   currentEvent: string;
+  eventMenuOpen?: boolean;
+  onToggleEventMenu?: () => void;
+  eventMenuButtonRef?: React.RefObject<HTMLButtonElement | null>;
 
   panelView: PanelView;
   onPanelViewChange: (v: PanelView) => void;
@@ -4518,6 +4524,20 @@ function ViewToggleBar({
               <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
               <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
             </div>
+            {onToggleEventMenu && (
+              <TooltipText label="Event Settings">
+                <button
+                  ref={eventMenuButtonRef}
+                  onClick={onToggleEventMenu}
+                  className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[4px] transition-colors hover:bg-black/5 active:scale-[0.96]"
+                  aria-label="Event settings"
+                  aria-haspopup="true"
+                  aria-expanded={eventMenuOpen}
+                >
+                  <LocalIcon src={arrowDownIconUrl} className="h-[14px] w-[14px]" color="var(--color-text-secondary)" />
+                </button>
+              </TooltipText>
+            )}
             <TooltipText label="Open Tree List">
               <button
                 onClick={onToggleTreeList}
@@ -12697,7 +12717,7 @@ function WorkspaceContent({
                   <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
                   <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
                 </div>
-                <TooltipText label="Event Settings">
+                {treeListOpen && <TooltipText label="Event Settings">
                   <button
                     ref={eventMenuButtonRef}
                     onClick={() => setEventMenuOpen((prev) => !prev)}
@@ -12708,7 +12728,7 @@ function WorkspaceContent({
                   >
                     <LocalIcon src={arrowDownIconUrl} className="h-[14px] w-[14px]" color="var(--color-text-secondary)" />
                   </button>
-                </TooltipText>
+                </TooltipText>}
               </div>
               <TooltipText label="Collapse Tree List">
                 <button
@@ -12940,6 +12960,9 @@ function WorkspaceContent({
               onToggleTreeList={() => setTreeListOpen(true)}
               onNavigateHome={onNavigateHome}
               currentEvent={currentEvent}
+              eventMenuOpen={eventMenuOpen}
+              onToggleEventMenu={() => setEventMenuOpen((prev) => !prev)}
+              eventMenuButtonRef={eventMenuButtonRef}
               panelView={panelView}
               onPanelViewChange={handlePanelViewChange}
               panelLayout={panelLayout}
@@ -13433,6 +13456,26 @@ const homeEvents: EventCardData[] = [
     status: 'in-progress',
     progress: { completed: 3, total: 10 },
     ta: 'Oncology',
+    teamMembers: [
+      {
+        name: 'Emily Liu',
+        initials: 'EL',
+        color: '#2d6a4f',
+        email: 'emily.liu@astrazeneca.com',
+        isOwner: true,
+        assignedTFLs: 3,
+        addedBy: 'System',
+      },
+      {
+        name: 'Alex Kim',
+        initials: 'AK',
+        color: '#7c8db0',
+        email: 'alex.kim@astrazeneca.com',
+        isOwner: false,
+        assignedTFLs: 1,
+        addedBy: 'Emily Liu',
+      },
+    ],
   },
   {
     id: 'e11',
@@ -13521,7 +13564,7 @@ function StatusTag({ status }: { status: EventStatus | 'uploading' }) {
 
 interface EventCardProps {
   event: EventCardData;
-  onEventClick: () => void;
+  onEventClick: (event: EventCardData) => void;
   onUpdateStatus: (id: string, status: EventStatus) => void;
   onOpenDownload?: () => void;
   onDelete?: () => void;
@@ -13555,7 +13598,7 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
 
   return (
     <div
-      onClick={isClickable ? onEventClick : undefined}
+      onClick={isClickable ? () => onEventClick(event) : undefined}
       className={`flex flex-col md:flex-row min-h-[92px] h-auto justify-between items-start md:items-center rounded-[4px] border px-[16px] py-[12px] gap-[12px] md:gap-[20px] transition-colors relative ${
         isClickable ? 'cursor-pointer hover:bg-bg-panel' : 'cursor-default'
       } ${
@@ -13568,9 +13611,6 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
         <div className="flex flex-col gap-[4px] min-w-0">
           <div className="flex items-center gap-[12px] min-w-0">
             <span className="t-heading text-text-primary truncate" title={event.name}>{event.name}</span>
-            <span className="flex h-[16px] items-center justify-center rounded-[2px] border-[0.6px] border-[#888E8E] px-[6px] text-[10px] leading-[12px] text-text-secondary shrink-0">
-              {event.version}
-            </span>
           </div>
           <div className="flex items-center gap-[4px] min-w-0 text-text-secondary">
             <span className="t-small text-[#666666] truncate">{event.project}</span>
@@ -13701,13 +13741,6 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
   );
 }
 
-const studyOwnerMap: Record<string, string> = {
-  'AZE2001-301': 'Tom',
-  'AZE2001-302': 'Sarah',
-  'AZE2001-303': 'James',
-  'AZE2001-401': 'Emily',
-};
-
 function HomePage({
   onEventClick,
   onCreateEvent,
@@ -13730,10 +13763,12 @@ function HomePage({
   onOpenNewProject,
   onOpenNewStudy,
   onChangeOwner,
+  onChangeEventOwner,
   onToggleProjectStatus,
   onToggleStudyStatus,
+  recentEventIds,
 }: {
-  onEventClick: () => void;
+  onEventClick: (event: EventCardData) => void;
   onCreateEvent: () => void;
   events: EventCardData[];
   onUpdateStatus: (id: string, status: EventStatus) => void;
@@ -13754,8 +13789,10 @@ function HomePage({
   onOpenNewProject: () => void;
   onOpenNewStudy: (projectId?: string) => void;
   onChangeOwner: (projectId: string, studyId: string, owner: string) => void;
+  onChangeEventOwner: (eventId: string, owner: string) => void;
   onToggleProjectStatus: (projectId: string) => void;
   onToggleStudyStatus: (projectId: string, studyId: string) => void;
+  recentEventIds: string[];
 }) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedTA, setSelectedTA] = useState<string>('All');
@@ -13765,6 +13802,9 @@ function HomePage({
   const [isResizing, setIsResizing] = useState(false);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const studyOwnerMap = useMemo(() => Object.fromEntries(
+    projects.flatMap((project) => project.studies.map((study) => [study.id, study.owner]))
+  ) as Record<string, string>, [projects]);
 
   useEffect(() => {
     if (!openActionMenuId && !sortMenuOpen) return;
@@ -13828,8 +13868,11 @@ function HomePage({
     });
   };
 
-  // Recents: 5 most recently accessed events (showing only name)
-  const recentEvents = useMemo(() => events.slice(0, 5), [events]);
+  // Recents are account-specific navigation history, not a permission grant.
+  const recentEvents = useMemo(
+    () => recentEventIds.map((eventId) => events.find((event) => event.id === eventId)).filter((event): event is EventCardData => Boolean(event)),
+    [events, recentEventIds]
+  );
 
   // Group events into 3-tier hierarchy: Project -> Study -> Events (for left tree)
   const projectGroups = useMemo(() => {
@@ -13889,13 +13932,8 @@ function HomePage({
       if (assignedToMeOnly) {
         const u = currentUserName.toLowerCase();
         const evOwner = (ev.owner || '').toLowerCase();
-        const evCreator = (ev.creator || '').toLowerCase();
-        const stdOwner = studyOwner.toLowerCase();
         const isMember = ev.teamMembers?.some(m => m.name.toLowerCase().includes(u) || u.includes(m.name.toLowerCase()));
-        const isAssigned = evOwner.includes(u) || u.includes(evOwner) ||
-                           evCreator.includes(u) || u.includes(evCreator) ||
-                           stdOwner.includes(u) || u.includes(stdOwner) ||
-                           Boolean(isMember);
+        const isAssigned = evOwner === u || Boolean(isMember);
         if (!isAssigned) {
           return;
         }
@@ -14054,7 +14092,7 @@ function HomePage({
                     recentEvents.map((rec) => (
                       <div
                         key={rec.id}
-                        onClick={onEventClick}
+                        onClick={() => onEventClick(rec)}
                         className="group flex h-[28px] items-center rounded-[4px] px-[8px] hover:bg-black/5 cursor-pointer transition-colors"
                         title={`${rec.name} (${rec.project} / ${rec.study})`}
                       >
@@ -14127,7 +14165,7 @@ function HomePage({
                                         {std.events.map((ev) => (
                                           <div
                                             key={ev.id}
-                                            onClick={onEventClick}
+                                            onClick={() => onEventClick(ev)}
                                             className="group flex h-[28px] items-center rounded-[4px] pl-[80px] pr-[8px] hover:bg-black/5 cursor-pointer transition-colors"
                                             title={ev.name}
                                           >
@@ -14467,6 +14505,7 @@ function HomePage({
                                       {isStdExpanded &&
                                         std.events.map((ev) => {
                                           const isMenuOpen = openActionMenuId === `table-${ev.id}`;
+                                          const canChangeEventOwner = currentUserName === std.owner || currentUserName === ev.owner;
                                           const actionButtons = [
                                             { icon: barChartIconUrl, label: 'View charts' },
                                             { icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) },
@@ -14476,7 +14515,7 @@ function HomePage({
                                           return (
                                             <tr
                                               key={ev.id}
-                                              onClick={onEventClick}
+                                              onClick={() => onEventClick(ev)}
                                               className="group h-[48px] cursor-pointer transition-colors hover:bg-black/[0.02]"
                                             >
                                               {/* Event Name (pl-[88px]: Event Name starts at 88px, exactly aligned under Study Name at 88px) */}
@@ -14484,9 +14523,6 @@ function HomePage({
                                                 <div className="flex items-center gap-[6px] min-w-0">
                                                   <span className="truncate font-normal text-text-primary" title={ev.name}>
                                                     {ev.name}
-                                                  </span>
-                                                  <span className="flex h-[16px] items-center justify-center rounded-[2px] border border-graphite-10 px-[5px] text-[10px] leading-[12px] text-text-secondary shrink-0 tabular-nums">
-                                                    {ev.version}
                                                   </span>
                                                 </div>
                                               </td>
@@ -14504,8 +14540,12 @@ function HomePage({
                                               </td>
 
                                               {/* Event Owner */}
-                                              <td className="px-[10px] py-[4px] whitespace-nowrap">
-                                                <ReadOnlyOwner name={ev.owner} />
+                                              <td className="px-[10px] py-[4px] whitespace-nowrap" onClick={(event) => event.stopPropagation()}>
+                                                {canChangeEventOwner ? (
+                                                  <OwnerPicker value={ev.owner} ariaLabel="Select Event Owner" onSelect={(owner) => onChangeEventOwner(ev.id, owner)} />
+                                                ) : (
+                                                  <ReadOnlyOwner name={ev.owner} />
+                                                )}
                                               </td>
 
                                               {/* Actions - Collapsed into Ellipsis (...) */}
@@ -14592,6 +14632,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [currentRole, setCurrentRole] = useState<UserRole>('admin');
   const [activeNav, setActiveNav] = useState<'events' | 'management'>('management');
   const [currentUserName, setCurrentUserName] = useState<string>('Administrator');
+  const [recentEventIdsByUser, setRecentEventIdsByUser] = useState<Record<string, string[]>>({});
 
   const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
   const [newStudyModalOpen, setNewStudyModalOpen] = useState(false);
@@ -14681,6 +14722,14 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setTeamModalOpen(true);
   };
 
+  const handleOpenEvent = (event: EventCardData) => {
+    setRecentEventIdsByUser((previous) => ({
+      ...previous,
+      [currentUserName]: [event.id, ...(previous[currentUserName] ?? []).filter((eventId) => eventId !== event.id)].slice(0, 5),
+    }));
+    setPage('event');
+  };
+
   const handleConfirmDelete = (eventId: string) => {
     setEvents(prev => prev.filter(e => e.id !== eventId));
   };
@@ -14704,11 +14753,44 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setEvents(prev => prev.map(e => e.id === id ? { ...e, status } : e));
   };
 
+  const handleChangeEventOwner = (eventId: string, newOwner: string) => {
+    const updateOwner = (event: EventCardData): EventCardData => {
+      if (event.id !== eventId || event.owner === newOwner) return event;
+      const previousOwner = event.owner;
+      const memberNames = new Set(event.teamMembers?.map((member) => member.name) ?? []);
+      const nextMembers = (event.teamMembers ?? []).map((member) => ({
+        ...member,
+        isOwner: member.name === newOwner,
+      }));
+
+      for (const ownerName of [previousOwner, newOwner]) {
+        if (memberNames.has(ownerName)) continue;
+        const user = SYSTEM_USERS.find((candidate) => candidate.name === ownerName);
+        if (!user) continue;
+        nextMembers.push({
+          name: user.name,
+          initials: user.initials,
+          color: user.color,
+          email: user.email,
+          isOwner: ownerName === newOwner,
+          assignedTFLs: 0,
+          addedBy: ownerName === newOwner ? 'Auto-added' : 'System',
+        });
+        memberNames.add(ownerName);
+      }
+
+      return { ...event, owner: newOwner, teamMembers: nextMembers };
+    };
+
+    setEvents((previous) => previous.map(updateOwner));
+    setSelectedTeamEvent((previous) => previous ? updateOwner(previous) : previous);
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {page === 'home' ? (
         <HomePage
-          onEventClick={() => setPage('event')}
+          onEventClick={handleOpenEvent}
           onCreateEvent={() => setCreateEventModalOpen(true)}
           events={events}
           onUpdateStatus={handleUpdateStatus}
@@ -14732,8 +14814,10 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
             setNewStudyModalOpen(true);
           }}
           onChangeOwner={handleSaveOwner}
+          onChangeEventOwner={handleChangeEventOwner}
           onToggleProjectStatus={handleToggleProjectStatus}
           onToggleStudyStatus={handleToggleStudyStatus}
+          recentEventIds={recentEventIdsByUser[currentUserName] ?? []}
         />
       ) : (
         <WorkspaceContent
@@ -14773,6 +14857,17 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         isOpen={teamModalOpen}
         onClose={() => setTeamModalOpen(false)}
         eventName={selectedTeamEvent?.name ?? ''}
+        initialTeamMembers={selectedTeamEvent ? (() => {
+          const baseMembers = selectedTeamEvent.teamMembers?.length ? selectedTeamEvent.teamMembers : MOCK_TEAM_MEMBERS;
+          const ownerExists = baseMembers.some((member) => member.name === selectedTeamEvent.owner);
+          const normalized = baseMembers.map((member) => ({ ...member, isOwner: member.name === selectedTeamEvent.owner }));
+          if (ownerExists) return normalized;
+          const owner = SYSTEM_USERS.find((user) => user.name === selectedTeamEvent.owner);
+          return owner ? [...normalized, { ...owner, isOwner: true, assignedTFLs: 0, addedBy: 'Auto-added' }] : normalized;
+        })() : undefined}
+        onOwnerChange={(owner) => {
+          if (selectedTeamEvent) handleChangeEventOwner(selectedTeamEvent.id, owner);
+        }}
       />
       <NewProjectModal
         isOpen={newProjectModalOpen}

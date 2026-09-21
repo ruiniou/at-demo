@@ -1591,6 +1591,7 @@ export interface EventTeamMemberModalProps {
   eventName: string;
   initialTeamMembers?: TeamMember[];
   initialTFLRows?: TFLRow[];
+  onOwnerChange?: (newOwner: string) => void;
 }
 
 export default function EventTeamMemberModal({
@@ -1599,6 +1600,7 @@ export default function EventTeamMemberModal({
   eventName,
   initialTeamMembers = MOCK_TEAM_MEMBERS,
   initialTFLRows = MOCK_TFL_ROWS,
+  onOwnerChange,
 }: EventTeamMemberModalProps) {
   const [activeTab, setActiveTab] = useState<"assignment" | "team">("assignment");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
@@ -1675,6 +1677,7 @@ export default function EventTeamMemberModal({
       }
       return withNewOwner;
     });
+    onOwnerChange?.(newOwnerName);
   };
 
   const handleAddMember = (user: typeof MOCK_USER_POOL[0]) => {

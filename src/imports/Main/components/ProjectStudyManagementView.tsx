@@ -38,7 +38,7 @@ function AvailabilitySwitch({ checked, disabled = false, label, onChange }: { ch
   );
 }
 
-function OwnerPicker({ value, onSelect, disabledAppearance = false }: { value: string; onSelect: (owner: string) => void; disabledAppearance?: boolean }) {
+export function OwnerPicker({ value, onSelect, disabledAppearance = false, ariaLabel = 'Select Owner' }: { value: string; onSelect: (owner: string) => void; disabledAppearance?: boolean; ariaLabel?: string }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
@@ -91,7 +91,7 @@ function OwnerPicker({ value, onSelect, disabledAppearance = false }: { value: s
         <span className={`truncate text-[12px] ${disabledAppearance ? 'text-graphite-40' : value ? 'text-text-primary' : 'text-text-secondary'}`}>{value || 'No Assignee'}</span>
       </button>
       {open && position && createPortal(
-        <div ref={popoverRef} role="dialog" aria-label="Select Study Owner" style={{ position: 'fixed', top: position.top, left: position.left, width: 260, zIndex: 9999 }} className="flex flex-col gap-[6px] rounded-[8px] border border-graphite-10 bg-white p-[4px] shadow-elevation-overlay">
+        <div ref={popoverRef} role="dialog" aria-label={ariaLabel} style={{ position: 'fixed', top: position.top, left: position.left, width: 260, zIndex: 9999 }} className="flex flex-col gap-[6px] rounded-[8px] border border-graphite-10 bg-white p-[4px] shadow-elevation-overlay">
           <div className="flex h-[32px] items-center gap-[6px] rounded-[4px] border border-border-default px-[8px] focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1/20">
             <img src={searchIconUrl} alt="" className="h-[13px] w-[13px] opacity-40" />
             <input ref={inputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search people..." className="min-w-0 flex-1 bg-transparent text-[12px] text-text-primary outline-none placeholder:text-text-secondary" />
@@ -221,7 +221,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
                     const canMaintainOwner = isAdmin || (isStudyOwner && study.owner === currentUserName);
                     return <tr key={study.id} className="h-[48px] bg-white hover:bg-black/[0.02]">
                       <td className="py-0 pl-[40px] pr-[16px]"><div className="flex h-[48px] items-center gap-[8px]"><MaskIcon src={stackIconUrl} className={`h-[16px] w-[16px] text-text-secondary ${effectiveDisabled ? 'opacity-50' : ''}`} /><span className={`font-medium ${effectiveDisabled ? 'text-graphite-40' : 'text-text-primary'}`}>{study.id}</span><Tag className={`h-[20px] py-0 pointer-events-none ${effectiveDisabled ? 'opacity-50' : ''}`}>{study.ta}</Tag></div></td>
-                      <td className="px-[10px] py-[4px]">{canMaintainOwner ? <OwnerPicker value={study.owner} disabledAppearance={effectiveDisabled} onSelect={(owner) => onChangeOwner(project.id, study.id, owner)} /> : <div className="flex min-h-[40px] items-center gap-[6px] px-[6px]"><Avatar name={study.owner || undefined} level="modal" disabled={effectiveDisabled} /><span className={`truncate text-[12px] ${effectiveDisabled ? 'text-graphite-40' : study.owner ? 'text-text-primary' : 'text-text-secondary'}`}>{study.owner || 'No Assignee'}</span></div>}</td>
+                      <td className="px-[10px] py-[4px]">{canMaintainOwner ? <OwnerPicker value={study.owner} disabledAppearance={effectiveDisabled} ariaLabel="Select Study Owner" onSelect={(owner) => onChangeOwner(project.id, study.id, owner)} /> : <div className="flex min-h-[40px] items-center gap-[6px] px-[6px]"><Avatar name={study.owner || undefined} level="modal" disabled={effectiveDisabled} /><span className={`truncate text-[12px] ${effectiveDisabled ? 'text-graphite-40' : study.owner ? 'text-text-primary' : 'text-text-secondary'}`}>{study.owner || 'No Assignee'}</span></div>}</td>
                       <td className="px-[16px] py-0"><AvailabilitySwitch checked={!effectiveDisabled} disabled={!isAdmin || projectDisabled} label={`${study.id} availability`} onChange={() => onToggleStudyStatus(project.id, study.id)} /></td>
                       <td className="w-[80px] px-[16px] py-0" />
                     </tr>;
