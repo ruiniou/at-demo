@@ -50,7 +50,6 @@ import teamIconUrl from "../../icons/team-line.svg";
 import searchLineIconUrl from "../../icons/search-line.svg";
 import filterIconUrl from "../../icons/filter-line.svg";
 import addLineIconUrl from "../../icons/add-line.svg";
-import arrowRightDoubleLineUrl from "../../icons/arrow-right-double-line.svg";
 import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
 import shiningFillIconUrl from "../../icons/shining-fill.svg";
@@ -61,7 +60,7 @@ import focusIconUrl from "../../icons/focus-3-line.svg";
 import barChartBoxAiIconUrl from "../../icons/bar-chart-box-ai-line.svg";
 import imageAiLineIconUrl from "../../icons/image-ai-line.svg";
 import chatAiFillIconUrl from "../../icons/chat-ai-4-fill.svg";
-import fileAiFillIconUrl from "../../icons/file-ai-fill.svg";
+import fileAiLineIconUrl from "../../icons/file-ai-line.svg";
 import gitBranchIconUrl from "../../icons/git-branch-line.svg";
 import resetRightIconUrl from "../../icons/reset-right-line.svg";
 import fileIconUrl from "../../icons/file-icon.svg";
@@ -79,7 +78,7 @@ import { FigureRenderPreviewModal } from "./components/FigureRenderPreviewModal"
 import { KMPlot } from "./components/KMPlot";
 import { CopilotScopeHeader } from "./components/CopilotScopeHeader";
 import { Button } from "../../components/ui/Button";
-import { OwnerPicker, ProjectStudyManagementView } from "./components/ProjectStudyManagementView";
+import { ProjectStudyManagementView } from "./components/ProjectStudyManagementView";
 import { NewProjectModal } from "./components/NewProjectModal";
 import { NewStudyModal } from "./components/NewStudyModal";
 import { ProjectItem, UserRole, INITIAL_PROJECTS, SYSTEM_USERS } from "./types/management";
@@ -2496,12 +2495,12 @@ function AICopilotPanel({
   programs,
   currentTableId,
   onHandoffToEventCopilot,
+  onComposerDirtyChange,
   copilotScope = 'tfl',
   onSelectScope,
   eventSessions = [],
   onSelectEventSession,
   onDeleteEventSession,
-  eventPanelTinted = true,
 }: {
   variant?: 'drawer' | 'incard';
   quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
@@ -2548,9 +2547,8 @@ function AICopilotPanel({
   programs?: ProgramItem[];
   currentTableId?: string;
   onHandoffToEventCopilot?: (userPrompt: string, targetTflIds: string[], sourceTflId: string) => void;
-  eventPanelTinted?: boolean;
+  onComposerDirtyChange?: (hasUnsentContent: boolean) => void;
 }) {
-  const useEventPanelTint = isEventCopilot && eventPanelTinted;
   const mapEventSessionMessage = (m: EventSessionMessage): Message => {
     if (m.summaryCardData) {
       return { type: 'event_summary_card', summaryCardData: m.summaryCardData, content: m.content };
@@ -2726,28 +2724,16 @@ function AICopilotPanel({
     setSelectedSession(sessionId);
   };
 
-  const handleNewTflSession = () => {
-    if (!isEventCopilot) {
-      setTflSessionMessages((prev) => ({
-        ...prev,
-        [selectedSession]: messages,
-      }));
-    }
-    const newId = `session-${Date.now()}`;
-    const newOption = { id: newId, name: 'New TFL Session' };
-    setSessionOptions((prev) => [newOption, ...prev]);
-    setTflSessionMessages((prev) => ({ ...prev, [newId]: [] }));
-    setSelectedSession(newId);
-    setMessages([]);
+  const handleNewSession = () => {
+    onNewEventSession?.();
   };
 
-  const handleNewSession = () => {
-    if (isEventCopilot) {
-      onNewEventSession?.();
-    } else {
-      handleNewTflSession();
-    }
-  };
+  const isPendingEventSessionDraft = Boolean(
+    activeEventSession?.id.startsWith('es-draft-') &&
+    !eventSessions.some((session) =>
+      session.id === activeEventSession.id || session.branches?.some((branch) => branch.id === activeEventSession.id)
+    )
+  );
 
   const handleRenameTflSession = (sessionId: string, newName: string) => {
     setSessionOptions((prev) =>
@@ -3646,38 +3632,37 @@ function AICopilotPanel({
       {/* Header */}
       {variant === 'incard' ? (
         <div className={`relative z-10 shrink-0 transition-colors ${
-          useEventPanelTint ? 'bg-bg-panel' : 'bg-white'
+          isEventCopilot ? 'bg-bg-panel' : 'bg-white'
         }`}>
           <PanelHeader
             noBorder
-            className={useEventPanelTint ? 'bg-bg-panel' : 'bg-white'}
+            className={isEventCopilot ? 'bg-bg-panel' : 'bg-white'}
             title={
               <CopilotScopeHeader
                 scope={isEventCopilot ? "event" : "tfl"}
                 eventSessions={eventSessions}
                 selectedEventSessionId={activeEventSession?.id || null}
+                selectedEventSessionName={activeEventSession?.name}
                 onSelectEventSession={(session) => onSelectEventSession?.(session)}
-                onNewEventSession={onNewEventSession}
                 onRenameEventSession={(id, newName) => onUpdateEventSession?.(id, { name: newName })}
                 tflSessions={sessionOptions}
                 selectedTflSessionId={selectedSession}
                 onSelectTflSession={handleSelectTflSession}
-                onNewTflSession={handleNewTflSession}
                 onRenameTflSession={handleRenameTflSession}
               />
             }
             actions={
               <div className="flex items-center gap-[4px]">
-                <TooltipText label={isEventCopilot ? "New Event Session" : "New TFL Session"}>
+                {isEventCopilot && !isPendingEventSessionDraft && <TooltipText label="New Event Session">
                   <button
                     type="button"
                     onClick={handleNewSession}
-                    aria-label={isEventCopilot ? "New Event Session" : "New TFL Session"}
+                    aria-label="New Event Session"
                     className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer"
                   >
                     <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
                   </button>
-                </TooltipText>
+                </TooltipText>}
                 <TooltipText label="Collapse AI Copilot">
                   <button
                     type="button"
@@ -3685,7 +3670,7 @@ function AICopilotPanel({
                     aria-label="Collapse AI Copilot"
                     className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer"
                   >
-                    <LocalIcon src={arrowRightDoubleLineUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                    <LocalIcon src={collapseIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
                   </button>
                 </TooltipText>
               </div>
@@ -3694,32 +3679,31 @@ function AICopilotPanel({
         </div>
       ) : (
         <div className={`relative z-10 shrink-0 h-[48px] flex items-center justify-between px-[12px] mb-[4px] transition-colors ${
-          useEventPanelTint ? 'bg-bg-panel' : 'bg-transparent'
+          isEventCopilot ? 'bg-bg-panel' : 'bg-transparent'
         }`}>
           <CopilotScopeHeader
             scope={isEventCopilot ? "event" : "tfl"}
             eventSessions={eventSessions}
             selectedEventSessionId={activeEventSession?.id || null}
+            selectedEventSessionName={activeEventSession?.name}
             onSelectEventSession={(session) => onSelectEventSession?.(session)}
-            onNewEventSession={onNewEventSession}
             onRenameEventSession={(id, newName) => onUpdateEventSession?.(id, { name: newName })}
             tflSessions={sessionOptions}
             selectedTflSessionId={selectedSession}
             onSelectTflSession={handleSelectTflSession}
-            onNewTflSession={handleNewTflSession}
             onRenameTflSession={handleRenameTflSession}
           />
           <div className="flex items-center gap-[4px]">
-            <TooltipText label={isEventCopilot ? "New Event Session" : "New TFL Session"}>
+            {isEventCopilot && !isPendingEventSessionDraft && <TooltipText label="New Event Session">
               <button
                 type="button"
                 onClick={handleNewSession}
-                aria-label={isEventCopilot ? "New Event Session" : "New TFL Session"}
+                aria-label="New Event Session"
                 className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer after:content-[''] after:absolute after:-inset-[8px]"
               >
                 <LocalIcon src={addLineIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
               </button>
-            </TooltipText>
+            </TooltipText>}
             <TooltipText label="Collapse AI Copilot">
               <button
                 type="button"
@@ -3727,7 +3711,7 @@ function AICopilotPanel({
                 aria-label="Collapse AI Copilot"
                 className="relative w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-black/5 active:scale-[0.96] shrink-0 cursor-pointer after:content-[''] after:absolute after:-inset-[8px]"
               >
-                <LocalIcon src={arrowRightDoubleLineUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
+                <LocalIcon src={collapseIconUrl} className="w-[16px] h-[16px]" color="var(--color-text-secondary)" />
               </button>
             </TooltipText>
           </div>
@@ -3738,7 +3722,7 @@ function AICopilotPanel({
       <div className="relative flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* Top compact fade (8px, avoids 12px scrollbar on right) */}
         <div className={`pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b z-10 ${
-          useEventPanelTint ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
+          isEventCopilot ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
         }`} />
 
         <div 
@@ -3784,20 +3768,21 @@ function AICopilotPanel({
               programs={programs}
               isExecutingInEventCopilot={!isEventCopilot && isExecutingInEventCopilot}
               onJumpToEvent={!isEventCopilot ? () => onSelectScope?.('event') : undefined}
-              panelTone={useEventPanelTint ? 'panel' : 'white'}
+              panelTone={isEventCopilot ? 'panel' : 'white'}
+              onContentStateChange={onComposerDirtyChange}
             />
           )}
         </div>
 
         {/* Bottom fade (16px, avoids 12px scrollbar on right) */}
         <div className={`pointer-events-none absolute bottom-0 left-0 right-[12px] h-[16px] bg-gradient-to-t z-10 ${
-          useEventPanelTint ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
+          isEventCopilot ? 'from-bg-panel to-transparent' : 'from-white to-transparent'
         }`} />
       </div>
 
       {/* Input Area */}
       <div data-ai-copilot-composer className={`shrink-0 p-[8px] flex flex-col gap-[4px] relative z-10 transition-colors ${
-        useEventPanelTint ? 'bg-bg-panel' : 'bg-transparent'
+        isEventCopilot ? 'bg-bg-panel' : 'bg-transparent'
       }`}>
         <div className="w-full flex flex-col gap-[4px] relative">
           {!isEventCopilot && isExecutingInEventCopilot && (
@@ -3851,7 +3836,8 @@ function AICopilotPanel({
               mentionOptions={mentionOptions}
               showMention={true}
               placeholder={isEventCopilot ? "Ask Event Copilot..." : "Ask TFL Copilot..."}
-              panelTone={useEventPanelTint ? 'panel' : 'white'}
+              panelTone={isEventCopilot ? 'panel' : 'white'}
+              onContentStateChange={onComposerDirtyChange}
             />
           ) : isCurrentTflPending ? (
             <ChatBox 
@@ -3879,7 +3865,8 @@ function AICopilotPanel({
               mentionOptions={mentionOptions}
               showMention={true}
               placeholder={isEventCopilot ? "Ask Event Copilot..." : "Ask TFL Copilot..."}
-              panelTone={useEventPanelTint ? 'panel' : 'white'}
+              panelTone={isEventCopilot ? 'panel' : 'white'}
+              onContentStateChange={onComposerDirtyChange}
             />
           ) : (
             <ChatBox 
@@ -3906,7 +3893,7 @@ function AICopilotPanel({
               mentionOptions={mentionOptions}
               showMention={true}
               placeholder={isEventCopilot ? "Ask Event Copilot..." : "Ask TFL Copilot..."}
-              panelTone={useEventPanelTint ? 'panel' : 'white'}
+              panelTone={isEventCopilot ? 'panel' : 'white'}
             />
           )}
           {messages.length === 0 && <p className="t-small text-[#D8DADA] text-center leading-[20px]">AI-generated content for reference only</p>}
@@ -3957,10 +3944,12 @@ type EventSessionMessage = {
   summaryCardData?: EventSummaryCardData;
 };
 
-type EventSession = {
+export type EventSession = {
   id: string;
   name: string;
   status: EventSessionStatus;
+  triggeredBy: string;
+  updatedAt: number;
   parentId?: string;       // set on branch sessions
   parentName?: string;     // display name of the parent session
   messages?: EventSessionMessage[];
@@ -3972,6 +3961,8 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
     id: 'es-1',
     name: 'Variable Replacement: TRTA → TRT01P',
     status: 'idle',
+    triggeredBy: 'Alex Kim',
+    updatedAt: Date.now() - 2 * 60 * 60 * 1000,
     messages: [
       { role: 'user', content: 'Replace variable TRTA with TRT01P across all demographic tables.' },
       {
@@ -4050,6 +4041,8 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
         id: 'es-1-b1',
         name: 'Safety Tables Only',
         status: 'completed',
+        triggeredBy: 'Emily Liu',
+        updatedAt: Date.now() - 3 * 24 * 60 * 60 * 1000,
         parentId: 'es-1',
         parentName: 'Variable Replacement: TRTA → TRT01P',
         messages: [
@@ -4072,6 +4065,8 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
         id: 'es-1-b2',
         name: 'Efficacy Tables Only',
         status: 'idle',
+        triggeredBy: 'James Park',
+        updatedAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
         parentId: 'es-1',
         parentName: 'Variable Replacement: TRTA → TRT01P',
         messages: [],
@@ -4082,6 +4077,8 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
     id: 'es-2',
     name: 'KM Plot Macro Update',
     status: 'processing',
+    triggeredBy: 'Emily Liu',
+    updatedAt: Date.now() - 35 * 60 * 1000,
     messages: [
       { role: 'user', content: 'Update the KM plot macro to use the new %KMPLOT_V2 syntax.' },
       { role: 'assistant', content: 'Scanning all figure outputs for %KMPLOT usage…' },
@@ -4091,12 +4088,16 @@ const MOCK_EVENT_SESSIONS: EventSession[] = [
     id: 'es-3',
     name: 'Shell Update Impact Check',
     status: 'idle',
+    triggeredBy: 'Sarah Chen',
+    updatedAt: Date.now() - 1 * 24 * 60 * 60 * 1000,
     messages: [],
   },
   {
     id: 'es-4',
     name: 'Demographics Table Sync',
     status: 'completed',
+    triggeredBy: 'Alex Kim',
+    updatedAt: Date.now() - 2 * 7 * 24 * 60 * 60 * 1000,
     messages: [
       { role: 'user', content: 'Sync the population filter across all demographics tables.' },
       { role: 'assistant', content: 'All 3 demographics tables have been updated with consistent population filters.' },
@@ -4380,23 +4381,21 @@ function PanelViewToggle({
   docType?: DocumentType;
 }) {
   return (
-    <div className="flex h-[28px] items-center rounded-[4px] border border-graphite-10 bg-bg-panel shrink-0 overflow-hidden">
-      <TooltipText label="Show Shell" className="h-full flex">
+    <div className="flex h-[28px] shrink-0 items-center gap-[1px] overflow-hidden rounded-[4px] border border-graphite-10 bg-bg-panel p-[1px]">
+      <TooltipText label="Show Shell" className="flex h-[24px]">
         <button
           onClick={() => onChange('shell')}
-          className={`flex h-full w-[40px] items-center justify-center relative rounded-[3px] shrink-0 transition-colors ${
-            value === 'shell' ? 'bg-white' : ''
+          className={`relative flex h-[24px] w-[40px] shrink-0 items-center justify-center rounded-[3px] active:scale-[0.96] transition-[background-color,color,scale] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
+            value === 'shell' ? 'bg-white' : 'hover:bg-black/5'
           }`}
         >
-          {value === 'shell' && (
-            <div aria-hidden className="absolute border-border-default border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
-          )}
-          <p className={`t-small whitespace-nowrap ${value === 'shell' ? 'text-text-primary' : 'text-text-secondary'}`}>
+          <span aria-hidden className={`pointer-events-none absolute inset-0 rounded-[3px] border-[0.6px] border-solid border-border-default transition-opacity duration-200 motion-reduce:transition-none ${value === 'shell' ? 'opacity-100' : 'opacity-0'}`} />
+          <p className={`t-small whitespace-nowrap transition-colors duration-200 motion-reduce:transition-none ${value === 'shell' ? 'text-text-primary' : 'text-text-secondary'}`}>
             Shell
           </p>
         </button>
       </TooltipText>
-      <TooltipText label={layout === 'vertical' ? "Stack View" : "Side-by-Side View"} className="h-full flex">
+      <TooltipText label={layout === 'vertical' ? "Stack View" : "Side-by-Side View"} className="flex h-[24px]">
         <button
           onClick={() => {
             if (value === 'both') {
@@ -4405,31 +4404,27 @@ function PanelViewToggle({
               onChange('both');
             }
           }}
-          className={`flex h-full w-[28px] items-center justify-center relative rounded-[3px] shrink-0 transition-colors ${
-            value === 'both' ? 'bg-white' : ''
+          className={`relative flex h-[24px] w-[28px] shrink-0 items-center justify-center rounded-[3px] active:scale-[0.96] transition-[background-color,color,scale] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
+            value === 'both' ? 'bg-white' : 'hover:bg-black/5'
           }`}
         >
-          {value === 'both' && (
-            <div aria-hidden className="absolute border-border-default border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
-          )}
-          <div className={`relative shrink-0 size-[16px] flex items-center justify-center ${layout === 'vertical' ? 'rotate-90' : ''}`}>
+          <span aria-hidden className={`pointer-events-none absolute inset-0 rounded-[3px] border-[0.6px] border-solid border-border-default transition-opacity duration-200 motion-reduce:transition-none ${value === 'both' ? 'opacity-100' : 'opacity-0'}`} />
+          <div className={`relative flex size-[16px] shrink-0 items-center justify-center transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${layout === 'vertical' ? 'rotate-90' : ''}`}>
             <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 13.334 12">
               <path d={SPLIT_ICON_PATH} fill={value === 'both' ? '#3C4242' : '#888E8E'} />
             </svg>
           </div>
         </button>
       </TooltipText>
-      <TooltipText label="Show Code Only" className="h-full flex">
+      <TooltipText label="Show Code Only" className="flex h-[24px]">
         <button
           onClick={() => onChange('code')}
-          className={`flex h-full w-[40px] items-center justify-center relative rounded-[3px] shrink-0 transition-colors ${
-            value === 'code' ? 'bg-white' : ''
+          className={`relative flex h-[24px] w-[40px] shrink-0 items-center justify-center rounded-[3px] active:scale-[0.96] transition-[background-color,color,scale] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
+            value === 'code' ? 'bg-white' : 'hover:bg-black/5'
           }`}
         >
-          {value === 'code' && (
-            <div aria-hidden className="absolute border-border-default border-[0.6px] border-solid inset-0 pointer-events-none rounded-[3px]" />
-          )}
-          <p className={`t-small whitespace-nowrap ${value === 'code' ? 'text-text-primary' : 'text-text-secondary'}`}>
+          <span aria-hidden className={`pointer-events-none absolute inset-0 rounded-[3px] border-[0.6px] border-solid border-border-default transition-opacity duration-200 motion-reduce:transition-none ${value === 'code' ? 'opacity-100' : 'opacity-0'}`} />
+          <p className={`t-small whitespace-nowrap transition-colors duration-200 motion-reduce:transition-none ${value === 'code' ? 'text-text-primary' : 'text-text-secondary'}`}>
             Code
           </p>
         </button>
@@ -4490,7 +4485,6 @@ function ViewToggleBar({
 
   const handleCopilotScopeClick = (nextScope: 'event' | 'tfl') => {
     if (nextScope === copilotScope) {
-      onOpenAICopilot?.();
       return;
     }
 
@@ -4539,46 +4533,75 @@ function ViewToggleBar({
       {/* 3. Panel View Toggle & AI Button (gap: 8px) */}
       <div className="flex items-center gap-[8px]">
         <PanelViewToggle value={panelView} onChange={onPanelViewChange} layout={panelLayout} onLayoutChange={onPanelLayoutChange} docType={docType} />
-        {onOpenAICopilot && !aiCopilotOpen && (
-          <TooltipText label="Open AI Copilot">
-            <button
-              type="button"
-              onClick={onOpenAICopilot}
-              className="relative flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] bg-brand-1 text-white shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-colors hover:bg-az-warning active:scale-[0.96]"
-              aria-label="Open AI Copilot"
+        {onOpenAICopilot && (
+          <div
+            className={`relative h-[28px] shrink-0 overflow-hidden transition-[width] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
+              aiCopilotOpen ? 'w-[91px]' : 'w-[28px]'
+            }`}
+          >
+            <TooltipText
+              label="Open AI Copilot"
+              className={`absolute right-0 top-0 flex h-[28px] w-[28px] transition-[opacity,scale,filter] duration-150 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
+                aiCopilotOpen ? 'pointer-events-none scale-[0.96] opacity-0 blur-[1px]' : 'scale-100 opacity-100 blur-0'
+              }`}
             >
-              <AtlasLogoIcon className="h-[16px] w-[16px] shrink-0" color="white" />
-            </button>
-          </TooltipText>
-        )}
-        {onOpenAICopilot && aiCopilotOpen && (
-          <div className="flex h-[28px] shrink-0 items-center overflow-hidden rounded-[4px] border border-graphite-10 bg-bg-panel" role="group" aria-label="AI Copilot scope">
-            {(['event', 'tfl'] as const).map((scopeOption) => {
-              const isActive = copilotScope === scopeOption;
-              const label = scopeOption === 'event' ? 'Event' : 'TFL';
-              const icon = scopeOption === 'event' ? chatAiFillIconUrl : fileAiFillIconUrl;
-              return (
-                <TooltipText key={scopeOption} label={`${label} Copilot${isActive ? ' · click to close' : ''}`} className="flex h-full">
-                  <button
-                    type="button"
-                    onClick={() => handleCopilotScopeClick(scopeOption)}
-                    className={`relative flex h-full items-center justify-center rounded-[3px] transition-colors active:scale-[0.98] ${
-                      isActive
-                        ? 'gap-[4px] bg-white px-[8px] text-brand-1'
-                        : 'w-[28px] text-text-secondary hover:bg-black/5 hover:text-text-primary'
-                    }`}
-                    aria-label={`${label} Copilot${isActive ? ', open' : ''}`}
-                    aria-pressed={isActive}
-                  >
-                    {isActive && (
-                      <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[3px] border-[0.6px] border-solid border-border-default" />
-                    )}
-                    <LocalIcon src={icon} className="h-[15px] w-[15px]" color={isActive ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />
-                    {isActive && <span className="t-small-medium leading-none">{label}</span>}
-                  </button>
-                </TooltipText>
-              );
-            })}
+              <button
+                type="button"
+                onClick={onOpenAICopilot}
+                className="relative flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] bg-brand-1 text-white shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-[background-color,scale] hover:bg-az-warning active:scale-[0.96]"
+                aria-label="Open AI Copilot"
+                aria-hidden={aiCopilotOpen}
+                tabIndex={aiCopilotOpen ? -1 : 0}
+              >
+                <AtlasLogoIcon className="h-[16px] w-[16px] shrink-0" color="white" />
+              </button>
+            </TooltipText>
+
+            <div
+              className={`absolute inset-0 flex h-[28px] items-center gap-[1px] overflow-hidden rounded-[4px] border border-graphite-10 bg-bg-panel p-[1px] transition-[opacity,scale,filter] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
+                aiCopilotOpen ? 'scale-100 opacity-100 blur-0' : 'pointer-events-none scale-[0.96] opacity-0 blur-[1px]'
+              }`}
+              role="group"
+              aria-label="AI Copilot scope"
+              aria-hidden={!aiCopilotOpen}
+            >
+              {(['event', 'tfl'] as const).map((scopeOption) => {
+                const isActive = copilotScope === scopeOption;
+                const label = scopeOption === 'event' ? 'Event' : 'TFL';
+                const icon = scopeOption === 'event' ? chatAiFillIconUrl : fileAiLineIconUrl;
+                return (
+                  <TooltipText key={scopeOption} label="Switch Copilot Mode" className="flex h-[24px]">
+                    <button
+                      type="button"
+                      onClick={() => handleCopilotScopeClick(scopeOption)}
+                      className={`relative flex h-[24px] items-center justify-center overflow-hidden rounded-[3px] active:scale-[0.96] transition-[width,background-color,color,scale] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
+                        isActive
+                          ? 'w-[58px] bg-white text-brand-1'
+                          : 'w-[28px] text-text-secondary hover:bg-black/5 hover:text-text-primary'
+                      }`}
+                      aria-label={`${label} Copilot${isActive ? ', open' : ''}`}
+                      aria-pressed={isActive}
+                      tabIndex={aiCopilotOpen ? 0 : -1}
+                    >
+                      {isActive && (
+                        <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[3px] border-[0.6px] border-solid border-border-default" />
+                      )}
+                      <span className={`flex min-w-0 items-center justify-center transition-[gap] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${isActive ? 'gap-[4px]' : 'gap-0'}`}>
+                        <LocalIcon src={icon} className="h-[15px] w-[15px] shrink-0" color={isActive ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />
+                        <span
+                          className={`t-small-medium overflow-hidden whitespace-nowrap leading-none transition-[max-width,opacity] duration-200 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
+                            isActive ? 'max-w-[32px] opacity-100' : 'max-w-0 opacity-0'
+                          }`}
+                          aria-hidden={!isActive}
+                        >
+                          {label}
+                        </span>
+                      </span>
+                    </button>
+                  </TooltipText>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
@@ -5045,13 +5068,11 @@ function WorkspaceDivider({
   onDrag,
   onDragStart,
   onDragEnd,
-  transparentDefault = false,
   className = "",
 }: {
   onDrag: (delta: number) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
-  transparentDefault?: boolean;
   className?: string;
 }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -5103,9 +5124,7 @@ function WorkspaceDivider({
     >
       <div className="absolute inset-y-0 -left-[4px] -right-[4px] z-10 cursor-col-resize" />
       {/* 缝隙填充底线：扣掉 8px 长度（上下各缩进 4px，带圆角柔化），避免卡片圆角转角处露亮线 */}
-      <div className={`absolute inset-x-0 top-[4px] bottom-[4px] w-full rounded-full transition-[background-color] duration-500 ${
-        transparentDefault ? 'bg-transparent' : 'bg-bg-panel'
-      }`} />
+      <div className="absolute inset-x-0 top-[4px] bottom-[4px] w-full bg-bg-panel rounded-full" />
       <div className={`absolute inset-x-0 top-[4px] bottom-[4px] w-full bg-brand-1 rounded-full transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
@@ -5236,13 +5255,11 @@ function HorizontalWorkspaceDivider({
   onDrag,
   onDragStart,
   onDragEnd,
-  transparentDefault = false,
   className = "",
 }: {
   onDrag: (delta: number) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
-  transparentDefault?: boolean;
   className?: string;
 }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -5294,9 +5311,7 @@ function HorizontalWorkspaceDivider({
     >
       <div className="absolute inset-x-0 -top-[4px] -bottom-[4px] z-10" />
       {/* 缝隙填充底线：扣掉 8px 长度（左右各缩进 4px，带圆角柔化），避免卡片圆角转角处露亮线 */}
-      <div className={`absolute inset-y-0 left-[4px] right-[4px] h-full rounded-full transition-[background-color] duration-500 ${
-        transparentDefault ? 'bg-transparent' : 'bg-bg-panel'
-      }`} />
+      <div className="absolute inset-y-0 left-[4px] right-[4px] h-full bg-bg-panel rounded-full" />
       <div className={`absolute inset-y-0 left-[4px] right-[4px] h-full bg-brand-1 rounded-full transition-opacity duration-150 ${isHovered || isDragging ? 'opacity-100 delay-200' : 'opacity-0 delay-0'}`} />
     </div>
   );
@@ -11778,7 +11793,6 @@ function WorkspaceContent({
   onLogout?: () => void;
 }) {
   const [aiLayoutVariant, setAiLayoutVariant] = useState<'drawer' | 'incard'>('incard');
-  const [eventVisualVariant, setEventVisualVariant] = useState<'panel-tint' | 'page-gradient'>('panel-tint');
   const [metaDiffItems, setMetaDiffItems] = useState<MetaDiffItem[]>([]);
   const [metaUpdateActive, setMetaUpdateActive] = useState(false);
   const [metaUpdateProcessing, setMetaUpdateProcessing] = useState(false);
@@ -11913,6 +11927,13 @@ function WorkspaceContent({
   const [idlistBaseline, setIdlistBaseline] = useState<{ frozenUntilIndex: number | null; pageSepActive: boolean; pageColumnCounts: Record<string, number> } | null>(null);
   const [aiInputValue, setAiInputValue] = useState("");
   const [aiInputFocusTrigger, setAiInputFocusTrigger] = useState(0);
+  const [isAiComposerDirty, setIsAiComposerDirty] = useState(false);
+  const [pendingDraftExit, setPendingDraftExit] = useState<
+    | { type: 'close' }
+    | { type: 'scope'; scope: 'event' | 'tfl' }
+    | { type: 'session'; session: EventSession }
+    | null
+  >(null);
 
   const metadataOpenRef = useRef(metadataOpen);
   metadataOpenRef.current = metadataOpen;
@@ -12462,8 +12483,48 @@ function WorkspaceContent({
     setAiCopilotOpen((prev) => !prev);
   };
 
+  const isPendingEventSessionDraft = Boolean(
+    selectedEventSession?.id.startsWith('es-draft-') &&
+    !eventSessions.some((session) =>
+      session.id === selectedEventSession.id || session.branches?.some((branch) => branch.id === selectedEventSession.id)
+    )
+  );
+
+  const completeDraftExit = (
+    action: NonNullable<typeof pendingDraftExit>,
+    discardDraft = false,
+  ) => {
+    if (discardDraft) {
+      setAiInputValue("");
+      setIsAiComposerDirty(false);
+      setSelectedEventSession(eventSessions[0] || null);
+      setEventProgressData(null);
+    }
+
+    if (action.type === 'close') {
+      setAiCopilotOpen(false);
+    } else if (action.type === 'scope') {
+      setCopilotScope(action.scope);
+    } else {
+      setSelectedEventSession(action.session);
+    }
+    setPendingDraftExit(null);
+  };
+
+  const requestDraftExit = (action: NonNullable<typeof pendingDraftExit>) => {
+    if (!isPendingEventSessionDraft) {
+      completeDraftExit(action);
+      return;
+    }
+    if (isAiComposerDirty) {
+      setPendingDraftExit(action);
+      return;
+    }
+    completeDraftExit(action, true);
+  };
+
   const handleCloseAICopilot = () => {
-    setAiCopilotOpen(false);
+    requestDraftExit({ type: 'close' });
   };
 
   const handlePanelViewChange = (v: PanelView) => {
@@ -12471,35 +12532,45 @@ function WorkspaceContent({
   };
 
   const handleUpdateEventSession = (sessionId: string, updates: Partial<EventSession>) => {
-    setEventSessions((prev) =>
-      prev.map((s) => {
+    setEventSessions((prev) => {
+      let foundSession = false;
+      const nextSessions = prev.map((s) => {
         if (s.id === sessionId) {
-          return { ...s, ...updates };
+          foundSession = true;
+          return { ...s, ...updates, updatedAt: updates.updatedAt ?? Date.now() };
         }
         if (s.branches) {
           return {
             ...s,
-            branches: s.branches.map((b) => (b.id === sessionId ? { ...b, ...updates } : b)),
+            branches: s.branches.map((b) => {
+              if (b.id !== sessionId) return b;
+              foundSession = true;
+              return { ...b, ...updates, updatedAt: updates.updatedAt ?? Date.now() };
+            }),
           };
         }
         return s;
-      })
-    );
-    setSelectedEventSession((curr) => (curr && curr.id === sessionId ? { ...curr, ...updates } : curr));
+      });
+
+      const shouldCreateDraft =
+        !foundSession &&
+        selectedEventSession?.id === sessionId &&
+        selectedEventSession.id.startsWith('es-draft-') &&
+        Boolean(updates.messages?.length);
+
+      return shouldCreateDraft
+        ? [{ ...selectedEventSession, ...updates, updatedAt: updates.updatedAt ?? Date.now() }, ...nextSessions]
+        : nextSessions;
+    });
+    setSelectedEventSession((curr) => (curr && curr.id === sessionId ? { ...curr, ...updates, updatedAt: updates.updatedAt ?? Date.now() } : curr));
   };
 
   const handleDeleteEventSession = (sessionId: string) => {
     setEventSessions((prev) => {
       const nextSessions = prev.filter((s) => s.id !== sessionId);
       if (nextSessions.length === 0) {
-        const fallbackSession: EventSession = {
-          id: `es-new-${Date.now()}`,
-          name: 'New Event Session',
-          status: 'idle',
-          messages: [],
-        };
-        setSelectedEventSession(fallbackSession);
-        return [fallbackSession];
+        setSelectedEventSession(null);
+        return [];
       }
       if (selectedEventSession?.id === sessionId || (!selectedEventSession && prev[0]?.id === sessionId)) {
         setSelectedEventSession(nextSessions[0]);
@@ -12698,6 +12769,8 @@ function WorkspaceContent({
       id: `es-diffuse-${Date.now()}`,
       name: sessionTitle,
       status: "idle",
+      triggeredBy: currentUserName,
+      updatedAt: Date.now(),
       parentId: sourceTflId,
       parentName: sourceTableName,
       messages: [
@@ -12742,24 +12815,25 @@ function WorkspaceContent({
         variant={variant}
         isEventCopilot={copilotScope === 'event'}
         copilotScope={copilotScope}
-        onSelectScope={setCopilotScope}
+        onSelectScope={(scope) => requestDraftExit({ type: 'scope', scope })}
         eventSessions={eventSessions}
-        onSelectEventSession={setSelectedEventSession}
+        onSelectEventSession={(session) => requestDraftExit({ type: 'session', session })}
         activeEventSession={currentEventSession}
         onNewEventSession={() => {
+          if (isPendingEventSessionDraft) return;
           const newSession: EventSession = {
-            id: `es-new-${Date.now()}`,
-            name: 'New Event Session',
+            id: `es-draft-${Date.now()}`,
+            name: 'New Session',
             status: 'idle',
+            triggeredBy: currentUserName,
+            updatedAt: Date.now(),
             messages: [],
           };
-          setEventSessions((prev) => [newSession, ...prev]);
           setSelectedEventSession(newSession);
           setEventProgressData(null);
         }}
         onUpdateEventSession={handleUpdateEventSession}
         onDeleteEventSession={handleDeleteEventSession}
-        eventPanelTinted={eventVisualVariant === 'panel-tint'}
         onStartEventExecution={handleStartEventExecution}
         onCompleteTflExecution={handleCompleteTflExecution}
         onSkipTflExecution={handleSkipTflExecution}
@@ -12775,6 +12849,7 @@ function WorkspaceContent({
         programs={programs}
         currentTableId={selectedTable?.id || selectedId}
         onHandoffToEventCopilot={handleHandoffToEventCopilot}
+        onComposerDirtyChange={setIsAiComposerDirty}
         quoteInsertRef={quoteInsertRef}
         panelWidth={aiCopilotWidth}
         onClose={handleCloseAICopilot}
@@ -12818,20 +12893,9 @@ function WorkspaceContent({
     );
   };
 
-  const showEventPageGradient = aiCopilotOpen && copilotScope === 'event' && eventVisualVariant === 'page-gradient';
-
   return (
-    <div className="relative flex h-full min-w-0 flex-1 overflow-hidden bg-bg-panel">
-      <div
-        aria-hidden
-        className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ease-[cubic-bezier(0.2,0,0,1)] ${
-          showEventPageGradient ? 'opacity-100' : 'opacity-0'
-        }`}
-        style={{
-          background: 'linear-gradient(180deg, var(--bg-light, #F8F7F7) 0%, var(--Light-AZ-Secondary, #F4E8EE) 45.97%, var(--Mulberry-20, #E6CCDC) 95.25%)',
-        }}
-      />
-      <div ref={workspaceContainerRef} className="relative z-10 flex min-w-0 flex-1 overflow-hidden pl-[4px]">
+    <div className="flex h-full min-w-0 flex-1 overflow-hidden bg-bg-panel">
+      <div ref={workspaceContainerRef} className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         <div
           className="shrink-0 overflow-hidden"
           style={{
@@ -12840,9 +12904,7 @@ function WorkspaceContent({
             transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
           }}
         >
-          <div className={`flex h-full w-full flex-col transition-[background-color] duration-500 ease-[cubic-bezier(0.2,0,0,1)] ${
-            showEventPageGradient ? 'bg-transparent' : 'bg-bg-panel'
-          }`}>
+          <div className="flex h-full w-full flex-col bg-bg-panel">
             <div className="flex h-[52px] shrink-0 items-center gap-[8px] px-[10px]">
               <TooltipText label="Back to Home">
                 <button
@@ -13025,25 +13087,24 @@ function WorkspaceContent({
                       <p className="t-small font-medium text-text-primary">No matching deliverables</p>
                       <p className="text-[11px] text-text-secondary">Try adjusting your filters or search query</p>
                     </div>
-                    <button
-                      type="button"
+                    <Button
+                      variant="primary"
+                      size="sm"
                       onClick={() => {
                         setTreeSearchQuery('');
                         handleResetAllFilters();
                       }}
-                      className="mt-[4px] inline-flex items-center gap-[4px] px-[10px] py-[4px] rounded-[4px] bg-brand-1 text-white text-[11px] font-medium hover:bg-brand-1/90 cursor-pointer transition-all"
+                      className="mt-[4px]"
                     >
                       Reset all filters
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Tree List Bottom-Left Controls — always visible */}
-            <div className={`shrink-0 flex flex-col border-t border-graphite-10 transition-[background-color] duration-500 ease-[cubic-bezier(0.2,0,0,1)] ${
-              showEventPageGradient ? 'bg-transparent' : 'bg-bg-panel'
-            }`}>
+            <div className="shrink-0 flex flex-col border-t border-graphite-10 bg-bg-panel">
               {/* Filter UI Switcher */}
               <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
                 <span className="text-[11px] text-text-secondary whitespace-nowrap">Filter UI</span>
@@ -13072,20 +13133,6 @@ function WorkspaceContent({
                 />
               </div>
 
-              {/* Event Copilot Visual Treatment */}
-              <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
-                <span className="text-[11px] text-text-secondary whitespace-nowrap">Event Style</span>
-                <SegmentedControl
-                  size="sm"
-                  value={eventVisualVariant}
-                  onChange={(val) => setEventVisualVariant(val as 'panel-tint' | 'page-gradient')}
-                  options={[
-                    { label: "Panel", value: "panel-tint" },
-                    { label: "Page", value: "page-gradient" },
-                  ]}
-                />
-              </div>
-
               <DemoIdentityControls currentRole={currentRole} currentUserName={currentUserName} onSwitchRole={onSwitchRole} onLogout={onLogout} />
             </div>
           </div>
@@ -13094,7 +13141,6 @@ function WorkspaceContent({
         {/* TreeList ↔ Main panel divider */}
         {treeListOpen && (
           <WorkspaceDivider
-            transparentDefault={showEventPageGradient}
             onDragStart={() => setIsResizing(true)}
             onDragEnd={() => setIsResizing(false)}
             onDrag={(delta) => setTreeListWidth((width) => clamp(width + delta, constraints.treeList.min, constraints.treeList.max))}
@@ -13193,7 +13239,6 @@ function WorkspaceContent({
                   {panelView === 'both' && (
                     panelLayout === 'vertical' ? (
                       <HorizontalWorkspaceDivider
-                        transparentDefault={showEventPageGradient}
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellHeight((h) => {
@@ -13205,7 +13250,6 @@ function WorkspaceContent({
                       />
                     ) : (
                       <WorkspaceDivider
-                        transparentDefault={showEventPageGradient}
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellPreviewWidth((w) => clamp(w + delta, constraints.shellPreview.min, dynamicShellMax))}
@@ -13233,7 +13277,6 @@ function WorkspaceContent({
                 {aiLayoutVariant === 'incard' && aiCopilotOpen && (
                   <>
                     <WorkspaceDivider
-                      transparentDefault={showEventPageGradient}
                       onDragStart={() => setIsResizing(true)}
                       onDragEnd={() => setIsResizing(false)}
                       onDrag={(delta) => setAiCopilotWidth((w) => clamp(w - delta, constraints.aiCopilot.min, constraints.aiCopilot.max))}
@@ -13330,7 +13373,6 @@ function WorkspaceContent({
                   {shellPreviewOpen && codeOpen && (
                     panelLayout === 'vertical' ? (
                       <HorizontalWorkspaceDivider
-                        transparentDefault={showEventPageGradient}
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellHeight((h) => {
@@ -13342,7 +13384,6 @@ function WorkspaceContent({
                       />
                     ) : (
                       <WorkspaceDivider
-                        transparentDefault={showEventPageGradient}
                         onDragStart={() => setIsResizing(true)}
                         onDragEnd={() => setIsResizing(false)}
                         onDrag={(delta) => setShellPreviewWidth((width) => clamp(width + delta, constraints.shellPreview.min, dynamicShellMax))}
@@ -13374,7 +13415,6 @@ function WorkspaceContent({
                 {aiLayoutVariant === 'incard' && aiCopilotOpen && (
                   <>
                     <WorkspaceDivider
-                      transparentDefault={showEventPageGradient}
                       onDragStart={() => setIsResizing(true)}
                       onDragEnd={() => setIsResizing(false)}
                       onDrag={(delta) => setAiCopilotWidth((w) => clamp(w - delta, constraints.aiCopilot.min, constraints.aiCopilot.max))}
@@ -13382,7 +13422,7 @@ function WorkspaceContent({
                     <div
                       style={{ width: `${aiCopilotWidth}px` }}
                       className={`h-full flex flex-col min-w-[320px] max-w-[560px] overflow-hidden shrink-0 rounded-[12px] border border-graphite-10 shadow-card-mulberry transition-colors ${
-                        copilotScope === 'event' && eventVisualVariant === 'panel-tint' ? 'bg-bg-panel' : 'bg-white'
+                        copilotScope === 'event' ? 'bg-bg-panel' : 'bg-white'
                       }`}
                     >
                       {renderAICopilotComponent('incard')}
@@ -13413,7 +13453,6 @@ function WorkspaceContent({
           <>
             {aiCopilotOpen && (
               <WorkspaceDivider
-                transparentDefault={showEventPageGradient}
                 onDragStart={() => setIsResizing(true)}
                 onDragEnd={() => setIsResizing(false)}
                 onDrag={(delta) => setAiCopilotWidth((width) => clamp(width - delta, constraints.aiCopilot.min, dynamicAiMax))}
@@ -13428,7 +13467,7 @@ function WorkspaceContent({
               }}
             >
               <div className={`h-full w-full flex flex-col overflow-hidden rounded-[12px] border border-graphite-10 shadow-card-mulberry transition-colors ${
-                copilotScope === 'event' && eventVisualVariant === 'panel-tint' ? 'bg-bg-panel' : 'bg-white'
+                copilotScope === 'event' ? 'bg-bg-panel' : 'bg-white'
               }`}>
                 {renderAICopilotComponent('drawer')}
               </div>
@@ -13449,6 +13488,20 @@ function WorkspaceContent({
           const program = programs.find((item) => item.name === modalState.programName);
           if (program) handleToggleLock(program.id);
           setModalState({ type: null });
+        }}
+      />
+
+      <WorkspaceModal
+        isOpen={pendingDraftExit !== null}
+        onClose={() => setPendingDraftExit(null)}
+        title="Discard unsent message?"
+        description="This session has not been created yet. Your unsent message will be lost."
+        primaryLabel="Discard"
+        secondaryLabel="Keep editing"
+        dangerPrimary
+        onSecondary={() => setPendingDraftExit(null)}
+        onPrimary={() => {
+          if (pendingDraftExit) completeDraftExit(pendingDraftExit, true);
         }}
       />
 
@@ -13923,7 +13976,6 @@ function HomePage({
   onOpenNewProject,
   onOpenNewStudy,
   onChangeOwner,
-  onChangeEventOwner,
   onToggleProjectStatus,
   onToggleStudyStatus,
   recentEventIds,
@@ -13950,14 +14002,13 @@ function HomePage({
   onOpenNewProject: () => void;
   onOpenNewStudy: (projectId?: string) => void;
   onChangeOwner: (projectId: string, studyId: string, owner: string) => void;
-  onChangeEventOwner: (eventId: string, owner: string) => void;
   onToggleProjectStatus: (projectId: string) => void;
   onToggleStudyStatus: (projectId: string, studyId: string) => void;
   recentEventIds: string[];
 }) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedTA, setSelectedTA] = useState<string>('All');
-  const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
+  const [assignedToMeOnly, setAssignedToMeOnly] = useState(true);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'name-asc'>('date-desc');
   const [isResizing, setIsResizing] = useState(false);
@@ -14639,7 +14690,6 @@ function HomePage({
                                           const isMenuOpen = openActionMenuId === `table-${ev.id}`;
                                           const isEventOwner = currentUserName === ev.owner;
                                           const isEventTeamMember = isEventOwner || Boolean(ev.teamMembers?.some((member) => member.name === currentUserName));
-                                          const canChangeEventOwner = currentUserName === std.owner || isEventOwner;
                                           const actionButtons = [
                                             { icon: barChartIconUrl, label: 'View Dashboard' },
                                             ...(isEventTeamMember
@@ -14678,12 +14728,8 @@ function HomePage({
                                               </td>
 
                                               {/* Event Owner */}
-                                              <td className="px-[10px] py-[4px] whitespace-nowrap" onClick={(event) => event.stopPropagation()}>
-                                                {canChangeEventOwner ? (
-                                                  <OwnerPicker value={ev.owner} ariaLabel="Select Event Owner" onSelect={(owner) => onChangeEventOwner(ev.id, owner)} />
-                                                ) : (
-                                                  <ReadOnlyOwner name={ev.owner} />
-                                                )}
+                                              <td className="px-[10px] py-[4px] whitespace-nowrap">
+                                                <ReadOnlyOwner name={ev.owner} />
                                               </td>
 
                                               {/* Actions - Collapsed into Ellipsis (...) */}
@@ -14882,7 +14928,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setEvents(prev => prev.filter(e => e.id !== eventId));
   };
 
-  const handleCreateEvent = (eventData: { name: string; project: string; study: string }) => {
+  const handleCreateEvent = (eventData: { name: string; project: string; study: string; owner: string }) => {
     const newEvent: EventCardData = {
       id: `e${events.length + 1}`,
       name: eventData.name,
@@ -14890,7 +14936,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
       project: eventData.project,
       study: eventData.study,
       creator: currentUserName,
-      owner: currentUserName,
+      owner: eventData.owner,
       createdDate: new Date().toISOString().split('T')[0],
       status: 'ai-processing',
     };
@@ -14974,7 +15020,6 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
             setNewStudyModalOpen(true);
           }}
           onChangeOwner={handleSaveOwner}
-          onChangeEventOwner={handleChangeEventOwner}
           onToggleProjectStatus={handleToggleProjectStatus}
           onToggleStudyStatus={handleToggleStudyStatus}
           recentEventIds={recentEventIdsByUser[currentUserName] ?? []}

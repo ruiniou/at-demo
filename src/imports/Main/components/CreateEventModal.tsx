@@ -223,7 +223,7 @@ const STUDY_HISTORICAL_EVENTS: Record<
   },
 };
 
-import { ProjectItem, UserRole } from "../types/management";
+import { ProjectItem, SYSTEM_USERS, UserRole } from "../types/management";
 
 // ==================== Main Modal ====================
 
@@ -240,7 +240,7 @@ export default function CreateEventModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onCreateEvent: (eventData: { name: string; project: string; study: string }) => void;
+  onCreateEvent: (eventData: { name: string; project: string; study: string; owner: string }) => void;
   projectsList?: ProjectItem[];
   currentRole?: UserRole;
   currentUserName?: string;
@@ -254,6 +254,7 @@ export default function CreateEventModal({
   const [studyCode, setStudyCode] = useState<string | null>(null);
   const [isStudyNew, setIsStudyNew] = useState(false);
   const [eventName, setEventName] = useState("");
+  const [eventOwner, setEventOwner] = useState<string | null>(null);
   const [ogemValue, setOgemValue] = useState<string | null>("12.8");
   const hasStudyContext = Boolean(defaultProjectId && defaultStudyId);
 
@@ -321,6 +322,10 @@ export default function CreateEventModal({
     { label: "12.7", value: "12.7" },
     { label: "12.6", value: "12.6" },
   ];
+  const eventOwnerOptions: DropdownOption[] = SYSTEM_USERS.map((user) => ({
+    label: user.name,
+    value: user.name,
+  }));
 
   useEffect(() => {
     if (!isOpen) return;
@@ -333,7 +338,12 @@ export default function CreateEventModal({
     );
     setIsProjectNew(false);
     setIsStudyNew(false);
-  }, [isOpen, hasStudyContext, defaultProjectId, defaultStudyId, defaultTherapeuticArea]);
+    setEventOwner(
+      currentUserName && SYSTEM_USERS.some((user) => user.name === currentUserName)
+        ? currentUserName
+        : null
+    );
+  }, [isOpen, hasStudyContext, defaultProjectId, defaultStudyId, defaultTherapeuticArea, currentUserName]);
 
   // Derive Study state: UNSELECTED | NEW | EXISTING
   const studyState: "UNSELECTED" | "NEW" | "EXISTING" = !studyCode
@@ -375,7 +385,7 @@ export default function CreateEventModal({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
-  const fieldsFilled = !!taValue && !!projectCode && !!studyCode && !!eventName.trim() && !!ogemValue;
+  const fieldsFilled = !!taValue && !!projectCode && !!studyCode && !!eventName.trim() && !!eventOwner && !!ogemValue;
 
   const requiredFilesUploaded =
     (adamStatus === "uploaded" || adamStatus === "use-existing") &&
@@ -394,6 +404,7 @@ export default function CreateEventModal({
       name: eventName,
       project: selectedProjectLabel,
       study: selectedStudyLabel,
+      owner: eventOwner || "",
     });
     // Reset state
     setEventName("");
@@ -402,6 +413,7 @@ export default function CreateEventModal({
     setIsProjectNew(false);
     setStudyCode(null);
     setIsStudyNew(false);
+    setEventOwner(null);
     setOgemValue("12.8");
     setAdamStatus("pending");
     setAdamFile("");
@@ -474,6 +486,7 @@ export default function CreateEventModal({
                   }}
                 />
                 <Input label="Event Name" required placeholder="Required" value={eventName} onChange={(e) => setEventName(e.target.value)} />
+                <Dropdown label="Event Owner" required placeholder="Required" options={eventOwnerOptions} value={eventOwner} onChange={setEventOwner} />
                 <Dropdown label="O_GEM Version" required placeholder="Required" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
                 <OptionalSection />
               </div>

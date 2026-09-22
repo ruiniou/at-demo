@@ -478,6 +478,7 @@ export interface ChatBoxProps {
   placeholder?: string;
   className?: string;
   panelTone?: 'panel' | 'white';
+  onContentStateChange?: (hasUnsentContent: boolean) => void;
 }
 
 export default function ChatBox({
@@ -505,6 +506,7 @@ export default function ChatBox({
   placeholder,
   className = "",
   panelTone = 'white',
+  onContentStateChange,
 }: ChatBoxProps) {
   // --- Core Functional States ---
   const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -628,6 +630,10 @@ export default function ChatBox({
   // Tracks whether the contenteditable has any real content (for placeholder + button state)
   const [hasContent, setHasContent] = useState(false);
   const [isMultiLine, setIsMultiLine] = useState(false);
+
+  useEffect(() => {
+    onContentStateChange?.(hasContent || attachments.length > 0);
+  }, [attachments.length, hasContent, onContentStateChange]);
 
   const editableRef = useRef<HTMLDivElement>(null);
   // We still keep a textarea ref for the pending/single-line fallback input

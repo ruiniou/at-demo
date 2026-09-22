@@ -78,7 +78,7 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
 
     if (!projectId) newErrors.project = 'Please select a project';
     const trimmedStudy = studyName.trim();
-    if (!trimmedStudy) newErrors.study = 'Study Name is required';
+    if (!trimmedStudy) newErrors.study = 'Study Code is required';
     if (!ta) newErrors.ta = 'Please select a TA';
     if (!selectedOwner) newErrors.owner = 'Please assign a Study Owner';
 
@@ -141,7 +141,7 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
             />
 
             <FormInputField
-              label="Study Name"
+              label="Study Code"
               required
               value={studyName}
               error={errors.study || undefined}

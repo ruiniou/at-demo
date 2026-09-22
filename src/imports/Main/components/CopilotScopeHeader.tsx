@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import gitBranchIconUrl from "../../../icons/git-branch-line.svg";
-import addLineIconUrl from "../../../icons/add-line.svg";
 import editIconUrl from "../../../icons/edit-2-line.svg";
 import { Tooltip } from "../../../components/ui/Tooltip";
+import { Avatar } from "../../../components/ui/Avatar";
 import type { EventSession } from "../Main";
 
 // Helper for icon color filtering
@@ -53,21 +53,31 @@ function ChevronDownIcon({ className = "size-[12px]", color = "currentColor" }: 
   );
 }
 
+function formatRelativeTime(updatedAt: number) {
+  const elapsedMinutes = Math.max(0, Math.floor((Date.now() - updatedAt) / 60000));
+  if (elapsedMinutes < 1) return "now";
+  if (elapsedMinutes < 60) return `${elapsedMinutes}m`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `${elapsedHours}h`;
+  const elapsedDays = Math.floor(elapsedHours / 24);
+  if (elapsedDays < 7) return `${elapsedDays}d`;
+  return `${Math.floor(elapsedDays / 7)}w`;
+}
+
 export interface CopilotScopeHeaderProps {
   scope: "event" | "tfl";
 
   // Event sessions
   eventSessions: EventSession[];
   selectedEventSessionId: string | null;
+  selectedEventSessionName?: string;
   onSelectEventSession: (session: EventSession) => void;
-  onNewEventSession?: () => void;
   onRenameEventSession?: (sessionId: string, newName: string) => void;
 
   // TFL sessions
   tflSessions: { id: string; name: string }[];
   selectedTflSessionId: string;
   onSelectTflSession: (id: string) => void;
-  onNewTflSession?: () => void;
   onRenameTflSession?: (sessionId: string, newName: string) => void;
 }
 
@@ -75,17 +85,16 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
   scope,
   eventSessions,
   selectedEventSessionId,
+  selectedEventSessionName,
   onSelectEventSession,
-  onNewEventSession,
   onRenameEventSession,
   tflSessions,
   selectedTflSessionId,
   onSelectTflSession,
-  onNewTflSession,
   onRenameTflSession,
 }) => {
   const [openDropdown, setOpenDropdown] = useState<"event" | "tfl" | null>(null);
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number; maxHeight: number } | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number; maxHeight: number } | null>(null);
 
   const eventButtonRef = useRef<HTMLButtonElement | null>(null);
   const tflButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -106,12 +115,17 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
     if (!targetBtn) return;
     const rect = targetBtn.getBoundingClientRect();
     const panel = targetBtn.closest<HTMLElement>("[data-ai-copilot-panel]");
+    const panelRect = panel?.getBoundingClientRect();
     const composer = panel?.querySelector<HTMLElement>("[data-ai-copilot-composer]");
     const bottomBoundary = composer?.getBoundingClientRect().top ?? window.innerHeight - 8;
+    const left = Math.max(8, rect.left);
+    const right = Math.min(window.innerWidth - 8, (panelRect?.right ?? left + 280) - 12);
+    const width = Math.min(Math.max(280, right - left), window.innerWidth - left - 8);
 
     setMenuPos({
       top: rect.bottom + 4,
-      left: Math.max(8, Math.min(rect.left, window.innerWidth - 290)),
+      left,
+      width,
       maxHeight: Math.max(80, bottomBoundary - rect.bottom - 12),
     });
   }, []);
@@ -208,13 +222,15 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
     type: "event" | "tfl"
   ) => {
     e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
+    const row = e.currentTarget.closest<HTMLElement>("[data-session-row]");
+    const nameColumn = row?.querySelector<HTMLElement>("[data-session-name]");
+    const rect = nameColumn?.getBoundingClientRect() ?? e.currentTarget.getBoundingClientRect();
     setRenameInputValue(name);
     setRenamingSession({
       id,
       name,
       type,
-      pos: { top: rect.top - 4, left: rect.right + 4 },
+      pos: { top: rect.top - 5, left: rect.left - 4 },
       anchorRect: {
         top: rect.top,
         left: rect.left,
@@ -224,9 +240,34 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
     });
   };
 
+  const isSessionNameDuplicate = (candidateName: string, session: NonNullable<typeof renamingSession>) => {
+    const normalizedCandidate = candidateName.trim().toLocaleLowerCase();
+    if (!normalizedCandidate) return false;
+    const sessions = session.type === "event"
+      ? eventSessions.flatMap((item) => [item, ...(item.branches || [])])
+      : tflSessions;
+    return sessions.some((item) =>
+      item.id !== session.id && item.name.trim().toLocaleLowerCase() === normalizedCandidate
+    );
+  };
+
+  const renameIsEmpty = Boolean(renamingSession && !renameInputValue.trim());
+  const renameIsDuplicate = Boolean(
+    renamingSession && isSessionNameDuplicate(renameInputValue, renamingSession)
+  );
+  const renameError = renameIsEmpty
+    ? "Session name is required"
+    : renameIsDuplicate
+      ? "A session with this name already exists"
+      : "";
+
   const handleConfirmRename = () => {
     if (renamingSession) {
       const trimmed = renameInputValue.trim();
+      if (!trimmed || isSessionNameDuplicate(trimmed, renamingSession)) {
+        setRenamingSession(null);
+        return;
+      }
       if (trimmed && trimmed !== renamingSession.name) {
         if (renamingSession.type === "event") {
           onRenameEventSession?.(renamingSession.id, trimmed);
@@ -251,7 +292,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
             aria-expanded={openDropdown === "event"}
           >
             <span className="t-small-medium min-w-0 truncate text-[13px] font-medium leading-none">
-              {eventSessions.flatMap((session) => [session, ...(session.branches || [])]).find((session) => session.id === selectedEventSessionId)?.name || eventSessions[0]?.name || "New Event Session"}
+              {eventSessions.flatMap((session) => [session, ...(session.branches || [])]).find((session) => session.id === selectedEventSessionId)?.name || selectedEventSessionName || eventSessions[0]?.name || "New Session"}
             </span>
             <ChevronDownIcon className="size-[12px] shrink-0 text-text-secondary" color="var(--color-text-secondary)" />
           </button>
@@ -278,8 +319,8 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
       {openDropdown === "event" && menuPos && createPortal(
         <div
           ref={menuRef}
-          style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, maxHeight: `${menuPos.maxHeight}px` }}
-          className="fixed z-[9999] w-[280px] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, width: `${menuPos.width}px`, maxHeight: `${menuPos.maxHeight}px` }}
+          className="fixed z-[9999] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-[6px] flex flex-col gap-[2px]">
@@ -294,15 +335,16 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
               return (
                 <div
                   key={s.id}
+                  data-session-row
                   onClick={() => {
                     onSelectEventSession(s);
                     setOpenDropdown(null);
                   }}
                   className={`group relative flex items-start justify-between gap-[6px] px-[8px] py-[6px] rounded-[6px] cursor-pointer transition-colors ${
-                    isSelected ? "bg-az-secondary text-brand-1 font-medium hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
+                    isSelected ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
                   }`}
                 >
-                  <div className="flex flex-col min-w-0 flex-1">
+                  <div data-session-name className="flex flex-col min-w-0 flex-1">
                     <div className="flex items-center gap-[6px]">
                       <span className="text-[13px] truncate leading-[20px]">{s.name}</span>
                     </div>
@@ -314,38 +356,29 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
                     )}
                   </div>
 
-                  <Tooltip label="Rename">
-                    <button
-                      type="button"
-                      onClick={(e) => handleStartRename(e, s.id, s.name, "event")}
-                      aria-label={`Rename ${s.name}`}
-                      className={`shrink-0 w-[22px] h-[22px] rounded-[4px] flex items-center justify-center transition-opacity ${
-                      isRenaming
-                        ? "text-text-primary opacity-100"
-                        : "opacity-0 group-hover:opacity-100 text-text-secondary hover:text-text-primary"
-                    }`}
-                    >
-                      <ScopeIcon src={editIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
-                    </button>
-                  </Tooltip>
+                  <div className="flex h-[20px] w-[56px] shrink-0 items-center justify-end">
+                    <span className={`h-[20px] w-[56px] grid-cols-[28px_20px] items-center gap-[8px] text-[11px] font-normal leading-[20px] text-text-secondary group-hover:hidden ${isRenaming ? "hidden" : "grid"}`}>
+                      <span className="w-[28px] text-right tabular-nums" title={`${s.triggeredBy}, ${formatRelativeTime(s.updatedAt)}`}>{formatRelativeTime(s.updatedAt)}</span>
+                      <Avatar name={s.triggeredBy} level="menu" />
+                    </span>
+                    <Tooltip label="Rename">
+                      <button
+                        type="button"
+                        onClick={(e) => handleStartRename(e, s.id, s.name, "event")}
+                        aria-label={`Rename ${s.name}`}
+                        className={`h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[4px] text-text-secondary hover:text-text-primary ${
+                          isRenaming ? "flex" : "hidden group-hover:flex"
+                        }`}
+                      >
+                        <ScopeIcon src={editIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
+                      </button>
+                    </Tooltip>
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="p-[4px] border-t border-border-default bg-white shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                setOpenDropdown(null);
-                onNewEventSession?.();
-              }}
-              className="w-full flex items-center gap-[6px] px-[8px] py-[6px] rounded-[6px] text-[12px] font-medium text-brand-1 hover:bg-[#F4E8EE] transition-colors cursor-pointer border-none outline-none"
-            >
-              <ScopeIcon src={addLineIconUrl} className="w-[13px] h-[13px]" color="var(--color-brand-1)" />
-              <span>New Event Session</span>
-            </button>
-          </div>
         </div>,
         document.body
       )}
@@ -353,8 +386,8 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
       {openDropdown === "tfl" && menuPos && createPortal(
         <div
           ref={menuRef}
-          style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, maxHeight: `${menuPos.maxHeight}px` }}
-          className="fixed z-[9999] w-[260px] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, width: `${menuPos.width}px`, maxHeight: `${menuPos.maxHeight}px` }}
+          className="fixed z-[9999] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-[6px] flex flex-col gap-[2px]">
@@ -373,15 +406,16 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
                   return (
                     <div
                       key={s.id}
+                      data-session-row
                       onClick={() => {
                         onSelectTflSession(s.id);
                         setOpenDropdown(null);
                       }}
                       className={`group relative flex items-center justify-between gap-[6px] px-[8px] py-[6px] rounded-[6px] cursor-pointer transition-colors ${
-                        isSelected ? "bg-az-secondary text-brand-1 font-medium hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
+                        isSelected ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
                       }`}
                     >
-                      <span className="text-[13px] truncate flex-1 leading-[20px]">{s.name}</span>
+                      <span data-session-name className="text-[13px] truncate flex-1 leading-[20px]">{s.name}</span>
 
                       <Tooltip label="Rename">
                         <button
@@ -418,15 +452,16 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
                   return (
                     <div
                       key={s.id}
+                      data-session-row
                       onClick={() => {
                         onSelectTflSession(s.id);
                         setOpenDropdown(null);
                       }}
                       className={`group relative flex items-center justify-between gap-[6px] px-[8px] py-[6px] rounded-[6px] cursor-pointer transition-colors ${
-                        isSelected ? "bg-az-secondary text-brand-1 font-medium hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
+                        isSelected ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
                       }`}
                     >
-                      <span className="text-[13px] truncate flex-1 leading-[20px]">{s.name}</span>
+                      <span data-session-name className="text-[13px] truncate flex-1 leading-[20px]">{s.name}</span>
 
                       <Tooltip label="Rename">
                         <button
@@ -449,45 +484,30 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
             )}
           </div>
 
-          <div className="p-[4px] border-t border-border-default bg-white shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                setOpenDropdown(null);
-                onNewTflSession?.();
-              }}
-              className="w-full flex items-center gap-[6px] px-[8px] py-[6px] rounded-[6px] text-[12px] font-medium text-brand-1 hover:bg-[#F4E8EE] transition-colors cursor-pointer border-none outline-none"
-            >
-              <ScopeIcon src={addLineIconUrl} className="w-[13px] h-[13px]" color="var(--color-brand-1)" />
-              <span>New TFL Session</span>
-            </button>
-          </div>
         </div>,
         document.body
       )}
 
       {/* Rename Popover */}
       {renamingSession && (() => {
-        const RENAME_WIDTH = 220;
+        const MAX_RENAME_WIDTH = 320;
         const PADDING = 8;
 
         let left = renamingSession.pos.left;
         let top = renamingSession.pos.top;
+        let width = 220;
 
         if (renamingSession.anchorRect) {
           const anchor = renamingSession.anchorRect;
-          // If cannot fit on the right of anchor, flip to the left of the anchor
-          if (anchor.right + 4 + RENAME_WIDTH > window.innerWidth - PADDING) {
-            left = anchor.left - 4 - RENAME_WIDTH;
-          } else {
-            left = anchor.right + 4;
-          }
-          top = anchor.top - 4;
+          width = Math.min(MAX_RENAME_WIDTH, anchor.right - anchor.left + 4);
+          left = anchor.left - 4;
+          top = anchor.top - 5;
         }
 
         // Strict boundary collision detection: guarantees never exceeding right, left, or bottom viewport
-        const safeLeft = Math.max(PADDING, Math.min(left, window.innerWidth - RENAME_WIDTH - PADDING));
-        const safeTop = Math.max(PADDING, Math.min(top, window.innerHeight - 44 - PADDING));
+        width = Math.min(width, window.innerWidth - PADDING * 2);
+        const safeLeft = Math.max(PADDING, Math.min(left, window.innerWidth - width - PADDING));
+        const safeTop = Math.max(PADDING, Math.min(top, window.innerHeight - (renameError ? 50 : 30) - PADDING));
 
         return createPortal(
           <>
@@ -501,16 +521,18 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
                 top: safeTop,
                 left: safeLeft,
                 zIndex: 10001,
-                width: RENAME_WIDTH,
+                width,
                 maxWidth: `calc(100vw - ${PADDING * 2}px)`,
               }}
-              className="bg-white rounded-[6px] p-[4px] border border-border-default shadow-[0px_4px_16px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-100 select-none"
+              className="rounded-[4px] bg-white shadow-[0px_4px_16px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-100 select-none"
               onMouseDown={(e) => e.stopPropagation()}
             >
               <input
                 ref={renameInputRef}
                 type="text"
                 value={renameInputValue}
+                aria-invalid={Boolean(renameError)}
+                aria-describedby={renameError ? "session-rename-error" : undefined}
                 onChange={(e) => setRenameInputValue(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -521,9 +543,18 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
                     setRenamingSession(null);
                   }
                 }}
-                className="w-full h-[30px] px-[8px] text-[13px] border border-brand-1 rounded-[4px] outline-none focus:ring-1 focus:ring-brand-1 text-text-primary bg-white transition-all"
+                className={`h-[30px] w-full rounded-[4px] border bg-white pl-[4px] pr-[8px] text-left text-[13px] text-text-primary outline-none transition-all focus:ring-1 ${
+                  renameError
+                    ? "border-status-error focus:ring-status-error-border"
+                    : "border-brand-1 focus:ring-brand-1"
+                }`}
                 placeholder="Session name"
               />
+              {renameError && (
+                <span id="session-rename-error" role="alert" className="block px-[4px] pt-[2px] text-[11px] leading-[16px] text-status-error">
+                  {renameError}
+                </span>
+              )}
             </div>
           </>,
           document.body

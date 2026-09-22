@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { createPortal } from "react-dom";
 import searchIconUrl from "../../../icons/search-line.svg";
 import closeIconUrl from "../../../icons/close-line.svg";
-import checkIconUrl from "../../../icons/check-line.svg";
+import arrowLeftIconUrl from "../../../icons/arrow-left-s-line.svg";
 import lockIconUrl from "../../../icons/Lock.svg";
 import aiProcessingIconUrl from "../../../icons/Status label/Status=AI Processing.svg";
 import wipStatusIconUrl from "../../../icons/Status label/Status=WIP.svg";
@@ -11,6 +11,7 @@ import completedStatusIconUrl from "../../../icons/Status label/Status=Completed
 import untouchedStatusIconUrl from "../../../icons/Status label/Status=Untouched.svg";
 import errorStatusIconUrl from "../../../icons/Status label/Status=Error.svg";
 import { Tag } from "../../../components/ui/Tag";
+import { CheckboxIndicator } from "../../../components/ui/CheckboxIndicator";
 
 
 export interface FacetedSearchBarProps {
@@ -122,6 +123,13 @@ export function FacetedSearchBar({
 
   const hasContent = hasTokens || searchQuery.length > 0;
 
+  const selectedStatusLabels = Array.from(selectedStatuses).map((status) =>
+    STATUS_ITEMS.find((item) => item.id === status)?.label ?? status
+  );
+  const selectedAssigneeLabels = Array.from(selectedAssignees).map((assignee) =>
+    assignee === "Sarah Chen" ? "Sarah (You)" : assignee
+  );
+
   // Ensure Sarah Chen is strictly the FIRST item in the members list
   const sortedAssignees = useMemo(() => {
     const list = [...allAssignees];
@@ -134,19 +142,6 @@ export function FacetedSearchBar({
     }
     return list;
   }, [allAssignees]);
-
-  // Level 2: Single click immediately applies selection and returns to Level 1
-  const handleSelectStatusAndReturn = (statusId: string) => {
-    onToggleStatus(statusId);
-    setLevel("root");
-    inputRef.current?.focus();
-  };
-
-  const handleSelectAssigneeAndReturn = (assignee: string) => {
-    onToggleAssignee(assignee);
-    setLevel("root");
-    inputRef.current?.focus();
-  };
 
   return (
     <div ref={containerRef} className={`relative shrink-0 ${className}`}>
@@ -173,39 +168,34 @@ export function FacetedSearchBar({
           className="flex flex-1 flex-nowrap items-center gap-[4px] min-w-0 overflow-x-auto overflow-y-hidden"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {/* Status Tags using UI component Tag with variant="brand" */}
-          {Array.from(selectedStatuses).map((status) => {
-            const config = STATUS_ITEMS.find((s) => s.id === status);
-            const label = config ? config.label : status;
-            return (
-              <Tag
-                key={status}
-                variant="brand"
-                onClose={() => onRemoveStatus(status)}
-                className="shrink-0 h-[24px] !py-0 flex items-center select-none"
-              >
-                <span className="flex items-center gap-[3px] max-w-[120px] truncate">
-                  <span className="opacity-70 font-normal shrink-0">Status:</span>
-                  <span className="truncate font-medium">{label}</span>
-                </span>
-              </Tag>
-            );
-          })}
-
-          {/* Assignee Tags using UI component Tag with variant="brand" */}
-          {Array.from(selectedAssignees).map((assignee) => (
+          {/* One grouped token per filter dimension */}
+          {selectedStatusLabels.length > 0 && (
             <Tag
-              key={assignee}
               variant="brand"
-              onClose={() => onRemoveAssignee(assignee)}
-              className="shrink-0 h-[24px] !py-0 flex items-center select-none"
+              onClose={() => Array.from(selectedStatuses).forEach(onRemoveStatus)}
+              className="h-[24px] max-w-[180px] shrink-0 !py-0 select-none"
+              title={`Status: ${selectedStatusLabels.join(",")}`}
             >
-              <span className="flex items-center gap-[4px] max-w-[130px] truncate">
-                <Avatar name={assignee} level="menu" />
-                <span className="truncate font-medium">{assignee === "Sarah Chen" ? "Sarah (You)" : assignee}</span>
+              <span className="block truncate">
+                <span className="font-normal opacity-70">Status: </span>
+                <span className="font-medium">{selectedStatusLabels.join(",")}</span>
               </span>
             </Tag>
-          ))}
+          )}
+
+          {selectedAssigneeLabels.length > 0 && (
+            <Tag
+              variant="brand"
+              onClose={() => Array.from(selectedAssignees).forEach(onRemoveAssignee)}
+              className="h-[24px] max-w-[180px] shrink-0 !py-0 select-none"
+              title={`By: ${selectedAssigneeLabels.join(",")}`}
+            >
+              <span className="block truncate">
+                <span className="font-normal opacity-70">By: </span>
+                <span className="font-medium">{selectedAssigneeLabels.join(",")}</span>
+              </span>
+            </Tag>
+          )}
 
           {/* Input field */}
           <input
@@ -316,68 +306,68 @@ export function FacetedSearchBar({
 
           {/* LEVEL 2: Status Submenu */}
           {level === "status" && (
-            <div className="flex flex-col gap-[1px] max-h-[220px] overflow-y-auto">
-              {STATUS_ITEMS.map((item) => {
-                const isSelected = selectedStatuses.has(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => handleSelectStatusAndReturn(item.id)}
-                    className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] text-left transition-colors cursor-pointer ${
-                      isSelected
-                        ? "bg-az-secondary/60 text-brand-1 font-medium"
-                        : "hover:bg-bg-panel text-text-primary"
-                    }`}
-                  >
-                    <img src={item.icon} alt="" className="size-[16px] shrink-0" />
-                    <span className="t-small flex-1 truncate">{item.label}</span>
-                    {isSelected && (
-                      <img
-                        src={checkIconUrl}
-                        alt=""
-                        className="size-[14px] shrink-0 opacity-90"
-                      />
-                    )}
-                  </button>
-                );
-              })}
+            <div className="flex flex-col gap-[2px]">
+              <div className="flex items-center gap-[6px] pb-[4px] pl-[2px] pr-[8px]">
+                <button type="button" onClick={() => setLevel("root")} className="flex size-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-bg-panel" aria-label="Back to filter types">
+                  <img src={arrowLeftIconUrl} alt="" className="size-[16px]" />
+                </button>
+                <span className="t-small-medium flex-1 text-text-secondary">Status</span>
+                {selectedStatuses.size > 0 && <span className="text-[11px] text-text-secondary">{selectedStatuses.size} selected</span>}
+              </div>
+              <div className="flex max-h-[220px] flex-col gap-[1px] overflow-y-auto">
+                {STATUS_ITEMS.map((item) => {
+                  const isSelected = selectedStatuses.has(item.id);
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => onToggleStatus(item.id)}
+                      className="flex items-center gap-[8px] rounded-[4px] px-[8px] py-[6px] text-left text-text-primary transition-colors cursor-pointer hover:bg-bg-panel"
+                    >
+                      <CheckboxIndicator checked={isSelected} size={14} />
+                      <img src={item.icon} alt="" className="size-[16px] shrink-0" />
+                      <span className="t-small flex-1 truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* LEVEL 2: Assignee Submenu (Direct members list, Sarah Chen FIRST, single click auto-returns) */}
+          {/* LEVEL 2: Assignee Submenu */}
           {level === "assignee" && (
-            <div className="flex flex-col gap-[1px] max-h-[220px] overflow-y-auto">
-              {sortedAssignees.map((assignee) => {
-                const isSelected = selectedAssignees.has(assignee);
-                return (
-                  <button
-                    key={assignee}
-                    type="button"
-                    onClick={() => handleSelectAssigneeAndReturn(assignee)}
-                    className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
-                      isSelected
-                        ? "bg-az-secondary/60 text-brand-1 font-medium"
-                        : "hover:bg-bg-panel text-text-primary"
-                    }`}
-                  >
-                    <Avatar name={assignee} level="menu" />
-                    <span className="t-small flex-1 truncate">{assignee}</span>
-                    {assignee === "Sarah Chen" && (
-                      <span className="t-small text-text-secondary shrink-0">
-                        (You)
-                      </span>
-                    )}
-                    {isSelected && (
-                      <img
-                        src={checkIconUrl}
-                        alt=""
-                        className="size-[14px] shrink-0 opacity-90"
-                      />
-                    )}
-                  </button>
-                );
-              })}
+            <div className="flex flex-col gap-[2px]">
+              <div className="flex items-center gap-[6px] pb-[4px] pl-[2px] pr-[8px]">
+                <button type="button" onClick={() => setLevel("root")} className="flex size-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-bg-panel" aria-label="Back to filter types">
+                  <img src={arrowLeftIconUrl} alt="" className="size-[16px]" />
+                </button>
+                <span className="t-small-medium flex-1 text-text-secondary">Assigned member</span>
+                {selectedAssignees.size > 0 && <span className="text-[11px] text-text-secondary">{selectedAssignees.size} selected</span>}
+              </div>
+              <div className="flex max-h-[220px] flex-col gap-[1px] overflow-y-auto">
+                {sortedAssignees.map((assignee) => {
+                  const isSelected = selectedAssignees.has(assignee);
+                  return (
+                    <button
+                      key={assignee}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => onToggleAssignee(assignee)}
+                      className="flex w-full items-center gap-[8px] rounded-[4px] px-[8px] py-[6px] text-left text-text-primary transition-colors cursor-pointer hover:bg-bg-panel"
+                    >
+                      <CheckboxIndicator checked={isSelected} size={14} />
+                      <Avatar name={assignee} level="menu" />
+                      <span className="t-small flex-1 truncate">{assignee}</span>
+                      {assignee === "Sarah Chen" && (
+                        <span className="t-small text-text-secondary shrink-0">
+                          (You)
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
