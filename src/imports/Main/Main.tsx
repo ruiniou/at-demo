@@ -4198,10 +4198,6 @@ function LockTreeIcon({ className = "w-[16px] h-[16px]", color = "#3F4444" }) {
   return <LocalIcon src={lockIconUrl} className={className} color={color} />;
 }
 
-function UnlockTreeIcon({ className = "w-[16px] h-[16px]", color = "#3F4444" }) {
-  return <LocalIcon src={unlockIconUrl} className={className} color={color} />;
-}
-
 function ChevronRightTreeIcon({ isExpanded, color }: { isExpanded: boolean; color: string }) {
   return (
     <SvgIcon className={`w-[16px] h-[16px] transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
@@ -4661,25 +4657,13 @@ function ViewToggleBar({
 
 // SearchBar is imported from components/ui/SearchBar
 
-function TreeStatusControl({
+function TreeStatusIcon({
   item,
-  itemId,
-  program,
-  isHovered,
-  isProgram,
-  isChildOfLockedParent,
-  onToggleLock,
-  onShowLockedModal,
+  lockedBy,
   isFigureQueued,
 }: {
   item: TableItem | ProgramItem;
-  itemId: string;
-  program: ProgramItem;
-  isHovered: boolean;
-  isProgram: boolean;
-  isChildOfLockedParent: boolean;
-  onToggleLock: (programId: string, tableId?: string) => void;
-  onShowLockedModal: (programName: string) => void;
+  lockedBy?: string;
   isFigureQueued?: boolean;
 }) {
   if (item.docType === 'figure' && isFigureQueued) {
@@ -4732,64 +4716,13 @@ function TreeStatusControl({
   }
 
   if (item.status === 'locked') {
-    if (isProgram) {
-      return (
+    const label = lockedBy ? `Locked by ${lockedBy}` : 'Locked';
+    return (
+      <span role="img" aria-label={label}>
         <CodeStatusSlot>
-          <LockTreeIcon color="#B2B4B4" />
-        </CodeStatusSlot>
-      );
-    }
-    if (isChildOfLockedParent) {
-      return (
-        <TooltipText label={`Locked by ${program.name}`}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onShowLockedModal(program.name);
-            }}
-            className="flex h-[20px] w-[20px] cursor-not-allowed items-center justify-center rounded-[4px]"
-            aria-label="Locked by parent"
-          >
-            <LockTreeIcon color="var(--color-text-secondary)" />
-          </button>
-        </TooltipText>
-      );
-    }
-
-    return (
-      <TooltipText label="Unlock Table Code">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isProgram) {
-              onToggleLock(itemId);
-            } else {
-              onToggleLock(program.id, itemId);
-            }
-          }}
-          className="flex h-[20px] w-[20px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-          aria-label="Unlock code"
-        >
           <LockTreeIcon color="var(--color-text-secondary)" />
-        </button>
-      </TooltipText>
-    );
-  }
-
-  if (isHovered && (item.status === 'pending' || item.status === 'completed') && !isProgram) {
-    return (
-      <TooltipText label="Lock Table Code">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleLock(program.id, isProgram ? undefined : itemId);
-          }}
-          className="flex h-[20px] w-[20px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-          aria-label="Lock code"
-        >
-          <UnlockTreeIcon color="var(--color-text-secondary)" />
-        </button>
-      </TooltipText>
+        </CodeStatusSlot>
+      </span>
     );
   }
 
@@ -4800,17 +4733,13 @@ function TreeItem({
   program,
   selectedId,
   onSelect,
-  onToggleLock,
   onToggleExpand,
-  onShowLockedModal,
   hasPendingCodeChanges,
 }: {
   program: ProgramItem;
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onToggleLock: (programId: string, tableId?: string) => void;
   onToggleExpand: (programId: string) => void;
-  onShowLockedModal: (programName: string) => void;
   hasPendingCodeChanges?: boolean;
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -4843,16 +4772,7 @@ function TreeItem({
               {program.name}
             </p>
           </div>
-          <TreeStatusControl
-            item={program}
-            itemId={program.id}
-            program={program}
-            isHovered={isProgramHovered}
-            isProgram
-            isChildOfLockedParent={false}
-            onToggleLock={onToggleLock}
-            onShowLockedModal={onShowLockedModal}
-          />
+          <TreeStatusIcon item={program} />
         </div>
       </div>
 
@@ -4862,7 +4782,7 @@ function TreeItem({
             const isTableHovered = hoveredId === table.id;
             const isTableSelected = selectedId === table.id;
             const isCurrentTablePending = table.id === selectedId && hasPendingCodeChanges;
-            const effectiveItem: TableItem = isProgramLocked
+            const effectiveItem: TableItem = isProgramLocked || table.status === 'locked'
               ? { ...table, status: 'locked' }
               : isCurrentTablePending
                 ? { ...table, status: 'modified' }
@@ -4899,15 +4819,9 @@ function TreeItem({
                       {table.name}
                     </p>
                   </div>
-                  <TreeStatusControl
+                  <TreeStatusIcon
                     item={effectiveItem}
-                    itemId={table.id}
-                    program={program}
-                    isHovered={isTableHovered && !isProgramLocked && !isQueued}
-                    isProgram={false}
-                    isChildOfLockedParent={isProgramLocked}
-                    onToggleLock={onToggleLock}
-                    onShowLockedModal={onShowLockedModal}
+                    lockedBy={isProgramLocked ? program.name : undefined}
                     isFigureQueued={isQueued}
                   />
                 </div>
@@ -11857,10 +11771,6 @@ function WorkspaceContent({
   ]);
   const [selectedId, setSelectedId] = useState<string | null>('t4');
   const [currentEvent] = useState('CSR Interim Analysis');
-  const [modalState, setModalState] = useState<{
-    type: 'locked-by-parent' | null;
-    programName?: string;
-  }>({ type: null });
   const [panelView, setPanelView] = useState<PanelView>('both');
   const shellPreviewOpen = panelView !== 'code';
   const codeOpen = panelView !== 'shell';
@@ -13072,9 +12982,7 @@ function WorkspaceContent({
                       program={program}
                       selectedId={selectedId}
                       onSelect={handleSelect}
-                      onToggleLock={handleToggleLock}
                       onToggleExpand={handleToggleExpand}
-                      onShowLockedModal={(programName) => setModalState({ type: 'locked-by-parent', programName })}
                       hasPendingCodeChanges={hasPendingCodeChanges}
                     />
                   ))
@@ -13475,21 +13383,6 @@ function WorkspaceContent({
           </>
         )}
       </div>
-
-      <WorkspaceModal
-        isOpen={modalState.type === 'locked-by-parent'}
-        onClose={() => setModalState({ type: null })}
-        title="Locked by Section"
-        description="This table is locked because its parent program code is locked."
-        primaryLabel="Unlock Program Code"
-        secondaryLabel="Cancel"
-        onSecondary={() => setModalState({ type: null })}
-        onPrimary={() => {
-          const program = programs.find((item) => item.name === modalState.programName);
-          if (program) handleToggleLock(program.id);
-          setModalState({ type: null });
-        }}
-      />
 
       <WorkspaceModal
         isOpen={pendingDraftExit !== null}
