@@ -326,7 +326,11 @@ export function FacetedSearchBar({
                       className="flex items-center gap-[8px] rounded-[4px] px-[8px] py-[6px] text-left text-text-primary transition-colors cursor-pointer hover:bg-bg-panel"
                     >
                       <CheckboxIndicator checked={isSelected} size={14} />
-                      <img src={item.icon} alt="" className="size-[16px] shrink-0" />
+                      {item.id === "locked" ? (
+                        <span aria-hidden="true" className="size-[16px] shrink-0 bg-text-secondary" style={{ mask: `url("${item.icon}") center / contain no-repeat`, WebkitMask: `url("${item.icon}") center / contain no-repeat` }} />
+                      ) : (
+                        <img src={item.icon} alt="" className="size-[16px] shrink-0" />
+                      )}
                       <span className="t-small flex-1 truncate">{item.label}</span>
                     </button>
                   );

@@ -168,11 +168,11 @@ export function TreeFilterPopover({
                     : "bg-white border-[#E0E2E2] hover:bg-graphite-10 text-text-primary"
                 }`}
               >
-                <img
-                  src={item.icon}
-                  alt=""
-                  className="size-[14px] shrink-0 block"
-                />
+                {item.id === "locked" ? (
+                  <span aria-hidden="true" className="size-[14px] shrink-0 block bg-text-secondary" style={{ mask: `url("${item.icon}") center / contain no-repeat`, WebkitMask: `url("${item.icon}") center / contain no-repeat` }} />
+                ) : (
+                  <img src={item.icon} alt="" className="size-[14px] shrink-0 block" />
+                )}
                 <span className="t-small leading-[16px] truncate flex-1">
                   {item.label}
                 </span>

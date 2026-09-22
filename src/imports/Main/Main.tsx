@@ -4194,8 +4194,9 @@ function ReadOnlyOwner({ name }: { name?: string }) {
   );
 }
 
-function LockTreeIcon({ className = "w-[16px] h-[16px]", color = "#3F4444" }) {
-  return <LocalIcon src={lockIconUrl} className={className} color={color} />;
+function LockStateIcon({ locked = true, className = "w-[16px] h-[16px]" }: { locked?: boolean; className?: string }) {
+  const mask = `url("${locked ? lockIconUrl : unlockIconUrl}") center / contain no-repeat`;
+  return <span aria-hidden="true" className={`${className} block shrink-0 bg-text-secondary`} style={{ mask, WebkitMask: mask }} />;
 }
 
 function ChevronRightTreeIcon({ isExpanded, color }: { isExpanded: boolean; color: string }) {
@@ -4720,7 +4721,7 @@ function TreeStatusIcon({
     return (
       <span role="img" aria-label={label}>
         <CodeStatusSlot>
-          <LockTreeIcon color="var(--color-text-secondary)" />
+          <LockStateIcon />
         </CodeStatusSlot>
       </span>
     );
@@ -11479,11 +11480,7 @@ ods graphics off;`;
           }`}
           aria-label={effectiveIsLocked ? "Unlock Code" : "Lock Code"}
         >
-          <LocalIcon
-            src={effectiveIsLocked ? lockIconUrl : unlockIconUrl}
-            className="h-[16px] w-[16px]"
-            color={effectiveIsLocked ? "#830051" : "var(--color-text-secondary)"}
-          />
+          <LockStateIcon locked={effectiveIsLocked} />
         </button>
       </TooltipText>
 
