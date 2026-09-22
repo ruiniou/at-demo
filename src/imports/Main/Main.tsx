@@ -14117,6 +14117,19 @@ function HomePage({
     }
   };
 
+  const expandTreeListButton = !treeListOpen ? (
+    <TooltipText label="Expand tree list">
+      <button
+        type="button"
+        onClick={() => setTreeListOpen(true)}
+        className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+        aria-label="Expand tree list"
+      >
+        <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+      </button>
+    </TooltipText>
+  ) : null;
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-bg-panel relative">
       <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
@@ -14131,7 +14144,7 @@ function HomePage({
         >
           <div className="flex h-full w-full flex-col bg-bg-panel">
             {/* Sidebar header */}
-            <div className="flex h-[48px] shrink-0 items-center justify-between px-[10px]">
+            <div className="flex h-[52px] shrink-0 items-center justify-between px-[10px]">
               <img src={atlasLogoFullUrl} alt="Atlas" className="h-[24px] block shrink-0" />
               <TooltipText label="Collapse Tree List">
                 <button
@@ -14307,21 +14320,6 @@ function HomePage({
         {/* Main Container Wrapper */}
         <div className="relative z-20 flex min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pt-[4px] pb-[8px] pr-[8px]">
           <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry pointer-events-auto">
-            {/* Expand tree list button when collapsed */}
-            {!treeListOpen && (
-              <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-border-default">
-                <TooltipText label="Expand tree list">
-                  <button
-                    onClick={() => setTreeListOpen(true)}
-                    className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                    aria-label="Expand tree list"
-                  >
-                    <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-                  </button>
-                </TooltipText>
-              </div>
-            )}
-
             {/* Floating Demo Role Switcher when Tree List is collapsed */}
             {!treeListOpen && (
               <div className="fixed bottom-[14px] left-[14px] z-50 flex items-center gap-[4px] rounded-[8px] bg-white/95 px-[10px] py-[6px] shadow-lg border border-border-default backdrop-blur-md text-[11px] select-none">
@@ -14375,6 +14373,7 @@ function HomePage({
 
             {activeNav === 'management' ? (
               <ProjectStudyManagementView
+                headerLeading={expandTreeListButton}
                 currentRole={currentRole}
                 currentUserName={currentUserName}
                 projects={projects}
@@ -14389,6 +14388,7 @@ function HomePage({
                 {/* Top Header Row: Events title with filled-circle icon + New Event button on the right */}
                 <div className="flex items-center justify-between px-[16px] pt-[20px] sm:px-[28px]">
                   <div className="flex items-center gap-[10px]">
+                    {expandTreeListButton}
                     <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-az-secondary shrink-0">
                       <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px]" color="#830051" />
                     </div>

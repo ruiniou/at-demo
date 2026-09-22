@@ -17,13 +17,13 @@
 - Selector values and option labels use the same body typography: font family, size, line height and normal weight. Selection state is communicated through color, surface and indicators rather than heavier text.
 - Selectors do not show an inline clear control by default. Their arrow keeps the same orientation in default and expanded states.
 - Existing avatar hierarchy remains unchanged: page 24px; modal/menu 20px.
-- Disabled text, monochrome icons, outline checkbox and check indicators use graphite-40 (#B2B4B4), without reducing whole-row opacity. Disabled checked/mixed indicators use a white interior and gray outline/mark.
+- Disabled text, monochrome icons, outline checkbox and check indicators use graphite-40 (#B2B4B4), without reducing whole-row opacity. Disabled unchecked checkboxes keep a white interior; disabled checked/mixed indicators use a graphite-40 fill with a white mark.
 - Icons supplied to row slots must use currentColor or a currentColor CSS mask; external SVG images with baked-in colors must be converted to masks. Person avatars retain their identity palette.
 - Disabled takes precedence over selected and danger. No hover fill on disabled rows.
 - Danger: status-error text/icon, existing shallow status-error-bg hover/pressed fill. Always retain explicit action text.
 - Normal option appearance, group labels and member content are retained. Do not add emails or descriptions simply because the component supports them.
 - Multi-select rows remain on the default surface when checked. Selection is communicated by CheckboxIndicator only; apply the row background on hover, not as a persistent selected fill.
-- A checked or mixed disabled CheckboxIndicator has no outline and uses `graphite-20` as its fill; keep the check or mixed mark at `graphite-40`.
+- A checked or mixed disabled CheckboxIndicator keeps the same outline geometry as its enabled state and uses `graphite-40` for both fill and outline; the check or mixed mark stays white (`--color-white`).
 
 ## Behavior and semantics
 - MenuItem executes an action; OptionLabel selects a value. Do not give selectable rows menuitem semantics automatically.

@@ -118,6 +118,7 @@ export function OwnerPicker({ value, onSelect, disabledAppearance = false, ariaL
 }
 
 interface ProjectStudyManagementViewProps {
+  headerLeading?: React.ReactNode;
   currentRole: UserRole;
   currentUserName: string;
   projects: ProjectItem[];
@@ -128,7 +129,7 @@ interface ProjectStudyManagementViewProps {
   onToggleStudyStatus: (projectId: string, studyId: string) => void;
 }
 
-export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProps> = ({ currentRole, currentUserName, projects, onOpenNewProject, onOpenNewStudy, onChangeOwner, onToggleProjectStatus, onToggleStudyStatus }) => {
+export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProps> = ({ headerLeading, currentRole, currentUserName, projects, onOpenNewProject, onOpenNewStudy, onChangeOwner, onToggleProjectStatus, onToggleStudyStatus }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
   const [taFilter, setTaFilter] = useState('All');
@@ -176,6 +177,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
     <div className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-hidden px-[16px] pb-[20px] pt-[20px] sm:px-[28px]">
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-[10px]">
+          {headerLeading}
           <div className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-az-secondary text-brand-1"><MaskIcon src={databaseIconUrl} className="h-[16px] w-[16px]" /></div>
           <h1 className="text-[22px] font-bold leading-[28px] tracking-tight text-text-primary">Projects &amp; Studies</h1>
         </div>
