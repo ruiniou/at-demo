@@ -10,7 +10,7 @@
 
 ## Appearance
 - Existing avatar hierarchy remains unchanged: page 24px; modal/menu 20px.
-- Disabled text, monochrome icons, outline checkbox and check indicators use graphite-40 (#B2B4B4), without reducing whole-row opacity. Disabled checked/mixed indicators use a white interior and gray outline/mark.
+- Disabled text, monochrome icons and unchecked checkbox outlines use graphite-40 (#B2B4B4), without reducing whole-row opacity. Disabled checked/mixed indicators use graphite-40 fill and outline with a white (`--color-white`) check/minus mark; disabled unchecked indicators retain a white interior with no mark.
 - Icons supplied to row slots must use currentColor or a currentColor CSS mask; external SVG images with baked-in colors must be converted to masks. Person avatars retain their identity palette.
 - Disabled takes precedence over selected and danger. No hover fill on disabled rows.
 - Danger: status-error text/icon, existing shallow status-error-bg hover/pressed fill. Always retain explicit action text.

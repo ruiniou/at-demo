@@ -88,7 +88,7 @@ export function OwnerPicker({ value, onSelect, disabledAppearance = false, ariaL
     <div className="relative min-w-0">
       <button ref={buttonRef} type="button" onClick={() => setOpen((current) => !current)} aria-haspopup="dialog" aria-expanded={open} className="flex min-h-[40px] w-full min-w-0 items-center gap-[6px] rounded-[4px] px-[6px] text-left hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-1/20">
         <Avatar name={value || undefined} initials={currentUser?.initials} color={currentUser?.color} level="modal" disabled={disabledAppearance} />
-        <span className={`truncate text-[12px] ${disabledAppearance ? 'text-graphite-40' : value ? 'text-text-primary' : 'text-text-secondary'}`}>{value || 'No Assignee'}</span>
+        <span className={`truncate text-[12px] ${disabledAppearance ? 'text-graphite-40' : value ? 'text-text-primary' : 'text-text-secondary'}`} title={value || 'No Assignee'}>{value || 'No Assignee'}</span>
       </button>
       {open && position && createPortal(
         <div ref={popoverRef} role="dialog" aria-label={ariaLabel} style={{ position: 'fixed', top: position.top, left: position.left, width: 260, zIndex: 9999 }} className="flex flex-col gap-[6px] rounded-[8px] border border-graphite-10 bg-white p-[4px] shadow-elevation-overlay">
@@ -114,6 +114,7 @@ export function OwnerPicker({ value, onSelect, disabledAppearance = false, ariaL
 }
 
 interface ProjectStudyManagementViewProps {
+  headerLeading?: React.ReactNode;
   currentRole: UserRole;
   currentUserName: string;
   projects: ProjectItem[];
@@ -124,7 +125,7 @@ interface ProjectStudyManagementViewProps {
   onToggleStudyStatus: (projectId: string, studyId: string) => void;
 }
 
-export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProps> = ({ currentRole, currentUserName, projects, onOpenNewProject, onOpenNewStudy, onChangeOwner, onToggleProjectStatus, onToggleStudyStatus }) => {
+export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProps> = ({ headerLeading, currentRole, currentUserName, projects, onOpenNewProject, onOpenNewStudy, onChangeOwner, onToggleProjectStatus, onToggleStudyStatus }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
   const [taFilter, setTaFilter] = useState('All');
@@ -169,30 +170,27 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
     setStatusFilter('all');
   };
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-[14px] overflow-hidden px-[16px] pb-[20px] pt-[20px] sm:px-[28px]">
-      <div className="flex shrink-0 items-center justify-between">
-        <div className="flex items-center gap-[10px]">
+    <div className="home-list-content flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] overflow-hidden pb-[20px] pt-[20px]">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 max-w-full items-center gap-[10px]">
+          {headerLeading}
           <div className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-az-secondary text-brand-1"><MaskIcon src={databaseIconUrl} className="h-[16px] w-[16px]" /></div>
-          <h1 className="text-[22px] font-bold leading-[28px] tracking-tight text-text-primary">Projects &amp; Studies</h1>
+          <h1 className="truncate text-[22px] font-bold leading-[28px] tracking-tight text-text-primary" title="Projects & Studies">Projects &amp; Studies</h1>
         </div>
         {isAdmin && <Button variant="primary" onClick={onOpenNewProject} className="shrink-0 whitespace-nowrap px-[14px] py-[6px]">+ New Project</Button>}
       </div>
-      <div className="flex shrink-0 flex-col justify-between gap-[12px] sm:flex-row sm:items-center">
-        <div className="flex max-w-[620px] flex-1 items-center gap-[10px]">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search Project/Study" background="light" className="w-full shrink-0 sm:w-[300px] md:w-[340px]" icon={<MaskIcon src={searchIconUrl} className="h-[16px] w-[16px] text-text-secondary" />} />
+      <div className="home-list-toolbar shrink-0">
+        <SearchBar value={search} onChange={setSearch} placeholder="Search Project/Study" background="light" className="home-list-search" icon={<MaskIcon src={searchIconUrl} className="h-[16px] w-[16px] text-text-secondary" />} />
+        <div className="home-list-filters">
           <FilterChip type="Dropdown" variant="filter" label={taFilter === 'All' ? 'All TA' : `TA: ${taFilter}`} value={taFilter} onChange={setTaFilter} icon={<MaskIcon src={microscopeIconUrl} className="h-[16px] w-[16px]" />} options={[{ label: 'All TA', value: 'All' }, { label: 'Oncology', value: 'Oncology' }, { label: 'Cardiology', value: 'Cardiology' }, { label: 'Neurology', value: 'Neurology' }, { label: 'Immunology', value: 'Immunology' }]} />
           <FilterChip type="Dropdown" variant="filter" showIcon={false} label={statusFilter === 'all' ? 'All Status' : statusFilter === 'enabled' ? 'Available' : 'Disabled'} value={statusFilter} onChange={(value) => setStatusFilter(value as typeof statusFilter)} options={[{ label: 'All Status', value: 'all' }, { label: 'Available', value: 'enabled' }, { label: 'Disabled', value: 'disabled' }]} />
         </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-graphite-10 bg-white">
-        <table className="w-full table-fixed border-collapse text-left">
-          <colgroup><col /><col className="w-[240px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
-          <thead><tr className="border-b border-graphite-10 bg-bg-app text-[12px] text-text-secondary"><th className="px-[16px] py-[10px] font-normal">Project / Study</th><th className="px-[16px] py-[10px] font-normal">Study Owner</th><th className="px-[16px] py-[10px] font-normal">Status</th><th className="px-[16px] py-[10px]" aria-label="Actions" /></tr></thead>
-        </table>
-        <div className="min-h-0 flex-1 overflow-y-auto">
-        {visibleGroups.length === 0 ? <div className="flex h-full min-h-[240px] flex-col items-center justify-center text-center text-text-muted"><img src={databaseIconUrl} alt="" className="mb-[6px] h-[28px] w-[28px] opacity-40" /><span className="text-[13px] font-medium">No matching projects or studies found</span>{hasActiveFilters && <button type="button" onClick={resetFilters} className="mt-[8px] cursor-pointer text-[12px] font-medium text-brand-1 hover:underline">Reset Filters</button>}</div> : (
-          <table className="w-full table-fixed border-collapse text-left">
-            <colgroup><col /><col className="w-[240px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-graphite-10 bg-white">
+        <div className="home-list-scroll flex min-h-0 min-w-0 flex-1 flex-col overflow-auto" role="region" aria-label="Projects and studies table" tabIndex={0}>
+          <table className="home-list-table home-list-table--management shrink-0 text-left">
+            <colgroup><col /><col className="home-list-owner-column" /><col className="home-list-status-column" /><col className="home-list-actions-column" /></colgroup>
+            <thead><tr className="border-b border-graphite-10 bg-white text-[12px] text-text-secondary"><th scope="col" className="px-[16px] py-[10px] font-normal">Project / Study</th><th scope="col" className="px-[16px] py-[10px] font-normal">Study Owner</th><th scope="col" className="px-[16px] py-[10px] font-normal">Status</th><th scope="col" className="px-[16px] py-[10px]" aria-label="Actions" /></tr></thead>
             <tbody className="divide-y divide-graphite-10 text-[13px]">
               {visibleGroups.map(({ project, studies }) => {
                 const expanded = expandedProjects.has(project.id);
@@ -201,7 +199,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
                   <tr className="group/project h-[48px] bg-bg-panel hover:bg-graphite-10/60">
                     <td className="py-0 pl-[16px] pr-[16px]"><div className="flex h-[48px] items-center gap-[16px]">
                       <button type="button" onClick={() => setExpandedProjects((current) => { const next = new Set(current); next.has(project.id) ? next.delete(project.id) : next.add(project.id); return next; })} aria-expanded={expanded} className="flex h-[48px] min-w-0 flex-1 items-center gap-[8px] text-left text-text-secondary">
-                        <span className="flex h-[16px] w-[16px] shrink-0 items-center justify-center"><ChevronRightTreeIcon isExpanded={expanded} /></span><MaskIcon src={capsuleIconUrl} className={`h-[16px] w-[16px] text-text-secondary ${projectDisabled ? 'opacity-50' : ''}`} /><span className={`truncate font-semibold ${projectDisabled ? 'text-text-secondary' : 'text-text-primary'}`}>{project.name}</span>
+                        <span className="flex h-[16px] w-[16px] shrink-0 items-center justify-center"><ChevronRightTreeIcon isExpanded={expanded} /></span><MaskIcon src={capsuleIconUrl} className={`h-[16px] w-[16px] text-text-secondary ${projectDisabled ? 'opacity-50' : ''}`} /><span className={`truncate font-semibold ${projectDisabled ? 'text-text-secondary' : 'text-text-primary'}`} title={project.name}>{project.name}</span>
                       </button>
                     </div></td>
                     <td className="px-[16px] py-0" />
@@ -220,7 +218,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
                     const effectiveDisabled = projectDisabled || study.status === 'disabled';
                     const canMaintainOwner = isAdmin || (isStudyOwner && study.owner === currentUserName);
                     return <tr key={study.id} className="h-[48px] bg-white hover:bg-black/[0.02]">
-                      <td className="py-0 pl-[40px] pr-[16px]"><div className="flex h-[48px] items-center gap-[8px]"><MaskIcon src={stackIconUrl} className={`h-[16px] w-[16px] text-text-secondary ${effectiveDisabled ? 'opacity-50' : ''}`} /><span className={`font-medium ${effectiveDisabled ? 'text-graphite-40' : 'text-text-primary'}`}>{study.id}</span><Tag className={`h-[20px] py-0 pointer-events-none ${effectiveDisabled ? 'opacity-50' : ''}`}>{study.ta}</Tag></div></td>
+                      <td className="py-0 pl-[40px] pr-[16px]"><div className="flex h-[48px] min-w-0 items-center gap-[8px]"><MaskIcon src={stackIconUrl} className={`h-[16px] w-[16px] text-text-secondary ${effectiveDisabled ? 'opacity-50' : ''}`} /><span className={`truncate font-medium ${effectiveDisabled ? 'text-graphite-40' : 'text-text-primary'}`} title={study.id}>{study.id}</span><Tag className={`h-[20px] shrink-0 py-0 pointer-events-none ${effectiveDisabled ? 'opacity-50' : ''}`}>{study.ta}</Tag></div></td>
                       <td className="px-[10px] py-[4px]">{canMaintainOwner ? <OwnerPicker value={study.owner} disabledAppearance={effectiveDisabled} ariaLabel="Select Study Owner" onSelect={(owner) => onChangeOwner(project.id, study.id, owner)} /> : <div className="flex min-h-[40px] items-center gap-[6px] px-[6px]"><Avatar name={study.owner || undefined} level="modal" disabled={effectiveDisabled} /><span className={`truncate text-[12px] ${effectiveDisabled ? 'text-graphite-40' : study.owner ? 'text-text-primary' : 'text-text-secondary'}`}>{study.owner || 'No Assignee'}</span></div>}</td>
                       <td className="px-[16px] py-0"><AvailabilitySwitch checked={!effectiveDisabled} disabled={!isAdmin || projectDisabled} label={`${study.id} availability`} onChange={() => onToggleStudyStatus(project.id, study.id)} /></td>
                       <td className="w-[80px] px-[16px] py-0" />
@@ -230,7 +228,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
               })}
             </tbody>
           </table>
-        )}
+          {visibleGroups.length === 0 && <div className="sticky left-0 flex min-h-[240px] flex-1 flex-col items-center justify-center p-4 text-center text-text-muted"><img src={databaseIconUrl} alt="" className="mb-[6px] h-[28px] w-[28px] opacity-40" /><span className="text-[13px] font-medium">No matching projects or studies found</span>{hasActiveFilters && <button type="button" onClick={resetFilters} className="mt-[8px] cursor-pointer text-[12px] font-medium text-brand-1 hover:underline">Reset Filters</button>}</div>}
         </div>
       </div>
     </div>

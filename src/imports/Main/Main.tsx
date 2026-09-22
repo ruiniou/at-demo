@@ -85,6 +85,7 @@ import { ProjectItem, UserRole, INITIAL_PROJECTS, SYSTEM_USERS } from "./types/m
 import { Tooltip } from "../../components/ui/Tooltip";
 import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
 import { Dropdown } from "../../components/ui/Dropdown";
+import { Popover } from "../../components/ui/Popover";
 import { ZoomControl } from "../../components/ui/ZoomControl";
 import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
 import { FilterChip } from "../../components/ui/FilterChip";
@@ -4187,7 +4188,7 @@ function ReadOnlyOwner({ name }: { name?: string }) {
   return (
     <div className="flex min-h-[40px] min-w-0 items-center gap-[6px] px-[6px]">
       <Avatar name={name} level="modal" />
-      <span className={`truncate text-[12px] font-normal ${name ? 'text-text-primary' : 'text-text-secondary'}`}>
+      <span className={`truncate text-[12px] font-normal ${name ? 'text-text-primary' : 'text-text-secondary'}`} title={name || 'No Assignee'}>
         {name || 'No Assignee'}
       </span>
     </div>
@@ -13904,6 +13905,48 @@ function HomePage({
   const [isResizing, setIsResizing] = useState(false);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const homePageRef = useRef<HTMLDivElement>(null);
+  const actionMenuAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const [homePageWidth, setHomePageWidth] = useState(0);
+  const [homeTreeAutoCollapsed, setHomeTreeAutoCollapsed] = useState(false);
+  const homeTreeManuallyExpanded = useRef(false);
+  const homeTreeListOpen = treeListOpen && !homeTreeAutoCollapsed;
+
+  useLayoutEffect(() => {
+    const page = homePageRef.current;
+    if (!page) return;
+    const measure = () => setHomePageWidth(page.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(page);
+    return () => observer.disconnect();
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!treeListOpen) {
+      setHomeTreeAutoCollapsed(false);
+      homeTreeManuallyExpanded.current = false;
+      return;
+    }
+    if (!homePageWidth || isResizing) return;
+    // Includes page chrome around the 800px minimum readable table.
+    const availableWithSidebar = homePageWidth - treeListWidth;
+    const minimumPanelWidth = 880;
+    const restoreBuffer = 64;
+    if (availableWithSidebar >= minimumPanelWidth + restoreBuffer) {
+      setHomeTreeAutoCollapsed(false);
+      homeTreeManuallyExpanded.current = false;
+    } else if (availableWithSidebar < minimumPanelWidth && !homeTreeManuallyExpanded.current) {
+      setHomeTreeAutoCollapsed(true);
+    }
+  }, [homePageWidth, treeListWidth, treeListOpen, isResizing]);
+
+  const setHomeTreeListOpen = (open: boolean) => {
+    homeTreeManuallyExpanded.current = open;
+    setHomeTreeAutoCollapsed(false);
+    setTreeListOpen(open);
+  };
+
   const studyOwnerMap = useMemo(() => Object.fromEntries(
     projects.flatMap((project) => project.studies.map((study) => [study.id, study.owner]))
   ) as Record<string, string>, [projects]);
@@ -14117,25 +14160,39 @@ function HomePage({
     }
   };
 
+  const expandTreeListButton = !homeTreeListOpen ? (
+    <TooltipText label="Expand tree list">
+      <button
+        type="button"
+        onClick={() => setHomeTreeListOpen(true)}
+        className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+        aria-label="Expand tree list"
+      >
+        <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
+      </button>
+    </TooltipText>
+  ) : null;
+
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-bg-panel relative">
+    <div ref={homePageRef} className="flex h-screen w-full overflow-hidden bg-bg-panel relative">
       <div className="flex min-w-0 flex-1 overflow-hidden pl-[4px]">
         {/* Tree list sidebar (no custom right-border; separation is managed by WorkspaceDivider) */}
         <div
           className="shrink-0 overflow-hidden"
           style={{
-            width: treeListOpen ? `${treeListWidth}px` : "0px",
-            opacity: treeListOpen ? 1 : 0,
+            width: homeTreeListOpen ? `${treeListWidth}px` : "0px",
+            opacity: homeTreeListOpen ? 1 : 0,
+            visibility: homeTreeListOpen ? 'visible' : 'hidden',
             transition: isResizing ? "none" : "width 180ms cubic-bezier(0.25,0.1,0.25,1), opacity 180ms cubic-bezier(0.25,0.1,0.25,1)",
           }}
         >
           <div className="flex h-full w-full flex-col bg-bg-panel">
             {/* Sidebar header */}
-            <div className="flex h-[48px] shrink-0 items-center justify-between px-[10px]">
+            <div className="flex h-[52px] shrink-0 items-center justify-between px-[10px]">
               <img src={atlasLogoFullUrl} alt="Atlas" className="h-[24px] block shrink-0" />
               <TooltipText label="Collapse Tree List">
                 <button
-                  onClick={() => setTreeListOpen(false)}
+                  onClick={() => setHomeTreeListOpen(false)}
                   className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
                   aria-label="Collapse tree list"
                 >
@@ -14296,7 +14353,7 @@ function HomePage({
         </div>
 
         {/* TreeList ↔ Main panel divider */}
-        {treeListOpen && (
+        {homeTreeListOpen && (
           <WorkspaceDivider
             onDragStart={() => setIsResizing(true)}
             onDragEnd={() => setIsResizing(false)}
@@ -14306,24 +14363,9 @@ function HomePage({
 
         {/* Main Container Wrapper */}
         <div className="relative z-20 flex min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pt-[4px] pb-[8px] pr-[8px]">
-          <div className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry pointer-events-auto">
-            {/* Expand tree list button when collapsed */}
-            {!treeListOpen && (
-              <div className="flex h-[48px] shrink-0 items-center px-[12px] border-b-[0.6px] border-border-default">
-                <TooltipText label="Expand tree list">
-                  <button
-                    onClick={() => setTreeListOpen(true)}
-                    className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
-                    aria-label="Expand tree list"
-                  >
-                    <LocalIcon src={expandIconUrl} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
-                  </button>
-                </TooltipText>
-              </div>
-            )}
-
+          <div className="home-list-panel flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry pointer-events-auto">
             {/* Floating Demo Role Switcher when Tree List is collapsed */}
-            {!treeListOpen && (
+            {!homeTreeListOpen && (
               <div className="fixed bottom-[14px] left-[14px] z-50 flex items-center gap-[4px] rounded-[8px] bg-white/95 px-[10px] py-[6px] shadow-lg border border-border-default backdrop-blur-md text-[11px] select-none">
                 <span className="text-text-secondary font-medium mr-[2px]">Role:</span>
                 <button
@@ -14375,6 +14417,7 @@ function HomePage({
 
             {activeNav === 'management' ? (
               <ProjectStudyManagementView
+                headerLeading={expandTreeListButton}
                 currentRole={currentRole}
                 currentUserName={currentUserName}
                 projects={projects}
@@ -14387,8 +14430,9 @@ function HomePage({
             ) : (
               <>
                 {/* Top Header Row: Events title with filled-circle icon + New Event button on the right */}
-                <div className="flex items-center justify-between px-[16px] pt-[20px] sm:px-[28px]">
-                  <div className="flex items-center gap-[10px]">
+                <div className="home-list-content flex shrink-0 flex-wrap items-center justify-between gap-3 pt-[20px]">
+                  <div className="flex min-w-0 items-center gap-[10px]">
+                    {expandTreeListButton}
                     <div className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-az-secondary shrink-0">
                       <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px]" color="#830051" />
                     </div>
@@ -14422,19 +14466,17 @@ function HomePage({
                 </div>
 
             {/* Event list content area */}
-            <div className="flex min-h-0 flex-1 flex-col gap-[14px] px-[16px] pb-[20px] pt-[14px] sm:px-[28px]">
+            <div className="home-list-content flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] pb-[20px] pt-[14px]">
               {/* Toolbar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-[12px]">
-                {/* Left: Search bar + FilterChip placed adjacently */}
-                <div className="flex items-center gap-[10px] flex-1 max-w-[560px]">
-                  <SearchBar
-                    value={searchValue}
-                    onChange={setSearchValue}
-                    placeholder="Search Project / Study / Event"
-                    background="light"
-                    className="w-full shrink-0 sm:w-[300px] md:w-[340px]"
-                  />
-
+              <div className="home-list-toolbar shrink-0">
+                <SearchBar
+                  value={searchValue}
+                  onChange={setSearchValue}
+                  placeholder="Search Project / Study / Event"
+                  background="light"
+                  className="home-list-search"
+                />
+                <div className="home-list-filters">
                   {/* TA FilterChip dropdown adjacent to Search bar */}
                   <FilterChip
                     type="Dropdown"
@@ -14464,42 +14506,19 @@ function HomePage({
               </div>
 
               {/* Main List Display: Hierarchical Table View */}
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-graphite-10 bg-white">
-                <table className="w-full table-fixed border-collapse text-left">
-                  <colgroup><col /><col className="w-[180px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
-                  <thead>
-                    <tr className="border-b border-graphite-10 bg-bg-app text-[12px] font-normal tracking-normal text-text-secondary">
-                      <th className="px-[16px] py-[10px] font-normal">Event Name</th>
-                      <th className="px-[16px] py-[10px] font-normal">Status</th>
-                      <th className="px-[16px] py-[10px] font-normal">Owner</th>
-                      <th className="px-[16px] py-[10px] text-right font-normal">Actions</th>
-                    </tr>
-                  </thead>
-                </table>
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                {hierarchicalProjects.length === 0 ? (
-                  <div className="flex h-full min-h-[240px] flex-col items-center justify-center text-[13px] text-text-muted">
-                    <span>No matching projects, studies or events found</span>
-                    {(searchValue.trim() || selectedTA !== 'All' || assignedToMeOnly) && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSearchValue('');
-                          setSelectedTA('All');
-                          setAssignedToMeOnly(false);
-                        }}
-                        className="mt-[8px] cursor-pointer text-[12px] font-medium text-brand-1 hover:underline"
-                      >
-                        Reset Filters
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  /* Hierarchical Table (List) View */
-                  <div className="min-w-full">
-                    <table className="w-full table-fixed border-collapse text-left">
-                      <colgroup><col /><col className="w-[180px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
-                      <tbody className="divide-y divide-graphite-10 text-[13px]">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-md border border-graphite-10 bg-white">
+                <div className="home-list-scroll flex min-h-0 min-w-0 flex-1 flex-col overflow-auto" role="region" aria-label="Events table" tabIndex={0}>
+                  <table className="home-list-table shrink-0 text-left">
+                    <colgroup><col /><col className="home-list-status-column" /><col className="home-list-owner-column" /><col className="home-list-actions-column" /></colgroup>
+                    <thead>
+                      <tr className="border-b border-graphite-10 bg-white text-[12px] font-normal tracking-normal text-text-secondary">
+                        <th scope="col" className="px-[16px] py-[10px] font-normal">Event Name</th>
+                        <th scope="col" className="px-[16px] py-[10px] font-normal">Status</th>
+                        <th scope="col" className="px-[16px] py-[10px] font-normal">Owner</th>
+                        <th scope="col" className="px-[16px] py-[10px] text-right font-normal">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-graphite-10 text-[13px]">
                         {hierarchicalProjects.map((proj) => {
                           const isProjExpanded = panelExpandedProjects.has(proj.projectId);
                           return (
@@ -14515,7 +14534,7 @@ function HomePage({
                                       <ChevronRightTreeIcon isExpanded={isProjExpanded} color="#888E8E" />
                                     </span>
                               <LocalIcon src={capsuleIconUrl} className="h-[16px] w-[16px] shrink-0" color="var(--color-text-secondary)" />
-                                    <span className="text-[13px] font-semibold text-text-primary">
+                                    <span className="truncate text-[13px] font-semibold text-text-primary" title={`Project: ${proj.projectId}`}>
                                       Project: {proj.projectId}
                                     </span>
                                   </div>
@@ -14540,10 +14559,10 @@ function HomePage({
                                               <ChevronRightTreeIcon isExpanded={isStdExpanded} color="#888E8E" />
                                             </span>
                                             <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color="var(--color-text-secondary)" />
-                                            <span className="text-[13px] font-medium text-text-primary">
+                                            <span className="truncate text-[13px] font-medium text-text-primary" title={std.studyId}>
                                               {std.studyId}
                                             </span>
-                                            <DesignTag className="pointer-events-none h-[20px] py-0">{std.ta}</DesignTag>
+                                            <DesignTag className="pointer-events-none h-[20px] shrink-0 py-0">{std.ta}</DesignTag>
                                           </div>
                                         </td>
 
@@ -14597,7 +14616,7 @@ function HomePage({
                                               className="group h-[48px] cursor-pointer transition-colors hover:bg-black/[0.02]"
                                             >
                                               {/* Event Name (pl-[88px]: Event Name starts at 88px, exactly aligned under Study Name at 88px) */}
-                                              <td className="py-[10px] pl-[88px] pr-[16px] max-w-[280px]">
+                                              <td className="py-[10px] pl-[88px] pr-[16px]">
                                                 <div className="flex items-center gap-[6px] min-w-0">
                                                   <span className="truncate font-normal text-text-primary" title={ev.name}>
                                                     {ev.name}
@@ -14607,7 +14626,7 @@ function HomePage({
 
                                               {/* Status */}
                                               <td className="px-[16px] py-[10px] whitespace-nowrap">
-                                                <div className="flex items-center gap-[8px]">
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                                   <StatusTag status={ev.status} />
                                                   {ev.progress && (
                                                     <span className="text-[11px] text-text-secondary tabular-nums">
@@ -14628,8 +14647,11 @@ function HomePage({
                                                   <TooltipText label="More actions">
                                                     <button
                                                       type="button"
+                                                      aria-haspopup="menu"
+                                                      aria-expanded={isMenuOpen}
                                                       onClick={(e) => {
                                                         e.stopPropagation();
+                                                        actionMenuAnchorRef.current = e.currentTarget;
                                                         setOpenActionMenuId((prev) => (prev === `table-${ev.id}` ? null : `table-${ev.id}`));
                                                       }}
                                                       className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors ${
@@ -14642,14 +14664,12 @@ function HomePage({
                                                   </TooltipText>
 
                                                   {isMenuOpen && (
-                                                    <div
-                                                      onClick={(e) => e.stopPropagation()}
-                                                      className="absolute right-0 top-[28px] bg-white border border-graphite-10 rounded-md shadow-elevation-overlay p-1 w-[140px] z-50 animate-fade-in"
-                                                    >
+                                                    <Popover open={isMenuOpen} onOpenChange={(open) => { if (!open) setOpenActionMenuId(null); }} anchorRef={actionMenuAnchorRef} role="menu" label="Event actions" align="end" width={160}>
                                                       {actionButtons.map((btn, i) => (
                                                         <button
                                                           key={i}
                                                           type="button"
+                                                          role="menuitem"
                                                           onClick={(e) => {
                                                             e.stopPropagation();
                                                             setOpenActionMenuId(null);
@@ -14661,7 +14681,7 @@ function HomePage({
                                                           <span className="truncate">{btn.label}</span>
                                                         </button>
                                                       ))}
-                                                    </div>
+                                                    </Popover>
                                                   )}
                                                 </div>
                                               </td>
@@ -14674,10 +14694,26 @@ function HomePage({
                             </React.Fragment>
                           );
                         })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                    </tbody>
+                  </table>
+                  {hierarchicalProjects.length === 0 && (
+                    <div className="sticky left-0 flex min-h-[240px] flex-1 flex-col items-center justify-center p-4 text-center text-[13px] text-text-muted">
+                      <span>No matching projects, studies or events found</span>
+                      {(searchValue.trim() || selectedTA !== 'All' || assignedToMeOnly) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchValue('');
+                            setSelectedTA('All');
+                            setAssignedToMeOnly(false);
+                          }}
+                          className="mt-[8px] cursor-pointer text-[12px] font-medium text-brand-1 hover:underline"
+                        >
+                          Reset Filters
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

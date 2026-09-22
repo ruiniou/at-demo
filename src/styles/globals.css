@@ -23,6 +23,70 @@ html, body {
   background: var(--color-graphite-20);
 }
 
+/* Home list pages only; workspace panels keep their own responsive rules. */
+.home-list-panel {
+  container: home-list / inline-size;
+}
+.home-list-content {
+  padding-inline: calc(var(--spacing) * 4);
+}
+.home-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--spacing) * 2.5);
+  min-width: 0;
+}
+.home-list-search {
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 340px;
+}
+.home-list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--spacing) * 2.5);
+  max-width: 100%;
+}
+.home-list-scroll {
+  scrollbar-gutter: stable;
+  overscroll-behavior-x: contain;
+}
+.home-list-table {
+  width: 100%;
+  min-width: 800px;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.home-list-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-white);
+  box-shadow: 0 1px 0 var(--color-graphite-10);
+}
+.home-list-table .home-list-owner-column {
+  width: clamp(180px, 18cqw, 260px);
+}
+.home-list-table--management .home-list-owner-column {
+  width: clamp(180px, 20cqw, 280px);
+}
+.home-list-table .home-list-status-column {
+  width: clamp(208px, 16cqw, 224px);
+}
+.home-list-table--management .home-list-status-column {
+  width: clamp(148px, 14cqw, 180px);
+}
+.home-list-table .home-list-actions-column {
+  width: 80px;
+}
+@container home-list (min-width: 800px) {
+  .home-list-content {
+    padding-inline: calc(var(--spacing) * 7);
+  }
+}
+
 /* Fade transition for Ask User */
 .q-fade {
   transition: opacity 0.25s ease, transform 0.25s ease;
