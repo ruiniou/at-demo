@@ -1205,7 +1205,7 @@ function InlineVariableList({
         width: 640,
         zIndex: 9999,
       }}
-      className="rounded-[4px] border border-[#D8DADA] bg-white p-[4px] shadow-[0px_4px_16px_rgba(0,0,0,0.15)] flex flex-col gap-[4px]"
+      className="rounded-md border border-[#D8DADA] bg-white p-[4px] shadow-[0px_4px_16px_rgba(0,0,0,0.15)] flex flex-col gap-[4px]"
     >
       {/* Search bar + Filter Chip */}
       <div className="flex items-center gap-[8px] w-full">
@@ -1215,6 +1215,7 @@ function InlineVariableList({
             onChange={setSearch}
             placeholder="Search..."
             background="light"
+            variant="embedded"
             autoFocus
           />
         </div>

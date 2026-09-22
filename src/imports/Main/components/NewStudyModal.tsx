@@ -166,7 +166,7 @@ export const NewStudyModal: React.FC<NewStudyModalProps> = ({
 
             <FormItem label="Assign Study Owner" labelClassName="t-small-medium" required error={errors.owner || undefined}>
               <div className="flex flex-col gap-[6px]">
-                <SearchBar value={userSearch} onChange={setUserSearch} placeholder="Search user by name or email..." background="light" size="compact" />
+                <SearchBar value={userSearch} onChange={setUserSearch} placeholder="Search user by name or email..." background="light" size="compact" variant="embedded" />
                 <div className="flex max-h-[140px] flex-col gap-[2px] overflow-y-auto rounded-[4px] border border-form-border p-[4px]">
               {filteredUsers.length === 0 ? (
                 <div className="p-[12px] text-center text-[12px] text-text-tertiary">

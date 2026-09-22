@@ -184,7 +184,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
           <FilterChip type="Dropdown" variant="filter" showIcon={false} label={statusFilter === 'all' ? 'All Status' : statusFilter === 'enabled' ? 'Available' : 'Disabled'} value={statusFilter} onChange={(value) => setStatusFilter(value as typeof statusFilter)} options={[{ label: 'All Status', value: 'all' }, { label: 'Available', value: 'enabled' }, { label: 'Disabled', value: 'disabled' }]} />
         </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-graphite-10 bg-white">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-graphite-10 bg-white">
         <table className="w-full table-fixed border-collapse text-left">
           <colgroup><col /><col className="w-[240px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
           <thead><tr className="border-b border-graphite-10 bg-bg-app text-[12px] text-text-secondary"><th className="px-[16px] py-[10px] font-normal">Project / Study</th><th className="px-[16px] py-[10px] font-normal">Study Owner</th><th className="px-[16px] py-[10px] font-normal">Status</th><th className="px-[16px] py-[10px]" aria-label="Actions" /></tr></thead>

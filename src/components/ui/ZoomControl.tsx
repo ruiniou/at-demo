@@ -156,7 +156,7 @@ export function ZoomControl({
 
       {/* 展开的下拉选项列表 */}
       {isOpen && !disabled && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-[100%] z-[100] mt-[4px] min-w-[88px] flex flex-col gap-[2px] rounded-[4px] border border-form-border bg-white p-[4px] shadow-[0px_2px_8px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute left-1/2 -translate-x-1/2 top-[100%] z-[100] mt-[4px] min-w-[88px] flex flex-col gap-[2px] rounded-md border border-form-border bg-white p-[4px] shadow-[0px_2px_8px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-100">
           <div className="flex flex-col gap-[2px]">
             {options.map((opt) => {
               const isSelected = opt.value === value;
@@ -168,7 +168,7 @@ export function ZoomControl({
                     onChange(opt.value);
                     setIsOpen(false);
                   }}
-                  className={`flex h-[28px] w-full items-center justify-between px-[8px] rounded-[3px] text-left text-[12px] transition-colors duration-150 cursor-pointer ${
+                  className={`flex h-[28px] w-full items-center justify-between px-[8px] rounded-[calc(var(--radius-xs)*2)] text-left text-[12px] transition-colors duration-150 cursor-pointer ${
                     isSelected
                       ? 'bg-az-secondary text-brand-1 font-medium'
                       : 'text-text-primary hover:bg-black/5'

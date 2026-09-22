@@ -118,7 +118,7 @@ export function GroupCodePanel({
                   className="fixed inset-0 z-[50]"
                   onClick={() => setIsDropdownOpen(false)}
                 />
-                <div className="absolute top-full left-0 right-0 z-[60] mt-[4px] max-h-[220px] overflow-y-auto rounded-[4px] border border-border-default bg-white p-[4px] shadow-elevation-overlay">
+                <div className="absolute top-full left-0 right-0 z-[60] mt-[4px] max-h-[220px] overflow-y-auto rounded-md border border-border-default bg-white p-[4px] shadow-elevation-overlay">
                   {groupCodes.map((item) => {
                     const isSelected = item.id === currentGroup.id;
                     return (
@@ -129,7 +129,7 @@ export function GroupCodePanel({
                           setSelectedId(item.id);
                           setIsDropdownOpen(false);
                         }}
-                        className={`flex w-full flex-col rounded-[3px] px-[8px] py-[6px] text-left transition-colors ${
+                        className={`flex w-full flex-col rounded-[calc(var(--radius-xs)*2)] px-[8px] py-[6px] text-left transition-colors ${
                           isSelected
                             ? "bg-az-secondary text-brand-1"
                             : "hover:bg-bg-panel text-text-primary"

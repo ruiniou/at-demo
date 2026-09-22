@@ -1448,7 +1448,7 @@ export default function ChatBox({
                           key={opt.id}
                           onClick={() => handleSelectMention(opt)}
                           onMouseEnter={() => setMentionSelectedIndex(idx)}
-                          className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[6px] cursor-pointer transition-colors text-[13px] ${
+                          className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[calc(var(--radius-xs)*2)] cursor-pointer transition-colors text-[13px] ${
                             isSelected ? "bg-az-secondary text-brand-1 font-medium hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
                           }`}
                         >

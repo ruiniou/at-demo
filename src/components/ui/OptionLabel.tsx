@@ -21,7 +21,7 @@ export function OptionLabel({ label, sub, description, selected = false, disable
   const highlighted = type === "highlight" && selected;
   return (
     <button type="button" disabled={disabled} aria-pressed={selected} onClick={onClick}
-      className={`dropdown-item flex ${description ? "min-h-12 py-1.5" : "h-8"} w-full items-center ${type === "single" ? "gap-[6px]" : "gap-2"} px-[6px] rounded-[2px] text-left transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 ${disabled ? "text-graphite-40 cursor-not-allowed" : highlighted ? "bg-az-secondary text-brand-1" : "text-text-primary hover:bg-bg-panel"} ${className}`}>
+      className={`dropdown-item flex ${description ? "min-h-12 py-1.5" : "h-8"} w-full items-center ${type === "single" ? "gap-[6px]" : "gap-2"} px-[6px] rounded-[calc(var(--radius-xs)*2)] text-left transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 ${disabled ? "text-graphite-40 cursor-not-allowed" : highlighted ? "bg-az-secondary text-brand-1" : "text-text-primary hover:bg-bg-panel"} ${className}`}>
       {type === "single" && <span aria-hidden="true" className={`size-4 shrink-0 bg-current ${selected ? "" : "invisible"}`} style={{ mask: `url("${checkIconUrl}") center / contain no-repeat` }} />}
       {type === "multi" && <CheckboxIndicator checked={selected} disabled={disabled} size={14} />}
       {leading && <span className="shrink-0 inline-flex items-center">{leading}</span>}

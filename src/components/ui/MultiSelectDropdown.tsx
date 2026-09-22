@@ -170,7 +170,7 @@ export function MultiSelectDropdown({
 
       {isOpen && !disabled && (
         <div
-          className={`absolute left-0 top-[100%] z-[100] mt-[4px] rounded-[4px] border border-form-border bg-white shadow-[0px_2px_6px_rgba(0,0,0,0.1)] ${
+          className={`absolute left-0 top-[100%] z-[100] mt-[4px] rounded-md border border-form-border bg-white shadow-[0px_2px_6px_rgba(0,0,0,0.1)] ${
             hasDerivation ? "w-[640px]" : "right-0"
           }`}
         >
@@ -193,7 +193,7 @@ export function MultiSelectDropdown({
                       type="button"
                       disabled={opt.disabled}
                       onClick={() => handleToggleOption(opt.value)}
-                      className={`dropdown-item disabled:cursor-not-allowed grid w-full grid-cols-[14px_72px_140px_1fr] items-start gap-[8px] rounded-[2px] px-[6px] py-[6px] text-left transition-colors enabled:hover:bg-bg-panel ${
+                      className={`dropdown-item disabled:cursor-not-allowed grid w-full grid-cols-[14px_72px_140px_1fr] items-start gap-[8px] rounded-[calc(var(--radius-xs)*2)] px-[6px] py-[6px] text-left transition-colors enabled:hover:bg-bg-panel ${
                         isSelected && !opt.disabled ? "bg-az-secondary" : ""
                       }`}
                     >

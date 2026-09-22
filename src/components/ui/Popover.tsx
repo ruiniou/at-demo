@@ -94,7 +94,7 @@ export function Popover({ open, onOpenChange, anchorRef, children, id, label,
   if (!open) return null;
   return createPortal(<div ref={panelRef} id={id} role={role} aria-label={label} tabIndex={-1}
     style={{ position: "fixed", zIndex: 10050, ...position }}
-    className={twMerge("overflow-y-auto rounded-[4px] border border-form-border bg-white p-1 shadow-elevation-overlay", className)}>
+    className={twMerge("overflow-y-auto rounded-md border border-form-border bg-white p-1 shadow-elevation-overlay", className)}>
     {children}
   </div>, document.body);
 }

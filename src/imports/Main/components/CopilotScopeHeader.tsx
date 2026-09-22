@@ -323,7 +323,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
           className="fixed z-[9999] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <div className="min-h-0 flex-1 overflow-y-auto p-[6px] flex flex-col gap-[2px]">
+          <div className="min-h-0 flex-1 overflow-y-auto p-1 flex flex-col gap-[2px]">
             <div className="px-[8px] pt-[4px] pb-[4px]">
               <span className="text-[11px] font-semibold text-text-secondary block">
                 Sessions
@@ -340,7 +340,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
                     onSelectEventSession(s);
                     setOpenDropdown(null);
                   }}
-                  className={`group relative flex items-start justify-between gap-[6px] px-[8px] py-[6px] rounded-[6px] cursor-pointer transition-colors ${
+                  className={`group relative flex items-start justify-between gap-[6px] px-[8px] py-[6px] rounded-[calc(var(--radius-xs)*2)] cursor-pointer transition-colors ${
                     isSelected ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
                   }`}
                 >
@@ -390,7 +390,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
           className="fixed z-[9999] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <div className="min-h-0 flex-1 overflow-y-auto p-[6px] flex flex-col gap-[2px]">
+          <div className="min-h-0 flex-1 overflow-y-auto p-1 flex flex-col gap-[2px]">
             {/* Latest Section */}
             {tflSessions.length > 0 && (
               <>
@@ -411,7 +411,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
                         onSelectTflSession(s.id);
                         setOpenDropdown(null);
                       }}
-                      className={`group relative flex items-center justify-between gap-[6px] px-[8px] py-[6px] rounded-[6px] cursor-pointer transition-colors ${
+                      className={`group relative flex items-center justify-between gap-[6px] px-[8px] py-[6px] rounded-[calc(var(--radius-xs)*2)] cursor-pointer transition-colors ${
                         isSelected ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
                       }`}
                     >
@@ -457,7 +457,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
                         onSelectTflSession(s.id);
                         setOpenDropdown(null);
                       }}
-                      className={`group relative flex items-center justify-between gap-[6px] px-[8px] py-[6px] rounded-[6px] cursor-pointer transition-colors ${
+                      className={`group relative flex items-center justify-between gap-[6px] px-[8px] py-[6px] rounded-[calc(var(--radius-xs)*2)] cursor-pointer transition-colors ${
                         isSelected ? "bg-az-secondary text-brand-1 hover:bg-az-secondary-hover" : "text-text-primary hover:bg-graphite-10"
                       }`}
                     >

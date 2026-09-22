@@ -692,6 +692,7 @@ export function AssignmentTab({
           onChange={setSearch}
           placeholder="Search TFLs..."
           size="compact"
+          variant="embedded"
           icon={<span aria-hidden="true" className="size-4 shrink-0 bg-text-secondary" style={{ mask: `url("${searchLineIconUrl}") center / contain no-repeat` }} />}
           background="light"
           className="w-[240px]"
