@@ -11,6 +11,7 @@ export interface SearchBarProps {
   className?: string;
   autoFocus?: boolean;
   size?: "default" | "compact";
+  variant?: "default" | "embedded";
   icon?: React.ReactNode;
 }
 
@@ -22,6 +23,7 @@ export function SearchBar({
   className = "",
   autoFocus = false,
   size = "default",
+  variant = "default",
   icon,
 }: SearchBarProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -35,9 +37,11 @@ export function SearchBar({
 
   const hasValue = value.length > 0;
   const searchIconMask = `url("${searchIconUrl}") center / contain no-repeat`;
+  const outerRadius = variant === "embedded" ? "rounded-[calc(var(--radius-xs)*2)]" : "rounded-md";
+  const innerRadius = variant === "embedded" ? "rounded-xs" : "rounded-sm";
 
   // Outer wrapper styles by state
-  let outerClasses = `flex ${size === "compact" ? "h-8" : "h-[36px]"} items-stretch rounded-[8px] p-[2px] gap-[6px] border-[0.6px]`;
+  let outerClasses = `flex ${size === "compact" ? "h-8" : "h-[36px]"} items-stretch ${outerRadius} p-[2px] gap-[6px] border-[0.6px]`;
   if (isFocused) {
     // Focused: bg #E6CCDC, border 0.6px #830051
     outerClasses += " bg-az-secondary-hover border-brand-1";
@@ -52,7 +56,7 @@ export function SearchBar({
   const innerPadding = size === "compact"
     ? "py-0 pl-[6px] pr-[4px]"
     : hasValue ? "p-[4px_4px_4px_6px]" : "p-[4px_6px]";
-  const innerClasses = `flex flex-1 items-center gap-[6px] rounded-[6px] ${innerBg} ${innerPadding}`;
+  const innerClasses = `flex flex-1 items-center gap-[6px] ${innerRadius} ${innerBg} ${innerPadding}`;
 
   const handleClear = () => {
     if (onChange) onChange("");
@@ -82,7 +86,7 @@ export function SearchBar({
               placeholder={placeholder}
               className="w-full bg-transparent outline-none"
               style={{
-                fontFamily: "'PingFang SC', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontWeight: 400,
                 fontSize: 12,
                 lineHeight: "20px",

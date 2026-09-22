@@ -1,157 +1,17 @@
-import { Popover } from "./Popover";
-import { DropdownEmpty } from "./DropdownParts";
-import React, { useState, useRef, useId } from "react";
-import arrowIconUrl from "../../icons/arrow-down-s-line.svg";
-import { OptionLabel } from "./OptionLabel";
-import { FormItem } from "./FormItem";
+import React from "react";
+import {
+  SingleSelect,
+  type SingleSelectOption,
+  type SingleSelectProps,
+} from "./SingleSelect";
 
-export type DropdownOption = {
-  label: string;
-  value: string;
-  disabled?: boolean;
-  /** Optional: shown in Variable multiselect dropdown rows */
-  derivation?: string;
-  /** Optional: dataset name prefix shown in Variable multiselect dropdown rows */
-  dataset?: string;
-};
+export type DropdownOption = SingleSelectOption;
+export type DropdownProps = SingleSelectProps;
 
-export interface DropdownProps {
-  label?: string;
-  options: DropdownOption[];
-  value: string | null;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  required?: boolean;
-  className?: string;
-  error?: string;
-  disabled?: boolean;
-  customBoxClass?: string;
-  customTextColor?: string;
-  customTextStyle?: React.CSSProperties;
-  suffixNode?: React.ReactNode;
-  triggerClassName?: string;
-  badge?: React.ReactNode;
+/** Compatibility wrapper. New Fundamental consumers should import SingleSelect directly. */
+export function Dropdown(props: DropdownProps) {
+  return <SingleSelect {...props} />;
 }
 
-// Figma 549:1458 — Select (Default / Hovered / Focused / Error / Disabled)
-// States: Default, Hovered, Focused (open), Error, Disabled
-export function Dropdown({
-  label,
-  options,
-  value,
-  onChange,
-  placeholder = "Select…",
-  required = false,
-  className = "",
-  error,
-  disabled = false,
-  customBoxClass,
-  customTextColor,
-  customTextStyle,
-  suffixNode,
-  triggerClassName,
-  badge,
-}: DropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const popoverId = useId();
-
-  const selectedOption = options.find((opt) => opt.value === value);
-
-  // Border + bg per state (Figma 549:1458)
-  let boxClasses = "";
-  if (customBoxClass) {
-    boxClasses = customBoxClass;
-  } else if (disabled) {
-    boxClasses = "border border-form-border bg-bg-panel cursor-not-allowed";
-  } else if (error) {
-    boxClasses = "border-[1.5px] border-az-danger bg-white";
-  } else if (isOpen) {
-    boxClasses = "border border-brand-1 bg-white shadow-[0px_0px_0px_2px_var(--color-az-secondary)]";
-  } else {
-    boxClasses = "border border-form-border bg-white hover:border-graphite-50";
-  }
-
-  // Label + star colors
-  const textColor = customTextColor ? customTextColor : disabled ? "var(--color-graphite-40)" : selectedOption ? "var(--color-text-primary)" : "var(--color-text-secondary)";
-
-  return (
-    <FormItem
-      label={label}
-      labelClassName="t-small-medium"
-      required={required}
-      disabled={disabled}
-      error={error}
-      badge={badge}
-      className={className}
-    >
-      <div className="relative">
-        <button
-        ref={triggerRef}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen && !disabled}
-        aria-controls={isOpen && !disabled ? popoverId : undefined}
-        type="button"
-        disabled={disabled}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`relative flex w-full items-center justify-between gap-[8px] transition-[border-color,box-shadow,background-color] after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0 ${triggerClassName || 'h-[32px] rounded-[4px] pl-[12px] pr-[10px]'} ${boxClasses}`}
-      >
-        <span
-          title={selectedOption ? selectedOption.label : placeholder}
-          style={{
-            fontFamily: "'PingFang SC', sans-serif",
-            fontWeight: 400,
-            fontSize: 12,
-            lineHeight: "20px",
-            color: textColor,
-            ...customTextStyle,
-          }}
-          className="flex-1 min-w-0 truncate text-left"
-        >
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        <div className="flex items-center gap-[4px] shrink-0">
-          {suffixNode && (
-            <div onClick={(e) => e.stopPropagation()}>{suffixNode}</div>
-          )}
-          <img
-            src={arrowIconUrl}
-            alt=""
-            className="h-[20px] w-[20px]"
-            style={{ opacity: disabled ? 0.4 : 1 }}
-          />
-        </div>
-      </button>
-
-      {error && (
-        <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 400, fontSize: 12, lineHeight: "20px", color: "var(--color-form-error)" }}>
-          {error}
-        </span>
-      )}
-
-      <Popover open={isOpen && !disabled} onOpenChange={setIsOpen} anchorRef={triggerRef} id={popoverId} label={label || placeholder} className="shadow-[0px_2px_6px_rgba(0,0,0,0.1)]">
-
-          <div className="flex max-h-[200px] flex-col gap-[2px] overflow-y-auto">
-            {options.length === 0 && <DropdownEmpty />}
-            {options.map((opt) => {
-              const isSelected = opt.value === value;
-              return (
-                <OptionLabel
-                  key={opt.value}
-                  label={opt.label}
-                  disabled={opt.disabled}
-                  selected={isSelected}
-                  type="single"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
-                  }}
-                />
-              );
-            })}
-          </div>
-        </Popover>
-      </div>
-    </FormItem>
-  );
-}
+export { SingleSelect };
+export type { SingleSelectProps };

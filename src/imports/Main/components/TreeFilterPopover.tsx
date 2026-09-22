@@ -289,7 +289,7 @@ export function TreeFilterPopover({
                 key={assignee}
                 type="button"
                 onClick={() => onToggleAssignee(assignee)}
-                className={`flex items-center gap-[6px] px-[6px] py-[6px] rounded-[3px] w-full text-left transition-colors cursor-pointer ${
+                className={`flex items-center gap-[6px] px-[6px] py-[6px] rounded-[calc(var(--radius-xs)*2)] w-full text-left transition-colors cursor-pointer ${
                   isSelected
                     ? "bg-[#F4E8EE] text-brand-1 font-medium"
                     : "hover:bg-bg-panel text-text-primary"

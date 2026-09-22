@@ -239,7 +239,7 @@ export function FacetedSearchBar({
             width: 300,
             zIndex: 10050,
           }}
-          className="rounded-[8px] border border-[#D8DADA] bg-white p-[6px] shadow-elevation-overlay flex flex-col gap-[2px] animate-fade-in select-none"
+          className="rounded-[8px] border border-[#D8DADA] bg-white p-1 shadow-elevation-overlay flex flex-col gap-[2px] animate-fade-in select-none"
         >
           {/* LEVEL 1: Dimension Selection Menu (No counts, standard t-small text) */}
           {level === "root" && (

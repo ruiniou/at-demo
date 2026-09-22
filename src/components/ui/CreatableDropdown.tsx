@@ -20,7 +20,6 @@ export interface CreatableDropdownProps {
   className?: string;
   error?: string;
   disabled?: boolean;
-  allowClear?: boolean;
   createPrefix?: string;
 }
 
@@ -35,7 +34,6 @@ export function CreatableDropdown({
   className = "",
   error,
   disabled = false,
-  allowClear = true,
   createPrefix = "Create",
 }: CreatableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -86,12 +84,6 @@ export function CreatableDropdown({
     setSearchQuery("");
   };
 
-  const handleClear = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onChange(null, false);
-    setSearchQuery("");
-  };
-
   let boxClasses = "";
   if (disabled) {
     boxClasses = "border border-form-border bg-bg-panel cursor-not-allowed";
@@ -129,10 +121,10 @@ export function CreatableDropdown({
           <div className="flex items-center gap-[6px] min-w-0 max-w-[calc(100%-48px)]">
             <span
               style={{
-                fontFamily: "'PingFang SC', sans-serif",
+                fontFamily: "var(--font-body)",
                 fontWeight: 400,
                 fontSize: 12,
-                lineHeight: "20px",
+                lineHeight: "18px",
                 color: textColor,
               }}
               className="truncate block text-left"
@@ -147,32 +139,18 @@ export function CreatableDropdown({
           </div>
 
           <div className="flex items-center gap-[4px] shrink-0">
-            {allowClear && value && !disabled && (
-              <span
-                onClick={handleClear}
-                className="flex h-[18px] w-[18px] items-center justify-center rounded-full hover:bg-black/5 text-text-secondary cursor-pointer"
-                title="Clear"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 10.586l4.95-4.95 1.414 1.414L13.414 12l4.95 4.95-1.414 1.414L12 13.414l-4.95 4.95-1.414-1.414L10.586 12 5.636 7.05l1.414-1.414L12 10.586z" fill="currentColor"/>
-                </svg>
-              </span>
-            )}
             <img
               src={arrowIconUrl}
               alt=""
-              className="h-[20px] w-[20px] transition-transform duration-200"
-              style={{
-                opacity: disabled ? 0.4 : 1,
-                transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-              }}
+              className="h-[20px] w-[20px]"
+              style={{ opacity: disabled ? 0.4 : 1 }}
             />
           </div>
         </button>
 
         {/* Dropdown Menu */}
         {isOpen && !disabled && (
-          <div className="absolute left-0 right-0 top-[100%] z-[100] mt-[4px] flex flex-col gap-[6px] rounded-[4px] border border-form-border bg-white p-[6px] shadow-[0px_4px_12px_rgba(0,0,0,0.12)]">
+          <div className="absolute left-0 right-0 top-[100%] z-[100] mt-[4px] flex flex-col gap-[6px] rounded-md border border-form-border bg-white p-1 shadow-[0px_4px_12px_rgba(0,0,0,0.12)]">
             {/* Search / Custom entry input */}
             <div className="w-full">
               <SearchBar
@@ -180,6 +158,7 @@ export function CreatableDropdown({
                 onChange={setSearchQuery}
                 placeholder="Search or type to create new..."
                 background="light"
+                variant="embedded"
                 className="w-full"
                 autoFocus
               />
@@ -215,7 +194,7 @@ export function CreatableDropdown({
                       type="button"
                       onClick={() => handleSelectOption(opt)}
                       className={`flex h-[32px] w-full items-center justify-between px-[8px] rounded-[4px] text-left transition-colors cursor-pointer ${
-                        isSelected ? "bg-az-secondary text-brand-1 font-medium" : "hover:bg-bg-panel text-text-primary"
+                        isSelected ? "bg-az-secondary text-brand-1" : "hover:bg-bg-panel text-text-primary"
                       }`}
                     >
                       <span className="t-small truncate">{opt.label}</span>

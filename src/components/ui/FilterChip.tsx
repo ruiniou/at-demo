@@ -323,7 +323,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
               overflowY: "auto",
               zIndex: 10050,
             }}
-            className="filter-chip-menu relative rounded-[4px] border border-[#D8DADA] bg-white p-[4px] shadow-[0px_4px_12px_rgba(0,0,0,0.12)] flex flex-col gap-[2px] before:content-[''] before:absolute before:-top-[8px] before:left-0 before:right-0 before:h-[8px]"
+            className="filter-chip-menu relative rounded-md border border-[#D8DADA] bg-white p-[4px] shadow-[0px_4px_12px_rgba(0,0,0,0.12)] flex flex-col gap-[2px] before:content-[''] before:absolute before:-top-[8px] before:left-0 before:right-0 before:h-[8px]"
           >
             {multiSelect ? (
               options.map((opt) => {
@@ -344,7 +344,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
                         : [...(values || []), opt.value];
                       onChangeMulti?.(next);
                     }}
-                    className="flex w-full items-center gap-[8px] px-[8px] py-[5px] rounded-[2px] text-left transition-colors cursor-pointer hover:bg-[#F8F7F7] select-none"
+                    className="flex w-full items-center gap-[8px] px-[8px] py-[5px] rounded-[calc(var(--radius-xs)*2)] text-left transition-colors cursor-pointer hover:bg-[#F8F7F7] select-none"
                   >
                     <Checkbox
                       checked={isOptionSelected}
@@ -380,7 +380,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
                       onChange?.(opt.value);
                       setIsOpen(false);
                     }}
-                    className={`flex w-full items-center justify-between px-[8px] py-[5px] rounded-[2px] text-left transition-colors cursor-pointer ${
+                    className={`flex w-full items-center justify-between px-[8px] py-[5px] rounded-[calc(var(--radius-xs)*2)] text-left transition-colors cursor-pointer ${
                       isOptionSelected
                         ? "bg-[#F4E8EE] text-[#830051]"
                         : "text-[#3F4444] hover:bg-[#F8F7F7]"

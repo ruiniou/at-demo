@@ -3,13 +3,14 @@ import React, { useState, useRef, useEffect } from "react";
 import arrowIconUrl from "../../icons/arrow-down-s-line.svg";
 import { FormItem } from "./FormItem";
 import { OptionLabel } from "./OptionLabel";
-import { DropdownOption } from "./Dropdown";
+import { OptionList } from "./OptionList";
+import type { SingleSelectOption } from "./SingleSelect";
 import { Tag } from "./Tag";
 import { Tooltip } from "./Tooltip";
 
 export interface MultiSelectDropdownProps {
   label?: string;
-  options: DropdownOption[];
+  options: SingleSelectOption[];
   value: string[];
   onChange: (value: string[]) => void;
   placeholder?: string;
@@ -69,8 +70,6 @@ export function MultiSelectDropdown({
   } else {
     boxClasses = "border border-form-border bg-white hover:border-graphite-50";
   }
-
-  const labelColor = disabled ? "var(--color-graphite-20)" : "var(--color-text-primary)";
 
   const handleToggleOption = (optValue: string) => {
     if (options.find((option) => option.value === optValue)?.disabled) return;
@@ -170,7 +169,7 @@ export function MultiSelectDropdown({
 
       {isOpen && !disabled && (
         <div
-          className={`absolute left-0 top-[100%] z-[100] mt-[4px] rounded-[4px] border border-form-border bg-white shadow-[0px_2px_6px_rgba(0,0,0,0.1)] ${
+          className={`absolute left-0 top-[100%] z-[100] mt-[4px] rounded-md border border-form-border bg-white shadow-[0px_2px_6px_rgba(0,0,0,0.1)] ${
             hasDerivation ? "w-[640px]" : "right-0"
           }`}
         >
@@ -193,9 +192,7 @@ export function MultiSelectDropdown({
                       type="button"
                       disabled={opt.disabled}
                       onClick={() => handleToggleOption(opt.value)}
-                      className={`dropdown-item disabled:cursor-not-allowed grid w-full grid-cols-[14px_72px_140px_1fr] items-start gap-[8px] rounded-[2px] px-[6px] py-[6px] text-left transition-colors enabled:hover:bg-bg-panel ${
-                        isSelected && !opt.disabled ? "bg-az-secondary" : ""
-                      }`}
+                      className="dropdown-item disabled:cursor-not-allowed grid w-full grid-cols-[14px_72px_140px_1fr] items-start gap-[8px] rounded-[calc(var(--radius-xs)*2)] px-[6px] py-[6px] text-left transition-colors enabled:hover:bg-bg-panel"
                     >
                       <span className="mt-[2px] inline-flex"><CheckboxIndicator checked={isSelected} disabled={opt.disabled} size={14} /></span>
 
@@ -231,7 +228,7 @@ export function MultiSelectDropdown({
             </>
           ) : (
             /* Standard dropdown: compact, single-column */
-            <div className="flex max-h-[200px] flex-col gap-[2px] overflow-y-auto p-[4px]">
+            <OptionList multiselectable className="max-h-[200px] p-[4px]">
               {sortedOptions.map((opt) => {
                 const isSelected = value.includes(opt.value);
                 return (
@@ -245,7 +242,7 @@ export function MultiSelectDropdown({
                   />
                 );
               })}
-            </div>
+            </OptionList>
           )}
         </div>
       )}
@@ -253,4 +250,3 @@ export function MultiSelectDropdown({
     </FormItem>
   );
 }
-

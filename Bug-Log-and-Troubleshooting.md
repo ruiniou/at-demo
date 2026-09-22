@@ -368,3 +368,31 @@
 * **经验教训 (Takeaways)**：
   1. Localhost 不可用时，先重启并观察 Vite 编译日志，再判断是否需要改代码。
   2. 恢复服务后应至少验证登录页与主工作区两个层级，避免只以端口可访问代替应用可用性检查。
+
+---
+
+### [2026-09-22] 错误的 Localhost 工作目录导致 Event Owner 仍显示旧版 Single Select
+
+* **现象 (Symptom)**：
+  Study Owner 从 Study 行新建 Event 时，Create New Event 的 Event Owner 仍显示左侧 Check、无头像和无搜索的旧版 Single Select。
+* **根本原因 (Root Cause)**：
+  浏览器中的 5173 预览由主目录 `/Users/ruini.ou/Downloads/AI Copilot` 启动，该目录的 `CreateEventModal.tsx` 仍使用 `<Dropdown>`；实际修改位于 Codex worktree，已经使用 `<MemberSingleSelect>`，但没有被当前开发服务器加载。
+* **解决方案 (Solution)**：
+  为当前 worktree 恢复依赖并在 5174 启动 Vite；读取实际服务模块确认包含 `MemberSingleSelect`，随后按 Study Owner → Add Event 路径验证头像触发框、搜索框和成员头像列表均已渲染。
+* **经验教训 (Takeaways)**：
+  1. 多 worktree 开发时，视觉验收前必须确认 Vite 的工作目录与实际修改目录一致。
+  2. 当截图与源码结构明显不符时，应优先核对服务来源和浏览器加载模块，而不是继续修改已经正确的组件代码。
+
+---
+
+### [2026-09-22] No Assignee 空头像显示为破图
+
+* **现象 (Symptom)**：
+  TFL Programmer Picker 的 `No Assignee` 选项显示浏览器破图标识，而不是灰色空成员图标。
+* **根本原因 (Root Cause)**：
+  `Avatar` 在没有 `name` 时通过 `<img>` 直接加载 `empty-assignee.svg`；该旧 SVG 包含兼容性不稳定的 `lch()` 填色声明，一旦浏览器无法正常解码就会暴露 `<img>` 的破图状态。
+* **解决方案 (Solution)**：
+  保留原 SVG 轮廓资源，改用 `mask` / `-webkit-mask` 配合 `background-color` 渲染空成员图标，避免图片解码失败时出现破图占位。
+* **经验教训 (Takeaways)**：
+  1. 单色功能图标统一使用 mask 渲染，不要混用普通 `<img>`，以便稳定继承设计 Token 颜色。
+  2. 从外部设计工具导出的 SVG 应在入库前清理非标准或兼容性有限的颜色声明。

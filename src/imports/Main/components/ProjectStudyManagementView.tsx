@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { Avatar } from '../../../components/ui/Avatar';
 import { Button } from '../../../components/ui/Button';
+import { MemberOptionRow } from '../../../components/ui/MemberOptionRow';
+import { OptionList } from '../../../components/ui/OptionList';
 import { SearchBar } from '../../../components/ui/SearchBar';
 import { FilterChip } from '../../../components/ui/FilterChip';
 import { Switch } from '../../../components/ui/Switch';
@@ -12,7 +14,6 @@ import databaseIconUrl from '../../../icons/database-2-line.svg';
 import capsuleIconUrl from '../../../icons/capsule-line.svg';
 import stackIconUrl from '../../../icons/stack-line.svg';
 import searchIconUrl from '../../../icons/search-line.svg';
-import checkIconUrl from '../../../icons/check-line.svg';
 import addIconUrl from '../../../icons/add-line.svg';
 import microscopeIconUrl from '../../../icons/microscope-line.svg';
 
@@ -96,18 +97,21 @@ export function OwnerPicker({ value, onSelect, disabledAppearance = false, ariaL
             <img src={searchIconUrl} alt="" className="h-[13px] w-[13px] opacity-40" />
             <input ref={inputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search people..." className="min-w-0 flex-1 bg-transparent text-[12px] text-text-primary outline-none placeholder:text-text-secondary" />
           </div>
-          <div className="max-h-[210px] overflow-y-auto">
-            {filteredUsers.length === 0 ? <div className="px-[8px] py-[12px] text-center text-[12px] text-text-tertiary">No matching users</div> : filteredUsers.map((user) => {
+          <OptionList empty={filteredUsers.length === 0} emptyContent="No matching users" className="max-h-[210px]">
+            {filteredUsers.map((user) => {
               const selected = user.name === value;
               return (
-                <button key={user.id} type="button" onClick={() => { if (!selected) onSelect(user.name); setOpen(false); buttonRef.current?.focus(); }} className={`flex min-h-[32px] w-full items-center gap-[8px] rounded-[4px] px-[8px] py-[6px] text-left transition-colors ${selected ? 'bg-az-secondary/60 text-brand-1 font-medium' : 'text-text-primary hover:bg-bg-panel'}`}>
-                  <Avatar name={user.name} initials={user.initials} color={user.color} level="menu" />
-                  <span className="min-w-0 flex-1 truncate text-[12px]">{user.name}</span>
-                  {selected && <img src={checkIconUrl} alt="" className="h-[14px] w-[14px] shrink-0" />}
-                </button>
+                <MemberOptionRow
+                  key={user.id}
+                  name={user.name}
+                  initials={user.initials}
+                  color={user.color}
+                  selected={selected}
+                  onSelect={() => { if (!selected) onSelect(user.name); setOpen(false); buttonRef.current?.focus(); }}
+                />
               );
             })}
-          </div>
+          </OptionList>
         </div>, document.body)}
     </div>
   );
@@ -184,7 +188,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
           <FilterChip type="Dropdown" variant="filter" showIcon={false} label={statusFilter === 'all' ? 'All Status' : statusFilter === 'enabled' ? 'Available' : 'Disabled'} value={statusFilter} onChange={(value) => setStatusFilter(value as typeof statusFilter)} options={[{ label: 'All Status', value: 'all' }, { label: 'Available', value: 'enabled' }, { label: 'Disabled', value: 'disabled' }]} />
         </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-graphite-10 bg-white">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-graphite-10 bg-white">
         <table className="w-full table-fixed border-collapse text-left">
           <colgroup><col /><col className="w-[240px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
           <thead><tr className="border-b border-graphite-10 bg-bg-app text-[12px] text-text-secondary"><th className="px-[16px] py-[10px] font-normal">Project / Study</th><th className="px-[16px] py-[10px] font-normal">Study Owner</th><th className="px-[16px] py-[10px] font-normal">Status</th><th className="px-[16px] py-[10px]" aria-label="Actions" /></tr></thead>

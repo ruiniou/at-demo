@@ -1,4 +1,4 @@
-import { DropdownGroupLabel, DropdownEmpty } from "../../../components/ui/DropdownParts";
+import { DropdownGroupLabel } from "../../../components/ui/DropdownParts";
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Avatar, AvatarGroup } from "../../../components/ui/Avatar";
@@ -13,6 +13,7 @@ import aiProcessingIconUrl from "../../../icons/Status label/Status=AI Processin
 import wipStatusIconUrl from "../../../icons/Status label/Status=WIP.svg";
 import lockedStatusIconUrl from "../../../icons/Lock.svg";
 import { Tooltip } from "../../../components/ui/Tooltip";
+import { Button } from "../../../components/ui/Button";
 import untouchedStatusIconUrl from "../../../icons/Status label/Status=Untouched.svg";
 import errorStatusIconUrl from "../../../icons/Status label/Status=Error.svg";
 import arrowDownIconUrl from "../../../icons/arrow-down-s-line.svg";
@@ -21,6 +22,8 @@ import deleteBinIconUrl from "../../../icons/delete-bin-line.svg";
 import { Checkbox } from "../../../components/ui/Checkbox";
 import { FilterChip, FilterChipOption } from "../../../components/ui/FilterChip";
 import { SearchBar } from "../../../components/ui/SearchBar";
+import { MemberOptionRow } from "../../../components/ui/MemberOptionRow";
+import { OptionList } from "../../../components/ui/OptionList";
 
 // ─── Shared Types ─────────────────────────────────────────────────────────────
 
@@ -142,7 +145,6 @@ function ProgrammerCell({
   const [search, setSearch] = useState("");
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
   const updatePosition = useCallback(() => {
@@ -192,8 +194,6 @@ function ProgrammerCell({
     document.addEventListener("keydown", handleKey);
     window.addEventListener("resize", handleScrollOrResize);
     window.addEventListener("scroll", handleScrollOrResize, true);
-
-    setTimeout(() => inputRef.current?.focus(), 0);
 
     return () => {
       document.removeEventListener("mousedown", handler);
@@ -262,30 +262,26 @@ function ProgrammerCell({
           className="bg-white rounded-[8px] border border-graphite-10 shadow-elevation-overlay p-[4px] flex flex-col gap-[6px] animate-fade-in select-none text-left"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Search — matching OwnerDropdown style */}
-          <div className="bg-white rounded-[4px] relative shrink-0 w-full border border-border-default focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1/20 transition-all">
-            <div className="p-[2px] flex items-center size-full">
-              <div className="bg-white flex-1 min-w-0 flex items-center px-[6px] py-[4px] gap-[4px]">
-                <img src={searchLineIconUrl} alt="" className="w-[13px] h-[13px] opacity-40 shrink-0" />
-                <input
-                  ref={inputRef}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search people..."
-                  className="min-w-[60px] flex-1 bg-transparent outline-none text-[12px] text-text-primary placeholder:text-text-secondary"
-                />
-              </div>
-            </div>
-          </div>
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search people..."
+            size="compact"
+            variant="embedded"
+            autoFocus
+          />
 
-          <div className="flex flex-col gap-[1px] max-h-[210px] overflow-y-auto w-full">
+          <OptionList
+            empty={!matchesNoAssignee && filteredTeam.length === 0 && filteredNew.length === 0}
+            className="max-h-[210px]"
+          >
             {/* No Assignee — only shown when search matches 'no assignee' or is empty */}
             {matchesNoAssignee && (
               <button
                 type="button"
                 onClick={() => { onSelect(null); setOpen(false); }}
                 className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
-                  value === null ? "bg-az-secondary/60 text-brand-1 font-medium" : "hover:bg-bg-panel text-text-primary"
+                  value === null ? "bg-az-secondary/60 text-brand-1" : "hover:bg-bg-panel text-text-primary"
                 }`}
               >
                 <Avatar level="menu" />
@@ -306,34 +302,24 @@ function ProgrammerCell({
                   // Owner annotation priority is higher than You
                   const sideLabel = m.isOwner ? "Owner" : isCurrentUser ? "You" : null;
                   return (
-                    <button
+                    <MemberOptionRow
                       key={m.name}
-                      type="button"
-                      onClick={() => { onSelect(m.name); setOpen(false); }}
-                      className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
-                        isSelected ? "bg-az-secondary/60 text-brand-1 font-medium" : "hover:bg-bg-panel text-text-primary"
-                      }`}
-                    >
-                      <Avatar name={m.name} initials={m.initials} color={m.color} level="menu" />
-                      <div className="flex items-center gap-[6px] min-w-0 flex-1">
-                        <span className="text-[12px] truncate">{m.name}</span>
-                        {sideLabel && (
+                      name={m.name}
+                      initials={m.initials}
+                      color={m.color}
+                      selected={isSelected}
+                      annotation={sideLabel && (
                           <span className={`text-[10px] font-medium px-[5px] py-[0.5px] rounded-[3px] shrink-0 ${
                             m.isOwner ? "text-brand-1 bg-az-secondary" : "text-text-secondary bg-graphite-10"
                           }`}>
                             {sideLabel}
                           </span>
-                        )}
-                      </div>
-                      {/* Checkmark to the left of the count */}
-                      {isSelected && (
-                        <img src={checkIconUrl} alt="" className="w-[14px] h-[14px] shrink-0 opacity-90" />
                       )}
-                      {/* Only show number without 'TFL' text */}
-                      <span className="text-[11px] text-text-secondary tabular-nums shrink-0 min-w-[14px] text-right">
+                      trailing={<span className="text-[11px] text-text-secondary tabular-nums shrink-0 min-w-[14px] text-right">
                         {m.assignedTFLs}
-                      </span>
-                    </button>
+                      </span>}
+                      onSelect={() => { onSelect(m.name); setOpen(false); }}
+                    />
                   );
                 })}
               </>
@@ -346,31 +332,24 @@ function ProgrammerCell({
                 {filteredNew.map((u) => {
                   const isCurrentUser = u.name === CURRENT_USER;
                   return (
-                    <button
+                    <MemberOptionRow
                       key={u.name}
-                      type="button"
-                      onClick={() => { onSelect(u.name); setOpen(false); }}
-                      className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
-                    >
-                      <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
-                      <div className="flex items-center gap-[6px] min-w-0 flex-1">
-                        <span className="text-[12px] truncate text-text-primary">{u.name}</span>
-                        {isCurrentUser && (
+                      name={u.name}
+                      initials={u.initials}
+                      color={u.color}
+                      annotation={isCurrentUser && (
                           <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[0.5px] rounded-[3px] shrink-0">
                             You
                           </span>
-                        )}
-                      </div>
-                    </button>
+                      )}
+                      onSelect={() => { onSelect(u.name); setOpen(false); }}
+                    />
                   );
                 })}
               </>
             )}
 
-            {!matchesNoAssignee && filteredTeam.length === 0 && filteredNew.length === 0 && (
-              <DropdownEmpty />
-            )}
-          </div>
+          </OptionList>
         </div>,
         document.body
       )}
@@ -395,7 +374,6 @@ function BatchAssignDropdown({
   const [search, setSearch] = useState("");
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
   const updatePosition = useCallback(() => {
@@ -444,8 +422,6 @@ function BatchAssignDropdown({
     window.addEventListener("resize", handleScrollOrResize);
     window.addEventListener("scroll", handleScrollOrResize, true);
 
-    setTimeout(() => inputRef.current?.focus(), 0);
-
     return () => {
       document.removeEventListener("mousedown", handler);
       document.removeEventListener("keydown", handleKey);
@@ -493,23 +469,19 @@ function BatchAssignDropdown({
           className="bg-white rounded-[8px] border border-graphite-10 shadow-elevation-overlay p-[4px] flex flex-col gap-[6px] animate-fade-in select-none text-left"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Search */}
-          <div className="bg-white rounded-[4px] relative shrink-0 w-full border border-border-default focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1/20 transition-all">
-            <div className="p-[2px] flex items-center size-full">
-              <div className="bg-white flex-1 min-w-0 flex items-center px-[6px] py-[4px] gap-[4px]">
-                <img src={searchLineIconUrl} alt="" className="w-[13px] h-[13px] opacity-40 shrink-0" />
-                <input
-                  ref={inputRef}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search people..."
-                  className="min-w-[60px] flex-1 bg-transparent outline-none text-[12px] text-text-primary placeholder:text-text-secondary"
-                />
-              </div>
-            </div>
-          </div>
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search people..."
+            size="compact"
+            variant="embedded"
+            autoFocus
+          />
 
-          <div className="flex flex-col gap-[1px] max-h-[210px] overflow-y-auto w-full">
+          <OptionList
+            empty={filteredTeam.length === 0 && filteredNew.length === 0}
+            className="max-h-[210px]"
+          >
             {/* Team Members */}
             {filteredTeam.length > 0 && (
               <>
@@ -518,27 +490,23 @@ function BatchAssignDropdown({
                   const isCurrentUser = m.name === CURRENT_USER;
                   const sideLabel = m.isOwner ? "Owner" : isCurrentUser ? "You" : null;
                   return (
-                    <button
+                    <MemberOptionRow
                       key={m.name}
-                      type="button"
-                      onClick={() => { onSelect(m.name); setOpen(false); }}
-                      className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left transition-colors cursor-pointer hover:bg-bg-panel text-text-primary"
-                    >
-                      <Avatar name={m.name} initials={m.initials} color={m.color} level="menu" />
-                      <div className="flex items-center gap-[6px] min-w-0 flex-1">
-                        <span className="text-[12px] truncate">{m.name}</span>
-                        {sideLabel && (
+                      name={m.name}
+                      initials={m.initials}
+                      color={m.color}
+                      annotation={sideLabel && (
                           <span className={`text-[10px] font-medium px-[5px] py-[0.5px] rounded-[3px] shrink-0 ${
                             m.isOwner ? "text-brand-1 bg-az-secondary" : "text-text-secondary bg-graphite-10"
                           }`}>
                             {sideLabel}
                           </span>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-text-secondary tabular-nums shrink-0 min-w-[14px] text-right">
+                      )}
+                      trailing={<span className="text-[11px] text-text-secondary tabular-nums shrink-0 min-w-[14px] text-right">
                         {m.assignedTFLs}
-                      </span>
-                    </button>
+                      </span>}
+                      onSelect={() => { onSelect(m.name); setOpen(false); }}
+                    />
                   );
                 })}
               </>
@@ -551,31 +519,24 @@ function BatchAssignDropdown({
                 {filteredNew.map((u) => {
                   const isCurrentUser = u.name === CURRENT_USER;
                   return (
-                    <button
+                    <MemberOptionRow
                       key={u.name}
-                      type="button"
-                      onClick={() => { onSelect(u.name); setOpen(false); }}
-                      className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
-                    >
-                      <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
-                      <div className="flex items-center gap-[6px] min-w-0 flex-1">
-                        <span className="text-[12px] truncate text-text-primary">{u.name}</span>
-                        {isCurrentUser && (
+                      name={u.name}
+                      initials={u.initials}
+                      color={u.color}
+                      annotation={isCurrentUser && (
                           <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[0.5px] rounded-[3px] shrink-0">
                             You
                           </span>
-                        )}
-                      </div>
-                    </button>
+                      )}
+                      onSelect={() => { onSelect(u.name); setOpen(false); }}
+                    />
                   );
                 })}
               </>
             )}
 
-            {filteredTeam.length === 0 && filteredNew.length === 0 && (
-              <DropdownEmpty />
-            )}
-          </div>
+          </OptionList>
         </div>,
         document.body
       )}
@@ -692,6 +653,7 @@ export function AssignmentTab({
           onChange={setSearch}
           placeholder="Search TFLs..."
           size="compact"
+          variant="embedded"
           icon={<span aria-hidden="true" className="size-4 shrink-0 bg-text-secondary" style={{ mask: `url("${searchLineIconUrl}") center / contain no-repeat` }} />}
           background="light"
           className="w-[240px]"
@@ -1033,7 +995,7 @@ function TeamMembersTab({
   teamMembers,
   onRemove,
   onChangeOwner,
-  onAddMember,
+  onAddMembers,
   currentUserName,
   canAddMember,
   canRemoveMember,
@@ -1042,7 +1004,7 @@ function TeamMembersTab({
   teamMembers: TeamMember[];
   onRemove: (name: string) => void;
   onChangeOwner: (newOwner: string) => void;
-  onAddMember: (user: typeof MOCK_USER_POOL[0]) => void;
+  onAddMembers: (users: typeof MOCK_USER_POOL) => void;
   currentUserName: string;
   canAddMember: boolean;
   canRemoveMember: boolean;
@@ -1054,15 +1016,14 @@ function TeamMembersTab({
   // Add Member Popover state
   const [addPopoverOpen, setAddPopoverOpen] = useState(false);
   const [addSearch, setAddSearch] = useState("");
+  const [pendingMemberNames, setPendingMemberNames] = useState<Set<string>>(new Set());
   const addPopoverRef = useRef<HTMLDivElement>(null);
-  const addInputRef = useRef<HTMLInputElement>(null);
 
   // Change Owner Popover state (keyed by member name or boolean)
   const [ownerPopoverOpen, setOwnerPopoverOpen] = useState(false);
   const [ownerSearch, setOwnerSearch] = useState("");
   const ownerPopoverRef = useRef<HTMLDivElement>(null);
   const ownerButtonRef = useRef<HTMLButtonElement>(null);
-  const ownerInputRef = useRef<HTMLInputElement>(null);
   const [ownerPos, setOwnerPos] = useState<{ top: number; left: number } | null>(null);
 
   const updateOwnerPosition = useCallback(() => {
@@ -1087,6 +1048,7 @@ function TeamMembersTab({
   useEffect(() => {
     if (!addPopoverOpen) {
       setAddSearch("");
+      setPendingMemberNames(new Set());
       return;
     }
     const handler = (e: MouseEvent) => {
@@ -1094,9 +1056,15 @@ function TeamMembersTab({
         setAddPopoverOpen(false);
       }
     };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAddPopoverOpen(false);
+    };
     document.addEventListener("mousedown", handler);
-    setTimeout(() => addInputRef.current?.focus(), 0);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", handleKey);
+    };
   }, [addPopoverOpen]);
 
   // Close Change Owner Popover on click outside
@@ -1128,8 +1096,6 @@ function TeamMembersTab({
     window.addEventListener("resize", handleScrollOrResize);
     window.addEventListener("scroll", handleScrollOrResize, true);
 
-    setTimeout(() => ownerInputRef.current?.focus(), 0);
-
     return () => {
       document.removeEventListener("mousedown", handler);
       document.removeEventListener("keydown", handleKey);
@@ -1147,6 +1113,22 @@ function TeamMembersTab({
   const addAlreadyIn = MOCK_USER_POOL.filter(
     (u) => teamNames.has(u.name) && u.name.toLowerCase().includes(addSearch.toLowerCase())
   );
+  const pendingMembers = MOCK_USER_POOL.filter((user) => pendingMemberNames.has(user.name));
+
+  const togglePendingMember = (name: string) => {
+    setPendingMemberNames((current) => {
+      const next = new Set(current);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
+
+  const confirmAddMembers = () => {
+    if (pendingMembers.length === 0) return;
+    onAddMembers(pendingMembers);
+    setAddPopoverOpen(false);
+  };
 
   // Change Owner candidates (exclude current owner)
   const nonOwners = teamMembers.filter(
@@ -1202,49 +1184,41 @@ function TeamMembersTab({
             {/* Standard Popover Panel matching OwnerDropdown */}
             {addPopoverOpen && (
               <div className="absolute right-0 top-full mt-1 z-[200] bg-white rounded-[8px] border border-graphite-10 shadow-elevation-overlay w-[240px] p-[4px] flex flex-col gap-[6px] animate-fade-in">
-                {/* Search box matching standard styling */}
-                <div className="bg-white rounded-[4px] relative shrink-0 w-full border border-border-default focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1/20 transition-all">
-                  <div className="p-[2px] flex items-center size-full">
-                    <div className="bg-white flex-1 min-w-0 flex items-center px-[6px] py-[4px] gap-[4px]">
-                      <img src={searchLineIconUrl} alt="" className="w-[13px] h-[13px] opacity-40 shrink-0" />
-                      <input
-                        ref={addInputRef}
-                        value={addSearch}
-                        onChange={(e) => setAddSearch(e.target.value)}
-                        placeholder="Search people..."
-                        className="min-w-[60px] flex-1 bg-transparent outline-none text-[12px] text-text-primary placeholder:text-text-secondary"
-                      />
-                    </div>
-                  </div>
-                </div>
+                <SearchBar
+                  value={addSearch}
+                  onChange={setAddSearch}
+                  placeholder="Search people..."
+                  background="light"
+                  size="compact"
+                  variant="embedded"
+                  autoFocus
+                />
 
                 {/* Candidate list */}
-                <div className="flex flex-col gap-[1px] max-h-[220px] overflow-y-auto w-full">
+                <OptionList
+                  empty={addCandidates.length === 0 && addAlreadyIn.length === 0}
+                  className="max-h-[220px]"
+                >
                   {addCandidates.length > 0 && (
                     <>
                       <DropdownGroupLabel>Out of Team (Invite and Add)</DropdownGroupLabel>
                       {addCandidates.map((u) => {
                         const isCurrentUser = u.name === currentUserName;
                         return (
-                          <button
+                          <MemberOptionRow
                             key={u.name}
-                            type="button"
-                            onClick={() => {
-                              onAddMember(u);
-                              setAddPopoverOpen(false);
-                            }}
-                            className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
-                          >
-                            <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
-                            <div className="flex items-center gap-[6px] min-w-0 flex-1">
-                              <span className="text-[12px] truncate text-text-primary">{u.name}</span>
-                              {isCurrentUser && (
-                                <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[0.5px] rounded-[3px] shrink-0">
-                                  You
-                                </span>
-                              )}
-                            </div>
-                          </button>
+                            name={u.name}
+                            initials={u.initials}
+                            color={u.color}
+                            selected={pendingMemberNames.has(u.name)}
+                            selectionMode="multi"
+                            annotation={isCurrentUser ? (
+                              <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[0.5px] rounded-[3px] shrink-0">
+                                You
+                              </span>
+                            ) : undefined}
+                            onSelect={() => togglePendingMember(u.name)}
+                          />
                         );
                       })}
                     </>
@@ -1252,26 +1226,22 @@ function TeamMembersTab({
 
                   {addAlreadyIn.length > 0 && (
                     <>
-                      <div className="px-[8px] pt-[8px] pb-[2px]">
-                        <span className="text-[11px] font-medium text-text-secondary">
-                          In Team
-                        </span>
-                      </div>
+                      <DropdownGroupLabel>In Team</DropdownGroupLabel>
                       {addAlreadyIn.map((u) => {
                         const member = teamMembers.find((m) => m.name === u.name);
                         const isOwner = member?.isOwner;
                         const isCurrentUser = u.name === currentUserName;
                         const sideLabel = isOwner ? "Owner" : isCurrentUser ? "You" : null;
                         return (
-                          <div
+                          <MemberOptionRow
                             key={u.name}
-                            aria-disabled="true"
-                            className="dropdown-item flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] cursor-not-allowed"
-                          >
-                            <Avatar name={u.name} initials={u.initials} color={u.color} level="menu" />
-                            <div className="flex items-center gap-[6px] min-w-0 flex-1">
-                              <span className="text-[12px] truncate text-text-primary">{u.name}</span>
-                              {sideLabel && (
+                            name={u.name}
+                            initials={u.initials}
+                            color={u.color}
+                            disabled
+                            selected
+                            selectionMode="multi"
+                            annotation={sideLabel ? (
                                 <span
                                   className={`text-[10px] px-[5px] py-[0.5px] rounded-[3px] shrink-0 ${
                                     isOwner
@@ -1281,18 +1251,26 @@ function TeamMembersTab({
                                 >
                                   {sideLabel}
                                 </span>
-                              )}
-                            </div>
-                            <span aria-hidden="true" className="size-[13px] shrink-0 bg-graphite-40" style={{ mask: `url("${checkIconUrl}") center / contain no-repeat` }} />
-                          </div>
+                            ) : undefined}
+                          />
                         );
                       })}
                     </>
                   )}
 
-                  {addCandidates.length === 0 && addAlreadyIn.length === 0 && (
-                    <DropdownEmpty />
-                  )}
+                </OptionList>
+                <div className="border-t border-graphite-10 pt-[4px]">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full"
+                    disabled={pendingMembers.length === 0}
+                    onClick={confirmAddMembers}
+                  >
+                    {pendingMembers.length > 0
+                      ? `Add ${pendingMembers.length} member${pendingMembers.length === 1 ? "" : "s"}`
+                      : "Add members"}
+                  </Button>
                 </div>
               </div>
             )}
@@ -1395,56 +1373,41 @@ function TeamMembersTab({
                                     className="bg-white rounded-[8px] border border-graphite-10 shadow-elevation-overlay p-[4px] flex flex-col gap-[6px] text-left animate-fade-in select-none"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <div className="bg-white rounded-[4px] relative shrink-0 w-full border border-border-default focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1/20 transition-all">
-                                      <div className="p-[2px] flex items-center size-full">
-                                        <div className="bg-white flex-1 min-w-0 flex items-center px-[6px] py-[4px] gap-[4px]">
-                                          <img
-                                            src={searchLineIconUrl}
-                                            alt=""
-                                            className="w-[13px] h-[13px] opacity-40 shrink-0"
-                                          />
-                                          <input
-                                            ref={ownerInputRef}
-                                            value={ownerSearch}
-                                            onChange={(e) => setOwnerSearch(e.target.value)}
-                                            placeholder="Search new owner..."
-                                            className="min-w-[60px] flex-1 bg-transparent outline-none text-[12px] text-text-primary placeholder:text-text-secondary"
-                                          />
-                                        </div>
-                                      </div>
-                                    </div>
+                                    <SearchBar
+                                      value={ownerSearch}
+                                      onChange={setOwnerSearch}
+                                      placeholder="Search new owner..."
+                                      background="light"
+                                      size="compact"
+                                      variant="embedded"
+                                      autoFocus
+                                    />
 
-                                    <div className="flex flex-col gap-[1px] max-h-[220px] overflow-y-auto w-full">
+                                    <OptionList
+                                      empty={nonOwners.length === 0 && outsideUsers.length === 0}
+                                      className="max-h-[220px]"
+                                    >
                                       {nonOwners.length > 0 && (
                                         <>
                                           <DropdownGroupLabel>In Team</DropdownGroupLabel>
                                           {nonOwners.map((cand) => {
                                             const candIsUser = cand.name === currentUserName;
                                             return (
-                                              <button
+                                              <MemberOptionRow
                                                 key={cand.name}
-                                                type="button"
-                                                onClick={() => {
+                                                name={cand.name}
+                                                initials={cand.initials}
+                                                color={cand.color}
+                                                annotation={candIsUser ? (
+                                                  <span className="rounded-[3px] bg-graphite-10 px-[5px] py-[0.5px] text-[10px] text-text-secondary">
+                                                    You
+                                                  </span>
+                                                ) : undefined}
+                                                onSelect={() => {
                                                   onChangeOwner(cand.name);
                                                   setOwnerPopoverOpen(false);
                                                 }}
-                                                className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
-                                              >
-                                                <Avatar
-                                                  name={cand.name}
-                                                  initials={cand.initials}
-                                                  color={cand.color}
-                                                  level="menu"
-                                                />
-                                                <span className="text-[12px] text-text-primary flex-1 truncate">
-                                                  {cand.name}
-                                                </span>
-                                                {candIsUser && (
-                                                  <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[0.5px] rounded-[3px] shrink-0">
-                                                    You
-                                                  </span>
-                                                )}
-                                              </button>
+                                              />
                                             );
                                           })}
                                         </>
@@ -1460,41 +1423,27 @@ function TeamMembersTab({
                                           {outsideUsers.map((u) => {
                                             const isUser = u.name === currentUserName;
                                             return (
-                                              <button
+                                              <MemberOptionRow
                                                 key={u.name}
-                                                type="button"
-                                                onClick={() => {
+                                                name={u.name}
+                                                initials={u.initials}
+                                                color={u.color}
+                                                annotation={isUser ? (
+                                                  <span className="rounded-[3px] bg-graphite-10 px-[5px] py-[0.5px] text-[10px] text-text-secondary">
+                                                    You
+                                                  </span>
+                                                ) : undefined}
+                                                onSelect={() => {
                                                   onChangeOwner(u.name);
                                                   setOwnerPopoverOpen(false);
                                                 }}
-                                                className="flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left hover:bg-bg-panel transition-colors cursor-pointer"
-                                              >
-                                                <Avatar
-                                                  name={u.name}
-                                                  initials={u.initials}
-                                                  color={u.color}
-                                                  level="menu"
-                                                />
-                                                <span className="text-[12px] text-text-primary flex-1 truncate">
-                                                  {u.name}
-                                                </span>
-                                                {isUser && (
-                                                  <span className="text-[10px] text-text-secondary bg-graphite-10 px-[5px] py-[0.5px] rounded-[3px] shrink-0">
-                                                    You
-                                                  </span>
-                                                )}
-                                              </button>
+                                              />
                                             );
                                           })}
                                         </>
                                       )}
 
-                                      {nonOwners.length === 0 && outsideUsers.length === 0 && (
-                                        <p className="text-[12px] text-text-secondary px-[8px] py-[6px]">
-                                          No results
-                                        </p>
-                                      )}
-                                    </div>
+                                    </OptionList>
                                   </div>,
                                   document.body
                                 )}
@@ -1725,13 +1674,17 @@ export default function EventTeamMemberModal({
     onOwnerChange?.(newOwnerName);
   };
 
-  const handleAddMember = (user: typeof MOCK_USER_POOL[0]) => {
+  const handleAddMembers = (users: typeof MOCK_USER_POOL) => {
     if (!canAddMember) return;
-    if (teamMembers.find((m) => m.name === user.name)) return;
-    const nextMembers = [...teamMembers, {
-      name: user.name, initials: user.initials, color: user.color, email: user.email,
-      isOwner: false, assignedTFLs: 0, addedBy: "Sarah Chen",
-    }];
+    const existingNames = new Set(teamMembers.map((member) => member.name));
+    const additions = users
+      .filter((user) => !existingNames.has(user.name))
+      .map((user) => ({
+        name: user.name, initials: user.initials, color: user.color, email: user.email,
+        isOwner: false, assignedTFLs: 0, addedBy: "Sarah Chen",
+      }));
+    if (additions.length === 0) return;
+    const nextMembers = [...teamMembers, ...additions];
     setTeamMembers(nextMembers);
     onTeamMembersChange?.(nextMembers);
   };
@@ -1788,7 +1741,7 @@ export default function EventTeamMemberModal({
               teamMembers={membersWithCounts}
               onRemove={handleRemoveMember}
               onChangeOwner={handleChangeOwner}
-              onAddMember={handleAddMember}
+              onAddMembers={handleAddMembers}
               currentUserName={currentUserName}
               canAddMember={canAddMember}
               canRemoveMember={canRemoveMember}

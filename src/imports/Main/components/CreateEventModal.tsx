@@ -4,7 +4,8 @@ import { Badge } from "../../../components/ui/Badge";
 import { UploadCard, UploadStatus } from "../../../components/ui/UploadCard";
 import { Button } from "../../../components/ui/Button";
 import { FormInputField as Input } from "../../../components/ui/FormInputField";
-import { Dropdown, DropdownOption } from "../../../components/ui/Dropdown";
+import { MemberSingleSelect } from "../../../components/ui/MemberSingleSelect";
+import { SingleSelect, type SingleSelectOption } from "../../../components/ui/SingleSelect";
 import { MultiSelectDropdown } from "../../../components/ui/MultiSelectDropdown";
 import { CreatableDropdown } from "../../../components/ui/CreatableDropdown";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
@@ -143,17 +144,17 @@ function OptionalSection() {
   const [refEventValue, setRefEventValue] = useState<string | null>(null);
   const [programPath, setProgramPath] = useState("");
 
-  const refStudyOptions: DropdownOption[] = [
+  const refStudyOptions: SingleSelectOption[] = [
     { label: "AZE2001-301", value: "aze2001-301" },
     { label: "AZE2001-302", value: "aze2001-302" },
     { label: "AZE2001-303", value: "aze2001-303" },
   ];
-  const refEventOptions: DropdownOption[] = [
+  const refEventOptions: SingleSelectOption[] = [
     { label: "CSR Interim Analysis", value: "csr-interim" },
     { label: "Final CSR", value: "final-csr" },
     { label: "DSMB Q1 Report", value: "dsmb-q1" },
   ];
-  const tablesToParseOptions: DropdownOption[] = [
+  const tablesToParseOptions: SingleSelectOption[] = [
     { label: "14.1.1 Demographics", value: "14.1.1" },
     { label: "14.1.2 Baseline Characteristics", value: "14.1.2" },
     { label: "14.1.3 Medical History", value: "14.1.3" },
@@ -171,8 +172,8 @@ function OptionalSection() {
       {isExpanded && (
         <div className="flex flex-col gap-[16px] px-[10px] py-[12px]">
           <MultiSelectDropdown label="Tables to parse" placeholder="Optional" options={tablesToParseOptions} value={tablesToParse} onChange={setTablesToParse} />
-          <Dropdown label="Reference Study" placeholder="Optional" options={refStudyOptions} value={refStudyValue} onChange={setRefStudyValue} />
-          <Dropdown label="Reference Event" placeholder="Optional" options={refEventOptions} value={refEventValue} onChange={setRefEventValue} />
+          <SingleSelect label="Reference Study" placeholder="Optional" options={refStudyOptions} value={refStudyValue} onChange={setRefStudyValue} />
+          <SingleSelect label="Reference Event" placeholder="Optional" options={refEventOptions} value={refEventValue} onChange={setRefEventValue} />
           <Input label="Program Path" placeholder="Optional" value={programPath} onChange={(e) => setProgramPath(e.target.value)} />
         </div>
       )}
@@ -280,7 +281,7 @@ export default function CreateEventModal({
   const [customShellStatus, setCustomShellStatus] = useState<UploadStatus>("pending");
   const [customShellFile, setCustomShellFile] = useState("");
 
-  const taOptions: DropdownOption[] = [
+  const taOptions: SingleSelectOption[] = [
     { label: "Oncology", value: "oncology" }, { label: "Cardiology", value: "cardiology" },
     { label: "Neurology", value: "neurology" }, { label: "Immunology", value: "immunology" },
     { label: "Infectious Disease", value: "infectious" },
@@ -317,14 +318,17 @@ export default function CreateEventModal({
     }
     return studies.map((s) => ({ label: s.id, value: s.id }));
   }, [projectsList, projectCode, currentRole, currentUserName]);
-  const ogemOptions: DropdownOption[] = [
+  const ogemOptions: SingleSelectOption[] = [
     { label: "12.8", value: "12.8" },
     { label: "12.7", value: "12.7" },
     { label: "12.6", value: "12.6" },
   ];
-  const eventOwnerOptions: DropdownOption[] = SYSTEM_USERS.map((user) => ({
-    label: user.name,
+  const eventOwnerOptions = SYSTEM_USERS.map((user) => ({
+    name: user.name,
     value: user.name,
+    initials: user.initials,
+    color: user.color,
+    email: user.email,
   }));
 
   useEffect(() => {
@@ -454,7 +458,7 @@ export default function CreateEventModal({
           <div className="flex min-h-0 flex-1 border-t border-graphite-10">
               {/* Left column */}
               <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto border-r border-graphite-10 p-[20px]">
-                <Dropdown label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} disabled={hasStudyContext} />
+                <SingleSelect label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} disabled={hasStudyContext} />
                 <CreatableDropdown
                   label="Project Code"
                   required
@@ -464,7 +468,6 @@ export default function CreateEventModal({
                   isNew={isProjectNew}
                   createPrefix="New Project"
                   disabled={hasStudyContext}
-                  allowClear={!hasStudyContext}
                   onChange={(val, isNew) => {
                     setProjectCode(val);
                     setIsProjectNew(isNew);
@@ -479,15 +482,14 @@ export default function CreateEventModal({
                   isNew={isStudyNew}
                   createPrefix="New Study"
                   disabled={hasStudyContext}
-                  allowClear={!hasStudyContext}
                   onChange={(val, isNew) => {
                     setStudyCode(val);
                     setIsStudyNew(isNew);
                   }}
                 />
                 <Input label="Event Name" required placeholder="Required" value={eventName} onChange={(e) => setEventName(e.target.value)} />
-                <Dropdown label="Event Owner" required placeholder="Required" options={eventOwnerOptions} value={eventOwner} onChange={setEventOwner} />
-                <Dropdown label="O_GEM Version" required placeholder="Required" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
+                <MemberSingleSelect label="Event Owner" required placeholder="Required" options={eventOwnerOptions} value={eventOwner} onChange={setEventOwner} />
+                <SingleSelect label="O_GEM Version" required placeholder="Required" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
                 <OptionalSection />
               </div>
               {/* Right column */}

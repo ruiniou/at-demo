@@ -264,12 +264,13 @@ export function UploadCard({
           {dropdownOpen && (
             <>
               <div className="fixed inset-0 z-[5]" onClick={() => setDropdownOpen(false)} />
-              <div className="absolute left-0 right-0 top-[38px] z-10 flex flex-col gap-[8px] rounded-[4px] border border-form-border bg-white p-[6px] shadow-[0px_4px_12px_rgba(0,0,0,0.12)]">
+              <div className="absolute left-0 right-0 top-[38px] z-10 flex flex-col gap-[8px] rounded-md border border-form-border bg-white p-1 shadow-[0px_4px_12px_rgba(0,0,0,0.12)]">
                 <SearchBar
                   value={searchQuery}
                   onChange={setSearchQuery}
                   placeholder="Search by event name..."
                   background="light"
+                  variant="embedded"
                   className="w-full"
                   autoFocus
                 />

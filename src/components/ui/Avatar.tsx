@@ -34,11 +34,18 @@ export function Avatar({ name, initials, color, level = "modal", disabled = fals
   const words = name?.trim().split(/\s+/).filter(Boolean) ?? [];
   const fallback = words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0]?.slice(0, 2);
   const letters = (identity?.initials ?? initials ?? fallback ?? "").toUpperCase();
+  const emptyAssigneeMask = `url("${emptyAssigneeUrl}") center / contain no-repeat`;
   return (
     <span role="img" aria-label={name || "No Assignee"} title={name || "No Assignee"}
       className={`inline-flex shrink-0 items-center justify-center rounded-full select-none font-medium leading-none text-white ${levelClasses[level]} ${stacked ? "ring-2 ring-white" : ""} ${disabled ? "opacity-50" : ""}`}
       style={{ backgroundColor: name ? identity?.color ?? color ?? "var(--color-text-secondary)" : undefined }}>
-      {name ? letters : <img src={emptyAssigneeUrl} alt="" className="size-full opacity-45" />}
+      {name ? letters : (
+        <span
+          aria-hidden="true"
+          className="size-full bg-text-secondary opacity-45"
+          style={{ mask: emptyAssigneeMask, WebkitMask: emptyAssigneeMask }}
+        />
+      )}
     </span>
   );
 }

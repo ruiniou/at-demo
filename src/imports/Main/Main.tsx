@@ -84,7 +84,7 @@ import { NewStudyModal } from "./components/NewStudyModal";
 import { ProjectItem, UserRole, INITIAL_PROJECTS, SYSTEM_USERS } from "./types/management";
 import { Tooltip } from "../../components/ui/Tooltip";
 import type { TooltipMetadataSection } from "../../components/ui/Tooltip";
-import { Dropdown } from "../../components/ui/Dropdown";
+import { SingleSelect } from "../../components/ui/SingleSelect";
 import { ZoomControl } from "../../components/ui/ZoomControl";
 import { MultiSelectDropdown } from "../../components/ui/MultiSelectDropdown";
 import { FilterChip } from "../../components/ui/FilterChip";
@@ -8186,7 +8186,7 @@ function AddComponentMenu({ anchorRect, onClose, onGenerate, lastSubmission, isG
             onChange={e => setName(e.target.value)}
             placeholder="Required"
           />
-          <Dropdown
+          <SingleSelect
             label="Type"
             required
             placeholder="Required"
@@ -8279,7 +8279,7 @@ function MoreOptionsMenu({ anchorRect, isDeprecated, onClose, onDeprecate, onDel
           <button
             type="button"
             onClick={() => { onDeprecate(); onClose(); }}
-            className="flex items-center gap-[6px] px-[4px] py-[6px] rounded-[2px] hover:bg-bg-panel transition-colors whitespace-nowrap w-full text-left active:scale-[0.97] transition-transform"
+            className="flex items-center gap-[6px] px-[4px] py-[6px] rounded-[calc(var(--radius-xs)*2)] hover:bg-bg-panel transition-colors whitespace-nowrap w-full text-left active:scale-[0.97] transition-transform"
           >
             <div className="relative shrink-0 size-[16px]">
               <div className="absolute" style={{ inset: '8.33% 8.34% 8.34% 8.33%' }}>
@@ -8295,7 +8295,7 @@ function MoreOptionsMenu({ anchorRect, isDeprecated, onClose, onDeprecate, onDel
           <button
             type="button"
             onClick={() => { onDelete(); onClose(); }}
-            className="flex items-center gap-[6px] px-[4px] py-[6px] rounded-[2px] hover:bg-[#fff5f5] transition-colors whitespace-nowrap w-full text-left active:scale-[0.97] transition-transform"
+            className="flex items-center gap-[6px] px-[4px] py-[6px] rounded-[calc(var(--radius-xs)*2)] hover:bg-[#fff5f5] transition-colors whitespace-nowrap w-full text-left active:scale-[0.97] transition-transform"
           >
             <div className="overflow-hidden relative shrink-0 size-[16px]">
               <img src={deleteBinIconUrl} className="w-full h-full" style={{ filter: 'invert(27%) sepia(85%) saturate(5833%) hue-rotate(345deg) brightness(97%) contrast(85%)' }} alt="delete" />
@@ -8702,7 +8702,7 @@ function BlocksTabContent({
 
                             if (effectiveInputType === 'dropdown') {
                               return (
-                                <Dropdown
+                                <SingleSelect
                                   label={labelWithLink as any}
                                   required={field.required}
                                   disabled={fieldIsDisabled}
@@ -10582,7 +10582,7 @@ function MetadataPanel({
                           >
                             <div className="relative w-full flex items-center gap-[16px]">
                               <div className="flex-1 min-w-0">
-                                <Dropdown
+                                <SingleSelect
                                   value={isS0 ? null : field.value}
                                   options={[
                                     { label: 'Table 14.1.6.1', value: 'Table 14.1.6.1' },
@@ -10793,10 +10793,10 @@ function MetadataPanel({
                         {!isLocked && <SvgIcon className="h-[16px] w-[16px]" shrink-0><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>}
                       </button>
                       {groupDropdownOpen && !isLocked && (
-                        <div className="absolute top-full left-0 right-0 mt-[2px] bg-white border border-border-default rounded-[4px] shadow-lg z-[60] max-h-[200px] overflow-auto">
+                        <div className="absolute top-full left-0 right-0 mt-[2px] bg-white border border-border-default rounded-md p-1 shadow-lg z-[60] max-h-[200px] overflow-auto">
                           {GROUP_OPTIONS.map((opt, idx) => (
                             <button key={idx} onClick={() => handleGroupSelect(idx)}
-                              className={`w-full text-left px-[8px] py-[6px] t-small hover:bg-bg-panel ${idx === selectedGroupIdx ? 'text-brand-1 font-medium' : 'text-text-primary'}`}>{opt.name}</button>
+                              className={`w-full text-left rounded-[calc(var(--radius-xs)*2)] px-1 py-[6px] t-small hover:bg-bg-panel ${idx === selectedGroupIdx ? 'text-brand-1 font-medium' : 'text-text-primary'}`}>{opt.name}</button>
                           ))}
                         </div>
                       )}
@@ -13926,7 +13926,7 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
                 {showMoreMenu && (
                   <div 
                     onClick={(e) => e.stopPropagation()}
-                    className="absolute right-0 bottom-[32px] sm:bottom-auto sm:top-[28px] mt-[4px] bg-white border border-[#D8DADA] rounded-[4px] shadow-lg py-[4px] w-[150px] z-50 animate-fade-in"
+                    className="absolute right-0 bottom-[32px] sm:bottom-auto sm:top-[28px] mt-[4px] bg-white border border-[#D8DADA] rounded-md shadow-lg p-1 w-[150px] z-50 animate-fade-in"
                   >
                     {actionButtons.map((btn, i) => (
                       <button
@@ -13936,7 +13936,7 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
                           setShowMoreMenu(false);
                           btn.onClick?.();
                         }}
-                        className="w-full text-left px-[12px] py-[6px] t-small text-text-primary hover:bg-bg-panel flex items-center gap-[8px]"
+                        className="w-full text-left rounded-[calc(var(--radius-xs)*2)] px-2 py-[6px] t-small text-text-primary hover:bg-bg-panel flex items-center gap-[8px]"
                       >
                         <LocalIcon src={btn.icon} className="h-[16px] w-[16px]" color="var(--color-text-secondary)" />
                         <span>{btn.label}</span>
@@ -14574,7 +14574,7 @@ function HomePage({
               </div>
 
               {/* Main List Display: Hierarchical Table View */}
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-graphite-10 bg-white">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-graphite-10 bg-white">
                 <table className="w-full table-fixed border-collapse text-left">
                   <colgroup><col /><col className="w-[180px]" /><col className="w-[180px]" /><col className="w-[80px]" /></colgroup>
                   <thead>
@@ -14754,7 +14754,7 @@ function HomePage({
                                                   {isMenuOpen && (
                                                     <div
                                                       onClick={(e) => e.stopPropagation()}
-                                                      className="absolute right-0 top-[28px] bg-white border border-graphite-10 rounded-[6px] shadow-elevation-overlay py-[4px] w-[140px] z-50 animate-fade-in"
+                                                      className="absolute right-0 top-[28px] bg-white border border-graphite-10 rounded-md shadow-elevation-overlay p-1 w-[140px] z-50 animate-fade-in"
                                                     >
                                                       {actionButtons.map((btn, i) => (
                                                         <button
@@ -14765,7 +14765,7 @@ function HomePage({
                                                             setOpenActionMenuId(null);
                                                             btn.onClick?.();
                                                           }}
-                                                          className="w-full text-left px-[10px] py-[6px] text-[13px] text-text-primary hover:bg-bg-panel flex items-center gap-[8px] transition-colors cursor-pointer"
+                                                          className="w-full text-left rounded-[calc(var(--radius-xs)*2)] px-1.5 py-[6px] text-[13px] text-text-primary hover:bg-bg-panel flex items-center gap-[8px] transition-colors cursor-pointer"
                                                         >
                                                           <LocalIcon src={btn.icon} className="h-[15px] w-[15px] shrink-0" color="var(--color-text-secondary)" />
                                                           <span className="truncate">{btn.label}</span>
