@@ -58,7 +58,7 @@ Event information
 
 Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`。它表达用户主动停止的中性终态；Error 继续独占错误色。
 
-当 Event 状态为 `AI Processing` 时，Treelist 内所有 Program 和 TFL 统一显示 `AI Processing` 状态图标；进入 `Stopped` 后，再按停止时的保留规则显示 `Stopped` 或原有完成/锁定状态。
+当 Event 状态为 `AI Processing` 时，Treelist 内所有 Program 和 TFL 统一显示 `AI Processing` 状态图标。进入 `Stopped` 后，TFL 只允许三种视觉状态：未完成项显示 `Stopped`，错误项保留 `Error`，停止前已经完成或锁定的项不显示状态图标。Stopped Event 下不出现 Lock 图标。
 
 ### Agent 执行结束后
 
@@ -82,7 +82,7 @@ Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`
 1. Owner 确认停止后，按钮进入 `Stopping…` 并禁止重复提交。
 2. 服务端取消尚未启动的任务，终止正在执行的 Agent 及其未完成子任务，并隔离迟到结果。
 3. Event 状态更新为 `Stopped`；仍在生成或排队的 TFL 更新为 `Stopped`。
-4. 已经完成或 Lock 的 TFL 保留原始结果和底层状态。
+4. 已经完成或 Lock 的 TFL 保留原始结果，但在 Stopped Event 中不显示状态图标。
 5. 右侧区域统一显示一张停止状态大卡，隐藏 Shell Preview / Code / AI 及右侧顶部栏。
 6. 停止状态大卡提供明确的重新上传入口，让用户修正文件后开始一轮全新的生成。
 

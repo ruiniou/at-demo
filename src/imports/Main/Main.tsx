@@ -11822,11 +11822,16 @@ function WorkspaceContent({
     if (isEventStopped) {
       setPrograms((previousPrograms) => previousPrograms.map((program) => ({
         ...program,
-        tables: program.tables.map((table) => (
-          table.status === 'analyzing' || table.status === 'pending'
-            ? { ...table, status: 'stopped' }
-            : table
-        )),
+        status: program.status === 'locked' ? 'completed' : program.status,
+        tables: program.tables.map((table) => {
+          if (table.status === 'analyzing' || table.status === 'pending') {
+            return { ...table, status: 'stopped' };
+          }
+          if (table.status === 'locked') {
+            return { ...table, status: 'completed' };
+          }
+          return table;
+        }),
       })));
       return;
     }
