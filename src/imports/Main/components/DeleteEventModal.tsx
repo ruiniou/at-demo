@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/Button";
+import { FormTextArea } from "../../../components/ui/FormTextArea";
 import closeIconUrl from "../../../icons/close-line.svg";
 
 export interface EventCardData {
@@ -19,7 +20,7 @@ export interface EventCardData {
 interface DeleteEventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirmDelete: (eventId: string) => void;
+  onConfirmDelete: (eventId: string, reason: string) => void;
   event: EventCardData | null;
 }
 
@@ -66,10 +67,12 @@ export default function DeleteEventModal({
   event,
 }: DeleteEventModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [reason, setReason] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       setIsDeleting(false);
+      setReason("");
     }
   }, [isOpen, event]);
 
@@ -86,10 +89,11 @@ export default function DeleteEventModal({
   if (!isOpen || !event) return null;
 
   const handleDelete = () => {
-    if (isDeleting) return;
+    const normalizedReason = reason.trim();
+    if (isDeleting || !normalizedReason) return;
     setIsDeleting(true);
     setTimeout(() => {
-      onConfirmDelete(event.id);
+      onConfirmDelete(event.id, normalizedReason);
       setIsDeleting(false);
       onClose();
     }, 500);
@@ -162,8 +166,22 @@ export default function DeleteEventModal({
 
           {/* Clinical Risk Caution */}
           <p className="text-[12px] leading-[18px] text-text-secondary">
-            This will permanently remove the event, its associated TFL shells, and generated outputs. This action cannot be undone.
+            {event.status === "ai-processing" || event.status === "to-do"
+              ? "The current generation will be stopped automatically. This will permanently remove the Event, its associated TFL shells, and generated outputs. This action cannot be undone."
+              : "This will permanently remove the Event, its associated TFL shells, and generated outputs. This action cannot be undone."}
           </p>
+
+          <FormTextArea
+            label="Reason for deletion"
+            required
+            value={reason}
+            onChange={(changeEvent) => setReason(changeEvent.target.value)}
+            disabled={isDeleting}
+            placeholder="Enter a reason"
+            rows={3}
+            maxLength={500}
+            style={{ resize: "none" }}
+          />
         </div>
 
         {/* Footer Actions */}
@@ -182,7 +200,7 @@ export default function DeleteEventModal({
             variant="secondary-danger"
             size="default"
             onClick={handleDelete}
-            disabled={isDeleting}
+            disabled={isDeleting || !reason.trim()}
             className="gap-[6px]"
           >
             <TrashIcon size={14} />
