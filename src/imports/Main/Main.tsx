@@ -11711,7 +11711,7 @@ function WorkspaceContent({
   currentEventData,
   onStopEvent,
   onDeleteEvent,
-  onReuploadEvent,
+  onOpenEventInformation,
   currentRole,
   currentUserName,
   onSwitchRole,
@@ -11728,7 +11728,7 @@ function WorkspaceContent({
   currentEventData: EventCardData;
   onStopEvent: (eventId: string, reason: string) => void;
   onDeleteEvent: (event: EventCardData) => void;
-  onReuploadEvent: (eventId: string, files: FileList) => void;
+  onOpenEventInformation: () => void;
   currentRole: UserRole;
   currentUserName: string;
   onSwitchRole: (role: UserRole) => void;
@@ -13157,7 +13157,7 @@ function WorkspaceContent({
         {isEventStopped && (
           <StoppedEventCard
             eventName={currentEventData.name}
-            onReupload={(files) => onReuploadEvent(currentEventData.id, files)}
+            onReupload={onOpenEventInformation}
           />
         )}
 
@@ -14818,6 +14818,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     studyId: string;
     therapeuticArea: string;
   } | null>(null);
+  const [eventInformationEvent, setEventInformationEvent] = useState<EventCardData | null>(null);
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedDownloadEvent, setSelectedDownloadEvent] = useState<string | undefined>(undefined);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -14944,10 +14945,13 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     )));
   };
 
-  const handleReuploadEvent = (eventId: string, _files: FileList) => {
+  const handleSaveEventInformation = (eventId: string, eventData: { name: string; project: string; study: string; owner: string }) => {
     setEvents((previous) => previous.map((event) => (
-      event.id === eventId ? { ...event, status: 'ai-processing' } : event
+      event.id === eventId
+        ? { ...event, ...eventData, status: event.status === 'stopped' ? 'ai-processing' : event.status }
+        : event
     )));
+    setEventInformationEvent(null);
   };
 
   const handleCreateEvent = (eventData: { name: string; project: string; study: string; owner: string }) => {
@@ -15016,10 +15020,12 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           onEventClick={handleOpenEvent}
           onCreateEvent={() => {
             setEventCreationContext(null);
+            setEventInformationEvent(null);
             setCreateEventModalOpen(true);
           }}
           onCreateEventForStudy={(projectId, studyId, therapeuticArea) => {
             setEventCreationContext({ projectId, studyId, therapeuticArea });
+            setEventInformationEvent(null);
             setCreateEventModalOpen(true);
           }}
           events={events}
@@ -15062,12 +15068,17 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           }}
           onOpenEditEventModal={() => {
             setEventCreationContext(null);
+            setEventInformationEvent(currentEventData);
             setCreateEventModalOpen(true);
           }}
           currentEventData={currentEventData}
           onStopEvent={handleStopEvent}
           onDeleteEvent={handleOpenDelete}
-          onReuploadEvent={handleReuploadEvent}
+          onOpenEventInformation={() => {
+            setEventCreationContext(null);
+            setEventInformationEvent(currentEventData);
+            setCreateEventModalOpen(true);
+          }}
           currentRole={currentRole}
           currentUserName={currentUserName}
           onSwitchRole={handleSwitchRole}
@@ -15083,8 +15094,12 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         onClose={() => {
           setCreateEventModalOpen(false);
           setEventCreationContext(null);
+          setEventInformationEvent(null);
         }}
         onCreateEvent={handleCreateEvent}
+        mode={eventInformationEvent ? "information" : "create"}
+        event={eventInformationEvent}
+        onSaveEvent={handleSaveEventInformation}
         projectsList={projects}
         currentRole={currentRole}
         currentUserName={currentUserName}

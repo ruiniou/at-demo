@@ -77,7 +77,7 @@ export default function StopEventModal({ isOpen, event, onClose, onConfirmStop }
             <div className="flex size-[32px] items-center justify-center rounded-[6px] bg-status-error-bg">
               <WarningIcon />
             </div>
-            <h2 id="stop-event-dialog-title" className="t-heading text-text-primary">Stop generation?</h2>
+            <h2 id="stop-event-dialog-title" className="t-heading text-text-primary">Stop Generation?</h2>
           </div>
           <button
             type="button"
@@ -92,7 +92,7 @@ export default function StopEventModal({ isOpen, event, onClose, onConfirmStop }
 
         <div className="flex flex-col gap-[14px] px-[20px] py-[12px]">
           <p className="t-caption text-text-primary">
-            Stop generation for <span className="font-medium">“{event.name}”</span>? This run cannot be resumed. The Event and completed TFLs will be kept.
+            This run cannot be resumed. After stopping, you can re-upload files or delete the Event.
           </p>
           <FormTextArea
             label="Reason for stopping"

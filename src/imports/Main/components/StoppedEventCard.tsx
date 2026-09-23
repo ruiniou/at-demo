@@ -1,16 +1,14 @@
-import React, { useRef } from "react";
+import React from "react";
 import { Button } from "../../../components/ui/Button";
 import stoppedStatusIconUrl from "../../../icons/Status label/Status=Stopped.svg";
 import uploadIconUrl from "../../../icons/upload-2-line.svg";
 
 interface StoppedEventCardProps {
   eventName: string;
-  onReupload: (files: FileList) => void;
+  onReupload: () => void;
 }
 
 export default function StoppedEventCard({ eventName, onReupload }: StoppedEventCardProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   return (
     <div className="flex min-w-0 flex-1 p-[8px] pl-[4px]">
       <div className="flex min-h-0 flex-1 items-center justify-center rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry">
@@ -24,17 +22,7 @@ export default function StoppedEventCard({ eventName, onReupload }: StoppedEvent
               Generation for “{eventName}” has stopped. Upload the corrected input files to start a new run.
             </p>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="sr-only"
-            onChange={(changeEvent) => {
-              if (changeEvent.target.files?.length) onReupload(changeEvent.target.files);
-              changeEvent.target.value = "";
-            }}
-          />
-          <Button variant="primary" size="default" onClick={() => fileInputRef.current?.click()} className="gap-[6px]">
+          <Button variant="primary" size="default" onClick={onReupload} className="gap-[6px]">
             <img src={uploadIconUrl} alt="" className="size-[14px] brightness-0 invert" aria-hidden="true" />
             Re-upload files
           </Button>

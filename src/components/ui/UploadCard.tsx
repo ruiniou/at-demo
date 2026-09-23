@@ -87,6 +87,10 @@ export function UploadCard({
   useEffect(() => {
     if (initialStatus === "pending" && !fileName) {
       if (mode === "upload") setUploadFile(null);
+    } else if (initialStatus === "uploaded" && fileName) {
+      setMode("upload");
+      setUploadFile(fileName);
+      setLinkedEvent(null);
     }
   }, [initialStatus, fileName, mode]);
 

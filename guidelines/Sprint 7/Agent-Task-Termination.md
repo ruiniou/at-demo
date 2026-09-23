@@ -68,8 +68,8 @@ Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`
 
 ### 确认弹窗
 
-- 标题：`Stop generation?`
-- 说明：当前生成将停止且不能恢复；Event 和已完成 TFL 会保留。
+- 标题：`Stop Generation?`
+- 说明：当前任务停止后不能恢复；用户可以重新上传文件或删除 Event。
 - 展示 Event 名称和当前状态。
 - 原因字段：选填。
 - 主按钮：`Stop generation`。
@@ -89,7 +89,8 @@ Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`
 - 图标：Stop 状态图标，不使用 Pause 图标。
 - 标题：`Generation stopped`。
 - 说明：当前生成已停止。如需重新生成，请上传正确的输入文件。
-- CTA：`Re-upload files`。
+- CTA：`Re-upload files`，打开预填的 `Event Information` 弹窗。
+- `Event Information` 左侧展示已创建 Event 的现有字段；右侧展示当前文件，并允许 Stopped Event 替换文件。重新提交后发起新一轮生成。
 - 不提供 `Resume`，因为旧任务不能续跑。
 
 Stopped 状态使用新增资源 `src/icons/Status label/Status=Stopped.svg`。颜色采用中性状态 Token `text-secondary`，与 Error 的 `status-error` 明确区分；Stopped 是用户主动结束，不是系统故障。操作按钮与状态可以共用 Stop glyph，但必须使用不同组件和视觉样式：操作可点击，状态只读。
