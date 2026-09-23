@@ -14766,8 +14766,8 @@ function HomePage({
                                               </td>
 
                                               {/* Actions - Collapsed into Ellipsis (...) */}
-                                              <td className="px-[16px] py-[10px] text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                                                <div className="relative inline-flex items-center justify-end">
+                                              <td className="relative px-[16px] py-[10px] text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                                                <div className="absolute right-[16px] top-1/2 inline-flex -translate-y-1/2 items-center justify-end">
                                                   {isStopped && isEventOwner ? (
                                                     <Button
                                                       variant="secondary"
