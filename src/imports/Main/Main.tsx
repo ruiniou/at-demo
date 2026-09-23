@@ -1730,7 +1730,7 @@ function EventSummaryCard({
                     <LocalIcon
                       src={resetRightIconUrl}
                       className={`w-[12px] h-[12px] ${item.isRetrying ? "animate-spin" : ""}`}
-                      color="#3F4444"
+                      color="currentColor"
                     />
                     <span>{item.isRetrying ? "Retrying…" : "Retry"}</span>
                   </Button>
@@ -11493,7 +11493,7 @@ ods graphics off;`;
           {isSaving ? (
             <div className="w-[12px] h-[12px] rounded-full border-[2px] border-transparent border-t-[#B2B4B4] border-l-[#B2B4B4] animate-spin" />
           ) : (
-            <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color={effectiveIsLocked || !isCodeUnsaved ? "#B2B4B4" : "var(--color-text-primary)"} />
+            <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color="currentColor" />
           )}
           <span className="text-[12px] leading-[18px] font-normal">{isSaving ? "Saving" : isCodeUnsaved ? "Save" : "Saved"}</span>
         </div>

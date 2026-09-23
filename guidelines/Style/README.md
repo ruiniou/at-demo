@@ -65,8 +65,7 @@ This document defines the UI infrastructure and design tokens for the Atlas Desi
 | `Status Label` | `Caption` | 36px (Height) | Spinning icon + text |
 | `Tool Call Card`| `Caption` | - | Hover: `bg-[#F8F7F7]` |
 | `Primary Button` | `Caption` | 28px/36px | Default: Bg `#830051` (Brand-1), Hover: `#F0AB00` (AZ-Warning), Text: `#FFFFFF` |
-| `Secondary Button` | `Caption` | 28px/36px | Default: Bg `#D9DADA` (Graphite/20), Text & Icon: `#3F4444` (Text-primary); Hover: Bg `#B2B4B4` (Graphite/40), Text & Icon: `#3F4444` (Text-primary); Disabled: Bg `#FFFFFF`, Stroke (Border): `#D9DADA` (Graphite/20), Text & Icon: `#B2B4B4` (Graphite/40) |
+| `Secondary Button` | `Caption` | 28px/36px | Default: Bg `#F4E8EE` (AZ Secondary), Text & Icon: `#830051` (Brand Color 1); Hover: Bg `#E6CCDC` (Mulberry/20), Text & Icon: `#830051` (Brand Color 1); Disabled: Bg `#FFFFFF`, Stroke (Border): `#D9DADA` (Graphite/20), Text & Icon: `#B2B4B4` (Graphite/40) |
 | `Icon Button` | - | 24x24px | Hover: `bg-[#EBECEC]` |
 | `Tag / Chip` | `Caption` | 20px (Height) | Rounded 4px, Left padding 2px, Right 6px |
 | `Code Diff` | `Code` | - | Collapsed by default; Line numbers `#888E8E` |
-
