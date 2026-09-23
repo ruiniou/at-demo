@@ -107,7 +107,6 @@ import { OptionLabel } from "../../components/ui/OptionLabel";
 import { FormInputField as Input } from "../../components/ui/FormInputField";
 import { Input as BaseInput } from "../../components/ui/Input";
 import { FormItem } from "../../components/ui/FormItem";
-import { MenuItem } from "../../components/ui/MenuItem";
 import { DropdownSeparator } from "../../components/ui/DropdownParts";
 import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 import groupIconUrl from "../../icons/group.svg";
@@ -4619,11 +4618,11 @@ function ViewToggleBar({
         <div className="h-[48px] w-full flex items-center px-[12px] justify-between">
           <div className="flex items-center gap-[8px]">
             <div className="min-w-0">
-              <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
               <div className="flex min-w-0 items-center gap-[4px]">
-                <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
+                <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
                 <img src={statusConfig[currentEventStatus].icon} alt={statusConfig[currentEventStatus].label} className="size-[14px] shrink-0" />
               </div>
+              <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
             </div>
             {onToggleEventMenu && (
               <TooltipText label="Event Settings">
@@ -4704,7 +4703,7 @@ function TreeStatusIcon({
   if (item.status === 'stopped') {
     return (
       <TooltipText label="Generation stopped">
-        <span className="cursor-help">
+        <span className="cursor-help" role="img" aria-label="Stopped">
           <CodeStatusSlot>
             <img src={stoppedStatusIconUrl} alt="" aria-hidden="true" className="h-[16px] w-[16px] block shrink-0" />
           </CodeStatusSlot>
@@ -4805,7 +4804,9 @@ function TreeItem({
             const isTableHovered = hoveredId === table.id;
             const isTableSelected = selectedId === table.id;
             const isCurrentTablePending = table.id === selectedId && hasPendingCodeChanges;
-            const effectiveItem: TableItem = isProgramLocked || table.status === 'locked'
+            const effectiveItem: TableItem = table.status === 'stopped'
+              ? table
+              : isProgramLocked || table.status === 'locked'
               ? { ...table, status: 'locked' }
               : isCurrentTablePending
                 ? { ...table, status: 'modified' }
@@ -12893,11 +12894,11 @@ function WorkspaceContent({
               </TooltipText>
               <div className="flex min-w-0 flex-1 items-center gap-[2px]">
                 <div className="min-w-0 flex-1">
-                  <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
                   <div className="flex min-w-0 items-center gap-[4px]">
-                    <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
+                    <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
                     <img src={statusConfig[currentEventData.status].icon} alt={statusConfig[currentEventData.status].label} className="size-[14px] shrink-0" />
                   </div>
+                  <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
                 </div>
                 <TooltipText label="Event Settings">
                   <button
@@ -13040,27 +13041,32 @@ function WorkspaceContent({
                 )}
                 {isEventOwner && <DropdownSeparator />}
                 {canStopEvent && (
-                  <MenuItem
-                    icon={<img src={stoppedStatusIconUrl} alt="" aria-hidden="true" className="size-[15px]" />}
+                  <button
+                    type="button"
+                    role="menuitem"
                     onClick={() => {
                       setEventMenuOpen(false);
                       setStopModalOpen(true);
                     }}
+                    className="flex w-full items-center gap-[8px] rounded-[4px] px-[8px] py-[7px] text-left text-[13px] font-normal text-text-primary transition-colors hover:bg-black/5 active:bg-black/10"
                   >
-                    Stop generation
-                  </MenuItem>
+                    <img src={stoppedStatusIconUrl} alt="" aria-hidden="true" className="size-[15px] shrink-0" />
+                    <span className="flex-1 truncate">Stop generation</span>
+                  </button>
                 )}
                 {isEventOwner && (
-                  <MenuItem
-                    danger
-                    icon={<LocalIcon src={deleteBinIconUrl} className="size-[15px]" color="currentColor" />}
+                  <button
+                    type="button"
+                    role="menuitem"
                     onClick={() => {
                       setEventMenuOpen(false);
                       onDeleteEvent(currentEventData);
                     }}
+                    className="flex w-full items-center gap-[8px] rounded-[4px] px-[8px] py-[7px] text-left text-[13px] font-normal text-status-error transition-colors hover:bg-status-error-bg/30 active:bg-status-error-bg/50"
                   >
-                    Delete Event
-                  </MenuItem>
+                    <LocalIcon src={deleteBinIconUrl} className="size-[15px]" color="var(--color-status-error)" />
+                    <span className="flex-1 truncate">Delete Event</span>
+                  </button>
                 )}
               </div>,
               document.body

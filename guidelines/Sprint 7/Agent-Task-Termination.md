@@ -69,11 +69,11 @@ Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`
 ### 确认弹窗
 
 - 标题：`Stop generation?`
-- 说明：当前生成将停止，不能从中断位置继续；Event 会保留，可重新上传正确文件并开始新一轮生成。
+- 说明：当前生成将停止且不能恢复；Event 和已完成 TFL 会保留。
 - 展示 Event 名称和当前状态。
 - 原因字段：选填。
 - 主按钮：`Stop generation`。
-- 次按钮：`Continue generation`，比 `Cancel` 更清楚地表达关闭弹窗后的结果。
+- 主按钮使用 Danger 样式；次按钮为 `Cancel`。
 
 ### 执行结果
 

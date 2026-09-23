@@ -3,7 +3,14 @@ import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/Button";
 import { FormTextArea } from "../../../components/ui/FormTextArea";
 import closeIconUrl from "../../../icons/close-line.svg";
-import stoppedStatusIconUrl from "../../../icons/Status label/Status=Stopped.svg";
+
+function WarningIcon() {
+  return (
+    <svg aria-hidden="true" className="size-[18px]" viewBox="0 0 24 24" fill="none">
+      <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10Zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm-1-5h2v2h-2v-2Zm0-8h2v6h-2V7Z" fill="var(--color-status-error)" />
+    </svg>
+  );
+}
 
 interface StoppableEvent {
   id: string;
@@ -67,8 +74,8 @@ export default function StopEventModal({ isOpen, event, onClose, onConfirmStop }
       >
         <div className="flex items-center justify-between px-[20px] pb-[14px] pt-[18px]">
           <div className="flex items-center gap-[10px]">
-            <div className="flex size-[32px] items-center justify-center rounded-[6px] bg-graphite-10">
-              <img src={stoppedStatusIconUrl} alt="" className="size-[18px]" aria-hidden="true" />
+            <div className="flex size-[32px] items-center justify-center rounded-[6px] bg-status-error-bg">
+              <WarningIcon />
             </div>
             <h2 id="stop-event-dialog-title" className="t-heading text-text-primary">Stop generation?</h2>
           </div>
@@ -85,7 +92,7 @@ export default function StopEventModal({ isOpen, event, onClose, onConfirmStop }
 
         <div className="flex flex-col gap-[14px] px-[20px] py-[12px]">
           <p className="t-caption text-text-primary">
-            Generation for <span className="font-medium">“{event.name}”</span> will stop and cannot continue from where it left off. The Event will be kept so you can upload corrected files and start again.
+            Stop generation for <span className="font-medium">“{event.name}”</span>? This run cannot be resumed. The Event and completed TFLs will be kept.
           </p>
           <FormTextArea
             label="Reason for stopping"
@@ -102,10 +109,9 @@ export default function StopEventModal({ isOpen, event, onClose, onConfirmStop }
 
         <div className="flex items-center justify-end gap-[10px] border-t border-graphite-10 px-[20px] py-[14px]">
           <Button variant="ghost" size="default" onClick={onClose} disabled={isStopping}>
-            Continue generation
+            Cancel
           </Button>
-          <Button variant="secondary" size="default" onClick={handleStop} disabled={isStopping} className="gap-[6px]">
-            <img src={stoppedStatusIconUrl} alt="" className="size-[14px]" aria-hidden="true" />
+          <Button variant="danger" size="default" onClick={handleStop} disabled={isStopping} className="gap-[6px]">
             {isStopping ? "Stopping..." : "Stop generation"}
           </Button>
         </div>
