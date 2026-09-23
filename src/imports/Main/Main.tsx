@@ -53,6 +53,7 @@ import filterIconUrl from "../../icons/filter-line.svg";
 import addLineIconUrl from "../../icons/add-line.svg";
 import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
+import uploadIconUrl from "../../icons/upload-2-line.svg";
 import shiningFillIconUrl from "../../icons/shining-fill.svg";
 import snowflakeIconUrl from "../../icons/snowflake-line.svg";
 import deleteBinIconUrl from "../../icons/delete-bin-line.svg";
@@ -13995,6 +13996,7 @@ function HomePage({
   onOpenDownloadModal,
   onOpenDeleteModal,
   onOpenTeamModal,
+  onReuploadEvent,
   onLogout,
   projects,
   currentRole,
@@ -14021,6 +14023,7 @@ function HomePage({
   onOpenDownloadModal?: (event: EventCardData) => void;
   onOpenDeleteModal?: (event: EventCardData) => void;
   onOpenTeamModal?: (event: EventCardData) => void;
+  onReuploadEvent: (event: EventCardData) => void;
   onLogout?: () => void;
   projects: ProjectItem[];
   currentRole: UserRole;
@@ -14719,6 +14722,7 @@ function HomePage({
                                           const isMenuOpen = openActionMenuId === `table-${ev.id}`;
                                           const isEventOwner = currentUserName === ev.owner;
                                           const isEventTeamMember = isEventOwner || Boolean(ev.teamMembers?.some((member) => member.name === currentUserName));
+                                          const isStopped = ev.status === 'stopped';
                                           const actionButtons = [
                                             { icon: barChartIconUrl, label: 'View Dashboard' },
                                             ...(isEventTeamMember
@@ -14764,23 +14768,40 @@ function HomePage({
                                               {/* Actions - Collapsed into Ellipsis (...) */}
                                               <td className="px-[16px] py-[10px] text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                                                 <div className="relative inline-flex items-center justify-end">
-                                                  <TooltipText label="More actions">
+                                                  {isStopped && isEventOwner ? (
+                                                    <Button
+                                                      variant="secondary"
+                                                      size="sm"
+                                                      type="button"
+                                                      onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        onReuploadEvent(ev);
+                                                      }}
+                                                      aria-label={`Re-upload files for ${ev.name}`}
+                                                    >
+                                                      <LocalIcon src={uploadIconUrl} className="h-[14px] w-[14px]" color="currentColor" />
+                                                      Re-upload
+                                                    </Button>
+                                                  ) : (
+                                                  <TooltipText label={isStopped ? "No actions available" : "More actions"}>
                                                     <button
                                                       type="button"
+                                                      disabled={isStopped}
                                                       onClick={(e) => {
                                                         e.stopPropagation();
                                                         setOpenActionMenuId((prev) => (prev === `table-${ev.id}` ? null : `table-${ev.id}`));
                                                       }}
-                                                      className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors ${
+                                                      className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${
                                                         isMenuOpen ? 'bg-black/5' : ''
                                                       }`}
-                                                      aria-label="More actions"
+                                                      aria-label={isStopped ? "More actions unavailable" : "More actions"}
                                                     >
                                                       <MoreIcon color="var(--color-text-secondary)" />
                                                     </button>
                                                   </TooltipText>
+                                                  )}
 
-                                                  {isMenuOpen && (
+                                                  {!isStopped && isMenuOpen && (
                                                     <div
                                                       onClick={(e) => e.stopPropagation()}
                                                       className="absolute right-0 top-[28px] bg-white border border-graphite-10 rounded-md shadow-elevation-overlay p-1 w-[140px] z-50 animate-fade-in"
@@ -15058,6 +15079,11 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           onOpenDownloadModal={handleOpenDownload}
           onOpenDeleteModal={handleOpenDelete}
           onOpenTeamModal={handleOpenTeam}
+          onReuploadEvent={(event) => {
+            setEventCreationContext(null);
+            setEventInformationEvent(event);
+            setCreateEventModalOpen(true);
+          }}
           onLogout={onLogout}
           projects={projects}
           currentRole={currentRole}

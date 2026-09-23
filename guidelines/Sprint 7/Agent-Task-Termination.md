@@ -94,6 +94,7 @@ Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`
 - CTA：`Re-upload Files`，打开预填的 `Event Information` 弹窗。
 - `Event Information` 左侧展示已创建 Event 的现有字段；右侧展示当前文件，并允许 Stopped Event 替换文件。重新提交后发起新一轮生成。
 - 不提供 `Resume`，因为旧任务不能续跑。
+- Events 列表中，Stopped Event 的 Owner 直接看到 `Re-upload` 按钮，点击后打开同一个 `Event Information` 弹窗；非 Owner 的 More 按钮保留原位置但禁用。
 
 Stopped 状态使用新增资源 `src/icons/Status label/Status=Stopped.svg`。颜色采用中性状态 Token `text-secondary`，与 Error 的 `status-error` 明确区分；Stopped 是用户主动结束，不是系统故障。操作按钮与状态可以共用 Stop glyph，但必须使用不同组件和视觉样式：操作可点击，状态只读。
 
