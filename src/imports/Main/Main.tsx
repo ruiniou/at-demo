@@ -4671,11 +4671,23 @@ function TreeStatusIcon({
   item,
   lockedBy,
   isFigureQueued,
+  forceAiProcessing = false,
 }: {
   item: TableItem | ProgramItem;
   lockedBy?: string;
   isFigureQueued?: boolean;
+  forceAiProcessing?: boolean;
 }) {
+  if (forceAiProcessing) {
+    return (
+      <span role="img" aria-label="AI Processing">
+        <CodeStatusSlot>
+          <img src={aiProcessingIconUrl} alt="" aria-hidden="true" className="h-[16px] w-[16px] block shrink-0" />
+        </CodeStatusSlot>
+      </span>
+    );
+  }
+
   if (item.docType === 'figure' && isFigureQueued) {
     return (
       <TooltipText label="Queued — Waiting for Table 14.1.6.1 to complete">
@@ -4757,12 +4769,14 @@ function TreeItem({
   onSelect,
   onToggleExpand,
   hasPendingCodeChanges,
+  forceAiProcessing = false,
 }: {
   program: ProgramItem;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onToggleExpand: (programId: string) => void;
   hasPendingCodeChanges?: boolean;
+  forceAiProcessing?: boolean;
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const isProgramHovered = hoveredId === program.id;
@@ -4794,7 +4808,7 @@ function TreeItem({
               {program.name}
             </p>
           </div>
-          <TreeStatusIcon item={program} />
+          <TreeStatusIcon item={program} forceAiProcessing={forceAiProcessing} />
         </div>
       </div>
 
@@ -4847,6 +4861,7 @@ function TreeItem({
                     item={effectiveItem}
                     lockedBy={isProgramLocked ? program.name : undefined}
                     isFigureQueued={isQueued}
+                    forceAiProcessing={forceAiProcessing}
                   />
                 </div>
               </div>
@@ -13083,6 +13098,7 @@ function WorkspaceContent({
                       onSelect={handleSelect}
                       onToggleExpand={handleToggleExpand}
                       hasPendingCodeChanges={hasPendingCodeChanges}
+                      forceAiProcessing={currentEventData.status === 'ai-processing'}
                     />
                   ))
                 ) : (

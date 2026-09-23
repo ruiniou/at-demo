@@ -91,7 +91,7 @@ export default function StopEventModal({ isOpen, event, onClose, onConfirmStop }
         </div>
 
         <div className="flex flex-col gap-[14px] px-[20px] py-[12px]">
-          <p className="t-caption text-text-primary">
+          <p className="t-caption text-text-secondary">
             This run cannot be resumed. After stopping, you can re-upload files or delete the Event.
           </p>
           <FormTextArea

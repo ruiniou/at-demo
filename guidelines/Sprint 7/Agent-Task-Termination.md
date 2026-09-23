@@ -58,6 +58,8 @@ Event information
 
 Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`。它表达用户主动停止的中性终态；Error 继续独占错误色。
 
+当 Event 状态为 `AI Processing` 时，Treelist 内所有 Program 和 TFL 统一显示 `AI Processing` 状态图标；进入 `Stopped` 后，再按停止时的保留规则显示 `Stopped` 或原有完成/锁定状态。
+
 ### Agent 执行结束后
 
 - Stop 入口消失，因为没有仍在运行的任务。

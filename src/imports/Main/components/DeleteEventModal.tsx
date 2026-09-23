@@ -143,7 +143,7 @@ export default function DeleteEventModal({
         {/* Body Content */}
         <div className="flex flex-col gap-[14px] px-[20px] py-[12px]">
           {/* Clinical Risk Caution */}
-          <p className="t-caption text-text-primary">
+          <p className="t-caption text-text-secondary">
             {event.status === "ai-processing" || event.status === "to-do"
               ? "This stops the current generation and permanently deletes the Event and its outputs. This action cannot be undone."
               : "This permanently deletes the Event and its outputs. This action cannot be undone."}
