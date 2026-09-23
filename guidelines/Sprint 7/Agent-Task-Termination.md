@@ -37,11 +37,11 @@ Event information
   Existing action 1
   Existing action 2
   ─────────────────
-  Stop generation
+  Stop Generation
   Delete Event
 ```
 
-- `Stop generation` 仅在 Agent 未启动、排队或正在执行时显示；使用 Stop 图标 + 完整文字，采用普通菜单项样式。
+- `Stop Generation` 仅在 Agent 未启动、排队或正在执行时显示；使用 Stop 图标 + 完整文字，采用普通菜单项样式。
 - `Delete Event` 始终显示，使用垃圾桶图标 + 完整文字，采用 Danger 菜单项样式。
 - Divider 只用于区分普通操作组和高影响操作组；Stop 与 Delete 之间不再增加 Divider。
 - 两个入口分别点击，分别进入各自的确认弹窗。
@@ -52,7 +52,7 @@ Event information
 
 | 项目 | Default | Hover / Focus | Active | Disabled / 不可用 |
 |---|---|---|---|---|
-| Stop generation | 文字 `text-primary`，图标 `text-secondary` | 中性 Hover 背景，文字和图标保持非危险色 | 使用中性 Active 背景 | Agent 不在可停止阶段时直接隐藏，不展示 Disabled 项 |
+| Stop Generation | 文字 `text-primary`，图标 `text-secondary` | 中性 Hover 背景，文字和图标保持非危险色 | 使用中性 Active 背景 | Agent 不在可停止阶段时直接隐藏，不展示 Disabled 项 |
 | Delete Event | 文字和图标使用 `status-error` | 使用 `status-error-bg`，保持危险色文字和图标 | 使用更强一级的危险态背景 Token | 无权限时直接隐藏；提交中在弹窗内 Disabled |
 | Divider | 使用 `border-default` | 不适用 | 不适用 | 不适用 |
 
@@ -72,7 +72,7 @@ Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`
 - 说明：当前任务停止后不能恢复；用户可以重新上传文件或删除 Event。
 - 展示 Event 名称和当前状态。
 - 原因字段：选填。
-- 主按钮：`Stop generation`。
+- 主按钮：`Stop Generation`。
 - 主按钮使用 Danger 样式；次按钮为 `Cancel`。
 
 ### 执行结果
@@ -87,9 +87,9 @@ Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`
 ### 停止状态大卡
 
 - 图标：Stop 状态图标，不使用 Pause 图标。
-- 标题：`Generation stopped`。
+- 标题：`Generation Stopped`。
 - 说明：当前生成已停止。如需重新生成，请上传正确的输入文件。
-- CTA：`Re-upload files`，打开预填的 `Event Information` 弹窗。
+- CTA：`Re-upload Files`，打开预填的 `Event Information` 弹窗。
 - `Event Information` 左侧展示已创建 Event 的现有字段；右侧展示当前文件，并允许 Stopped Event 替换文件。重新提交后发起新一轮生成。
 - 不提供 `Resume`，因为旧任务不能续跑。
 
@@ -191,7 +191,7 @@ Stopped 状态使用新增资源 `src/icons/Status label/Status=Stopped.svg`。�
 
 | 问题 | 当前建议 |
 |---|---|
-| 重新上传是否发生在原 Event 内 | 是；停止状态大卡提供 `Re-upload files`，保留 Event 身份与权限 |
+| 重新上传是否发生在原 Event 内 | 是；停止状态大卡提供 `Re-upload Files`，保留 Event 身份与权限 |
 | 新文件上传后如何处理旧的已完成 TFL | 建议按 run 归档，默认只展示最新一轮；是否允许查看旧轮次需 PM 确认 |
 | 重新上传是否自动开始生成 | 建议沿用现有上传流程，完成校验后由用户明确开始，避免传错后再次自动执行 |
 | Stop 原因是否需要必填 | 沿用原需求为选填；Delete 原因必填 |

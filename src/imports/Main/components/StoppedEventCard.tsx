@@ -17,14 +17,14 @@ export default function StoppedEventCard({ eventName, onReupload }: StoppedEvent
             <img src={stoppedStatusIconUrl} alt="" className="size-[24px]" aria-hidden="true" />
           </div>
           <div className="flex flex-col gap-[4px]">
-            <h2 className="t-heading text-text-primary">Generation stopped</h2>
+            <h2 className="t-heading text-text-primary">Generation Stopped</h2>
             <p className="t-caption text-text-secondary">
               Generation for “{eventName}” has stopped. Upload the corrected input files to start a new run.
             </p>
           </div>
           <Button variant="primary" size="default" onClick={onReupload} className="gap-[6px]">
             <img src={uploadIconUrl} alt="" className="size-[14px] brightness-0 invert" aria-hidden="true" />
-            Re-upload files
+            Re-upload Files
           </Button>
         </div>
       </div>

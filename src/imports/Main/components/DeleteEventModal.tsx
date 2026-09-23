@@ -127,7 +127,7 @@ export default function DeleteEventModal({
               id="delete-event-dialog-title"
               className="text-[16px] font-semibold text-text-primary leading-[22px]"
             >
-              Delete Event
+              Delete Event?
             </h2>
           </div>
           <button
@@ -142,33 +142,11 @@ export default function DeleteEventModal({
 
         {/* Body Content */}
         <div className="flex flex-col gap-[14px] px-[20px] py-[12px]">
-          <p className="text-[13px] leading-[20px] text-text-primary">
-            Are you sure you want to delete{" "}
-            <span className="font-semibold text-text-primary">"{event.name}"</span>?
-          </p>
-
-          {/* Event Context Pill */}
-          <div className="flex flex-col gap-[4px] rounded-[4px] bg-bg-panel border border-graphite-10 px-[12px] py-[10px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] font-medium text-text-primary truncate">
-                {event.name}
-              </span>
-              <span className="flex h-[18px] items-center rounded-[2px] border border-graphite-20 bg-white px-[5px] text-[10px] font-medium text-text-secondary shrink-0">
-                v{event.version}
-              </span>
-            </div>
-            <div className="flex items-center gap-[6px] text-[12px] text-text-secondary truncate">
-              <span>{event.project}</span>
-              <span>/</span>
-              <span>{event.study}</span>
-            </div>
-          </div>
-
           {/* Clinical Risk Caution */}
-          <p className="text-[12px] leading-[18px] text-text-secondary">
+          <p className="t-caption text-text-primary">
             {event.status === "ai-processing" || event.status === "to-do"
-              ? "The current generation will be stopped automatically. This will permanently remove the Event, its associated TFL shells, and generated outputs. This action cannot be undone."
-              : "This will permanently remove the Event, its associated TFL shells, and generated outputs. This action cannot be undone."}
+              ? "This stops the current generation and permanently deletes the Event and its outputs. This action cannot be undone."
+              : "This permanently deletes the Event and its outputs. This action cannot be undone."}
           </p>
 
           <FormTextArea

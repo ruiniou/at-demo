@@ -95,8 +95,7 @@ export default function StopEventModal({ isOpen, event, onClose, onConfirmStop }
             This run cannot be resumed. After stopping, you can re-upload files or delete the Event.
           </p>
           <FormTextArea
-            label="Reason for stopping"
-            badge={<span className="t-small text-text-secondary">Optional</span>}
+            label={<>Reason for stopping <span className="font-normal text-text-secondary">(Optional)</span></>}
             value={reason}
             onChange={(changeEvent) => setReason(changeEvent.target.value)}
             disabled={isStopping}
@@ -112,7 +111,7 @@ export default function StopEventModal({ isOpen, event, onClose, onConfirmStop }
             Cancel
           </Button>
           <Button variant="danger" size="default" onClick={handleStop} disabled={isStopping} className="gap-[6px]">
-            {isStopping ? "Stopping..." : "Stop generation"}
+            {isStopping ? "Stopping..." : "Stop Generation"}
           </Button>
         </div>
       </div>

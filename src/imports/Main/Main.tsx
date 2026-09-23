@@ -4702,7 +4702,7 @@ function TreeStatusIcon({
 
   if (item.status === 'stopped') {
     return (
-      <TooltipText label="Generation stopped">
+      <TooltipText label="Generation Stopped">
         <span className="cursor-help" role="img" aria-label="Stopped">
           <CodeStatusSlot>
             <img src={stoppedStatusIconUrl} alt="" aria-hidden="true" className="h-[16px] w-[16px] block shrink-0" />
@@ -13051,7 +13051,7 @@ function WorkspaceContent({
                     className="flex w-full items-center gap-[8px] rounded-[4px] px-[8px] py-[7px] text-left text-[13px] font-normal text-text-primary transition-colors hover:bg-black/5 active:bg-black/10"
                   >
                     <img src={stoppedStatusIconUrl} alt="" aria-hidden="true" className="size-[15px] shrink-0" />
-                    <span className="flex-1 truncate">Stop generation</span>
+                    <span className="flex-1 truncate">Stop Generation</span>
                   </button>
                 )}
                 {isEventOwner && (

@@ -608,7 +608,7 @@ export default function CreateEventModal({
         {/* Footer */}
         <div className="flex shrink-0 items-center justify-end border-t border-graphite-10 px-[20px] py-[14px]">
           <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>
-            {isEventInformation ? (event?.status === "stopped" ? "Restart generation" : "Save changes") : "Create Event"}
+            {isEventInformation ? (event?.status === "stopped" ? "Restart Generation" : "Save Changes") : "Create Event"}
           </PrimaryButton>
         </div>
       </div>
