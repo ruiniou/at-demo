@@ -3912,7 +3912,7 @@ function AICopilotPanel({
 
 // ==================== Workspace Shell: Top Nav & Tree List ====================
 
-type ItemStatus = 'pending' | 'locked' | 'analyzing' | 'error' | 'modified' | 'completed' | 'stopped';
+type ItemStatus = 'idle' | 'pending' | 'locked' | 'analyzing' | 'error' | 'modified' | 'completed' | 'stopped';
 type DocumentType = 'table' | 'listing' | 'figure';
 
 
@@ -11797,6 +11797,7 @@ function WorkspaceContent({
   onStopEvent,
   onDeleteEvent,
   onOpenEventInformation,
+  onEventWorkStarted,
   currentRole,
   currentUserName,
   onSwitchRole,
@@ -11814,6 +11815,7 @@ function WorkspaceContent({
   onStopEvent: (eventId: string, reason: string) => void;
   onDeleteEvent: (event: EventCardData) => void;
   onOpenEventInformation: () => void;
+  onEventWorkStarted: () => void;
   currentRole: UserRole;
   currentUserName: string;
   onSwitchRole: (role: UserRole) => void;
@@ -11906,18 +11908,11 @@ function WorkspaceContent({
       return;
     }
 
-    if (currentEventData.status === 'ai-processing') {
-      let assignedActiveTask = false;
+    if (currentEventData.status === 'to-do') {
       setPrograms((previousPrograms) => previousPrograms.map((program) => ({
         ...program,
-        tables: program.tables.map((table) => {
-          if (table.status !== 'stopped') return table;
-          if (!assignedActiveTask) {
-            assignedActiveTask = true;
-            return { ...table, status: 'analyzing' };
-          }
-          return { ...table, status: 'pending' };
-        }),
+        status: 'completed',
+        tables: program.tables.map((table) => ({ ...table, status: 'idle' })),
       })));
     }
   }, [currentEventData.status, isEventStopped]);
@@ -12990,8 +12985,12 @@ function WorkspaceContent({
         metaUpdateActive={metaUpdateActive}
         hasPendingCodeChanges={hasPendingCodeChanges}
         onMetaCancel={() => setMetaUpdateActive(false)}
-        onCodeDiffChange={setHasPendingCodeChanges}
+        onCodeDiffChange={(hasDiff) => {
+          setHasPendingCodeChanges(hasDiff);
+          if (hasDiff) onEventWorkStarted();
+        }}
         onMetaProceed={() => {
+          onEventWorkStarted();
           setMetaUpdateActive(false);
           setMetaUpdateProcessing(true);
           setSubmittedDiffItems(metaDiffItems);
@@ -15005,6 +15004,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     therapeuticArea: string;
   } | null>(null);
   const [eventInformationEvent, setEventInformationEvent] = useState<EventCardData | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedDownloadEvent, setSelectedDownloadEvent] = useState<string | undefined>(undefined);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -15123,7 +15123,14 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setEvents(prev => prev.filter(e => e.id !== eventId));
     if (selectedEventId === eventId) setPage('home');
     setSelectedDeleteEvent(null);
+    setToastMessage('Event deleted');
   };
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = window.setTimeout(() => setToastMessage(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
 
   const handleStopEvent = (eventId: string, _reason: string) => {
     setEvents((previous) => previous.map((event) => (
@@ -15284,6 +15291,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
             setEventCreationContext(null);
             setEventInformationModalOpen(true);
           }}
+          onEventWorkStarted={() => handleUpdateStatus(currentEventData.id, 'in-progress')}
           currentRole={currentRole}
           currentUserName={currentUserName}
           onSwitchRole={handleSwitchRole}
@@ -15356,6 +15364,12 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         ))}
         canManageAssignments={Boolean(selectedTeamEvent && selectedTeamEvent.owner === currentUserName)}
       />
+      {toastMessage && (
+        <div className="fixed bottom-[24px] left-1/2 z-[10060] flex -translate-x-1/2 items-center gap-[8px] rounded-[6px] bg-text-primary px-[16px] py-[10px] text-white shadow-elevation-overlay animate-slide-in-up" role="status">
+          <img src={checkIconUrl} alt="" className="size-[16px] invert" />
+          <span className="t-small font-medium">{toastMessage}</span>
+        </div>
+      )}
       <NewProjectModal
         isOpen={newProjectModalOpen}
         onClose={() => setNewProjectModalOpen(false)}

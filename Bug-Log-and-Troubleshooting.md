@@ -434,3 +434,17 @@
 * **经验教训 (Takeaways)**：
   1. **同一插槽多状态尺寸强等价原则**：同一逻辑占位槽在不同业务状态间切换时（只读 vs 可交互、自身 vs 他人），最外层容器的 `width`、`height`、`padding`、`border` 盒模型必须完全等价，避免依赖内部子元素尺寸自适应导致布局跳动（Layout Shift）。
   2. **工具栏图标按钮统一网格基准**：应用顶栏操作项应统一遵循 28px（或 32px）的固定几何基准，禁止出现 24px、30px 等杂乱尺寸混排。
+
+---
+
+### [2026-09-24] Input 重传完成后 Tree List 保留过期的 TFL 分析状态
+
+* **现象 (Symptom)**：
+  Event 完成 Input 重传并进入 To do 后，Tree List 仍可能显示某一条 TFL 的 AI Processing 或 Pending changes 状态。
+* **根本原因 (Root Cause)**：
+  `WorkspaceContent` 仅在 Event 为 `ai-processing` 时覆盖 Tree List 图标，没有在状态转为 `to-do` 时重置 `programs` 中每个 TFL 的内部 `status`，因此旧的 `analyzing` / `pending` 状态继续渲染。
+* **解决方案 (Solution)**：
+  在 Event 转为 `to-do` 时，将所有 TFL 的内部状态设为 `idle`，使 Tree List 无状态显示；在 metadata 或 code 产生修改时，通过 `onEventWorkStarted` 将 Event 状态更新为 `in-progress`。同时在删除 Event 成功后显示 3 秒的确认 Toast。
+* **经验教训 (Takeaways)**：
+  1. Event 生命周期状态变化时，应同时定义并更新其派生的 TFL 列表状态，不能只依赖视觉覆盖。
+  2. 删除后发生页面跳转时，应提供非阻断式结果确认，避免用户无法判断操作是否成功。
