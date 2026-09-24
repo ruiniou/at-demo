@@ -15,11 +15,15 @@ export interface PopoverProps {
   width?: number | "anchor";
   offset?: number;
   className?: string;
+  autoFocus?: boolean;
+  onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
+  onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 /** Shared floating surface. Listbox/combobox selection remains the caller's job. */
 export function Popover({ open, onOpenChange, anchorRef, children, id, label,
-  role = "dialog", placement = "bottom", align = "start", width = "anchor", offset = 4, className = "" }: PopoverProps) {
+  role = "dialog", placement = "bottom", align = "start", width = "anchor", offset = 4, className = "",
+  autoFocus = true, onMouseEnter, onMouseLeave }: PopoverProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<React.CSSProperties>({ visibility: "hidden" });
   const changeRef = useRef(onOpenChange);
@@ -54,7 +58,10 @@ export function Popover({ open, onOpenChange, anchorRef, children, id, label,
     window.addEventListener("scroll", update, true);
 
     const focusable = () => Array.from(panel.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), [tabindex="0"], a[href]'));
-    const focusFrame = requestAnimationFrame(() => (panel.querySelector<HTMLElement>("input:not(:disabled)") ?? focusable()[0] ?? panel).focus());
+    let focusFrame: number | undefined;
+    if (autoFocus) {
+      focusFrame = requestAnimationFrame(() => (panel.querySelector<HTMLElement>("input:not(:disabled)") ?? focusable()[0] ?? panel).focus());
+    }
     const outside = (event: PointerEvent) => {
       if (!panel.contains(event.target as Node) && !anchor.contains(event.target as Node)) changeRef.current(false);
     };
@@ -80,19 +87,25 @@ export function Popover({ open, onOpenChange, anchorRef, children, id, label,
     document.addEventListener("keydown", keydown, true);
     document.addEventListener("focusin", focusout);
     return () => {
-      cancelAnimationFrame(focusFrame);
+      if (focusFrame !== undefined) cancelAnimationFrame(focusFrame);
       observer.disconnect();
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
       document.removeEventListener("pointerdown", outside, true);
       document.removeEventListener("keydown", keydown, true);
       document.removeEventListener("focusin", focusout);
-      if (panel.contains(document.activeElement) || document.activeElement === document.body) anchor.focus();
+      if (panel.contains(document.activeElement)) {
+        anchor.focus();
+      } else if (autoFocus && document.activeElement === document.body) {
+        anchor.focus();
+      }
     };
-  }, [open, anchorRef, placement, align, width, offset, role]);
+  }, [open, anchorRef, placement, align, width, offset, role, autoFocus]);
 
   if (!open) return null;
   return createPortal(<div ref={panelRef} id={id} role={role} aria-label={label} tabIndex={-1}
+    onMouseEnter={onMouseEnter}
+    onMouseLeave={onMouseLeave}
     style={{ position: "fixed", zIndex: 10050, ...position }}
     className={twMerge("overflow-y-auto rounded-md border border-form-border bg-white p-1 shadow-elevation-overlay", className)}>
     {children}

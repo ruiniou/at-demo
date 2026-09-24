@@ -25,6 +25,7 @@ export interface FacetedSearchBarProps {
   onRemoveAssignee: (assignee: string) => void;
   onResetAll: () => void;
   allAssignees: string[];
+  currentUserName?: string;
   className?: string;
 }
 
@@ -50,6 +51,7 @@ export function FacetedSearchBar({
   onRemoveAssignee,
   onResetAll,
   allAssignees,
+  currentUserName = "Sarah Chen",
   className = "",
 }: FacetedSearchBarProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -280,9 +282,9 @@ export function FacetedSearchBar({
                 </span>
                 <button
                   type="button"
-                  onClick={() => onToggleAssignee("Sarah Chen")}
+                  onClick={() => onToggleAssignee(currentUserName)}
                   className={`px-[8px] py-[3px] rounded-[4px] t-small font-medium transition-colors cursor-pointer ${
-                    selectedAssignees.has("Sarah Chen")
+                    selectedAssignees.has(currentUserName)
                       ? "bg-[#F4E8EE] text-brand-1"
                       : "bg-graphite-10 hover:bg-graphite-20 text-text-primary"
                   }`}

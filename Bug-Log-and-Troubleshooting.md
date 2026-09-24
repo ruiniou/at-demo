@@ -396,3 +396,41 @@
 * **经验教训 (Takeaways)**：
   1. 单色功能图标统一使用 mask 渲染，不要混用普通 `<img>`，以便稳定继承设计 Token 颜色。
   2. 从外部设计工具导出的 SVG 应在入库前清理非标准或兼容性有限的颜色声明。
+
+---
+
+### [2026-09-24] Tree List 未排除当前用户自身导致 Take over 接管后错误显示本人头像
+
+* **现象 (Symptom)**：
+  用户在工作区顶栏对离线用户的交付物执行 Take over（接管为自己编辑）后，左侧 Tree List 中该交付物条目右侧错误展示了当前用户本人的头像，遮挡了原本的交付物状态图标（如 Modified / Locked）。
+* **根本原因 (Root Cause)**：
+  1. `WorkspaceContent` 在遍历渲染 `filteredPrograms` 调用 `<TreeItem ... />` 时，漏传了 `currentUserName={CURRENT_USER}` prop。
+  2. `TreeItem` 内部对 `occupant` 的推导逻辑原本为 `const occupant = tflOccupancy?.isOccupied ? table.assignee : undefined;`，未对占用者是否为当前登录用户（`table.assignee === currentUserName`）进行排除。因此只要当前用户自身占用了页面锁，组件就将当前用户识别为协同冲突占用者并渲染头像。
+* **解决方案 (Solution)**：
+  1. 在 `TreeItem` 的 Props 声明中补充 `currentUserName?: string`，并在 `WorkspaceContent` 调用 `<TreeItem ... />` 处传入 `currentUserName={CURRENT_USER}`。
+  2. 在 `TreeItem` 内部计算 `occupant` 时引入自身排除判断：
+     `const isSelf = Boolean(currentUserName && table.assignee === currentUserName);`
+     `const occupant = tflOccupancy?.isOccupied && !isSelf ? table.assignee : undefined;`
+     确保仅在「其他用户处于占用编辑中」时才展示头像，当前用户自己编辑时保留其原本的状态图标。
+* **经验教训 (Takeaways)**：
+  1. **协同冲突防范中的视角区分（Self vs. Others）**：列表级协同头像的目的是「提示其他协作者正在编辑以防止碰撞冲突」，因此自己的头像在当前工作区列表中属于冗余信息，且会覆盖对编辑者至关重要的状态图标（Status Icon）。
+  2. **多层组件参数透传严防断漏**：当为子组件增加了过滤依赖（如 `currentUserName`）时，必须同步核对其在父级 JSX 实例化位置的传参，避免空值兜底掩盖逻辑失效。
+
+---
+
+### [2026-09-24] 工作区顶栏自身头像与他人头像外盒尺寸不一致导致微妙位置位移
+
+* **现象 (Symptom)**：
+  在右上角工作区顶栏中，切换查看不同 TFL 时，用户自己的头像（`own-occupied`）或未分配头像（`unassigned`）与他人头像（`other-occupied` / `other-away`）在位置上存在微妙的水平与垂直偏差，且右侧邻近的 `Group Code` 按钮发生跳动。
+* **根本原因 (Root Cause)**：
+  在 `AssigneeOccupancyButton.tsx` 中：
+  1. 他人头像状态（在线或离线）渲染为带有 `p-[2px]` 与 1px 边框的 `<button>`，由于内含 24px（`size-6`）的 Avatar，计算得到的外盒尺寸为 `24 + 4 + 2 = 30px`。
+  2. 自身头像状态与未分配状态渲染为无任何 padding 和边框的 `<span>`，直接沿用 Avatar 的 `24px × 24px`。
+  两者在顶栏 `flex items-center gap-[6px]` 容器中存在 6px（30px vs 24px）的外盒宽度差，导致自身头像中心点相较于他人头像发生 3px 水平偏移与 3px 垂直微偏，并导致邻近按钮位置移动 6px。
+* **解决方案 (Solution)**：
+  对 `AssigneeOccupancyButton.tsx` 的所有状态统一外层容器基准类：
+  `baseSlotClasses = "relative size-[28px] inline-flex shrink-0 items-center justify-center rounded-full select-none"`
+  使四个状态（`unassigned`、`own-occupied`、`other-occupied`、`other-away`）均采用严格固定的 `28px × 28px` 圆形盒模型与 1px 边框占位，内部 24px Avatar 完美居中对齐，与顶栏同级 28px 图标按钮（如 Group Code、Download）形成像素级一致的视觉网格。
+* **经验教训 (Takeaways)**：
+  1. **同一插槽多状态尺寸强等价原则**：同一逻辑占位槽在不同业务状态间切换时（只读 vs 可交互、自身 vs 他人），最外层容器的 `width`、`height`、`padding`、`border` 盒模型必须完全等价，避免依赖内部子元素尺寸自适应导致布局跳动（Layout Shift）。
+  2. **工具栏图标按钮统一网格基准**：应用顶栏操作项应统一遵循 28px（或 32px）的固定几何基准，禁止出现 24px、30px 等杂乱尺寸混排。
