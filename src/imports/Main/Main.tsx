@@ -67,6 +67,7 @@ import fileIconUrl from "../../icons/file-icon.svg";
 import { EventThinkingBlock, type EventThinkingData } from "../../components/ui/EventThinkingBlock";
 import { EventStatusBadge } from "../../components/ui/EventStatusBadge";
 import CreateEventModal from "./components/CreateEventModal";
+import EventInformationModal, { type EventInputFiles } from "./components/EventInformationModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
 import EventTeamMemberModal from "./components/EventTeamMemberModal";
@@ -13429,6 +13430,7 @@ interface EventCardData {
   ta?: string;
   owner: string;
   teamMembers?: TeamMember[];
+  inputFiles?: EventInputFiles;
 }
 
 const homeEvents: EventCardData[] = [
@@ -14731,6 +14733,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [treeListOpen, setTreeListOpen] = useState(true);
   const [treeListWidth, setTreeListWidth] = useState(240);
   const [createEventModalOpen, setCreateEventModalOpen] = useState(false);
+  const [eventInformationModalOpen, setEventInformationModalOpen] = useState(false);
   const [eventCreationContext, setEventCreationContext] = useState<{
     projectId: string;
     studyId: string;
@@ -14873,6 +14876,34 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setEvents(prev => prev.map(e => e.id === id ? { ...e, status } : e));
   };
 
+  const handleUpdateInputs = (eventId: string, inputFiles: EventInputFiles) => {
+    setEvents((previous) => previous.map((event) =>
+      event.id === eventId
+        ? { ...event, inputFiles, status: 'ai-processing', errorMessage: undefined }
+        : event
+    ));
+
+    window.setTimeout(() => {
+      setEvents((previous) => previous.map((event) =>
+        event.id === eventId ? { ...event, status: 'in-progress' } : event
+      ));
+    }, 1600);
+
+    window.setTimeout(() => {
+      setEvents((previous) => previous.map((event) =>
+        event.id === eventId
+          ? {
+              ...event,
+              status: 'completed',
+              progress: event.progress
+                ? { ...event.progress, completed: event.progress.total }
+                : event.progress,
+            }
+          : event
+      ));
+    }, 4200);
+  };
+
   const handleChangeEventOwner = (eventId: string, newOwner: string) => {
     const updateOwner = (event: EventCardData): EventCardData => {
       if (event.id !== eventId || event.owner === newOwner) return event;
@@ -14964,7 +14995,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           }}
           onOpenEditEventModal={() => {
             setEventCreationContext(null);
-            setCreateEventModalOpen(true);
+            setEventInformationModalOpen(true);
           }}
           currentRole={currentRole}
           currentUserName={currentUserName}
@@ -14985,6 +15016,13 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         defaultProjectId={eventCreationContext?.projectId}
         defaultStudyId={eventCreationContext?.studyId}
         defaultTherapeuticArea={eventCreationContext?.therapeuticArea}
+      />
+      <EventInformationModal
+        isOpen={eventInformationModalOpen}
+        event={events.find((event) => event.id === selectedEventId) ?? null}
+        currentUserName={currentUserName}
+        onClose={() => setEventInformationModalOpen(false)}
+        onUpdateInputs={handleUpdateInputs}
       />
       <DownloadSasProgramsModal
         isOpen={downloadModalOpen}
