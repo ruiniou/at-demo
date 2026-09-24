@@ -13714,53 +13714,53 @@ interface EventCardData {
 const homeEvents: EventCardData[] = [
   {
     id: 'e1',
-    name: 'Safety Monitoring Report',
+    name: '[Review] Stop Event — Safety Monitoring Report',
     version: '2.2',
     project: 'PRO001',
     study: 'AZE2001-301',
-    creator: 'Tom',
-    owner: 'Tom Chen',
+    creator: 'Emily',
+    owner: 'Emily Liu',
     createdDate: '2025-11-11',
     status: 'ai-processing',
     ta: 'Oncology',
   },
   {
     id: 'e2',
-    name: 'CSR Interim Analysis',
+    name: '[Review] Delete Event — CSR Interim Analysis',
     version: '2.2',
     project: 'PRO001',
     study: 'AZE2001-301',
-    creator: 'Tom',
-    owner: 'Tom Chen',
+    creator: 'Emily',
+    owner: 'Emily Liu',
     createdDate: '2025-11-11',
-    status: 'in-progress',
-    progress: { completed: 14, total: 15 },
+    status: 'to-do',
+    progress: { completed: 0, total: 15 },
     ta: 'Oncology',
   },
   {
     id: 'e3',
-    name: 'DSMB Q1 Report',
+    name: '[Review] Update Inputs — DSMB Q1 Report',
     version: '2.2',
     project: 'PRO001',
     study: 'AZE2001-301',
-    creator: 'Tom',
-    owner: 'Tom Chen',
+    creator: 'Emily',
+    owner: 'Emily Liu',
     createdDate: '2025-11-11',
-    status: 'completed',
-    progress: { completed: 8, total: 8 },
+    status: 'error',
+    errorMessage: 'Input validation failed. Replace the source files to continue.',
     ta: 'Oncology',
   },
   {
     id: 'e4',
-    name: 'Final CSR',
+    name: '[Review] Restart Stopped Event — Final CSR',
     version: '2.2',
     project: 'PRO001',
     study: 'AZE2001-301',
     creator: 'Tom',
-    owner: 'James Park',
+    owner: 'Emily Liu',
     createdDate: '2025-11-11',
-    status: 'to-do',
-    progress: { completed: 0, total: 12 },
+    status: 'stopped',
+    progress: { completed: 4, total: 12 },
     ta: 'Oncology',
   },
   {
@@ -14865,6 +14865,7 @@ function HomePage({
                                           const isEventOwner = currentUserName === ev.owner;
                                           const isEventTeamMember = isEventOwner || Boolean(ev.teamMembers?.some((member) => member.name === currentUserName));
                                           const isStopped = ev.status === 'stopped';
+                                          const canReupload = isEventOwner && (isStopped || ev.status === 'error');
                                           const actionButtons = [
                                             { icon: barChartIconUrl, label: 'View Dashboard' },
                                             ...(isEventTeamMember
@@ -14910,7 +14911,7 @@ function HomePage({
                                               {/* Actions - Collapsed into Ellipsis (...) */}
                                               <td className="relative px-[16px] py-[10px] text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                                                 <div className="absolute right-[16px] top-1/2 inline-flex -translate-y-1/2 items-center justify-end">
-                                                  {isStopped && isEventOwner ? (
+                                                  {canReupload ? (
                                                     <Button
                                                       variant="secondary"
                                                       size="sm"
@@ -15014,9 +15015,9 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [selectedEventId, setSelectedEventId] = useState<string>('e1');
   const [events, setEvents] = useState<EventCardData[]>(homeEvents);
   const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
-  const [currentRole, setCurrentRole] = useState<UserRole>('admin');
-  const [activeNav, setActiveNav] = useState<'events' | 'management'>('management');
-  const [currentUserName, setCurrentUserName] = useState<string>('Administrator');
+  const [currentRole, setCurrentRole] = useState<UserRole>('event-owner');
+  const [activeNav, setActiveNav] = useState<'events' | 'management'>('events');
+  const [currentUserName, setCurrentUserName] = useState<string>('Emily Liu');
   const [recentEventIdsByUser, setRecentEventIdsByUser] = useState<Record<string, string[]>>({});
 
   const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
