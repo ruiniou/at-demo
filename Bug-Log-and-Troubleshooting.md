@@ -525,8 +525,8 @@
 * **现象 (Symptom)**：
   Tree List 展开时，其顶部区域比右侧工作区顶部栏高 4px，两个区域的下边缘无法对齐。
 * **根本原因 (Root Cause)**：
-  Tree List 顶部固定为 52px，而右侧 `ViewToggleBar` 及 Tree List 折叠态顶部栏均使用 48px。
+  Tree List 顶部固定为 52px，而右侧 `ViewToggleBar` 及 Tree List 折叠态顶部栏均使用 48px；右侧工作区容器还有额外的 4px 顶部 padding，顶部栏下方保留 4px 间距，导致工作区面板顶部也无法与 Search bar 对齐。Home 页 Tree List 顶部仍残留相同的 52px 高度。
 * **解决方案 (Solution)**：
-  将 Event 详情页 Tree List 展开态顶部高度统一为 48px，保持内部 28px 操作按钮及原有水平间距不变。
+  将 Event 详情页及 Home 页 Tree List 顶部高度统一为 48px；移除右侧工作区的 4px 顶部 padding，并将顶部栏与面板间距调整为 2px。最终顶部栏从页面顶端对齐，右侧面板与 Tree List Search bar 均从 50px 开始。
 * **经验教训 (Takeaways)**：
   同一视觉行的展开态、折叠态和相邻面板应共享同一个高度基准，避免独立硬编码产生边缘错位。

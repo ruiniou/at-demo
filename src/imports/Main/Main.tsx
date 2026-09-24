@@ -13290,9 +13290,9 @@ function WorkspaceContent({
         )}
 
         {/* Middle Column: (视图切换行 + Code&Shell卡 + Group Code浮层) */}
-        <div ref={contentAreaRef} className={`relative z-20 min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pt-[4px] pb-[8px] ${isEventStopped ? 'hidden' : 'flex'} ${aiLayoutVariant === 'drawer' && aiCopilotOpen ? 'pr-[4px]' : 'pr-[8px]'}`}>
+        <div ref={contentAreaRef} className={`relative z-20 min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pb-[8px] ${isEventStopped ? 'hidden' : 'flex'} ${aiLayoutVariant === 'drawer' && aiCopilotOpen ? 'pr-[4px]' : 'pr-[8px]'}`}>
           {/* 视图切换行 (Top bar) */}
-          <div className="shrink-0 w-full overflow-hidden mb-[4px] pointer-events-auto">
+          <div className="shrink-0 w-full overflow-hidden mb-[2px] pointer-events-auto">
             <ViewToggleBar
               treeListOpen={treeListOpen}
               onToggleTreeList={() => setTreeListOpen(true)}
@@ -14407,7 +14407,7 @@ function HomePage({
         >
           <div className="flex h-full w-full flex-col bg-bg-panel">
             {/* Sidebar header */}
-            <div className="flex h-[52px] shrink-0 items-center justify-between px-[10px]">
+            <div className="flex h-[48px] shrink-0 items-center justify-between px-[10px]">
               <img src={atlasLogoFullUrl} alt="Atlas" className="h-[24px] block shrink-0" />
               <TooltipText label="Collapse Tree List">
                 <button
