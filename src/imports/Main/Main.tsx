@@ -104,7 +104,6 @@ import ChatBox from "./components/ChatBox";
 import type { AttachmentItem, MentionOption } from "./components/ChatBox";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { Tag as DesignTag } from "../../components/ui/Tag";
-import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { OptionLabel } from "../../components/ui/OptionLabel";
 import { FormInputField as Input } from "../../components/ui/FormInputField";
 import { Input as BaseInput } from "../../components/ui/Input";
@@ -11812,7 +11811,7 @@ function WorkspaceContent({
   onLogout?: () => void;
 }) {
   const [stopModalOpen, setStopModalOpen] = useState(false);
-  const [aiLayoutVariant, setAiLayoutVariant] = useState<'drawer' | 'incard'>('incard');
+  const [aiLayoutVariant] = useState<'drawer' | 'incard'>('incard');
   const [metaDiffItems, setMetaDiffItems] = useState<MetaDiffItem[]>([]);
   const [metaUpdateActive, setMetaUpdateActive] = useState(false);
   const [metaUpdateProcessing, setMetaUpdateProcessing] = useState(false);
@@ -12376,7 +12375,7 @@ function WorkspaceContent({
     );
   };
 
-  const [filterStyleVariant, setFilterStyleVariant] = useState<'in-search' | 'split'>('in-search');
+  const [filterStyleVariant] = useState<'in-search' | 'split'>('in-search');
   const [treeSearchQuery, setTreeSearchQuery] = useState('');
   const [treeFilterOpen, setTreeFilterOpen] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set());
@@ -13256,36 +13255,8 @@ function WorkspaceContent({
               </div>
             </div>
 
-            {/* Tree List Bottom-Left Controls — always visible */}
+            {/* Tree List Bottom-Left Controls */}
             <div className="shrink-0 flex flex-col border-t border-graphite-10 bg-bg-panel">
-              {/* Filter UI Switcher */}
-              <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
-                <span className="text-[11px] text-text-secondary whitespace-nowrap">Filter UI</span>
-                <SegmentedControl
-                  size="sm"
-                  value={filterStyleVariant}
-                  onChange={(val) => setFilterStyleVariant(val as 'in-search' | 'split')}
-                  options={[
-                    { label: "In-Search", value: "in-search" },
-                    { label: "Split", value: "split" },
-                  ]}
-                />
-              </div>
-
-              {/* AI Layout Switcher */}
-              <div className="flex items-center justify-between px-[10px] py-[6px] border-b border-graphite-10/50 gap-[8px]">
-                <span className="text-[11px] text-text-secondary whitespace-nowrap">AI Layout</span>
-                <SegmentedControl
-                  size="sm"
-                  value={aiLayoutVariant}
-                  onChange={(val) => setAiLayoutVariant(val as 'drawer' | 'incard')}
-                  options={[
-                    { label: "Drawer", value: "drawer" },
-                    { label: "In-Card", value: "incard" },
-                  ]}
-                />
-              </div>
-
               <DemoIdentityControls currentRole={currentRole} currentUserName={currentUserName} onSwitchRole={onSwitchRole} onLogout={onLogout} />
             </div>
           </div>
