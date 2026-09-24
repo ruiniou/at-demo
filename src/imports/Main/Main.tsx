@@ -12174,10 +12174,9 @@ function WorkspaceContent({
   const selectedProgram = programs.find((program) => program.id === selectedId);
   const isSelectedProgramLocked = selectedProgram?.status === 'locked';
   const isParentProgramLocked = selectedTableProgram?.status === 'locked';
-  // ── Occupancy mock state & Current User ──────────────────────────────────
-  // In production this would come from a real-time backend (WebSocket / polling).
-  // For the prototype we model it as a per-TFL map of { occupant, isOccupied }.
-  const CURRENT_USER = "Sarah Chen";
+  // ── Occupancy state & Current User ──────────────────────────────────────
+  // The current active user is dynamically driven by currentUserName (synced with Role Switcher & AccountMenu)
+  const CURRENT_USER = currentUserName || "Sarah Chen";
 
   const isSelectedTflExecuting = executingTflIds.includes(selectedId ?? '');
   // P0 & PERM-13: If this TFL is not assigned to current user, it is strictly read-only

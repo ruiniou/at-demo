@@ -37,7 +37,7 @@ export function Avatar({ name, initials, color, level = "modal", disabled = fals
   const emptyAssigneeMask = `url("${emptyAssigneeUrl}") center / contain no-repeat`;
   return (
     <span role="img" aria-label={name || "No Assignee"} title={name || "No Assignee"}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full select-none font-medium leading-none text-white ${levelClasses[level]} ${stacked ? "ring-2 ring-white" : ""} ${disabled ? "opacity-50" : ""}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full select-none font-medium leading-none text-white ${levelClasses[level]} ${stacked ? "ring-2 ring-white" : ""} ${disabled ? "opacity-40" : ""}`}
       style={{ backgroundColor: name ? identity?.color ?? color ?? "var(--color-text-secondary)" : undefined }}>
       {name ? (
         <span className="flex items-center justify-center leading-none select-none tracking-normal">
