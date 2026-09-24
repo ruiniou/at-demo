@@ -4782,6 +4782,7 @@ function TreeItem({
   hasPendingCodeChanges?: boolean;
   /** Per-TFL occupancy: key = table id, value = { isOccupied, assignee } */
   occupancyMap?: Record<string, { isOccupied: boolean; assignee?: string }>;
+  currentUserName?: string;
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const isProgramHovered = hoveredId === program.id;
@@ -4831,9 +4832,11 @@ function TreeItem({
 
             const isQueued = table.docType === 'figure' && table.status === 'queued';
 
-            // Occupant avatar replaces status icon when the TFL has an active page lock
+            // Occupant avatar replaces status icon ONLY when occupied by ANOTHER user (collision prevention).
+            // Current user's own occupied items retain their standard status icon so the editor can see edit/lock state.
             const tflOccupancy = occupancyMap[table.id];
-            const occupant = tflOccupancy?.isOccupied ? table.assignee : undefined;
+            const isSelf = Boolean(currentUserName && table.assignee === currentUserName);
+            const occupant = tflOccupancy?.isOccupied && !isSelf ? table.assignee : undefined;
 
             return (
               <div
@@ -13105,6 +13108,7 @@ function WorkspaceContent({
                       onToggleExpand={handleToggleExpand}
                       hasPendingCodeChanges={hasPendingCodeChanges}
                       occupancyMap={occupancyMap}
+                      currentUserName={CURRENT_USER}
                     />
                   ))
                 ) : (

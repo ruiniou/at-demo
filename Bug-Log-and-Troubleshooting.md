@@ -396,3 +396,22 @@
 * **经验教训 (Takeaways)**：
   1. 单色功能图标统一使用 mask 渲染，不要混用普通 `<img>`，以便稳定继承设计 Token 颜色。
   2. 从外部设计工具导出的 SVG 应在入库前清理非标准或兼容性有限的颜色声明。
+
+---
+
+### [2026-09-24] Tree List 未排除当前用户自身导致 Take over 接管后错误显示本人头像
+
+* **现象 (Symptom)**：
+  用户在工作区顶栏对离线用户的交付物执行 Take over（接管为自己编辑）后，左侧 Tree List 中该交付物条目右侧错误展示了当前用户本人的头像，遮挡了原本的交付物状态图标（如 Modified / Locked）。
+* **根本原因 (Root Cause)**：
+  1. `WorkspaceContent` 在遍历渲染 `filteredPrograms` 调用 `<TreeItem ... />` 时，漏传了 `currentUserName={CURRENT_USER}` prop。
+  2. `TreeItem` 内部对 `occupant` 的推导逻辑原本为 `const occupant = tflOccupancy?.isOccupied ? table.assignee : undefined;`，未对占用者是否为当前登录用户（`table.assignee === currentUserName`）进行排除。因此只要当前用户自身占用了页面锁，组件就将当前用户识别为协同冲突占用者并渲染头像。
+* **解决方案 (Solution)**：
+  1. 在 `TreeItem` 的 Props 声明中补充 `currentUserName?: string`，并在 `WorkspaceContent` 调用 `<TreeItem ... />` 处传入 `currentUserName={CURRENT_USER}`。
+  2. 在 `TreeItem` 内部计算 `occupant` 时引入自身排除判断：
+     `const isSelf = Boolean(currentUserName && table.assignee === currentUserName);`
+     `const occupant = tflOccupancy?.isOccupied && !isSelf ? table.assignee : undefined;`
+     确保仅在「其他用户处于占用编辑中」时才展示头像，当前用户自己编辑时保留其原本的状态图标。
+* **经验教训 (Takeaways)**：
+  1. **协同冲突防范中的视角区分（Self vs. Others）**：列表级协同头像的目的是「提示其他协作者正在编辑以防止碰撞冲突」，因此自己的头像在当前工作区列表中属于冗余信息，且会覆盖对编辑者至关重要的状态图标（Status Icon）。
+  2. **多层组件参数透传严防断漏**：当为子组件增加了过滤依赖（如 `currentUserName`）时，必须同步核对其在父级 JSX 实例化位置的传参，避免空值兜底掩盖逻辑失效。
