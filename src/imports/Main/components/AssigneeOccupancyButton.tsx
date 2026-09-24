@@ -170,12 +170,16 @@ export function AssigneeOccupancyButton({
     setPopoverOpen(false);
   }, [assigneeName, occupancyState]);
 
+  // Fixed slot geometry: 28px × 28px circle identical to toolbar icon buttons (Group Code, Download, etc.)
+  const baseSlotClasses =
+    "relative size-[28px] inline-flex shrink-0 items-center justify-center rounded-full select-none";
+
   // Case 1: Unassigned (Read-only, no hover, no cursor pointer)
   if (occupancyState === "unassigned") {
     return (
       <span
         aria-label="No Assignee"
-        className="inline-flex shrink-0 items-center justify-center cursor-default select-none"
+        className={`${baseSlotClasses} border border-transparent cursor-default`}
       >
         <Avatar level="page" />
       </span>
@@ -187,7 +191,7 @@ export function AssigneeOccupancyButton({
     return (
       <span
         aria-label={`${assigneeName} (you are editing)`}
-        className="inline-flex shrink-0 items-center justify-center cursor-default select-none"
+        className={`${baseSlotClasses} border border-transparent cursor-default`}
       >
         <Avatar name={assigneeName} level="page" />
       </span>
@@ -267,7 +271,7 @@ export function AssigneeOccupancyButton({
             : `${assigneeName} is editing`
         }
         aria-expanded={popoverOpen}
-        className={`relative inline-flex shrink-0 items-center justify-center rounded-full p-[2px] transition-[border-color,box-shadow,opacity] cursor-pointer select-none focus-visible:outline-none ${
+        className={`${baseSlotClasses} transition-[border-color,box-shadow,opacity] cursor-pointer focus-visible:outline-none ${
           isAway
             ? popoverOpen
               ? "border border-brand-1 shadow-[0px_0px_0px_3px_var(--color-az-secondary)] opacity-100"
