@@ -570,3 +570,17 @@
   在 Avatar 和 AvatarGroup 的 `+N` 项中显式使用 `var(--font-body)`；缩写使用铺满头像的 flex 容器居中，并向下进行 0.5px 光学校正。尺寸、字号、Medium 字重和身份色保持原规范。
 * **经验教训 (Takeaways)**：
   小尺寸文字组件必须显式绑定字体 Token；几何居中后仍需按实际字形做亚像素级光学校正。
+
+---
+
+### [2026-09-24] Avatar 光学校正导致小尺寸文字下沉
+
+* **现象 (Symptom)**：
+  所有 Avatar 的缩写文字看起来偏下，并且在 20px 的 Modal、Menu Avatar 中比 24px Avatar 更明显。
+* **根本原因 (Root Cause)**：
+  共享 `Avatar` 和 `AvatarGroup` 的 initials 节点在 Flexbox 几何居中之外又设置了 `translate-y-[0.5px]`。固定的半像素位移占小尺寸头像的比例更高，使文字整体向下偏移。
+* **解决方案 (Solution)**：
+  移除普通 Avatar 与 `+N` Avatar 的垂直位移，统一依靠铺满容器的 Flexbox、`items-center`、`justify-center` 和 `leading-none` 居中。
+* **经验教训 (Takeaways)**：
+  1. 光学校正必须同时检查组件的全部尺寸，不能只按单一尺寸判断。
+  2. 共享组件已能几何居中时，不应添加对所有字号通用的固定像素偏移。

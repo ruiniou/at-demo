@@ -43,7 +43,7 @@ export function Avatar({ name, initials, color, level = "modal", disabled = fals
         fontFamily: "var(--font-body)",
       }}>
       {name ? (
-        <span className="flex size-full translate-y-[0.5px] items-center justify-center text-center leading-none select-none tracking-normal">
+        <span className="flex size-full items-center justify-center text-center leading-none select-none tracking-normal">
           {letters}
         </span>
       ) : (
@@ -73,7 +73,7 @@ export function AvatarGroup({ members, max = 5, level = "modal" }: {
       ))}
       {remaining > 0 && <span title={`${remaining} more members`} aria-label={`${remaining} more members`}
         className={`-ml-1.5 inline-flex shrink-0 items-center justify-center rounded-full bg-bg-panel text-center text-text-secondary font-medium leading-none ring-2 ring-white ${levelClasses[level]}`}
-        style={{ fontFamily: "var(--font-body)" }}><span className="translate-y-[0.5px]">+{remaining}</span></span>}
+        style={{ fontFamily: "var(--font-body)" }}><span>+{remaining}</span></span>}
     </span>
   );
 }
