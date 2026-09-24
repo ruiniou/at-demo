@@ -38,7 +38,7 @@ function AvailabilitySwitch({ checked, disabled = false, label, onChange }: { ch
   );
 }
 
-export function OwnerPicker({ value, onSelect, disabled = false, disabledAppearance = false, ariaLabel = 'Select Owner' }: { value: string; onSelect: (owner: string) => void; disabled?: boolean; disabledAppearance?: boolean; ariaLabel?: string }) {
+export function OwnerPicker({ value, onSelect, compact = false, disabled = false, disabledAppearance = false, ariaLabel = 'Select Owner' }: { value: string; onSelect: (owner: string) => void; compact?: boolean; disabled?: boolean; disabledAppearance?: boolean; ariaLabel?: string }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
@@ -86,7 +86,7 @@ export function OwnerPicker({ value, onSelect, disabled = false, disabledAppeara
 
   return (
     <div className="relative min-w-0">
-      <button ref={buttonRef} type="button" disabled={disabled} onClick={() => setOpen((current) => !current)} aria-haspopup="dialog" aria-expanded={open} className="flex min-h-[40px] w-full min-w-0 items-center gap-[6px] rounded-[4px] px-[6px] text-left hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-1/20 disabled:cursor-not-allowed disabled:hover:bg-transparent">
+      <button ref={buttonRef} type="button" disabled={disabled} onClick={() => setOpen((current) => !current)} aria-haspopup="dialog" aria-expanded={open} className={`flex w-full min-w-0 items-center gap-[6px] rounded-[4px] px-[6px] text-left hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-1/20 disabled:cursor-not-allowed disabled:border disabled:border-form-border disabled:bg-bg-panel disabled:hover:bg-bg-panel ${compact ? "h-[32px]" : "min-h-[40px]"}`}>
         <Avatar name={value || undefined} initials={currentUser?.initials} color={currentUser?.color} level="modal" disabled={disabled || disabledAppearance} />
         <span className={`truncate text-[12px] ${disabled || disabledAppearance ? 'text-graphite-40' : value ? 'text-text-primary' : 'text-text-secondary'}`} title={value || 'No Assignee'}>{value || 'No Assignee'}</span>
       </button>

@@ -484,7 +484,7 @@ export default function CreateEventModal({
                 />
                 <Input label="Event Name" required placeholder="Required" value={eventName} onChange={(e) => setEventName(e.target.value)} />
                 <FormItem label="Event Owner" labelClassName="t-small-medium" required>
-                  <OwnerPicker value={eventOwner || ""} onSelect={setEventOwner} ariaLabel="Select Event Owner" />
+                  <OwnerPicker value={eventOwner || ""} onSelect={setEventOwner} compact ariaLabel="Select Event Owner" />
                 </FormItem>
                 <Dropdown label="O_GEM Version" required placeholder="Required" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
                 <OptionalSection />
