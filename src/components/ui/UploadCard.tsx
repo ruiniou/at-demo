@@ -409,7 +409,7 @@ export function UploadCard({
           <SegmentedControl
             size="sm"
             options={[
-              { label: "Upload", value: "0", disabled },
+              { label: "Upload", value: "0", disabled: disabled },
               { 
                 label: "Use Existing", 
                 value: "1",

@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/Button";
 import { UploadCard, UploadStatus } from "../../../components/ui/UploadCard";
+import { FormInputField as Input } from "../../../components/ui/FormInputField";
+import { Dropdown, DropdownOption } from "../../../components/ui/Dropdown";
 import closeIconUrl from "../../../icons/close-line.svg";
 import informationIconUrl from "../../../icons/information-line.svg";
 
@@ -176,6 +178,8 @@ export default function EventInformationModal({
         ? "Only the Event Owner can change input files."
         : null;
 
+  const readOnlyOptions = (value: string): DropdownOption[] => [{ label: value, value }];
+
   return createPortal(
     <>
       <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -189,48 +193,37 @@ export default function EventInformationModal({
           </div>
 
           <div className="flex min-h-0 flex-1 border-t border-graphite-10">
-            <div className="w-[320px] shrink-0 overflow-y-auto border-r border-graphite-10 p-[20px]">
-              <dl className="flex flex-col gap-[18px]">
-                {[
-                  ["Therapeutic Area", event.ta || "—"],
-                  ["Project Code", event.project],
-                  ["Study Code", event.study],
-                  ["Event Name", event.name],
-                  ["Event Owner", event.owner],
-                  ["O_GEM Version", event.version],
-                ].map(([label, value]) => (
-                  <div key={label} className="flex flex-col gap-[4px]">
-                    <dt className="t-small-medium text-text-secondary">{label}</dt>
-                    <dd className="t-body-secondary text-text-primary">{value}</dd>
-                  </div>
-                ))}
-              </dl>
+            <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto border-r border-graphite-10 p-[20px]">
+              <Dropdown label="Therapeutic Area" required options={readOnlyOptions(event.ta || "—")} value={event.ta || "—"} disabled />
+              <Dropdown label="Project Code" required options={readOnlyOptions(event.project)} value={event.project} disabled />
+              <Dropdown label="Study Code" required options={readOnlyOptions(event.study)} value={event.study} disabled />
+              <Input label="Event Name" required value={event.name} onChange={() => undefined} disabled />
+              <Dropdown label="Event Owner" required options={readOnlyOptions(event.owner)} value={event.owner} disabled />
+              <Dropdown label="O_GEM Version" required options={readOnlyOptions(event.version)} value={event.version} disabled />
             </div>
 
-            <div className="min-w-0 flex-1 overflow-y-auto p-[20px]">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto p-[18px_20px_20px_20px]">
               {bannerCopy && (
-                <div className="mb-[16px] flex items-center gap-[8px] rounded-[4px] bg-bg-panel px-[12px] py-[9px] text-text-secondary">
+                <div className="flex items-center gap-[8px] rounded-[4px] bg-bg-panel px-[12px] py-[9px] text-text-secondary">
                   <img src={informationIconUrl} alt="" className="size-[16px] shrink-0 opacity-70" />
                   <p className="t-small">{bannerCopy}</p>
                 </div>
               )}
-              <div className="flex flex-col gap-[16px]">
-                {FIELD_CONFIG.map((field) => (
-                  <UploadCard
-                    key={`${event.id}-${field.key}`}
-                    label={field.label}
-                    required={field.required}
-                    requirementText={field.requirementText}
-                    showSegmentedControl={field.canUseExisting}
-                    disabled={inputsDisabled}
-                    status={statuses[field.key]}
-                    fileName={files[field.key] || ""}
-                    existingEvents={field.canUseExisting ? existingOptions : []}
-                    onStatusChange={(nextStatus) => setStatuses((previous) => ({ ...previous, [field.key]: nextStatus }))}
-                    onFileSelect={(fileName) => setFiles((previous) => ({ ...previous, [field.key]: fileName || undefined }))}
-                  />
-                ))}
-              </div>
+              {FIELD_CONFIG.map((field) => (
+                <UploadCard
+                  key={`${event.id}-${field.key}`}
+                  label={field.label}
+                  required={field.required}
+                  requirementText={field.requirementText}
+                  showSegmentedControl={field.canUseExisting}
+                  disabled={inputsDisabled}
+                  status={statuses[field.key]}
+                  fileName={files[field.key] || ""}
+                  existingEvents={field.canUseExisting ? existingOptions : []}
+                  onStatusChange={(nextStatus) => setStatuses((previous) => ({ ...previous, [field.key]: nextStatus }))}
+                  onFileSelect={(fileName) => setFiles((previous) => ({ ...previous, [field.key]: fileName || undefined }))}
+                />
+              ))}
             </div>
           </div>
 
