@@ -3924,7 +3924,7 @@ type TableItem = {
 type ProgramItem = {
   id: string;
   name: string;
-  status: 'completed' | 'locked';
+  status: 'pending' | 'completed' | 'locked' | 'analyzing';
   isExpanded: boolean;
   tables: TableItem[];
 };
@@ -11687,6 +11687,7 @@ function WorkspaceContent({
   onOpenDownloadModal,
   onOpenTeamModal,
   onOpenEditEventModal,
+  eventStatus,
   currentRole,
   currentUserName,
   onSwitchRole,
@@ -11700,6 +11701,7 @@ function WorkspaceContent({
   onOpenDownloadModal?: () => void;
   onOpenTeamModal?: () => void;
   onOpenEditEventModal?: () => void;
+  eventStatus?: EventStatus;
   currentRole: UserRole;
   currentUserName: string;
   onSwitchRole: (role: UserRole) => void;
@@ -11768,6 +11770,17 @@ function WorkspaceContent({
       ],
     },
   ]);
+
+  useEffect(() => {
+    if (eventStatus !== 'ai-processing' && eventStatus !== 'to-do') return;
+
+    const nextStatus = eventStatus === 'ai-processing' ? 'analyzing' : 'pending';
+    setPrograms((previous) => previous.map((program) => ({
+      ...program,
+      status: nextStatus,
+      tables: program.tables.map((table) => ({ ...table, status: nextStatus })),
+    })));
+  }, [eventStatus]);
   const [selectedId, setSelectedId] = useState<string | null>('t4');
   const [currentEvent] = useState('CSR Interim Analysis');
   const [panelView, setPanelView] = useState<PanelView>('both');
@@ -14886,18 +14899,12 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
 
     window.setTimeout(() => {
       setEvents((previous) => previous.map((event) =>
-        event.id === eventId ? { ...event, status: 'in-progress' } : event
-      ));
-    }, 1600);
-
-    window.setTimeout(() => {
-      setEvents((previous) => previous.map((event) =>
         event.id === eventId
           ? {
               ...event,
-              status: 'completed',
+              status: 'to-do',
               progress: event.progress
-                ? { ...event.progress, completed: event.progress.total }
+                ? { ...event.progress, completed: 0 }
                 : event.progress,
             }
           : event
@@ -14998,6 +15005,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
             setEventCreationContext(null);
             setEventInformationModalOpen(true);
           }}
+          eventStatus={events.find((event) => event.id === selectedEventId)?.status}
           currentRole={currentRole}
           currentUserName={currentUserName}
           onSwitchRole={handleSwitchRole}

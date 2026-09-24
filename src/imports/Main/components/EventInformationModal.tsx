@@ -94,13 +94,7 @@ function ConfirmModal({
         </div>
         <div className="flex justify-end gap-[8px] border-t border-graphite-10 px-[20px] py-[14px]">
           <Button variant="secondary" onClick={onSecondary}>{secondaryLabel}</Button>
-          <button
-            type="button"
-            onClick={onPrimary}
-            className={`h-[32px] rounded-[4px] px-[12px] t-small-medium text-white active:scale-[0.96] ${danger ? "bg-status-error hover:opacity-90" : "bg-brand-1 hover:opacity-90"}`}
-          >
-            {primaryLabel}
-          </button>
+          <Button variant={danger ? "danger" : "primary"} onClick={onPrimary}>{primaryLabel}</Button>
         </div>
       </div>
     </div>,
@@ -152,7 +146,6 @@ export default function EventInformationModal({
   const isOwner = Boolean(event && event.owner === currentUserName);
   const inputsDisabled = isProcessing || isCompleted || !isOwner;
   const requiredReady = Boolean(files.adam && files.sdtm && files.sap && files.shell);
-  const changedCount = FIELD_CONFIG.filter(({ key }) => files[key] !== initialFiles[key]).length;
 
   const requestClose = () => {
     if (hasChanges) setDiscardOpen(true);
@@ -253,7 +246,7 @@ export default function EventInformationModal({
       <ConfirmModal
         open={updateOpen}
         title="Update Input Files?"
-        description={`This will replace ${changedCount} input ${changedCount === 1 ? "file" : "files"}. Atlas will check the ${changedCount === 1 ? "change" : "changes"} and update any affected TFLs.`}
+        description="This will replace the original files."
         primaryLabel="Update Inputs"
         secondaryLabel="Cancel"
         onSecondary={() => setUpdateOpen(false)}
