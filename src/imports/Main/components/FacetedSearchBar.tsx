@@ -289,7 +289,7 @@ export function FacetedSearchBar({
                       : "bg-graphite-10 hover:bg-graphite-20 text-text-primary"
                   }`}
                 >
-                  Assigned to me ({currentUserName.split(" ")[0]})
+                  Assigned to me
                 </button>
                 <button
                   type="button"

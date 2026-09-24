@@ -224,7 +224,6 @@ export function TreeFilterPopover({
         >
           <Avatar name={currentUserName} level="menu" />
           <span className="text-[11px] flex-1">Assigned to me</span>
-          <span className="text-[10px] text-text-secondary">({currentUserName.split(" ")[0]})</span>
           {selectedAssignees.has(currentUserName) && (
             <img
               src={checkIconUrl}

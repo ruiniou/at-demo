@@ -7,15 +7,17 @@
  *
  * Requirements:
  *   1. Read-only avatars (own-occupied, unassigned) have NO hover effect, no cursor pointer.
- *   2. Online user (other-occupied): Click to view read-only Popover (Avatar + name + relative time, NO danger button).
+ *   2. Online user (other-occupied):
+ *      - Hover opens read-only Popover (Avatar + name + relative time, NO danger button).
+ *      - NOT triggered by click.
  *   3. Offline/Away user (other-away):
- *      - Default: 40% opacity.
- *      - Hover: increases opacity to 80% with smooth transition, and shows input-like border (border-graphite-30).
+ *      - Click opens Take over Popover.
+ *      - Hover changes opacity from 40% to 80% with input-like border (border-graphite-30), but does NOT open Popover.
  *      - Selected (Popover open): input-like focus ring (border border-brand-1 shadow-[0px_0px_0px_3px_var(--color-az-secondary)]).
  *      - Popover displays user info + danger Take over button.
  */
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Popover } from "../../../components/ui/Popover";
 import { MenuItem } from "../../../components/ui/MenuItem";
@@ -24,8 +26,8 @@ import { MenuItem } from "../../../components/ui/MenuItem";
 
 export type OccupancyState =
   | "own-occupied"   // Current user is the Assignee and holds the lock (read-only, no hover)
-  | "other-occupied" // Someone else holds the page lock (popover with info only, no take-over)
-  | "other-away"     // Assignee exists but is offline/away (popover with info + take over)
+  | "other-occupied" // Someone else holds the page lock (hover opens popover with info only)
+  | "other-away"     // Assignee exists but is offline/away (click opens popover with info + take over)
   | "unassigned";    // No Assignee on this TFL (read-only, no hover)
 
 export interface AssigneeOccupancyProps {
@@ -83,12 +85,16 @@ function AssigneePopoverContent({
   showTakeOver = false,
   onTakeOver,
   onClose,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   assigneeName: string;
   lastEditedAt?: Date;
   showTakeOver?: boolean;
   onTakeOver?: () => void;
   onClose: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }) {
   const handleTakeOver = () => {
     onTakeOver?.();
@@ -96,7 +102,11 @@ function AssigneePopoverContent({
   };
 
   return (
-    <div className="flex flex-col min-w-[180px] max-w-[240px]">
+    <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className="flex flex-col min-w-[180px] max-w-[240px]"
+    >
       {/* Info row */}
       <div className="flex items-center gap-[8px] px-[8px] pt-[8px] pb-[6px]">
         <Avatar name={assigneeName} level="menu" />
@@ -142,6 +152,7 @@ export function AssigneeOccupancyButton({
 }: AssigneeOccupancyProps) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Derive the occupancy state
   const occupancyState: OccupancyState = !assigneeName
@@ -151,6 +162,18 @@ export function AssigneeOccupancyButton({
     : isOccupied
     ? "other-occupied"
     : "other-away";
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
+
+  // When assigneeName or occupancyState changes, close popover
+  useEffect(() => {
+    setPopoverOpen(false);
+  }, [assigneeName, occupancyState]);
 
   // Case 1: Unassigned (Read-only, no hover, no cursor pointer)
   if (occupancyState === "unassigned") {
@@ -176,26 +199,53 @@ export function AssigneeOccupancyButton({
     );
   }
 
-  // Case 3 & 4: Other user (either online/occupied or offline/away)
   const isAway = occupancyState === "other-away";
+  const isOnlineOther = occupancyState === "other-occupied";
+
+  // Mouse handlers for Online user (Hover to show Popover)
+  const handleMouseEnter = () => {
+    if (isOnlineOther) {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+      setPopoverOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (isOnlineOther) {
+      hoverTimerRef.current = setTimeout(() => {
+        setPopoverOpen(false);
+      }, 150);
+    }
+  };
+
+  // Click handler: ONLY for Offline/Away user
+  const handleClick = () => {
+    if (isAway) {
+      setPopoverOpen((prev) => !prev);
+    }
+  };
 
   return (
     <>
       <button
         ref={anchorRef}
         type="button"
-        onClick={() => setPopoverOpen((prev) => !prev)}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         aria-label={
           isAway
             ? `${assigneeName} (away) — click to take over`
-            : `${assigneeName} is editing — click to view`
+            : `${assigneeName} is editing`
         }
         aria-expanded={popoverOpen}
         className={`relative inline-flex shrink-0 items-center justify-center rounded-full p-[2px] transition-[border-color,box-shadow,opacity] cursor-pointer select-none focus-visible:outline-none ${
-          popoverOpen
-            ? "border border-brand-1 shadow-[0px_0px_0px_3px_var(--color-az-secondary)]"
-            : isAway
-            ? "border border-transparent hover:border-graphite-30 opacity-40 hover:opacity-80"
+          isAway
+            ? popoverOpen
+              ? "border border-brand-1 shadow-[0px_0px_0px_3px_var(--color-az-secondary)] opacity-100"
+              : "border border-transparent hover:border-graphite-30 opacity-40 hover:opacity-80"
+            : popoverOpen
+            ? "border border-graphite-30"
             : "border border-transparent hover:border-graphite-30"
         }`}
       >
@@ -218,6 +268,10 @@ export function AssigneeOccupancyButton({
           showTakeOver={isAway}
           onTakeOver={onTakeOver}
           onClose={() => setPopoverOpen(false)}
+          onMouseEnter={isOnlineOther ? () => {
+            if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+          } : undefined}
+          onMouseLeave={isOnlineOther ? handleMouseLeave : undefined}
         />
       </Popover>
     </>

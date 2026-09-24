@@ -11801,11 +11801,11 @@ function WorkspaceContent({
       tables: [
         { id: 't1', name: '14.1.1 Disposition', status: 'completed', assignee: 'Sarah Chen' },
         { id: 't2', name: '14.1.2 Important Protocol Deviations', status: 'analyzing', assignee: 'Sarah Chen' },
-        { id: 't3', name: '14.1.3 Analysis Sets', status: 'pending', assignee: 'Sarah Chen' },
+        { id: 't3', name: '14.1.3 Analysis Sets', status: 'pending', assignee: 'Alex Kim' },
         { id: 't4', name: '14.1.4 Demographics (Full Analysis Set)', status: 'pending', assignee: 'James Park' },
         { id: 't5', name: '14.1.5 Baseline Characteristics', status: 'completed', assignee: 'James Park' },
         { id: 't6', name: '14.1.6 Prior Anti-cancer Therapy', status: 'pending', assignee: 'Priya Sharma' },
-        { id: 't8', name: '14.1.8 Medical History by SOC', status: 'locked', assignee: 'Tom' },
+        { id: 't8', name: '14.1.8 Medical History by SOC', status: 'locked', assignee: 'Alex Kim' },
       ],
     },
     {
@@ -11826,7 +11826,7 @@ function WorkspaceContent({
       isExpanded: true,
       tables: [
         { id: 'l1', name: '16.2.1 Subject Enrolment Listing', status: 'completed', docType: 'listing', assignee: 'Sarah Chen' },
-        { id: 'l2', name: '16.2.4 Discontinuation Listing', status: 'error', errorMessage: 'SAS macro execution failed: syntax error', docType: 'listing', assignee: 'Tom' },
+        { id: 'l2', name: '16.2.4 Discontinuation Listing', status: 'error', errorMessage: 'SAS macro execution failed: syntax error', docType: 'listing', assignee: 'Alex Kim' },
         { id: 'l3', name: '16.2.7 Adverse Events Listing', status: 'locked', docType: 'listing', assignee: 'Sarah Chen' },
       ],
     },
@@ -12312,6 +12312,11 @@ function WorkspaceContent({
   const [treeFilterOpen, setTreeFilterOpen] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set());
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
+
+  // Reset selectedAssignees on role switch so filter cleanly targets the active account
+  useEffect(() => {
+    setSelectedAssignees(new Set());
+  }, [CURRENT_USER]);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   // Event settings dropdown state
@@ -12421,7 +12426,7 @@ function WorkspaceContent({
         if (t.assignee) set.add(t.assignee);
       });
     });
-    ["Sarah Chen", "James Park", "Priya Sharma", "Tom"].forEach((name) => set.add(name));
+    ["Sarah Chen", "James Park", "Priya Sharma", "Alex Kim", "Tom"].forEach((name) => set.add(name));
     return Array.from(set);
   }, [programs]);
 
