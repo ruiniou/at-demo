@@ -260,7 +260,7 @@ export function AssigneeOccupancyButton({
         placement="bottom"
         align="start"
         width={220}
-        offset={6}
+        offset={2}
       >
         <AssigneePopoverContent
           assigneeName={assigneeName!}
