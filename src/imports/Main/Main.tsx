@@ -3907,7 +3907,7 @@ function AICopilotPanel({
 
 // ==================== Workspace Shell: Top Nav & Tree List ====================
 
-type ItemStatus = 'pending' | 'locked' | 'analyzing' | 'error' | 'modified' | 'completed';
+type ItemStatus = 'idle' | 'pending' | 'locked' | 'analyzing' | 'error' | 'modified' | 'completed';
 type DocumentType = 'table' | 'listing' | 'figure';
 
 
@@ -3924,7 +3924,7 @@ type TableItem = {
 type ProgramItem = {
   id: string;
   name: string;
-  status: 'pending' | 'completed' | 'locked' | 'analyzing';
+  status: 'idle' | 'pending' | 'completed' | 'locked' | 'analyzing';
   isExpanded: boolean;
   tables: TableItem[];
 };
@@ -11774,7 +11774,7 @@ function WorkspaceContent({
   useEffect(() => {
     if (eventStatus !== 'ai-processing' && eventStatus !== 'to-do') return;
 
-    const nextStatus = eventStatus === 'ai-processing' ? 'analyzing' : 'pending';
+    const nextStatus = eventStatus === 'ai-processing' ? 'analyzing' : 'idle';
     setPrograms((previous) => previous.map((program) => ({
       ...program,
       status: nextStatus,
