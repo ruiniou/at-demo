@@ -107,6 +107,7 @@ import { FormItem } from "../../components/ui/FormItem";
 import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 import groupIconUrl from "../../icons/group.svg";
 import { GroupCodePanel, type GroupCodeItem } from "../../components/ui/GroupCodePanel";
+import { AssigneeOccupancyButton } from "./components/AssigneeOccupancyButton";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -4662,11 +4663,27 @@ function TreeStatusIcon({
   item,
   lockedBy,
   isFigureQueued,
+  occupant,
 }: {
   item: TableItem | ProgramItem;
   lockedBy?: string;
   isFigureQueued?: boolean;
+  /** Name of the user currently occupying (editing) this TFL. If set, avatar replaces Status Icon. */
+  occupant?: string;
 }) {
+  // Occupant avatar takes full precedence over all status icons (Option B: mutual exclusion)
+  if (occupant) {
+    return (
+      <TooltipText label={`${occupant} is editing`}>
+        <span className="cursor-default">
+          <CodeStatusSlot>
+            <Avatar name={occupant} level="menu" />
+          </CodeStatusSlot>
+        </span>
+      </TooltipText>
+    );
+  }
+
   if (item.docType === 'figure' && isFigureQueued) {
     return (
       <TooltipText label="Queued — Waiting for Table 14.1.6.1 to complete">
@@ -4736,12 +4753,15 @@ function TreeItem({
   onSelect,
   onToggleExpand,
   hasPendingCodeChanges,
+  occupancyMap = {},
 }: {
   program: ProgramItem;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onToggleExpand: (programId: string) => void;
   hasPendingCodeChanges?: boolean;
+  /** Per-TFL occupancy: key = table id, value = { isOccupied, assignee } */
+  occupancyMap?: Record<string, { isOccupied: boolean; assignee?: string }>;
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const isProgramHovered = hoveredId === program.id;
@@ -4791,6 +4811,10 @@ function TreeItem({
 
             const isQueued = table.docType === 'figure' && table.status === 'queued';
 
+            // Occupant avatar replaces status icon when the TFL has an active page lock
+            const tflOccupancy = occupancyMap[table.id];
+            const occupant = tflOccupancy?.isOccupied ? table.assignee : undefined;
+
             return (
               <div
                 key={table.id}
@@ -4824,6 +4848,7 @@ function TreeItem({
                     item={effectiveItem}
                     lockedBy={isProgramLocked ? program.name : undefined}
                     isFigureQueued={isQueued}
+                    occupant={occupant}
                   />
                 </div>
               </div>
@@ -11167,6 +11192,12 @@ function CodePanel({
   showRiskTable = true,
   groupViewOpen = false,
   onToggleGroupView,
+  // Occupancy props
+  assigneeName,
+  currentUser = "Sarah Chen",
+  isOccupied = false,
+  lastEditedAt,
+  onTakeOver,
 }: {
   selectedItem: string;
   docType?: DocumentType;
@@ -11181,6 +11212,16 @@ function CodePanel({
   showRiskTable?: boolean;
   groupViewOpen?: boolean;
   onToggleGroupView?: () => void;
+  /** Name of the currently assigned programmer for this TFL. Undefined = unassigned. */
+  assigneeName?: string;
+  /** The currently logged-in user's display name. */
+  currentUser?: string;
+  /** Whether the Assignee currently holds an active page lock. */
+  isOccupied?: boolean;
+  /** Timestamp of the Assignee's last edit, for the popover relative time display. */
+  lastEditedAt?: Date;
+  /** Called when the current user clicks "Take over" and confirms. */
+  onTakeOver?: () => void;
 }) {
   const [isLockedLocal, setIsLockedLocal] = useState(Boolean(isLockedProp));
 
@@ -11442,11 +11483,25 @@ ods graphics off;`;
   };
 
   const toolbarButtons = (
-    <div className="flex items-center gap-[6px]">
+    <div className="flex items-center gap-[8px]">
+      {/* Leftmost: Assignee occupancy avatar */}
+      <AssigneeOccupancyButton
+        assigneeName={assigneeName}
+        currentUserName={currentUser}
+        isOccupied={isOccupied}
+        lastEditedAt={lastEditedAt}
+        onTakeOver={onTakeOver}
+      />
+
+      {/* Thin vertical separator between occupancy area and action buttons */}
+      {assigneeName && (
+        <span className="inline-block w-[1px] h-[16px] bg-graphite-10 shrink-0" aria-hidden="true" />
+      )}
+
       {/* 1. Save (Secondary style, h-26px) */}
-      <Button 
-        variant="secondary" 
-        disabled={effectiveIsLocked || !isCodeUnsaved || isSaving} 
+      <Button
+        variant="secondary"
+        disabled={effectiveIsLocked || !isCodeUnsaved || isSaving}
         onClick={handleSave}
         className="h-[26px] px-[8px] py-0 gap-[4px] rounded-[4px]"
       >
@@ -11498,6 +11553,7 @@ ods graphics off;`;
 
 
 
+
   return (
     <div className="flex h-full min-w-0 flex-col overflow-hidden bg-white code-panel-container">
       <style dangerouslySetInnerHTML={{ __html: `
@@ -11525,6 +11581,10 @@ ods graphics off;`;
             <strong className="font-semibold text-text-primary">Read-only:</strong>{" "}
             {isExecutingInEventCopilot
               ? "This deliverable is currently being updated by Event Copilot. Code editing is locked."
+              : !assigneeName
+              ? "This deliverable has no assignee and is in read-only mode."
+              : assigneeName !== currentUser
+              ? `${assigneeName} is currently assigned. You can take over editing when they are away.`
               : "The code is locked and cannot be edited."}
           </p>
         </div>
@@ -12109,9 +12169,17 @@ function WorkspaceContent({
   const selectedProgram = programs.find((program) => program.id === selectedId);
   const isSelectedProgramLocked = selectedProgram?.status === 'locked';
   const isParentProgramLocked = selectedTableProgram?.status === 'locked';
+  // ── Occupancy mock state & Current User ──────────────────────────────────
+  // In production this would come from a real-time backend (WebSocket / polling).
+  // For the prototype we model it as a per-TFL map of { occupant, isOccupied }.
+  const CURRENT_USER = "Sarah Chen";
+
   const isSelectedTflExecuting = executingTflIds.includes(selectedId ?? '');
-  const selectedTableLocked = isSelectedProgramLocked || isParentProgramLocked || selectedTable?.status === 'locked' || isSelectedTflExecuting;
+  // P0 & PERM-13: If this TFL is not assigned to current user, it is strictly read-only
+  const isNotAssignee = Boolean(selectedTable && selectedTable.assignee !== CURRENT_USER);
+  const selectedTableLocked = isSelectedProgramLocked || isParentProgramLocked || selectedTable?.status === 'locked' || isSelectedTflExecuting || isNotAssignee;
   const handleCodePanelToggleLock = () => {
+    if (isNotAssignee) return; // Cannot toggle lock if not assignee
     const prog = selectedTableProgram || programs[0];
     const table = selectedTable || prog?.tables[0];
     if (prog && isParentProgramLocked) {
@@ -12122,6 +12190,37 @@ function WorkspaceContent({
       handleToggleLock(selectedProgram.id);
     }
   };
+
+  // Initial occupancy: James Park is actively editing t4, Priya Sharma is away on t9
+  const [occupancyMap, setOccupancyMap] = useState<
+    Record<string, { isOccupied: boolean; lastEditedAt: Date }>
+  >({
+    t4: { isOccupied: true,  lastEditedAt: new Date(Date.now() - 60 * 1000) },  // James Park actively editing
+    t9: { isOccupied: false, lastEditedAt: new Date(Date.now() - 3 * 60 * 1000) }, // Priya Sharma away
+  });
+
+  const selectedTflOccupancy = selectedId ? occupancyMap[selectedId] : undefined;
+  const selectedTflAssignee = selectedTable?.assignee;
+
+  const handleTakeOver = () => {
+    if (!selectedId || !selectedTflAssignee) return;
+    // Update Assignee in programs tree
+    setPrograms((prev) =>
+      prev.map((prog) => ({
+        ...prog,
+        tables: prog.tables.map((tbl) =>
+          tbl.id === selectedId ? { ...tbl, assignee: CURRENT_USER } : tbl
+        ),
+      }))
+    );
+    // Establish page occupancy for the current user on this TFL
+    setOccupancyMap((prev) => ({
+      ...prev,
+      [selectedId]: { isOccupied: true, lastEditedAt: new Date() },
+    }));
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
 
   const [isLayoutUserOverridden, setIsLayoutUserOverridden] = useState(false);
 
@@ -12981,6 +13080,7 @@ function WorkspaceContent({
                       onSelect={handleSelect}
                       onToggleExpand={handleToggleExpand}
                       hasPendingCodeChanges={hasPendingCodeChanges}
+                      occupancyMap={occupancyMap}
                     />
                   ))
                 ) : (
@@ -13173,6 +13273,11 @@ function WorkspaceContent({
                         isLocked={selectedTableLocked}
                         isExecutingInEventCopilot={isSelectedTflExecuting}
                         onToggleLock={handleCodePanelToggleLock}
+                        assigneeName={selectedTflAssignee}
+                        currentUser={CURRENT_USER}
+                        isOccupied={selectedTflOccupancy?.isOccupied ?? false}
+                        lastEditedAt={selectedTflOccupancy?.lastEditedAt}
+                        onTakeOver={handleTakeOver}
                       />
                     </div>
                   )}
@@ -13311,6 +13416,11 @@ function WorkspaceContent({
                         showCensorMarks={showCensorMarks}
                         showMedianLines={showMedianLines}
                         showRiskTable={showRiskTable}
+                        assigneeName={selectedTflAssignee}
+                        currentUser={CURRENT_USER}
+                        isOccupied={selectedTflOccupancy?.isOccupied ?? false}
+                        lastEditedAt={selectedTflOccupancy?.lastEditedAt}
+                        onTakeOver={handleTakeOver}
                       />
                     </div>
                   )}
