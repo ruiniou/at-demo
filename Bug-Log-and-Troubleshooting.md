@@ -544,3 +544,16 @@
 * **经验教训 (Takeaways)**：
   1. 状态空页面不应替换承载全局导航与布局恢复能力的 Toolbar。
   2. 无法确认停止原因时，文案只陈述已知状态，通过独立操作按钮表达可选的下一步。
+
+---
+
+### [2026-09-24] Role Switcher 顶部出现多余分隔线
+
+* **现象 (Symptom)**：
+  Tree List 底部的 Role Switcher 上方显示一条不需要的 Divider。
+* **根本原因 (Root Cause)**：
+  Role Switcher 组件自身和 Event 详情页外层容器都设置了顶部边框。
+* **解决方案 (Solution)**：
+  移除 Role Switcher 组件及详情页外层容器的 `border-t`，保留原有 8px 顶部间距。
+* **经验教训 (Takeaways)**：
+  可复用底部区块的分隔关系应由单一层级控制，避免组件与容器重复声明边框。

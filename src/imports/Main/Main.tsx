@@ -11764,7 +11764,7 @@ function DemoIdentityControls({
   ];
 
   return (
-    <div className="px-[8px] pb-[8px] shrink-0 border-t border-border-default/80 pt-[8px] flex flex-col gap-[6px]">
+    <div className="px-[8px] pb-[8px] shrink-0 pt-[8px] flex flex-col gap-[6px]">
       <div className="rounded-[6px] bg-bg-app border border-border-default/60 p-[6px] flex flex-col gap-[4px]">
         <div className="flex items-center justify-between px-[2px]">
           <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">Role Switcher</span>
@@ -13275,7 +13275,7 @@ function WorkspaceContent({
             </div>
 
             {/* Tree List Bottom-Left Controls */}
-            <div className="shrink-0 flex flex-col border-t border-graphite-10 bg-bg-panel">
+            <div className="shrink-0 flex flex-col bg-bg-panel">
               <DemoIdentityControls currentRole={currentRole} currentUserName={currentUserName} onSwitchRole={onSwitchRole} onLogout={onLogout} />
             </div>
           </div>
