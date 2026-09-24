@@ -38,6 +38,7 @@ import wipStatusIconUrl from "../../icons/Status label/Status=WIP.svg";
 import completedStatusIconUrl from "../../icons/Status label/Status=Completed.svg";
 import untouchedStatusIconUrl from "../../icons/Status label/Status=Untouched.svg";
 import errorStatusIconUrl from "../../icons/Status label/Status=Error.svg";
+import stoppedStatusIconUrl from "../../icons/Status label/Status=Stopped.svg";
 import addMetadiffIconUrl from "../../icons/Add metadiff.svg";
 import dashboardIconUrl from "../../icons/dashboard-3-line.svg";
 import taskIconUrl from "../../icons/task-line.svg";
@@ -52,6 +53,7 @@ import filterIconUrl from "../../icons/filter-line.svg";
 import addLineIconUrl from "../../icons/add-line.svg";
 import barChartIconUrl from "../../icons/bar-chart-2-line.svg";
 import downloadIconUrl from "../../icons/download-2-line.svg";
+import uploadIconUrl from "../../icons/upload-2-line.svg";
 import shiningFillIconUrl from "../../icons/shining-fill.svg";
 import snowflakeIconUrl from "../../icons/snowflake-line.svg";
 import deleteBinIconUrl from "../../icons/delete-bin-line.svg";
@@ -69,6 +71,8 @@ import { EventStatusBadge } from "../../components/ui/EventStatusBadge";
 import CreateEventModal from "./components/CreateEventModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
+import StopEventModal from "./components/StopEventModal";
+import StoppedEventCard from "./components/StoppedEventCard";
 import EventTeamMemberModal from "./components/EventTeamMemberModal";
 import type { TeamMember } from "./components/EventTeamMemberModal";
 import AccountMenu from "../../components/auth/AccountMenu";
@@ -104,6 +108,7 @@ import { OptionLabel } from "../../components/ui/OptionLabel";
 import { FormInputField as Input } from "../../components/ui/FormInputField";
 import { Input as BaseInput } from "../../components/ui/Input";
 import { FormItem } from "../../components/ui/FormItem";
+import { DropdownSeparator } from "../../components/ui/DropdownParts";
 import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 import groupIconUrl from "../../icons/group.svg";
 import { GroupCodePanel, type GroupCodeItem } from "../../components/ui/GroupCodePanel";
@@ -1726,7 +1731,7 @@ function EventSummaryCard({
                     <LocalIcon
                       src={resetRightIconUrl}
                       className={`w-[12px] h-[12px] ${item.isRetrying ? "animate-spin" : ""}`}
-                      color="#3F4444"
+                      color="currentColor"
                     />
                     <span>{item.isRetrying ? "Retrying…" : "Retry"}</span>
                   </Button>
@@ -3906,7 +3911,7 @@ function AICopilotPanel({
 
 // ==================== Workspace Shell: Top Nav & Tree List ====================
 
-type ItemStatus = 'pending' | 'locked' | 'analyzing' | 'error' | 'modified' | 'completed';
+type ItemStatus = 'pending' | 'locked' | 'analyzing' | 'error' | 'modified' | 'completed' | 'stopped';
 type DocumentType = 'table' | 'listing' | 'figure';
 
 
@@ -4436,6 +4441,7 @@ function ViewToggleBar({
   onToggleTreeList,
   onNavigateHome,
   currentEvent,
+  currentEventStatus,
   eventMenuOpen,
   onToggleEventMenu,
   eventMenuButtonRef,
@@ -4466,6 +4472,7 @@ function ViewToggleBar({
   onToggleTreeList: () => void;
   onNavigateHome: () => void;
   currentEvent: string;
+  currentEventStatus: EventStatus;
   eventMenuOpen?: boolean;
   onToggleEventMenu?: () => void;
   eventMenuButtonRef?: React.RefObject<HTMLButtonElement | null>;
@@ -4632,7 +4639,10 @@ function ViewToggleBar({
         <div className="h-[48px] w-full flex items-center px-[12px] justify-between">
           <div className="flex items-center gap-[8px]">
             <div className="min-w-0">
-              <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
+              <div className="flex min-w-0 items-center gap-[4px]">
+                <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
+                <img src={statusConfig[currentEventStatus].icon} alt={statusConfig[currentEventStatus].label} className="size-[14px] shrink-0" />
+              </div>
               <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
             </div>
             {onToggleEventMenu && (
@@ -4683,14 +4693,25 @@ function TreeStatusIcon({
   lockedBy,
   isFigureQueued,
   occupant,
+  forceAiProcessing = false,
 }: {
   item: TableItem | ProgramItem;
   lockedBy?: string;
   isFigureQueued?: boolean;
   /** Name of the user currently occupying (editing) this TFL. If set, avatar replaces Status Icon. */
   occupant?: string;
+  forceAiProcessing?: boolean;
 }) {
-  // Occupant avatar takes full precedence over all status icons (Option B: mutual exclusion)
+  if (forceAiProcessing) {
+    return (
+      <span role="img" aria-label="AI Processing">
+        <CodeStatusSlot>
+          <img src={aiProcessingIconUrl} alt="" aria-hidden="true" className="h-[16px] w-[16px] block shrink-0" />
+        </CodeStatusSlot>
+      </span>
+    );
+  }
+
   if (occupant) {
     return (
       <TooltipText label={`${occupant} is editing`}>
@@ -4724,6 +4745,18 @@ function TreeStatusIcon({
       <CodeStatusSlot>
         <img src={aiProcessingIconUrl} alt="" aria-hidden="true" className="h-[16px] w-[16px] block shrink-0" />
       </CodeStatusSlot>
+    );
+  }
+
+  if (item.status === 'stopped') {
+    return (
+      <TooltipText label="Generation Stopped">
+        <span className="cursor-help" role="img" aria-label="Stopped">
+          <CodeStatusSlot>
+            <img src={stoppedStatusIconUrl} alt="" aria-hidden="true" className="h-[16px] w-[16px] block shrink-0" />
+          </CodeStatusSlot>
+        </span>
+      </TooltipText>
     );
   }
 
@@ -4774,6 +4807,7 @@ function TreeItem({
   hasPendingCodeChanges,
   occupancyMap = {},
   currentUserName,
+  forceAiProcessing = false,
 }: {
   program: ProgramItem;
   selectedId: string | null;
@@ -4783,6 +4817,7 @@ function TreeItem({
   /** Per-TFL occupancy: key = table id, value = { isOccupied, assignee } */
   occupancyMap?: Record<string, { isOccupied: boolean; assignee?: string }>;
   currentUserName?: string;
+  forceAiProcessing?: boolean;
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const isProgramHovered = hoveredId === program.id;
@@ -4814,7 +4849,7 @@ function TreeItem({
               {program.name}
             </p>
           </div>
-          <TreeStatusIcon item={program} />
+          <TreeStatusIcon item={program} forceAiProcessing={forceAiProcessing} />
         </div>
       </div>
 
@@ -4824,7 +4859,9 @@ function TreeItem({
             const isTableHovered = hoveredId === table.id;
             const isTableSelected = selectedId === table.id;
             const isCurrentTablePending = table.id === selectedId && hasPendingCodeChanges;
-            const effectiveItem: TableItem = isProgramLocked || table.status === 'locked'
+            const effectiveItem: TableItem = table.status === 'stopped'
+              ? table
+              : isProgramLocked || table.status === 'locked'
               ? { ...table, status: 'locked' }
               : isCurrentTablePending
                 ? { ...table, status: 'modified' }
@@ -4872,6 +4909,7 @@ function TreeItem({
                     lockedBy={isProgramLocked ? program.name : undefined}
                     isFigureQueued={isQueued}
                     occupant={occupant}
+                    forceAiProcessing={forceAiProcessing}
                   />
                 </div>
               </div>
@@ -11518,7 +11556,7 @@ ods graphics off;`;
           {isSaving ? (
             <div className="w-[12px] h-[12px] rounded-full border-[2px] border-transparent border-t-[#B2B4B4] border-l-[#B2B4B4] animate-spin" />
           ) : (
-            <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color={effectiveIsLocked || !isCodeUnsaved ? "#B2B4B4" : "var(--color-text-primary)"} />
+            <LocalIcon src={saveIconUrl} className="w-[14px] h-[14px]" color="currentColor" />
           )}
           <span className="text-[12px] leading-[18px] font-normal">{isSaving ? "Saving" : isCodeUnsaved ? "Save" : "Saved"}</span>
         </div>
@@ -11754,6 +11792,10 @@ function WorkspaceContent({
   onOpenDownloadModal,
   onOpenTeamModal,
   onOpenEditEventModal,
+  currentEventData,
+  onStopEvent,
+  onDeleteEvent,
+  onOpenEventInformation,
   currentRole,
   currentUserName,
   onSwitchRole,
@@ -11767,11 +11809,16 @@ function WorkspaceContent({
   onOpenDownloadModal?: () => void;
   onOpenTeamModal?: () => void;
   onOpenEditEventModal?: () => void;
+  currentEventData: EventCardData;
+  onStopEvent: (eventId: string, reason: string) => void;
+  onDeleteEvent: (event: EventCardData) => void;
+  onOpenEventInformation: () => void;
   currentRole: UserRole;
   currentUserName: string;
   onSwitchRole: (role: UserRole) => void;
   onLogout?: () => void;
 }) {
+  const [stopModalOpen, setStopModalOpen] = useState(false);
   const [aiLayoutVariant, setAiLayoutVariant] = useState<'drawer' | 'incard'>('incard');
   const [metaDiffItems, setMetaDiffItems] = useState<MetaDiffItem[]>([]);
   const [metaUpdateActive, setMetaUpdateActive] = useState(false);
@@ -11836,7 +11883,43 @@ function WorkspaceContent({
     },
   ]);
   const [selectedId, setSelectedId] = useState<string | null>('t4');
-  const [currentEvent] = useState('CSR Interim Analysis');
+  const currentEvent = currentEventData.name;
+  const isEventOwner = currentEventData.owner === currentUserName;
+  const canStopEvent = isEventOwner && (currentEventData.status === 'ai-processing' || currentEventData.status === 'to-do');
+  const isEventStopped = currentEventData.status === 'stopped';
+  useEffect(() => {
+    if (isEventStopped) {
+      setPrograms((previousPrograms) => previousPrograms.map((program) => ({
+        ...program,
+        status: program.status === 'locked' ? 'completed' : program.status,
+        tables: program.tables.map((table) => {
+          if (table.status === 'analyzing' || table.status === 'pending') {
+            return { ...table, status: 'stopped' };
+          }
+          if (table.status === 'locked') {
+            return { ...table, status: 'completed' };
+          }
+          return table;
+        }),
+      })));
+      return;
+    }
+
+    if (currentEventData.status === 'ai-processing') {
+      let assignedActiveTask = false;
+      setPrograms((previousPrograms) => previousPrograms.map((program) => ({
+        ...program,
+        tables: program.tables.map((table) => {
+          if (table.status !== 'stopped') return table;
+          if (!assignedActiveTask) {
+            assignedActiveTask = true;
+            return { ...table, status: 'analyzing' };
+          }
+          return { ...table, status: 'pending' };
+        }),
+      })));
+    }
+  }, [currentEventData.status, isEventStopped]);
   const [panelView, setPanelView] = useState<PanelView>('both');
   const shellPreviewOpen = panelView !== 'code';
   const codeOpen = panelView !== 'shell';
@@ -12326,13 +12409,17 @@ function WorkspaceContent({
   // Event settings dropdown state
   const [eventMenuOpen, setEventMenuOpen] = useState(false);
   const eventMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const treeEventMenuButtonRef = useRef<HTMLButtonElement>(null);
   const eventMenuRef = useRef<HTMLDivElement>(null);
   const [eventMenuPos, setEventMenuPos] = useState<{ top: number; left: number } | null>(null);
 
   const updateEventMenuPosition = useCallback(() => {
-    if (!eventMenuButtonRef.current) return;
-    const rect = eventMenuButtonRef.current.getBoundingClientRect();
-    const menuWidth = 240;
+    const activeButton = treeListOpen
+      ? treeEventMenuButtonRef.current
+      : eventMenuButtonRef.current;
+    if (!activeButton) return;
+    const rect = activeButton.getBoundingClientRect();
+    const menuWidth = 180;
     let left = rect.left;
     if (left + menuWidth > window.innerWidth - 8) {
       left = Math.max(8, window.innerWidth - menuWidth - 8);
@@ -12347,9 +12434,11 @@ function WorkspaceContent({
 
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
+      const clickedEventButton = eventMenuButtonRef.current?.contains(target);
+      const clickedTreeEventButton = treeEventMenuButtonRef.current?.contains(target);
       if (
-        eventMenuButtonRef.current &&
-        !eventMenuButtonRef.current.contains(target) &&
+        !clickedEventButton &&
+        !clickedTreeEventButton &&
         eventMenuRef.current &&
         !eventMenuRef.current.contains(target)
       ) {
@@ -12949,12 +13038,15 @@ function WorkspaceContent({
               </TooltipText>
               <div className="flex min-w-0 flex-1 items-center gap-[2px]">
                 <div className="min-w-0 flex-1">
-                  <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
+                  <div className="flex min-w-0 items-center gap-[4px]">
+                    <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>
+                    <img src={statusConfig[currentEventData.status].icon} alt={statusConfig[currentEventData.status].label} className="size-[14px] shrink-0" />
+                  </div>
                   <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
                 </div>
-                {treeListOpen && <TooltipText label="Event Settings">
+                <TooltipText label="Event Settings">
                   <button
-                    ref={eventMenuButtonRef}
+                    ref={treeEventMenuButtonRef}
                     onClick={() => setEventMenuOpen((prev) => !prev)}
                     className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors"
                     aria-label="Event settings"
@@ -12963,7 +13055,7 @@ function WorkspaceContent({
                   >
                     <LocalIcon src={arrowDownIconUrl} className="h-[14px] w-[14px]" color="var(--color-text-secondary)" />
                   </button>
-                </TooltipText>}
+                </TooltipText>
               </div>
               <TooltipText label="Collapse Tree List">
                 <button
@@ -13064,6 +13156,7 @@ function WorkspaceContent({
                   width: 180,
                   zIndex: 10050,
                 }}
+                role="menu"
                 className="rounded-[8px] border border-border-default bg-white p-[4px] shadow-elevation-overlay flex flex-col gap-[2px] animate-fade-in select-none"
               >
                 {onOpenEditEventModal && (
@@ -13092,6 +13185,35 @@ function WorkspaceContent({
                     <span className="flex-1 truncate">Event Team</span>
                   </button>
                 )}
+                {isEventOwner && <DropdownSeparator />}
+                {canStopEvent && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setEventMenuOpen(false);
+                      setStopModalOpen(true);
+                    }}
+                    className="flex w-full items-center gap-[8px] rounded-[4px] px-[8px] py-[7px] text-left text-[13px] font-normal text-text-primary transition-colors hover:bg-black/5 active:bg-black/10"
+                  >
+                    <img src={stoppedStatusIconUrl} alt="" aria-hidden="true" className="size-[15px] shrink-0" />
+                    <span className="flex-1 truncate">Stop Generation</span>
+                  </button>
+                )}
+                {isEventOwner && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setEventMenuOpen(false);
+                      onDeleteEvent(currentEventData);
+                    }}
+                    className="flex w-full items-center gap-[8px] rounded-[4px] px-[8px] py-[7px] text-left text-[13px] font-normal text-status-error transition-colors hover:bg-status-error-bg/30 active:bg-status-error-bg/50"
+                  >
+                    <LocalIcon src={deleteBinIconUrl} className="size-[15px]" color="var(--color-status-error)" />
+                    <span className="flex-1 truncate">Delete Event</span>
+                  </button>
+                )}
               </div>,
               document.body
             )}
@@ -13109,6 +13231,7 @@ function WorkspaceContent({
                       hasPendingCodeChanges={hasPendingCodeChanges}
                       occupancyMap={occupancyMap}
                       currentUserName={CURRENT_USER}
+                      forceAiProcessing={currentEventData.status === 'ai-processing'}
                     />
                   ))
                 ) : (
@@ -13180,8 +13303,15 @@ function WorkspaceContent({
           />
         )}
 
+        {isEventStopped && (
+          <StoppedEventCard
+            eventName={currentEventData.name}
+            onReupload={onOpenEventInformation}
+          />
+        )}
+
         {/* Middle Column: (视图切换行 + Code&Shell卡 + Group Code浮层) */}
-        <div ref={contentAreaRef} className={`relative z-20 flex min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pt-[4px] pb-[8px] ${aiLayoutVariant === 'drawer' && aiCopilotOpen ? 'pr-[4px]' : 'pr-[8px]'}`}>
+        <div ref={contentAreaRef} className={`relative z-20 min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pt-[4px] pb-[8px] ${isEventStopped ? 'hidden' : 'flex'} ${aiLayoutVariant === 'drawer' && aiCopilotOpen ? 'pr-[4px]' : 'pr-[8px]'}`}>
           {/* 视图切换行 (Top bar) */}
           <div className="shrink-0 w-full overflow-hidden mb-[4px] pointer-events-auto">
             <ViewToggleBar
@@ -13189,9 +13319,10 @@ function WorkspaceContent({
               onToggleTreeList={() => setTreeListOpen(true)}
               onNavigateHome={onNavigateHome}
               currentEvent={currentEvent}
+              currentEventStatus={currentEventData.status}
               eventMenuOpen={eventMenuOpen}
-              onToggleEventMenu={() => setEventMenuOpen((prev) => !prev)}
-              eventMenuButtonRef={eventMenuButtonRef}
+              onToggleEventMenu={isEventStopped ? undefined : () => setEventMenuOpen((prev) => !prev)}
+              eventMenuButtonRef={isEventStopped ? undefined : eventMenuButtonRef}
               panelView={panelView}
               onPanelViewChange={handlePanelViewChange}
               panelLayout={panelLayout}
@@ -13497,7 +13628,7 @@ function WorkspaceContent({
         </div>
 
         {/* Right Column: AI Copilot Panel (Variant 1: Outside Drawer) */}
-        {aiLayoutVariant === 'drawer' && (
+        {!isEventStopped && aiLayoutVariant === 'drawer' && (
           <>
             {aiCopilotOpen && (
               <WorkspaceDivider
@@ -13523,6 +13654,13 @@ function WorkspaceContent({
           </>
         )}
       </div>
+
+      <StopEventModal
+        isOpen={stopModalOpen}
+        event={currentEventData}
+        onClose={() => setStopModalOpen(false)}
+        onConfirmStop={onStopEvent}
+      />
 
       <WorkspaceModal
         isOpen={pendingDraftExit !== null}
@@ -13555,7 +13693,7 @@ function WorkspaceContent({
 
 // ===================== HomePage =====================
 
-type EventStatus = 'ai-processing' | 'in-progress' | 'completed' | 'to-do' | 'error';
+type EventStatus = 'ai-processing' | 'in-progress' | 'completed' | 'to-do' | 'error' | 'stopped';
 
 interface EventCardData {
   id: string;
@@ -13698,7 +13836,7 @@ const homeEvents: EventCardData[] = [
     creator: 'Tom',
     owner: 'Emily Liu',
     createdDate: '2025-11-03',
-    status: 'in-progress',
+    status: 'ai-processing',
     progress: { completed: 3, total: 10 },
     ta: 'Oncology',
     teamMembers: [
@@ -13787,6 +13925,7 @@ const statusConfig: Record<EventStatus | 'uploading', { icon: string; label: str
   'completed': { icon: completedStatusIconUrl, label: 'Completed', color: "var(--color-text-primary)" },
   'to-do': { icon: untouchedStatusIconUrl, label: 'To do', color: "var(--color-text-primary)" },
   'error': { icon: errorStatusIconUrl, label: 'Parse Failed', color: '#CC2C3C' },
+  'stopped': { icon: stoppedStatusIconUrl, label: 'Stopped', color: "var(--color-text-secondary)" },
   'uploading': { icon: aiProcessingIconUrl, label: 'Uploading...', color: "var(--color-text-secondary)" },
 };
 
@@ -13999,6 +14138,7 @@ function HomePage({
   onOpenDownloadModal,
   onOpenDeleteModal,
   onOpenTeamModal,
+  onReuploadEvent,
   onLogout,
   projects,
   currentRole,
@@ -14025,6 +14165,7 @@ function HomePage({
   onOpenDownloadModal?: (event: EventCardData) => void;
   onOpenDeleteModal?: (event: EventCardData) => void;
   onOpenTeamModal?: (event: EventCardData) => void;
+  onReuploadEvent: (event: EventCardData) => void;
   onLogout?: () => void;
   projects: ProjectItem[];
   currentRole: UserRole;
@@ -14723,6 +14864,7 @@ function HomePage({
                                           const isMenuOpen = openActionMenuId === `table-${ev.id}`;
                                           const isEventOwner = currentUserName === ev.owner;
                                           const isEventTeamMember = isEventOwner || Boolean(ev.teamMembers?.some((member) => member.name === currentUserName));
+                                          const isStopped = ev.status === 'stopped';
                                           const actionButtons = [
                                             { icon: barChartIconUrl, label: 'View Dashboard' },
                                             ...(isEventTeamMember
@@ -14766,25 +14908,42 @@ function HomePage({
                                               </td>
 
                                               {/* Actions - Collapsed into Ellipsis (...) */}
-                                              <td className="px-[16px] py-[10px] text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                                                <div className="relative inline-flex items-center justify-end">
-                                                  <TooltipText label="More actions">
+                                              <td className="relative px-[16px] py-[10px] text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                                                <div className="absolute right-[16px] top-1/2 inline-flex -translate-y-1/2 items-center justify-end">
+                                                  {isStopped && isEventOwner ? (
+                                                    <Button
+                                                      variant="secondary"
+                                                      size="sm"
+                                                      type="button"
+                                                      onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        onReuploadEvent(ev);
+                                                      }}
+                                                      aria-label={`Re-upload files for ${ev.name}`}
+                                                    >
+                                                      <LocalIcon src={uploadIconUrl} className="h-[14px] w-[14px]" color="currentColor" />
+                                                      Re-upload
+                                                    </Button>
+                                                  ) : (
+                                                  <TooltipText label={isStopped ? "No actions available" : "More actions"}>
                                                     <button
                                                       type="button"
+                                                      disabled={isStopped}
                                                       onClick={(e) => {
                                                         e.stopPropagation();
                                                         setOpenActionMenuId((prev) => (prev === `table-${ev.id}` ? null : `table-${ev.id}`));
                                                       }}
-                                                      className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors ${
+                                                      className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${
                                                         isMenuOpen ? 'bg-black/5' : ''
                                                       }`}
-                                                      aria-label="More actions"
+                                                      aria-label={isStopped ? "More actions unavailable" : "More actions"}
                                                     >
                                                       <MoreIcon color="var(--color-text-secondary)" />
                                                     </button>
                                                   </TooltipText>
+                                                  )}
 
-                                                  {isMenuOpen && (
+                                                  {!isStopped && isMenuOpen && (
                                                     <div
                                                       onClick={(e) => e.stopPropagation()}
                                                       className="absolute right-0 top-[28px] bg-white border border-graphite-10 rounded-md shadow-elevation-overlay p-1 w-[140px] z-50 animate-fade-in"
@@ -14843,6 +15002,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     studyId: string;
     therapeuticArea: string;
   } | null>(null);
+  const [eventInformationEvent, setEventInformationEvent] = useState<EventCardData | null>(null);
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [selectedDownloadEvent, setSelectedDownloadEvent] = useState<string | undefined>(undefined);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -14957,8 +15117,25 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setPage('event');
   };
 
-  const handleConfirmDelete = (eventId: string) => {
+  const handleConfirmDelete = (eventId: string, _reason: string) => {
     setEvents(prev => prev.filter(e => e.id !== eventId));
+    if (selectedEventId === eventId) setPage('home');
+    setSelectedDeleteEvent(null);
+  };
+
+  const handleStopEvent = (eventId: string, _reason: string) => {
+    setEvents((previous) => previous.map((event) => (
+      event.id === eventId ? { ...event, status: 'stopped' } : event
+    )));
+  };
+
+  const handleSaveEventInformation = (eventId: string, eventData: { name: string; project: string; study: string; owner: string }) => {
+    setEvents((previous) => previous.map((event) => (
+      event.id === eventId
+        ? { ...event, ...eventData, status: event.status === 'stopped' ? 'ai-processing' : event.status }
+        : event
+    )));
+    setEventInformationEvent(null);
   };
 
   const handleCreateEvent = (eventData: { name: string; project: string; study: string; owner: string }) => {
@@ -15018,6 +15195,8 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setSelectedTeamEvent((previous) => previous?.id === eventId ? { ...previous, teamMembers } : previous);
   };
 
+  const currentEventData = events.find((event) => event.id === selectedEventId) ?? events[0];
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {page === 'home' ? (
@@ -15025,10 +15204,12 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           onEventClick={handleOpenEvent}
           onCreateEvent={() => {
             setEventCreationContext(null);
+            setEventInformationEvent(null);
             setCreateEventModalOpen(true);
           }}
           onCreateEventForStudy={(projectId, studyId, therapeuticArea) => {
             setEventCreationContext({ projectId, studyId, therapeuticArea });
+            setEventInformationEvent(null);
             setCreateEventModalOpen(true);
           }}
           events={events}
@@ -15040,6 +15221,11 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           onOpenDownloadModal={handleOpenDownload}
           onOpenDeleteModal={handleOpenDelete}
           onOpenTeamModal={handleOpenTeam}
+          onReuploadEvent={(event) => {
+            setEventCreationContext(null);
+            setEventInformationEvent(event);
+            setCreateEventModalOpen(true);
+          }}
           onLogout={onLogout}
           projects={projects}
           currentRole={currentRole}
@@ -15057,7 +15243,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           onToggleStudyStatus={handleToggleStudyStatus}
           recentEventIds={recentEventIdsByUser[currentUserName] ?? []}
         />
-      ) : (
+      ) : currentEventData ? (
         <WorkspaceContent
           onNavigateHome={() => setPage('home')}
           treeListOpen={treeListOpen}
@@ -15071,6 +15257,15 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           }}
           onOpenEditEventModal={() => {
             setEventCreationContext(null);
+            setEventInformationEvent(currentEventData);
+            setCreateEventModalOpen(true);
+          }}
+          currentEventData={currentEventData}
+          onStopEvent={handleStopEvent}
+          onDeleteEvent={handleOpenDelete}
+          onOpenEventInformation={() => {
+            setEventCreationContext(null);
+            setEventInformationEvent(currentEventData);
             setCreateEventModalOpen(true);
           }}
           currentRole={currentRole}
@@ -15078,14 +15273,22 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           onSwitchRole={handleSwitchRole}
           onLogout={onLogout}
         />
+      ) : (
+        <div className="flex h-full flex-1 items-center justify-center bg-bg-panel text-text-secondary">
+          No Event selected
+        </div>
       )}
       <CreateEventModal
         isOpen={createEventModalOpen}
         onClose={() => {
           setCreateEventModalOpen(false);
           setEventCreationContext(null);
+          setEventInformationEvent(null);
         }}
         onCreateEvent={handleCreateEvent}
+        mode={eventInformationEvent ? "information" : "create"}
+        event={eventInformationEvent}
+        onSaveEvent={handleSaveEventInformation}
         projectsList={projects}
         currentRole={currentRole}
         currentUserName={currentUserName}

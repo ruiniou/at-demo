@@ -82,8 +82,8 @@ export function PrimaryButton({
 
 // ==================== Secondary Button ====================
 // Figma: 221-554, Button/Secondary
-// Default bg: #D9DADA (graphite-20), text & icon: #3F4444 (text-primary)
-// Hovered bg: #B2B4B4 (graphite-40), text & icon: #3F4444 (text-primary)
+// Default bg: #F4E8EE (AZ secondary), text & icon: #830051 (brand-1)
+// Hovered bg: #E6CCDC (mulberry-20 / AZ secondary hover), text & icon: #830051 (brand-1)
 // Disabled bg: #FFFFFF, text & icon: #B2B4B4 (graphite-40)
 
 export function SecondaryButton({
@@ -99,9 +99,9 @@ export function SecondaryButton({
   const fontSize = size === "sm" ? 12 : 14;
   const iconSize = 16;
   const bgClass = disabled
-    ? "bg-white"
-    : "bg-graphite-20 hover:bg-graphite-40";
-  const textColor = disabled ? "#B2B4B4" : "#3F4444";
+    ? "bg-white border border-graphite-20"
+    : "bg-az-secondary hover:bg-az-secondary-hover";
+  const textColor = disabled ? "var(--color-graphite-40)" : "var(--color-brand-1)";
   const hitAreaClass = size === "sm"
     ? "relative after:content-[''] after:absolute after:-inset-y-[6px] after:inset-x-0"
     : "relative after:content-[''] after:absolute after:-inset-y-[2px] after:inset-x-0";

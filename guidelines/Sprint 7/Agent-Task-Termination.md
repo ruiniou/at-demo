@@ -37,11 +37,11 @@ Event information
   Existing action 1
   Existing action 2
   ─────────────────
-  Stop generation
+  Stop Generation
   Delete Event
 ```
 
-- `Stop generation` 仅在 Agent 未启动、排队或正在执行时显示；使用 Stop 图标 + 完整文字，采用普通菜单项样式。
+- `Stop Generation` 仅在 Agent 未启动、排队或正在执行时显示；使用 Stop 图标 + 完整文字，采用普通菜单项样式。
 - `Delete Event` 始终显示，使用垃圾桶图标 + 完整文字，采用 Danger 菜单项样式。
 - Divider 只用于区分普通操作组和高影响操作组；Stop 与 Delete 之间不再增加 Divider。
 - 两个入口分别点击，分别进入各自的确认弹窗。
@@ -52,11 +52,13 @@ Event information
 
 | 项目 | Default | Hover / Focus | Active | Disabled / 不可用 |
 |---|---|---|---|---|
-| Stop generation | 文字 `text-primary`，图标 `text-secondary` | 中性 Hover 背景，文字和图标保持非危险色 | 使用中性 Active 背景 | Agent 不在可停止阶段时直接隐藏，不展示 Disabled 项 |
+| Stop Generation | 文字 `text-primary`，图标 `text-secondary` | 中性 Hover 背景，文字和图标保持非危险色 | 使用中性 Active 背景 | Agent 不在可停止阶段时直接隐藏，不展示 Disabled 项 |
 | Delete Event | 文字和图标使用 `status-error` | 使用 `status-error-bg`，保持危险色文字和图标 | 使用更强一级的危险态背景 Token | 无权限时直接隐藏；提交中在弹窗内 Disabled |
 | Divider | 使用 `border-default` | 不适用 | 不适用 | 不适用 |
 
 Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`。它表达用户主动停止的中性终态；Error 继续独占错误色。
+
+当 Event 状态为 `AI Processing` 时，Treelist 内所有 Program 和 TFL 统一显示 `AI Processing` 状态图标。进入 `Stopped` 后，TFL 只允许三种视觉状态：未完成项显示 `Stopped`，错误项保留 `Error`，停止前已经完成或锁定的项不显示状态图标。Stopped Event 下不出现 Lock 图标。
 
 ### Agent 执行结束后
 
@@ -68,29 +70,31 @@ Stopped 状态标签使用 `text-secondary` 语义色，不使用 `status-error`
 
 ### 确认弹窗
 
-- 标题：`Stop generation?`
-- 说明：当前生成将停止，不能从中断位置继续；Event 会保留，可重新上传正确文件并开始新一轮生成。
+- 标题：`Stop Generation?`
+- 说明：当前任务停止后不能恢复；用户可以重新上传文件或删除 Event。
 - 展示 Event 名称和当前状态。
 - 原因字段：选填。
-- 主按钮：`Stop generation`。
-- 次按钮：`Continue generation`，比 `Cancel` 更清楚地表达关闭弹窗后的结果。
+- 主按钮：`Stop Generation`。
+- 主按钮使用 Danger 样式；次按钮为 `Cancel`。
 
 ### 执行结果
 
 1. Owner 确认停止后，按钮进入 `Stopping…` 并禁止重复提交。
 2. 服务端取消尚未启动的任务，终止正在执行的 Agent 及其未完成子任务，并隔离迟到结果。
 3. Event 状态更新为 `Stopped`；仍在生成或排队的 TFL 更新为 `Stopped`。
-4. 已经完成或 Lock 的 TFL 保留原始结果和底层状态。
+4. 已经完成或 Lock 的 TFL 保留原始结果，但在 Stopped Event 中不显示状态图标。
 5. 右侧区域统一显示一张停止状态大卡，隐藏 Shell Preview / Code / AI 及右侧顶部栏。
 6. 停止状态大卡提供明确的重新上传入口，让用户修正文件后开始一轮全新的生成。
 
 ### 停止状态大卡
 
 - 图标：Stop 状态图标，不使用 Pause 图标。
-- 标题：`Generation stopped`。
+- 标题：`Generation Stopped`。
 - 说明：当前生成已停止。如需重新生成，请上传正确的输入文件。
-- CTA：`Re-upload files`。
+- CTA：`Re-upload Files`，打开预填的 `Event Information` 弹窗。
+- `Event Information` 左侧展示已创建 Event 的现有字段；右侧展示当前文件，并允许 Stopped Event 替换文件。重新提交后发起新一轮生成。
 - 不提供 `Resume`，因为旧任务不能续跑。
+- Events 列表中，Stopped Event 的 Owner 直接看到 `Re-upload` 按钮，点击后打开同一个 `Event Information` 弹窗；非 Owner 的 More 按钮保留原位置但禁用。
 
 Stopped 状态使用新增资源 `src/icons/Status label/Status=Stopped.svg`。颜色采用中性状态 Token `text-secondary`，与 Error 的 `status-error` 明确区分；Stopped 是用户主动结束，不是系统故障。操作按钮与状态可以共用 Stop glyph，但必须使用不同组件和视觉样式：操作可点击，状态只读。
 
@@ -190,7 +194,7 @@ Stopped 状态使用新增资源 `src/icons/Status label/Status=Stopped.svg`。�
 
 | 问题 | 当前建议 |
 |---|---|
-| 重新上传是否发生在原 Event 内 | 是；停止状态大卡提供 `Re-upload files`，保留 Event 身份与权限 |
+| 重新上传是否发生在原 Event 内 | 是；停止状态大卡提供 `Re-upload Files`，保留 Event 身份与权限 |
 | 新文件上传后如何处理旧的已完成 TFL | 建议按 run 归档，默认只展示最新一轮；是否允许查看旧轮次需 PM 确认 |
 | 重新上传是否自动开始生成 | 建议沿用现有上传流程，完成校验后由用户明确开始，避免传错后再次自动执行 |
 | Stop 原因是否需要必填 | 沿用原需求为选填；Delete 原因必填 |

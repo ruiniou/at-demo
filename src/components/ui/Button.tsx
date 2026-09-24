@@ -14,7 +14,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // Variant styles — Figma 221-516 (Primary), 221-554 (Secondary)
     const variants: Record<string, string> = {
       primary: "bg-brand-1 hover:bg-az-warning disabled:bg-brand-1-disabled shadow-sm",
-      secondary: "bg-graphite-20 hover:bg-graphite-40 disabled:bg-white",
+      secondary: "bg-az-secondary hover:bg-az-secondary-hover disabled:bg-white disabled:border disabled:border-graphite-20",
       ghost: "bg-transparent text-text-secondary hover:bg-black/5 hover:text-text-primary",
       danger: "bg-status-error text-white hover:bg-[#B3202F] active:bg-[#991523] disabled:bg-graphite-10 disabled:cursor-not-allowed",
       "secondary-danger": "bg-status-error-bg hover:bg-status-error-border active:bg-[#EE808F] disabled:bg-white disabled:cursor-not-allowed",
@@ -33,7 +33,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // Text style per variant (inline to avoid globals.css .t-body-secondary color override)
     const textColors: Record<string, string> = {
       primary: "#FFFFFF",
-      secondary: disabled ? "#B2B4B4" : "#3F4444",
+      secondary: disabled ? "var(--color-graphite-40)" : "var(--color-brand-1)",
       ghost: "",
       danger: disabled ? "#B2B4B4" : "#FFFFFF",
       "secondary-danger": disabled ? "#B2B4B4" : "#B3202F",

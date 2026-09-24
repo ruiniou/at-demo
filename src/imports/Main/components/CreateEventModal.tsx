@@ -238,6 +238,9 @@ export default function CreateEventModal({
   defaultProjectId,
   defaultStudyId,
   defaultTherapeuticArea,
+  mode = "create",
+  event,
+  onSaveEvent,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -248,7 +251,11 @@ export default function CreateEventModal({
   defaultProjectId?: string;
   defaultStudyId?: string;
   defaultTherapeuticArea?: string;
+  mode?: "create" | "information";
+  event?: { id: string; name: string; project: string; study: string; owner: string; status: string } | null;
+  onSaveEvent?: (eventId: string, eventData: { name: string; project: string; study: string; owner: string }) => void;
 }) {
+  const isEventInformation = mode === "information" && Boolean(event);
   const [taValue, setTaValue] = useState<string | null>(null);
   const [projectCode, setProjectCode] = useState<string | null>(null);
   const [isProjectNew, setIsProjectNew] = useState(false);
@@ -333,21 +340,40 @@ export default function CreateEventModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    setProjectCode(hasStudyContext ? defaultProjectId ?? null : null);
-    setStudyCode(hasStudyContext ? defaultStudyId ?? null : null);
+    const informationProject = isEventInformation ? event?.project ?? null : null;
+    const informationStudy = isEventInformation ? event?.study ?? null : null;
+    setProjectCode(informationProject ?? (hasStudyContext ? defaultProjectId ?? null : null));
+    setStudyCode(informationStudy ?? (hasStudyContext ? defaultStudyId ?? null : null));
     setTaValue(
-      hasStudyContext
+      isEventInformation
+        ? projectsList?.find((project) => project.id === informationProject)?.studies.find((study) => study.id === informationStudy)?.ta?.toLowerCase() ?? "oncology"
+        : hasStudyContext
         ? taOptions.find((option) => option.label === defaultTherapeuticArea)?.value ?? null
         : null
     );
     setIsProjectNew(false);
     setIsStudyNew(false);
+    setEventName(isEventInformation ? event?.name ?? "" : "");
     setEventOwner(
-      currentUserName && SYSTEM_USERS.some((user) => user.name === currentUserName)
+      isEventInformation
+        ? event?.owner ?? null
+        : currentUserName && SYSTEM_USERS.some((user) => user.name === currentUserName)
         ? currentUserName
         : null
     );
-  }, [isOpen, hasStudyContext, defaultProjectId, defaultStudyId, defaultTherapeuticArea, currentUserName]);
+    if (isEventInformation) {
+      setAdamStatus("uploaded");
+      setAdamFile("adam_spec.xlsx");
+      setSdtmStatus("uploaded");
+      setSdtmFile("sdtm_spec.xlsx");
+      setSapStatus("uploaded");
+      setSapFile("sap_v2.1.pdf");
+      setShellStatus("uploaded");
+      setShellFile("tfl_shells.xlsx");
+      setTifoStatus("uploaded");
+      setTifoFile("tifo.xlsx");
+    }
+  }, [isOpen, isEventInformation, event, hasStudyContext, defaultProjectId, defaultStudyId, defaultTherapeuticArea, currentUserName, projectsList]);
 
   // Derive Study state: UNSELECTED | NEW | EXISTING
   const studyState: "UNSELECTED" | "NEW" | "EXISTING" = !studyCode
@@ -404,12 +430,18 @@ export default function CreateEventModal({
     const selectedProjectLabel = projectOptions.find(o => o.value === projectCode)?.label.split(" - ")[0] || projectCode || "";
     const selectedStudyLabel = studyOptions.find(o => o.value === studyCode)?.label || studyCode || "";
 
-    onCreateEvent({
+    const eventData = {
       name: eventName,
       project: selectedProjectLabel,
       study: selectedStudyLabel,
       owner: eventOwner || "",
-    });
+    };
+    if (isEventInformation && event) {
+      onSaveEvent?.(event.id, eventData);
+      onClose();
+      return;
+    }
+    onCreateEvent(eventData);
     // Reset state
     setEventName("");
     setTaValue(null);
@@ -446,7 +478,7 @@ export default function CreateEventModal({
         {/* Header */}
         <div className="flex shrink-0 items-center gap-[16px] px-[20px] pb-[12px] pt-[16px]">
           <div className="flex min-w-0 flex-1 items-center gap-[10px]">
-            <h2 style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 14, lineHeight: "22px", color: "var(--color-text-primary)" }}>Create New Event</h2>
+            <h2 style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 14, lineHeight: "22px", color: "var(--color-text-primary)" }}>{isEventInformation ? "Event Information" : "Create New Event"}</h2>
           </div>
           <button onClick={onClose} className="relative flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-graphite-10 active:scale-[0.96] after:content-[''] after:absolute after:-inset-[8px]" aria-label="Close">
             <CloseIcon size={16} color="var(--color-text-secondary)" />
@@ -458,7 +490,7 @@ export default function CreateEventModal({
           <div className="flex min-h-0 flex-1 border-t border-graphite-10">
               {/* Left column */}
               <div className="flex min-h-0 w-[320px] shrink-0 flex-col gap-[16px] overflow-y-auto border-r border-graphite-10 p-[20px]">
-                <SingleSelect label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} disabled={hasStudyContext} />
+                <SingleSelect label="Therapeutic Area" required placeholder="Required" options={taOptions} value={taValue} onChange={setTaValue} disabled={hasStudyContext || isEventInformation} />
                 <CreatableDropdown
                   label="Project Code"
                   required
@@ -467,7 +499,7 @@ export default function CreateEventModal({
                   value={projectCode}
                   isNew={isProjectNew}
                   createPrefix="New Project"
-                  disabled={hasStudyContext}
+                  disabled={hasStudyContext || isEventInformation}
                   onChange={(val, isNew) => {
                     setProjectCode(val);
                     setIsProjectNew(isNew);
@@ -481,7 +513,7 @@ export default function CreateEventModal({
                   value={studyCode}
                   isNew={isStudyNew}
                   createPrefix="New Study"
-                  disabled={hasStudyContext}
+                  disabled={hasStudyContext || isEventInformation}
                   onChange={(val, isNew) => {
                     setStudyCode(val);
                     setIsStudyNew(isNew);
@@ -575,7 +607,9 @@ export default function CreateEventModal({
 
         {/* Footer */}
         <div className="flex shrink-0 items-center justify-end border-t border-graphite-10 px-[20px] py-[14px]">
-          <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>Create Event</PrimaryButton>
+          <PrimaryButton disabled={!canCreateEvent} onClick={handleCreate}>
+            {isEventInformation ? (event?.status === "stopped" ? "Restart Generation" : "Save Changes") : "Create Event"}
+          </PrimaryButton>
         </div>
       </div>
     </div>,
