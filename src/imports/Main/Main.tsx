@@ -4452,6 +4452,12 @@ function ViewToggleBar({
   onOpenDownloadModal,
   onOpenTeamModal,
   onOpenAICopilot,
+  // Assignee Occupancy in top toolbar
+  assigneeName,
+  currentUser,
+  isOccupied,
+  lastEditedAt,
+  onTakeOver,
   aiCopilotOpen = false,
   copilotScope,
   onSelectCopilotScope,
@@ -4476,6 +4482,11 @@ function ViewToggleBar({
   onOpenDownloadModal?: () => void;
   onOpenTeamModal?: () => void;
   onOpenAICopilot?: () => void;
+  assigneeName?: string;
+  currentUser?: string;
+  isOccupied?: boolean;
+  lastEditedAt?: Date;
+  onTakeOver?: () => void;
   aiCopilotOpen?: boolean;
   copilotScope: 'event' | 'tfl';
   onSelectCopilotScope: (scope: 'event' | 'tfl') => void;
@@ -4493,8 +4504,16 @@ function ViewToggleBar({
 
   const rightControls = (
     <div className="flex items-center">
-      {/* 1. Left Icon Buttons: Group Code, Team & Download (gap: 4px, borderless & transparent in default) */}
-      <div className="flex items-center gap-[4px]">
+      {/* 1. Left Icon Buttons: Assignee Avatar, Group Code, Team & Download (gap: 6px) */}
+      <div className="flex items-center gap-[6px]">
+        {/* Assignee occupancy avatar placed to the left of Group code */}
+        <AssigneeOccupancyButton
+          assigneeName={assigneeName}
+          currentUserName={currentUser || 'Sarah Chen'}
+          isOccupied={isOccupied ?? false}
+          lastEditedAt={lastEditedAt}
+          onTakeOver={onTakeOver}
+        />
         {onToggleGroupView && (
           <TooltipText label={groupViewOpen ? "Close Group Code" : "Open Group Code"}>
             <button
@@ -4675,7 +4694,7 @@ function TreeStatusIcon({
   if (occupant) {
     return (
       <TooltipText label={`${occupant} is editing`}>
-        <span className="cursor-default">
+        <span className="cursor-pointer inline-flex items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95">
           <CodeStatusSlot>
             <Avatar name={occupant} level="menu" />
           </CodeStatusSlot>
@@ -11483,21 +11502,7 @@ ods graphics off;`;
   };
 
   const toolbarButtons = (
-    <div className="flex items-center gap-[8px]">
-      {/* Leftmost: Assignee occupancy avatar */}
-      <AssigneeOccupancyButton
-        assigneeName={assigneeName}
-        currentUserName={currentUser}
-        isOccupied={isOccupied}
-        lastEditedAt={lastEditedAt}
-        onTakeOver={onTakeOver}
-      />
-
-      {/* Thin vertical separator between occupancy area and action buttons */}
-      {assigneeName && (
-        <span className="inline-block w-[1px] h-[16px] bg-graphite-10 shrink-0" aria-hidden="true" />
-      )}
-
+    <div className="flex items-center gap-[6px]">
       {/* 1. Save (Secondary style, h-26px) */}
       <Button
         variant="secondary"
@@ -13174,6 +13179,11 @@ function WorkspaceContent({
               groupViewOpen={groupViewOpen}
               onToggleGroupView={() => setGroupViewOpen(v => !v)}
               onOpenDownloadModal={onOpenDownloadModal}
+              assigneeName={selectedTflAssignee}
+              currentUser={CURRENT_USER}
+              isOccupied={selectedTflOccupancy?.isOccupied ?? false}
+              lastEditedAt={selectedTflOccupancy?.lastEditedAt}
+              onTakeOver={handleTakeOver}
               onOpenTeamModal={onOpenTeamModal}
               onOpenAICopilot={handleOpenAICopilot}
               aiCopilotOpen={aiCopilotOpen}

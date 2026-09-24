@@ -182,7 +182,13 @@ export function AssigneeOccupancyButton({
               : "No Assignee"
           }
           aria-expanded={popoverOpen}
-          className="inline-flex items-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-1"
+          className={`relative inline-flex items-center justify-center rounded-full transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-1 cursor-pointer active:scale-95 ${
+            popoverOpen
+              ? "ring-2 ring-brand-1 ring-offset-1"
+              : isAway
+              ? "hover:opacity-80 hover:ring-2 hover:ring-graphite-30"
+              : "hover:ring-2 hover:ring-brand-1/40"
+          }`}
         >
           {avatarEl}
         </button>
