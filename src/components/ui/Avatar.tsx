@@ -38,9 +38,12 @@ export function Avatar({ name, initials, color, level = "modal", disabled = fals
   return (
     <span role="img" aria-label={name || "No Assignee"} title={name || "No Assignee"}
       className={`inline-flex shrink-0 items-center justify-center rounded-full select-none font-medium leading-none text-white ${levelClasses[level]} ${stacked ? "ring-2 ring-white" : ""} ${disabled ? "opacity-40" : ""}`}
-      style={{ backgroundColor: name ? identity?.color ?? color ?? "var(--color-text-secondary)" : undefined }}>
+      style={{
+        backgroundColor: name ? identity?.color ?? color ?? "var(--color-text-secondary)" : undefined,
+        fontFamily: "var(--font-body)",
+      }}>
       {name ? (
-        <span className="flex items-center justify-center leading-none select-none tracking-normal">
+        <span className="flex size-full translate-y-[0.5px] items-center justify-center text-center leading-none select-none tracking-normal">
           {letters}
         </span>
       ) : (
@@ -69,7 +72,8 @@ export function AvatarGroup({ members, max = 5, level = "modal" }: {
         </span>
       ))}
       {remaining > 0 && <span title={`${remaining} more members`} aria-label={`${remaining} more members`}
-        className={`-ml-1.5 inline-flex shrink-0 items-center justify-center rounded-full bg-bg-panel text-text-secondary font-medium ring-2 ring-white ${levelClasses[level]}`}>+{remaining}</span>}
+        className={`-ml-1.5 inline-flex shrink-0 items-center justify-center rounded-full bg-bg-panel text-center text-text-secondary font-medium leading-none ring-2 ring-white ${levelClasses[level]}`}
+        style={{ fontFamily: "var(--font-body)" }}><span className="translate-y-[0.5px]">+{remaining}</span></span>}
     </span>
   );
 }
