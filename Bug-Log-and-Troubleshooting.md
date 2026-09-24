@@ -491,3 +491,16 @@
   1. 复用业务组件时应先核对其公开属性，TypeScript 未参与构建检查时，未声明的 JSX 属性可能静默失效。
   2. Disabled 既是视觉状态也是交互状态；字段外观、原生 `disabled` 属性和弹层打开条件必须由同一个状态控制。
   3. 跨页面操作完成提示应遵循统一的 Toast 位置与明暗模式，避免局部实现沿用旧样式。
+
+---
+
+### [2026-09-24] To do Event 错误显示 Stop Generation 操作
+
+* **现象 (Symptom)**：
+  Input 更新完成、Event 回到 To do 后，Event Settings 菜单中仍显示 `Stop Generation`。
+* **根本原因 (Root Cause)**：
+  操作可见性条件同时允许 `ai-processing` 与 `to-do` 状态，未按照“只有正在生成的 Event 才能停止”的状态边界限制。
+* **解决方案 (Solution)**：
+  将 `Stop Generation` 的显示条件收紧为：当前用户是 Event Owner，且 Event 状态严格等于 `ai-processing`。
+* **经验教训 (Takeaways)**：
+  状态操作的可见性应由可执行该动作的精确源状态控制；完成状态迁移后，应同步复核菜单操作、按钮和快捷入口。

@@ -11881,7 +11881,7 @@ function WorkspaceContent({
   const [selectedId, setSelectedId] = useState<string | null>('t4');
   const currentEvent = currentEventData.name;
   const isEventOwner = currentEventData.owner === currentUserName;
-  const canStopEvent = isEventOwner && (currentEventData.status === 'ai-processing' || currentEventData.status === 'to-do');
+  const canStopEvent = isEventOwner && currentEventData.status === 'ai-processing';
   const isEventStopped = currentEventData.status === 'stopped';
   useEffect(() => {
     if (isEventStopped) {
