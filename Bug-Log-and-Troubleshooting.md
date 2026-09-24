@@ -540,7 +540,7 @@
 * **根本原因 (Root Cause)**：
   Stopped 状态在 `WorkspaceContent` 中直接隐藏了包含 `ViewToggleBar` 的完整内容区，并在其外部渲染空状态卡片；文案将停止原因写死为需要上传 corrected input files。
 * **解决方案 (Solution)**：
-  Stopped 状态保留完整顶部栏和导航入口，只在顶部栏下方替换为空状态卡片。右侧 Assignee、Group Code、Download、Shell/Code 与 AI Copilot 操作由禁用 `fieldset` 统一关闭并降低透明度；Home、Event 信息及 Tree List 展开入口保持可用。说明文案只保留客观状态 `Generation for “{Event}” has stopped.`。
+  Stopped 状态保留完整顶部栏和导航入口，只在顶部栏下方替换为空状态卡片。右侧 Assignee、Group Code、Download、Shell/Code 与 AI Copilot 操作由禁用 `fieldset` 统一关闭并降低透明度；Home、Event 信息及 Tree List 展开入口保持可用。说明文案延续停止确认 Modal 的结果与后续选择：`This run cannot be resumed. You can re-upload files or delete the Event.`。
 * **经验教训 (Takeaways)**：
   1. 状态空页面不应替换承载全局导航与布局恢复能力的 Toolbar。
   2. 无法确认停止原因时，文案只陈述已知状态，通过独立操作按钮表达可选的下一步。

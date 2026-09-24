@@ -13331,7 +13331,6 @@ function WorkspaceContent({
           <div className="relative min-w-0 min-h-0 flex-1 overflow-visible pointer-events-auto">
             {isEventStopped && (
               <StoppedEventCard
-                eventName={currentEventData.name}
                 onReupload={onOpenEventInformation}
               />
             )}
