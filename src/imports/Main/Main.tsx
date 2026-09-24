@@ -4477,6 +4477,7 @@ function ViewToggleBar({
   aiCopilotOpen = false,
   copilotScope,
   onSelectCopilotScope,
+  controlsDisabled = false,
 }: {
   treeListOpen: boolean;
   onToggleTreeList: () => void;
@@ -4507,6 +4508,7 @@ function ViewToggleBar({
   aiCopilotOpen?: boolean;
   copilotScope: 'event' | 'tfl';
   onSelectCopilotScope: (scope: 'event' | 'tfl') => void;
+  controlsDisabled?: boolean;
 }) {
 
   const handleCopilotScopeClick = (nextScope: 'event' | 'tfl') => {
@@ -4520,6 +4522,11 @@ function ViewToggleBar({
 
 
   const rightControls = (
+    <fieldset
+      disabled={controlsDisabled}
+      aria-disabled={controlsDisabled}
+      className={`m-0 min-w-0 border-0 p-0 transition-opacity ${controlsDisabled ? 'pointer-events-none opacity-40' : ''}`}
+    >
     <div className="flex items-center">
       {/* 1. Left Icon Buttons: Assignee Avatar, Group Code, Team & Download (gap: 6px) */}
       <div className="flex items-center gap-[6px]">
@@ -4640,6 +4647,7 @@ function ViewToggleBar({
         )}
       </div>
     </div>
+    </fieldset>
   );
 
   if (!treeListOpen) {
@@ -13282,15 +13290,8 @@ function WorkspaceContent({
           />
         )}
 
-        {isEventStopped && (
-          <StoppedEventCard
-            eventName={currentEventData.name}
-            onReupload={onOpenEventInformation}
-          />
-        )}
-
         {/* Middle Column: (视图切换行 + Code&Shell卡 + Group Code浮层) */}
-        <div ref={contentAreaRef} className={`relative z-20 min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pb-[8px] ${isEventStopped ? 'hidden' : 'flex'} ${aiLayoutVariant === 'drawer' && aiCopilotOpen ? 'pr-[4px]' : 'pr-[8px]'}`}>
+        <div ref={contentAreaRef} className={`relative z-20 flex min-w-0 min-h-0 flex-1 flex-col overflow-visible pointer-events-none pl-[4px] pb-[8px] ${aiLayoutVariant === 'drawer' && aiCopilotOpen ? 'pr-[4px]' : 'pr-[8px]'}`}>
           {/* 视图切换行 (Top bar) */}
           <div className="shrink-0 w-full overflow-hidden mb-[2px] pointer-events-auto">
             <ViewToggleBar
@@ -13322,11 +13323,20 @@ function WorkspaceContent({
               aiCopilotOpen={aiCopilotOpen}
               copilotScope={copilotScope}
               onSelectCopilotScope={setCopilotScope}
+              controlsDisabled={isEventStopped}
             />
           </div>
 
           {/* Below ViewToggleBar: Container for Shell, Code, AI Copilot cards and floating GroupCodePanel */}
           <div className="relative min-w-0 min-h-0 flex-1 overflow-visible pointer-events-auto">
+            {isEventStopped && (
+              <StoppedEventCard
+                eventName={currentEventData.name}
+                onReupload={onOpenEventInformation}
+              />
+            )}
+            {!isEventStopped && (
+              <>
             {/* 3 Separate In-Card panels with 12px radius, white bg, Mulberry-tinted soft shadow, and 2px gap */}
             {docType === 'listing' ? (
               <div className="flex min-w-0 min-h-0 h-full w-full overflow-visible" style={{ flexDirection: 'row' }}>
@@ -13602,6 +13612,8 @@ function WorkspaceContent({
                   groupCodes={currentGroupCodes}
                 />
               </div>
+            )}
+              </>
             )}
           </div>
         </div>

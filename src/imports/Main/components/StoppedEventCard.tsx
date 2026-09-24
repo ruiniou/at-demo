@@ -10,7 +10,7 @@ interface StoppedEventCardProps {
 
 export default function StoppedEventCard({ eventName, onReupload }: StoppedEventCardProps) {
   return (
-    <div className="flex min-w-0 flex-1 p-[8px] pl-[4px]">
+    <div className="flex h-full min-w-0 flex-1">
       <div className="flex min-h-0 flex-1 items-center justify-center rounded-[12px] border border-graphite-10 bg-white shadow-card-mulberry">
         <div className="flex max-w-[420px] flex-col items-center gap-[12px] px-[32px] text-center">
           <div className="flex size-[48px] items-center justify-center rounded-full bg-graphite-10">
@@ -19,7 +19,7 @@ export default function StoppedEventCard({ eventName, onReupload }: StoppedEvent
           <div className="flex flex-col gap-[4px]">
             <h2 className="t-heading text-text-primary">Generation Stopped</h2>
             <p className="t-caption text-text-secondary">
-              Generation for “{eventName}” has stopped. Upload the corrected input files to start a new run.
+              Generation for “{eventName}” has stopped.
             </p>
           </div>
           <Button variant="primary" size="default" onClick={onReupload} className="gap-[6px]">
