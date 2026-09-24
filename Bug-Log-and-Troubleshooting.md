@@ -448,3 +448,17 @@
 * **经验教训 (Takeaways)**：
   1. Event 生命周期状态变化时，应同时定义并更新其派生的 TFL 列表状态，不能只依赖视觉覆盖。
   2. 删除后发生页面跳转时，应提供非阻断式结果确认，避免用户无法判断操作是否成功。
+
+---
+
+### [2026-09-24] 进入 Event 详情页会无操作地刷新首页状态
+
+* **现象 (Symptom)**：
+  从首页进入一个 Event 详情页后，不进行 metadata 或 code 修改便直接返回，首页中的 Event 状态仍被改成 In Progress。
+* **根本原因 (Root Cause)**：
+  `AIContent` 在挂载时会通过 `onCodeDiffChange` 上报 Mock 会话中已有的 `hasCodeDiff`。`WorkspaceContent` 将这次初始化同步误判为用户新产生的 Diff，并立即调用 `onEventWorkStarted` 更新共享 `events` 状态；内联回调在重渲染时还会重复触发该 Effect。
+* **解决方案 (Solution)**：
+  按 TFL 上下文记录 Code Diff 是否已完成首次同步，跳过每个 TFL 的初始上报，仅在进入详情后发生 `false → true` 的新 Diff 时将 Event 改为 In Progress。同时让状态更新保持幂等，目标状态未变化时复用原数组。
+* **经验教训 (Takeaways)**：
+  1. 组件初始化时上报的派生状态不能直接等同于用户操作，需要区分 hydration 与 interaction。
+  2. 由子组件 Effect 驱动的共享状态更新必须保持幂等，并避免因回调引用变化重复触发。

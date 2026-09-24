@@ -4186,6 +4186,16 @@ function LocalIcon({
   className?: string;
   color?: string;
 }) {
+  if (color === "currentColor") {
+    const mask = `url("${src}") center / contain no-repeat`;
+    return (
+      <span
+        aria-hidden="true"
+        className={`${className} block shrink-0 bg-current`}
+        style={{ mask, WebkitMask: mask }}
+      />
+    );
+  }
   const filter = color ? iconFilters[color] : undefined;
   return <img src={src} alt="" aria-hidden="true" className={`${className} block shrink-0`} style={filter ? { filter } : undefined} />;
 }
@@ -11846,6 +11856,9 @@ function WorkspaceContent({
 
   const [reviewItems, setReviewItems] = useState<ReviewItem[]>(DEFAULT_FIGURE_REVIEW_ITEMS);
   const [hasPendingCodeChanges, setHasPendingCodeChanges] = useState(false);
+  const hasInitializedCodeDiffRef = useRef(false);
+  const previousCodeDiffRef = useRef(false);
+  const codeDiffContextRef = useRef<string | null>(null);
   const [programs, setPrograms] = useState<ProgramItem[]>([
     {
       id: 'p1',
@@ -12987,7 +13000,18 @@ function WorkspaceContent({
         onMetaCancel={() => setMetaUpdateActive(false)}
         onCodeDiffChange={(hasDiff) => {
           setHasPendingCodeChanges(hasDiff);
-          if (hasDiff) onEventWorkStarted();
+          if (codeDiffContextRef.current !== selectedId) {
+            codeDiffContextRef.current = selectedId;
+            hasInitializedCodeDiffRef.current = false;
+            previousCodeDiffRef.current = false;
+          }
+          if (!hasInitializedCodeDiffRef.current) {
+            hasInitializedCodeDiffRef.current = true;
+            previousCodeDiffRef.current = hasDiff;
+            return;
+          }
+          if (hasDiff && !previousCodeDiffRef.current) onEventWorkStarted();
+          previousCodeDiffRef.current = hasDiff;
         }}
         onMetaProceed={() => {
           onEventWorkStarted();
@@ -15164,8 +15188,20 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   };
 
   const handleUpdateStatus = (id: string, status: EventStatus) => {
-    setEvents(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+    setEvents(prev => {
+      const event = prev.find((candidate) => candidate.id === id);
+      if (!event || event.status === status) return prev;
+      return prev.map((candidate) => candidate.id === id ? { ...candidate, status } : candidate);
+    });
   };
+
+  const handleSelectedEventWorkStarted = useCallback(() => {
+    setEvents((previous) => {
+      const event = previous.find((candidate) => candidate.id === selectedEventId);
+      if (!event || event.status === 'in-progress') return previous;
+      return previous.map((candidate) => candidate.id === selectedEventId ? { ...candidate, status: 'in-progress' } : candidate);
+    });
+  }, [selectedEventId]);
 
   const handleUpdateInputs = (eventId: string, inputFiles: EventInputFiles) => {
     setEvents((previous) => previous.map((event) => (
@@ -15292,7 +15328,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
             setEventCreationContext(null);
             setEventInformationModalOpen(true);
           }}
-          onEventWorkStarted={() => handleUpdateStatus(currentEventData.id, 'in-progress')}
+          onEventWorkStarted={handleSelectedEventWorkStarted}
           currentRole={currentRole}
           currentUserName={currentUserName}
           onSwitchRole={handleSwitchRole}
