@@ -12195,12 +12195,24 @@ function WorkspaceContent({
     }
   };
 
-  // Initial occupancy: James Park is actively editing t4, Priya Sharma is away on t9
+  // Initial occupancy & edit timestamps per TFL:
+  // Each TFL has a recorded lastEditedAt timestamp so popovers always show editing recency.
   const [occupancyMap, setOccupancyMap] = useState<
     Record<string, { isOccupied: boolean; lastEditedAt: Date }>
   >({
-    t4: { isOccupied: true,  lastEditedAt: new Date(Date.now() - 60 * 1000) },  // James Park actively editing
-    t9: { isOccupied: false, lastEditedAt: new Date(Date.now() - 3 * 60 * 1000) }, // Priya Sharma away
+    t1: { isOccupied: false, lastEditedAt: new Date(Date.now() - 2 * 60 * 1000) },
+    t2: { isOccupied: false, lastEditedAt: new Date(Date.now() - 5 * 60 * 1000) },
+    t3: { isOccupied: false, lastEditedAt: new Date(Date.now() - 12 * 60 * 1000) },
+    t4: { isOccupied: true,  lastEditedAt: new Date(Date.now() - 60 * 1000) },     // James Park actively editing
+    t5: { isOccupied: false, lastEditedAt: new Date(Date.now() - 25 * 60 * 1000) },
+    t6: { isOccupied: false, lastEditedAt: new Date(Date.now() - 8 * 60 * 1000) },
+    t8: { isOccupied: false, lastEditedAt: new Date(Date.now() - 45 * 60 * 1000) },
+    t9: { isOccupied: false, lastEditedAt: new Date(Date.now() - 3 * 60 * 1000) },  // Priya Sharma away
+    t10: { isOccupied: false, lastEditedAt: new Date(Date.now() - 18 * 60 * 1000) },
+    f1: { isOccupied: false, lastEditedAt: new Date(Date.now() - 30 * 60 * 1000) },
+    l1: { isOccupied: false, lastEditedAt: new Date(Date.now() - 10 * 60 * 1000) },
+    l2: { isOccupied: false, lastEditedAt: new Date(Date.now() - 60 * 60 * 1000) },
+    l3: { isOccupied: false, lastEditedAt: new Date(Date.now() - 15 * 60 * 1000) },
   });
 
   const selectedTflOccupancy = selectedId ? occupancyMap[selectedId] : undefined;
@@ -12968,6 +12980,7 @@ function WorkspaceContent({
                 onRemoveAssignee={handleRemoveAssignee}
                 onResetAll={handleResetAllFilters}
                 allAssignees={allAssignees}
+                currentUserName={CURRENT_USER}
                 className="mx-[8px] my-[2px]"
               />
             ) : (
@@ -13023,6 +13036,7 @@ function WorkspaceContent({
                   onToggleAssignee={handleToggleAssignee}
                   onClearAssignees={handleClearAssignees}
                   allAssignees={allAssignees}
+                  currentUserName={CURRENT_USER}
                   onResetAll={handleResetAllFilters}
                   matchingCount={totalMatchingTables}
                   totalCount={totalTablesCount}

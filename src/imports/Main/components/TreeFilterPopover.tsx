@@ -20,6 +20,7 @@ export interface TreeFilterPopoverProps {
   onToggleAssignee: (assignee: string) => void;
   onClearAssignees: () => void;
   allAssignees: string[];
+  currentUserName?: string;
   onResetAll: () => void;
   matchingCount?: number;
   totalCount?: number;
@@ -44,6 +45,7 @@ export function TreeFilterPopover({
   onToggleAssignee,
   onClearAssignees,
   allAssignees,
+  currentUserName = "Sarah Chen",
   onResetAll,
   matchingCount,
   totalCount,
@@ -213,17 +215,17 @@ export function TreeFilterPopover({
         {/* Quick selection: Assigned to me */}
         <button
           type="button"
-          onClick={() => onToggleAssignee("Sarah Chen")}
+          onClick={() => onToggleAssignee(currentUserName)}
           className={`flex items-center gap-[6px] px-[8px] py-[5px] rounded-[4px] border text-left transition-colors cursor-pointer w-full ${
-            selectedAssignees.has("Sarah Chen")
+            selectedAssignees.has(currentUserName)
               ? "bg-[#F4E8EE] border-[#830051] text-brand-1 font-medium"
               : "bg-white border-border-default hover:bg-graphite-10 text-text-primary"
           }`}
         >
-          <Avatar name="Sarah Chen" level="menu" />
+          <Avatar name={currentUserName} level="menu" />
           <span className="text-[11px] flex-1">Assigned to me</span>
-          <span className="text-[10px] text-text-secondary">(Sarah)</span>
-          {selectedAssignees.has("Sarah Chen") && (
+          <span className="text-[10px] text-text-secondary">({currentUserName.split(" ")[0]})</span>
+          {selectedAssignees.has(currentUserName) && (
             <img
               src={checkIconUrl}
               alt=""
