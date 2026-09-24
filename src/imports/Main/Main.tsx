@@ -4694,7 +4694,7 @@ function TreeStatusIcon({
   if (occupant) {
     return (
       <TooltipText label={`${occupant} is editing`}>
-        <span className="cursor-pointer inline-flex items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95">
+        <span className="cursor-default inline-flex items-center justify-center rounded-full">
           <CodeStatusSlot>
             <Avatar name={occupant} level="menu" />
           </CodeStatusSlot>

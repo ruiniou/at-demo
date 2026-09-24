@@ -1,29 +1,32 @@
 /**
  * AssigneeOccupancyButton
  *
- * Renders in the Code Panel's toolbar left slot.
+ * Renders in the top workspace toolbar to the left of Group code.
  * Displays the current TFL Assignee's occupancy state and allows
  * Team Members to Take over when the Assignee is away.
  *
- * States:
- *   own-occupied  — current user IS the Assignee and holds the page lock (no interaction)
- *   other-occupied — another user holds the page lock (popover: read-only info only)
- *   other-away    — Assignee exists but has left the page (popover: info + Take over)
- *   unassigned    — no Assignee; nobody can edit (empty avatar, no interaction)
+ * Requirements:
+ *   1. Read-only avatars (own-occupied, unassigned) have NO hover effect, no cursor pointer.
+ *   2. Online user (other-occupied): Hover to view info in Tooltip (NO click popover, NO scale).
+ *   3. Offline/Away user (other-away): Clickable with input-field-like hover & selected focus ring:
+ *      - Hover: border border-graphite-30
+ *      - Selected (Popover open): border border-brand-1 shadow-[0px_0px_0px_3px_var(--color-az-secondary)]
+ *      - Popover displays user name, last edited time, and Take over button (danger style).
  */
 
 import React, { useRef, useState } from "react";
-import { Avatar, AVATAR_IDENTITIES } from "../../../components/ui/Avatar";
+import { Avatar } from "../../../components/ui/Avatar";
 import { Popover } from "../../../components/ui/Popover";
 import { MenuItem } from "../../../components/ui/MenuItem";
+import { Tooltip } from "../../../components/ui/Tooltip";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type OccupancyState =
-  | "own-occupied"   // I am the Assignee and I hold the page lock
-  | "other-occupied" // Someone else holds the page lock right now
-  | "other-away"     // There is an Assignee but they've left the page
-  | "unassigned";    // No Assignee on this TFL
+  | "own-occupied"   // Current user is the Assignee and holds the lock (read-only, no hover)
+  | "other-occupied" // Someone else holds the page lock (hover tooltip with info, not clickable)
+  | "other-away"     // Assignee exists but is offline/away (hover ring + click to take over)
+  | "unassigned";    // No Assignee on this TFL (read-only, no hover)
 
 export interface AssigneeOccupancyProps {
   /** The current TFL's Assignee name (undefined = unassigned). */
@@ -72,18 +75,16 @@ function LockIcon({ className = "w-[14px] h-[14px]" }: { className?: string }) {
   );
 }
 
-// ── Popover content ───────────────────────────────────────────────────────────
+// ── Take-over Popover Content ──────────────────────────────────────────────────
 
-function AssigneePopoverContent({
+function TakeOverPopoverContent({
   assigneeName,
   lastEditedAt,
-  showTakeOver,
   onTakeOver,
   onClose,
 }: {
   assigneeName: string;
   lastEditedAt?: Date;
-  showTakeOver: boolean;
   onTakeOver?: () => void;
   onClose: () => void;
 }) {
@@ -110,20 +111,16 @@ function AssigneePopoverContent({
       </div>
 
       {/* Take over action */}
-      {showTakeOver && (
-        <>
-          <div className="my-[2px] mx-[4px] border-t border-form-border" />
-          <div className="pb-[4px] px-[4px]">
-            <MenuItem
-              danger
-              icon={<LockIcon />}
-              onClick={handleTakeOver}
-            >
-              Take over
-            </MenuItem>
-          </div>
-        </>
-      )}
+      <div className="my-[2px] mx-[4px] border-t border-form-border" />
+      <div className="pb-[4px] px-[4px]">
+        <MenuItem
+          danger
+          icon={<LockIcon />}
+          onClick={handleTakeOver}
+        >
+          Take over
+        </MenuItem>
+      </div>
     </div>
   );
 }
@@ -149,83 +146,89 @@ export function AssigneeOccupancyButton({
     ? "other-occupied"
     : "other-away";
 
-  const isInteractive =
-    occupancyState === "other-occupied" || occupancyState === "other-away";
+  // Case 1: Unassigned (Read-only, no hover, no cursor pointer)
+  if (occupancyState === "unassigned") {
+    return (
+      <span
+        aria-label="No Assignee"
+        className="inline-flex shrink-0 items-center justify-center cursor-default select-none"
+      >
+        <Avatar level="page" />
+      </span>
+    );
+  }
 
-  const isAway = occupancyState === "other-away";
+  // Case 2: Own occupied (Current user is Assignee, read-only, no hover ring, no cursor pointer)
+  if (occupancyState === "own-occupied") {
+    return (
+      <span
+        aria-label={`${assigneeName} (you are editing)`}
+        className="inline-flex shrink-0 items-center justify-center cursor-default select-none"
+      >
+        <Avatar name={assigneeName} level="page" />
+      </span>
+    );
+  }
 
-  const handleClick = () => {
-    if (!isInteractive) return;
-    setPopoverOpen((prev) => !prev);
-  };
+  // Case 3: Other occupied (Online, another user is editing).
+  // Requirements: Hover to view info tooltip, NOT click to view, NO hover scale.
+  if (occupancyState === "other-occupied") {
+    const tooltipLabel = lastEditedAt
+      ? `${assigneeName} is editing · ${relativeTime(lastEditedAt)}`
+      : `${assigneeName} is editing`;
 
-  const avatarEl = (
-    <Avatar
-      name={assigneeName}
-      level="page"
-      disabled={isAway}
-    />
-  );
+    return (
+      <Tooltip label={tooltipLabel} placement="bottom">
+        <span
+          aria-label={`${assigneeName} is editing`}
+          className="inline-flex shrink-0 items-center justify-center cursor-default select-none"
+        >
+          <Avatar name={assigneeName} level="page" />
+        </span>
+      </Tooltip>
+    );
+  }
 
+  // Case 4: Other away (Offline/away, clickable to take over).
+  // Requirements:
+  // - Avatar with disabled opacity (50%)
+  // - Hover: input-like hover border (border border-graphite-30)
+  // - Selected (popover open): input-like focus ring (border border-brand-1 shadow-[0px_0px_0px_3px_var(--color-az-secondary)])
+  // - Click: opens Take over popover
   return (
     <>
-      {isInteractive ? (
-        <button
-          ref={anchorRef}
-          type="button"
-          onClick={handleClick}
-          aria-label={
-            assigneeName
-              ? isAway
-                ? `${assigneeName} (away) — click to take over`
-                : `${assigneeName} is editing`
-              : "No Assignee"
-          }
-          aria-expanded={popoverOpen}
-          className={`relative inline-flex items-center justify-center rounded-full transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-1 cursor-pointer active:scale-95 ${
-            popoverOpen
-              ? "ring-2 ring-brand-1 ring-offset-1"
-              : isAway
-              ? "hover:opacity-80 hover:ring-2 hover:ring-graphite-30"
-              : "hover:ring-2 hover:ring-brand-1/40"
-          }`}
-        >
-          {avatarEl}
-        </button>
-      ) : (
-        // own-occupied or unassigned: no interaction, use a plain span
-        <span
-          aria-label={
-            occupancyState === "own-occupied"
-              ? `${assigneeName} (you are editing)`
-              : "No Assignee"
-          }
-          className="inline-flex items-center"
-        >
-          {avatarEl}
-        </span>
-      )}
+      <button
+        ref={anchorRef}
+        type="button"
+        onClick={() => setPopoverOpen((prev) => !prev)}
+        aria-label={`${assigneeName} (away) — click to take over`}
+        aria-expanded={popoverOpen}
+        className={`relative inline-flex shrink-0 items-center justify-center rounded-full p-[2px] transition-[border-color,box-shadow,opacity] cursor-pointer select-none focus-visible:outline-none ${
+          popoverOpen
+            ? "border border-brand-1 shadow-[0px_0px_0px_3px_var(--color-az-secondary)]"
+            : "border border-transparent hover:border-graphite-30"
+        }`}
+      >
+        <Avatar name={assigneeName} level="page" disabled />
+      </button>
 
-      {isInteractive && assigneeName && (
-        <Popover
-          open={popoverOpen}
-          onOpenChange={setPopoverOpen}
-          anchorRef={anchorRef as React.RefObject<HTMLElement>}
-          role="dialog"
-          placement="bottom"
-          align="start"
-          width={220}
-          offset={6}
-        >
-          <AssigneePopoverContent
-            assigneeName={assigneeName}
-            lastEditedAt={lastEditedAt}
-            showTakeOver={isAway}
-            onTakeOver={onTakeOver}
-            onClose={() => setPopoverOpen(false)}
-          />
-        </Popover>
-      )}
+      <Popover
+        open={popoverOpen}
+        onOpenChange={setPopoverOpen}
+        anchorRef={anchorRef as React.RefObject<HTMLElement>}
+        role="dialog"
+        placement="bottom"
+        align="start"
+        width={220}
+        offset={6}
+      >
+        <TakeOverPopoverContent
+          assigneeName={assigneeName!}
+          lastEditedAt={lastEditedAt}
+          onTakeOver={onTakeOver}
+          onClose={() => setPopoverOpen(false)}
+        />
+      </Popover>
     </>
   );
 }
