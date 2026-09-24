@@ -8,6 +8,8 @@ import { Dropdown, DropdownOption } from "../../../components/ui/Dropdown";
 import { MultiSelectDropdown } from "../../../components/ui/MultiSelectDropdown";
 import { CreatableDropdown } from "../../../components/ui/CreatableDropdown";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
+import { FormItem } from "../../../components/ui/FormItem";
+import { OwnerPicker } from "./ProjectStudyManagementView";
 
 import { createPortal } from "react-dom";
 import aiProcessingIconUrl from "../../../icons/Status label/Status=AI Processing.svg";
@@ -136,7 +138,7 @@ function MoreIcon({ size = 16, color = "#888E8E" }: { size?: number; color?: str
 
 // ==================== Optional Section ====================
 
-function OptionalSection() {
+export function OptionalSection({ disabled = false }: { disabled?: boolean }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [tablesToParse, setTablesToParse] = useState<string[]>([]);
   const [refStudyValue, setRefStudyValue] = useState<string | null>(null);
@@ -162,18 +164,18 @@ function OptionalSection() {
 
   return (
     <div className="rounded-[6px] border border-graphite-10">
-      <button type="button" onClick={() => setIsExpanded(!isExpanded)}
-        className={`flex w-full items-center justify-between px-[10px] py-[10px] hover:bg-bg-panel ${isExpanded ? "rounded-t-[6px]" : "rounded-[6px]"}`}>
+      <button type="button" disabled={disabled} onClick={() => !disabled && setIsExpanded(!isExpanded)}
+        className={`flex w-full items-center justify-between px-[10px] py-[10px] hover:bg-bg-panel disabled:cursor-not-allowed disabled:hover:bg-transparent ${isExpanded ? "rounded-t-[6px]" : "rounded-[6px]"}`}>
         <span style={{ fontFamily: "'PingFang SC', sans-serif", fontWeight: 600, fontSize: 13, lineHeight: "20px", color: "var(--color-text-primary)" }}>Optional</span>
         <ArrowDownIcon size={20} color="var(--color-text-secondary)" rotated={isExpanded} />
       </button>
       <div className="h-0 w-full border-t border-graphite-10" />
       {isExpanded && (
         <div className="flex flex-col gap-[16px] px-[10px] py-[12px]">
-          <MultiSelectDropdown label="Tables to parse" placeholder="Optional" options={tablesToParseOptions} value={tablesToParse} onChange={setTablesToParse} />
-          <Dropdown label="Reference Study" placeholder="Optional" options={refStudyOptions} value={refStudyValue} onChange={setRefStudyValue} />
-          <Dropdown label="Reference Event" placeholder="Optional" options={refEventOptions} value={refEventValue} onChange={setRefEventValue} />
-          <Input label="Program Path" placeholder="Optional" value={programPath} onChange={(e) => setProgramPath(e.target.value)} />
+          <MultiSelectDropdown label="Tables to parse" placeholder="Optional" options={tablesToParseOptions} value={tablesToParse} onChange={setTablesToParse} disabled={disabled} />
+          <Dropdown label="Reference Study" placeholder="Optional" options={refStudyOptions} value={refStudyValue} onChange={setRefStudyValue} disabled={disabled} />
+          <Dropdown label="Reference Event" placeholder="Optional" options={refEventOptions} value={refEventValue} onChange={setRefEventValue} disabled={disabled} />
+          <Input label="Program Path" placeholder="Optional" value={programPath} onChange={(e) => setProgramPath(e.target.value)} disabled={disabled} />
         </div>
       )}
     </div>
@@ -322,11 +324,6 @@ export default function CreateEventModal({
     { label: "12.7", value: "12.7" },
     { label: "12.6", value: "12.6" },
   ];
-  const eventOwnerOptions: DropdownOption[] = SYSTEM_USERS.map((user) => ({
-    label: user.name,
-    value: user.name,
-  }));
-
   useEffect(() => {
     if (!isOpen) return;
     setProjectCode(hasStudyContext ? defaultProjectId ?? null : null);
@@ -486,7 +483,9 @@ export default function CreateEventModal({
                   }}
                 />
                 <Input label="Event Name" required placeholder="Required" value={eventName} onChange={(e) => setEventName(e.target.value)} />
-                <Dropdown label="Event Owner" required placeholder="Required" options={eventOwnerOptions} value={eventOwner} onChange={setEventOwner} />
+                <FormItem label="Event Owner" labelClassName="t-small-medium" required>
+                  <OwnerPicker value={eventOwner || ""} onSelect={setEventOwner} ariaLabel="Select Event Owner" />
+                </FormItem>
                 <Dropdown label="O_GEM Version" required placeholder="Required" options={ogemOptions} value={ogemValue} onChange={setOgemValue} />
                 <OptionalSection />
               </div>

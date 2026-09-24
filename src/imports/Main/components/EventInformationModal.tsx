@@ -4,6 +4,9 @@ import { Button } from "../../../components/ui/Button";
 import { UploadCard, UploadStatus } from "../../../components/ui/UploadCard";
 import { FormInputField as Input } from "../../../components/ui/FormInputField";
 import { Dropdown, DropdownOption } from "../../../components/ui/Dropdown";
+import { FormItem } from "../../../components/ui/FormItem";
+import { OptionalSection } from "./CreateEventModal";
+import { OwnerPicker } from "./ProjectStudyManagementView";
 import closeIconUrl from "../../../icons/close-line.svg";
 import informationIconUrl from "../../../icons/information-line.svg";
 
@@ -198,8 +201,11 @@ export default function EventInformationModal({
               <Dropdown label="Project Code" required options={readOnlyOptions(event.project)} value={event.project} disabled />
               <Dropdown label="Study Code" required options={readOnlyOptions(event.study)} value={event.study} disabled />
               <Input label="Event Name" required value={event.name} onChange={() => undefined} disabled />
-              <Dropdown label="Event Owner" required options={readOnlyOptions(event.owner)} value={event.owner} disabled />
+              <FormItem label="Event Owner" labelClassName="t-small-medium" required disabled>
+                <OwnerPicker value={event.owner} onSelect={() => undefined} disabled ariaLabel="Event Owner" />
+              </FormItem>
               <Dropdown label="O_GEM Version" required options={readOnlyOptions(event.version)} value={event.version} disabled />
+              <OptionalSection disabled />
             </div>
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[16px] overflow-y-auto p-[18px_20px_20px_20px]">
