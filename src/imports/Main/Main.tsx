@@ -4773,6 +4773,7 @@ function TreeItem({
   onToggleExpand,
   hasPendingCodeChanges,
   occupancyMap = {},
+  currentUserName,
 }: {
   program: ProgramItem;
   selectedId: string | null;
