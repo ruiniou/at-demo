@@ -15375,8 +15375,8 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         canManageAssignments={Boolean(selectedTeamEvent && selectedTeamEvent.owner === currentUserName)}
       />
       {toastMessage && (
-        <div className="fixed bottom-[24px] left-1/2 z-[10060] flex -translate-x-1/2 items-center gap-[8px] rounded-[6px] bg-text-primary px-[16px] py-[10px] text-white shadow-elevation-overlay animate-slide-in-up" role="status">
-          <img src={checkIconUrl} alt="" className="size-[16px] invert" />
+        <div className="fixed left-1/2 top-[24px] z-[10060] flex -translate-x-1/2 items-center gap-[8px] rounded-[6px] border border-graphite-10 bg-white px-[16px] py-[10px] text-text-primary shadow-elevation-overlay animate-slide-in-down" role="status">
+          <LocalIcon src={checkIconUrl} className="size-[16px]" color="var(--color-status-success-icon)" />
           <span className="t-small font-medium">{toastMessage}</span>
         </div>
       )}

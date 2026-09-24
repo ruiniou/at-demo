@@ -476,3 +476,18 @@
 * **经验教训 (Takeaways)**：
   1. Event 状态向 TFL 状态映射必须按精确源状态转换，禁止用宽泛条件覆盖未参与 Processing 的项目。
   2. Modal footer 的次操作应统一复用无填充 variant，填充型 Secondary 仅用于 Re-upload 等页面级操作。
+
+---
+
+### [2026-09-24] Update Inputs 的 Event Owner 呈可编辑态且删除 Toast 样式位置不符
+
+* **现象 (Symptom)**：
+  Update Inputs 使用的 Event Information Modal 中，Event Owner 仍以白底、无禁用边框的可编辑外观显示；删除 Event 成功提示使用深色样式并从页面底部出现。
+* **根本原因 (Root Cause)**：
+  Event Information Modal 向 `OwnerPicker` 传入了组件未声明的 `disabled` 与 `compact` 属性，因此禁用状态没有进入 OwnerPicker 的样式及交互逻辑；删除提示则沿用了固定在底部的深色 Toast 实现。
+* **解决方案 (Solution)**：
+  为 `OwnerPicker` 增加真实的 `disabled` 能力，并让原有 `disabledAppearance` 同样关闭交互；Disabled 状态复用 Member Selector 的 32px 高度、面板底色、表单边框和 Graphite-40 内容色。删除成功 Toast 改为页面顶部居中、白底浅色边框与阴影，并增加从顶部进入的动画。
+* **经验教训 (Takeaways)**：
+  1. 复用业务组件时应先核对其公开属性，TypeScript 未参与构建检查时，未声明的 JSX 属性可能静默失效。
+  2. Disabled 既是视觉状态也是交互状态；字段外观、原生 `disabled` 属性和弹层打开条件必须由同一个状态控制。
+  3. 跨页面操作完成提示应遵循统一的 Toast 位置与明暗模式，避免局部实现沿用旧样式。

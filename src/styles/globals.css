@@ -376,12 +376,27 @@ html, body {
   }
 }
 
+@keyframes slideInDown {
+  from {
+    transform: translate(-50%, -12px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out forwards;
 }
 
 .animate-slide-in-up {
   animation: slideInUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-down {
+  animation: slideInDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Design System Elevation Shadows */

@@ -39,13 +39,14 @@ function AvailabilitySwitch({ checked, disabled = false, label, onChange }: { ch
   );
 }
 
-export function OwnerPicker({ value, onSelect, disabledAppearance = false, ariaLabel = 'Select Owner' }: { value: string; onSelect: (owner: string) => void; disabledAppearance?: boolean; ariaLabel?: string }) {
+export function OwnerPicker({ value, onSelect, disabled = false, disabledAppearance = false, ariaLabel = 'Select Owner' }: { value: string; onSelect: (owner: string) => void; disabled?: boolean; disabledAppearance?: boolean; ariaLabel?: string }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isDisabled = disabled || disabledAppearance;
   const currentUser = SYSTEM_USERS.find((user) => user.name === value);
   const filteredUsers = SYSTEM_USERS.filter((user) => {
     const query = search.trim().toLowerCase();
@@ -61,6 +62,10 @@ export function OwnerPicker({ value, onSelect, disabledAppearance = false, ariaL
     const openAbove = window.innerHeight - rect.bottom < estimatedHeight && rect.top > estimatedHeight;
     setPosition({ left, top: openAbove ? Math.max(8, rect.top - estimatedHeight - 4) : rect.bottom + 4 });
   }, []);
+
+  useEffect(() => {
+    if (isDisabled && open) setOpen(false);
+  }, [isDisabled, open]);
 
   useEffect(() => {
     if (!open) { setSearch(''); return; }
@@ -87,11 +92,11 @@ export function OwnerPicker({ value, onSelect, disabledAppearance = false, ariaL
 
   return (
     <div className="relative min-w-0">
-      <button ref={buttonRef} type="button" onClick={() => setOpen((current) => !current)} aria-haspopup="dialog" aria-expanded={open} className="flex min-h-[40px] w-full min-w-0 items-center gap-[6px] rounded-[4px] px-[6px] text-left hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-1/20">
-        <Avatar name={value || undefined} initials={currentUser?.initials} color={currentUser?.color} level="modal" disabled={disabledAppearance} />
-        <span className={`truncate text-[12px] ${disabledAppearance ? 'text-graphite-40' : value ? 'text-text-primary' : 'text-text-secondary'}`}>{value || 'No Assignee'}</span>
+      <button ref={buttonRef} type="button" disabled={isDisabled} onClick={() => !isDisabled && setOpen((current) => !current)} aria-haspopup="dialog" aria-expanded={open && !isDisabled} className={`flex h-[32px] w-full min-w-0 items-center gap-[8px] rounded-[4px] border px-[8px] text-left transition-[border-color,box-shadow,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-1/20 ${isDisabled ? 'cursor-not-allowed border-form-border bg-bg-panel' : 'border-form-border bg-white hover:border-graphite-50'}`}>
+        <Avatar name={value || undefined} initials={currentUser?.initials} color={currentUser?.color} level="menu" disabled={isDisabled} />
+        <span className={`truncate text-[12px] ${isDisabled ? 'text-graphite-40' : value ? 'text-text-primary' : 'text-text-secondary'}`}>{value || 'No Assignee'}</span>
       </button>
-      {open && position && createPortal(
+      {open && !isDisabled && position && createPortal(
         <div ref={popoverRef} role="dialog" aria-label={ariaLabel} style={{ position: 'fixed', top: position.top, left: position.left, width: 260, zIndex: 9999 }} className="flex flex-col gap-[6px] rounded-[8px] border border-graphite-10 bg-white p-[4px] shadow-elevation-overlay">
           <div className="flex h-[32px] items-center gap-[6px] rounded-[4px] border border-border-default px-[8px] focus-within:border-brand-1 focus-within:ring-1 focus-within:ring-brand-1/20">
             <img src={searchIconUrl} alt="" className="h-[13px] w-[13px] opacity-40" />

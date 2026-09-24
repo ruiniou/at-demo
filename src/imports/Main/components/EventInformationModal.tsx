@@ -195,7 +195,7 @@ export default function EventInformationModal({
               <Dropdown label="Study Code" required options={readOnlyOptions(event.study)} value={event.study} disabled />
               <Input label="Event Name" required value={event.name} onChange={() => undefined} disabled />
               <FormItem label="Event Owner" labelClassName="t-small-medium" required disabled>
-                <OwnerPicker value={event.owner} onSelect={() => undefined} compact disabled ariaLabel="Event Owner" />
+                <OwnerPicker value={event.owner} onSelect={() => undefined} disabled ariaLabel="Event Owner" />
               </FormItem>
               <Dropdown label="O_GEM Version" required options={readOnlyOptions(event.version)} value={event.version} disabled />
               <OptionalSection disabled />
