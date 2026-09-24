@@ -4648,6 +4648,17 @@ function ViewToggleBar({
       <div className="shrink-0 w-full">
         <div className="h-[48px] w-full flex items-center px-[12px] justify-between">
           <div className="flex items-center gap-[8px]">
+            <TooltipText label="Back to Home">
+              <button
+                type="button"
+                onClick={onNavigateHome}
+                className="group flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
+                aria-label="Go to Home"
+              >
+                <AtlasLogoIcon className="group-hover:hidden" />
+                <LocalIcon src={homeIconUrl} className="hidden h-[16px] w-[16px] group-hover:block" color="var(--color-text-secondary)" />
+              </button>
+            </TooltipText>
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-[4px]">
                 <p className="t-small truncate font-medium text-text-primary">AZE2001-301</p>

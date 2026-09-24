@@ -504,3 +504,16 @@
   将 `Stop Generation` 的显示条件收紧为：当前用户是 Event Owner，且 Event 状态严格等于 `ai-processing`。
 * **经验教训 (Takeaways)**：
   状态操作的可见性应由可执行该动作的精确源状态控制；完成状态迁移后，应同步复核菜单操作、按钮和快捷入口。
+
+---
+
+### [2026-09-24] Tree List 折叠后缺少返回首页入口
+
+* **现象 (Symptom)**：
+  Event 详情页折叠 Tree List 后，顶部栏只显示 Event 信息和展开按钮，`Back to Home` 入口消失。
+* **根本原因 (Root Cause)**：
+  `ViewToggleBar` 的折叠态使用独立 JSX 分支，该分支未复用展开态左上角的返回首页按钮。
+* **解决方案 (Solution)**：
+  在折叠态顶部栏左侧增加与展开态一致的 28px `Back to Home` 图标按钮，包括 Tooltip、Hover 切换 Home 图标及点击导航行为。
+* **经验教训 (Takeaways)**：
+  同一顶部栏的展开与折叠分支必须保留核心导航入口，仅隐藏与被折叠区域直接相关的内容。
