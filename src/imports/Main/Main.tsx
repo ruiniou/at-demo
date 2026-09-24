@@ -11627,26 +11627,6 @@ ods graphics off;`;
         }
         actions={toolbarButtons}
       />
-      {/* Read-only Locked Code Banner */}
-      {effectiveIsLocked && (
-        <div className="flex items-center gap-[8px] border-y border-[#F5E9C6] bg-[#FEF7E6] px-[12px] py-[6px] shrink-0">
-          <div className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[4px] bg-[#FCEECC]">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#F0AB00]">
-              <path fillRule="evenodd" clipRule="evenodd" d="M12 1C13.5912 1 15.117 1.63267 16.2422 2.75781C17.3673 3.88297 17.9999 5.40879 18 7V10H19C20.6568 10 21.9999 11.3433 22 13V20C22 21.6569 20.6569 23 19 23H5C3.34315 23 2 21.6569 2 20V13C2.00013 11.3433 3.34323 10 5 10H6V7C6.00006 5.40879 6.63265 3.88297 7.75781 2.75781C8.88302 1.63268 10.4088 1 12 1ZM5 12C4.4478 12 4.00013 12.4478 4 13V20C4 20.5523 4.44772 21 5 21H19C19.5523 21 20 20.5523 20 20V13C19.9999 12.4478 19.5522 12 19 12H5ZM12 3C10.9392 3 9.92201 3.42181 9.17188 4.17188C8.42179 4.92196 8.00006 5.93922 8 7V10H16V7C15.9999 5.93922 15.5782 4.92196 14.8281 4.17188C14.078 3.4218 13.0608 3 12 3Z" fill="currentColor"/>
-            </svg>
-          </div>
-          <p className="text-[12px] leading-[18px] text-text-primary">
-            <strong className="font-semibold text-text-primary">Read-only:</strong>{" "}
-            {isExecutingInEventCopilot
-              ? "This deliverable is currently being updated by Event Copilot. Code editing is locked."
-              : !assigneeName
-              ? "This deliverable has no assignee and is in read-only mode."
-              : assigneeName !== currentUser
-              ? `${assigneeName} is currently assigned. You can take over editing when they are away.`
-              : "The code is locked and cannot be edited."}
-          </p>
-        </div>
-      )}
       <div className="relative min-h-0 flex-1 overflow-hidden">
         {/* Top compact fade (8px, avoids 12px scrollbar on right) */}
         <div className="pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b from-white to-transparent z-20" />
@@ -11907,16 +11887,9 @@ function WorkspaceContent({
     if (isEventStopped) {
       setPrograms((previousPrograms) => previousPrograms.map((program) => ({
         ...program,
-        status: program.status === 'locked' ? 'completed' : program.status,
-        tables: program.tables.map((table) => {
-          if (table.status === 'analyzing' || table.status === 'pending') {
-            return { ...table, status: 'stopped' };
-          }
-          if (table.status === 'locked') {
-            return { ...table, status: 'completed' };
-          }
-          return table;
-        }),
+        tables: program.tables.map((table) => table.status === 'analyzing'
+          ? { ...table, status: 'stopped' }
+          : table),
       })));
       return;
     }

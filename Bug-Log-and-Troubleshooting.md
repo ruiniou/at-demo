@@ -462,3 +462,17 @@
 * **经验教训 (Takeaways)**：
   1. 组件初始化时上报的派生状态不能直接等同于用户操作，需要区分 hydration 与 interaction。
   2. 由子组件 Effect 驱动的共享状态更新必须保持幂等，并避免因回调引用变化重复触发。
+
+---
+
+### [2026-09-24] Stopped Event 误改非 Processing TFL 状态并出现 Modal 次操作样式回归
+
+* **现象 (Symptom)**：
+  停止 Event 后，Pending 与 Locked TFL 也被改写；Event Information 及二次确认 Modal 的 Cancel / Keep Editing 显示为填充按钮，详情页还出现了多余的 Read-only Banner。
+* **根本原因 (Root Cause)**：
+  `WorkspaceContent` 的停止状态 Effect 将 `analyzing`、`pending` 和 `locked` 一并转换；`EventInformationModal` 与 `MaintainOwnerModal` 的次操作错误使用了填充型 `secondary` variant；Code Panel 在 `effectiveIsLocked` 时额外渲染提示 Banner。
+* **解决方案 (Solution)**：
+  停止状态仅执行 `analyzing → stopped`，其余 TFL 和分组状态保持原值；Modal footer 的 Cancel / Keep Editing 改用无填充 `ghost` variant；移除 Code Panel 的 Read-only Banner，保留原有禁用与 Take over 行为。
+* **经验教训 (Takeaways)**：
+  1. Event 状态向 TFL 状态映射必须按精确源状态转换，禁止用宽泛条件覆盖未参与 Processing 的项目。
+  2. Modal footer 的次操作应统一复用无填充 variant，填充型 Secondary 仅用于 Re-upload 等页面级操作。

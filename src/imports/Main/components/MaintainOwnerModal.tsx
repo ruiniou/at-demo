@@ -157,7 +157,7 @@ export const MaintainOwnerModal: React.FC<MaintainOwnerModalProps> = ({
           </div>
 
           <div className="mt-[24px] flex items-center justify-end gap-[10px]">
-            <Button variant="secondary" size="md" onClick={onClose} type="button">
+            <Button variant="ghost" size="default" onClick={onClose} type="button">
               Cancel
             </Button>
             <Button variant="primary" size="md" type="submit">

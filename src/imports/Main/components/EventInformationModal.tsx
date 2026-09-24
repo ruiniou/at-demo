@@ -93,7 +93,7 @@ function ConfirmModal({
           <p className="t-body-secondary text-text-secondary">{description}</p>
         </div>
         <div className="flex justify-end gap-[8px] border-t border-graphite-10 px-[20px] py-[14px]">
-          <Button variant="secondary" onClick={onSecondary}>{secondaryLabel}</Button>
+          <Button variant="ghost" onClick={onSecondary}>{secondaryLabel}</Button>
           <Button variant={danger ? "danger" : "primary"} onClick={onPrimary}>{primaryLabel}</Button>
         </div>
       </div>
@@ -227,7 +227,7 @@ export default function EventInformationModal({
           </div>
 
           <div className="flex shrink-0 justify-end gap-[8px] border-t border-graphite-10 px-[20px] py-[14px]">
-            <Button variant="secondary" onClick={requestClose}>Cancel</Button>
+            <Button variant="ghost" onClick={requestClose}>Cancel</Button>
             <Button variant="primary" disabled={inputsDisabled || !hasChanges || !requiredReady} onClick={() => setUpdateOpen(true)}>Update Inputs</Button>
           </div>
         </div>
