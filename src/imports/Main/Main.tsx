@@ -13032,7 +13032,7 @@ function WorkspaceContent({
           }}
         >
           <div className="flex h-full w-full flex-col bg-bg-panel">
-            <div className="flex h-[52px] shrink-0 items-center gap-[8px] px-[10px]">
+            <div className="flex h-[48px] shrink-0 items-center gap-[8px] px-[10px]">
               <TooltipText label="Back to Home">
                 <button
                   onClick={onNavigateHome}
