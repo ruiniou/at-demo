@@ -137,7 +137,7 @@ function MoreIcon({ size = 16, color = "#888E8E" }: { size?: number; color?: str
 
 // ==================== Optional Section ====================
 
-function OptionalSection() {
+export function OptionalSection() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [tablesToParse, setTablesToParse] = useState<string[]>([]);
   const [refStudyValue, setRefStudyValue] = useState<string | null>(null);

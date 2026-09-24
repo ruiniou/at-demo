@@ -42,6 +42,7 @@ export interface UploadCardProps {
   uploadProgress?: number;
   existingEvents?: ExistingEventOption[];
   existingFileOptions?: string[]; // for backwards compatibility
+  disabled?: boolean;
   
   // Callbacks for integration
   onStatusChange?: (status: UploadStatus) => void;
@@ -62,6 +63,7 @@ export function UploadCard({
   uploadProgress = 45,
   existingEvents = [],
   existingFileOptions = [],
+  disabled = false,
   onStatusChange,
   onFileSelect,
 }: UploadCardProps) {
@@ -114,6 +116,7 @@ export function UploadCard({
 
   // Simulated upload progress
   const handleStartUpload = () => {
+    if (disabled) return;
     setIsUploading(true);
     setLocalProgress(0);
   };
@@ -143,6 +146,7 @@ export function UploadCard({
 
   // Mode switching (SegmentedControl toggle)
   const handleModeChange = (newModeStr: string) => {
+    if (disabled) return;
     const newMode = newModeStr === "1" ? "existing" : "upload";
     setMode(newMode);
 
@@ -173,6 +177,7 @@ export function UploadCard({
 
   // Picking a new existing event
   const handleSelectEvent = (evt: ExistingEventOption) => {
+    if (disabled) return;
     // Selecting an event clears the other side (uploadFile = null)
     setLinkedEvent(evt);
     setUploadFile(null);
@@ -184,6 +189,7 @@ export function UploadCard({
 
   // Clear or remove in Upload mode
   const handleClearUpload = () => {
+    if (disabled) return;
     setUploadFile(null);
     onStatusChange?.("pending");
     onFileSelect?.("", "");
@@ -191,6 +197,7 @@ export function UploadCard({
 
   // Clear or replace in Existing mode (clears linkedEvent, stays in Existing, opens dropdown)
   const handleClearOrChangeExisting = () => {
+    if (disabled) return;
     setLinkedEvent(null);
     setDropdownOpen(true);
     setSearchQuery("");
@@ -236,6 +243,7 @@ export function UploadCard({
             </div>
             <button
               type="button"
+              disabled={disabled}
               onClick={handleClearOrChangeExisting}
               className="relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 after:content-[''] after:absolute after:-inset-[8px] cursor-pointer"
               title="Replace or clear selection"
@@ -253,6 +261,7 @@ export function UploadCard({
         <div className="relative flex flex-col gap-[2px]">
           <button
             type="button"
+            disabled={disabled}
             onClick={() => setDropdownOpen(!dropdownOpen)}
             className={`flex h-[36px] items-center justify-between rounded-[4px] border bg-white pl-[12px] pr-[10px] transition-[border-color,box-shadow,background-color] cursor-pointer ${
               dropdownOpen ? "border-brand-1 shadow-[0px_0px_0px_2px_var(--color-az-secondary)]" : "border-graphite-10 hover:border-graphite-50"
@@ -286,6 +295,7 @@ export function UploadCard({
                         <button
                           key={`${evt.eventName}-${evt.fileName}`}
                           type="button"
+                          disabled={disabled}
                           onClick={() => handleSelectEvent(evt)}
                           className={`flex items-center justify-between gap-[8px] rounded-[4px] px-[8px] py-[6px] text-left transition-colors cursor-pointer ${
                             isSelected ? "bg-az-secondary text-brand-1" : "hover:bg-bg-panel text-text-primary"
@@ -361,6 +371,7 @@ export function UploadCard({
             </div>
             <button
               type="button"
+              disabled={disabled}
               onClick={handleClearUpload}
               className="relative flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 after:content-[''] after:absolute after:-inset-[8px] cursor-pointer"
               title="Remove file"
@@ -383,7 +394,7 @@ export function UploadCard({
                 <span className="t-small text-text-secondary">{requirementText}</span>
               </div>
             </div>
-            <Button variant="secondary" size="sm" onClick={handleStartUpload}>Upload</Button>
+            <Button variant="secondary" size="sm" disabled={disabled} onClick={handleStartUpload}>Upload</Button>
           </div>
         </div>
       );
@@ -396,16 +407,17 @@ export function UploadCard({
       labelClassName="t-small-medium"
       headerClassName={showSegmented ? "min-h-[24px]" : "min-h-[20px]"}
       required={required}
+      className={disabled ? "pointer-events-none opacity-60" : ""}
       actionButton={
         showSegmented ? (
           <SegmentedControl
             size="sm"
             options={[
-              { label: "Upload", value: "0" }, 
+              { label: "Upload", value: "0", disabled: disabled },
               { 
                 label: "Use Existing", 
                 value: "1",
-                disabled: isUseExistingDisabled,
+                disabled: disabled || isUseExistingDisabled,
                 tooltip: isUseExistingDisabled ? useExistingDisabledReason : undefined,
               }
             ]} 
