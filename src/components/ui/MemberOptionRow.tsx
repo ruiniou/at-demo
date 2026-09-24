@@ -55,7 +55,7 @@ export function MemberOptionRow({
         </span>
       ) : undefined}
       onSelect={onSelect}
-      className={`gap-[8px] rounded-[4px] px-[8px] ${selectionMode === "highlight" && selected ? "bg-az-secondary/60" : ""} ${className}`}
+      className={`h-10 gap-[8px] rounded-[4px] px-[8px] ${selectionMode === "highlight" && selected ? "bg-az-secondary/60" : ""} ${className}`}
     />
   );
 }

@@ -280,7 +280,7 @@ function ProgrammerCell({
               <button
                 type="button"
                 onClick={() => { onSelect(null); setOpen(false); }}
-                className={`flex items-center gap-[8px] px-[8px] py-[6px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
+                className={`flex h-10 items-center gap-[8px] px-[8px] rounded-[4px] w-full text-left transition-colors cursor-pointer ${
                   value === null ? "bg-az-secondary/60 text-brand-1" : "hover:bg-bg-panel text-text-primary"
                 }`}
               >

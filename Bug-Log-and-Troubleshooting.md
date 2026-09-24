@@ -584,3 +584,17 @@
 * **经验教训 (Takeaways)**：
   1. 光学校正必须同时检查组件的全部尺寸，不能只按单一尺寸判断。
   2. 共享组件已能几何居中时，不应添加对所有字号通用的固定像素偏移。
+
+---
+
+### [2026-09-24] 成员选择器 Option Row 内容拥挤
+
+* **现象 (Symptom)**：
+  Event Team Configuration 的 Programmer picker 中，Avatar、姓名、Owner/You 标记、数量及勾选图标纵向拥挤，行高与内容密度不匹配。
+* **根本原因 (Root Cause)**：
+  `MemberOptionRow` 复用了基础文本 Option 的固定 `h-8`，将 20px Avatar 和多项辅助信息压在 32px 行高中；`No Assignee` 又使用独立的 padding 规则，和成员行缺少统一高度。
+* **解决方案 (Solution)**：
+  将共享 `MemberOptionRow` 统一为 40px 行高，并把 Programmer picker 的 `No Assignee` 行同步为 40px，保留原有 8px 横向间距和左右 padding。
+* **经验教训 (Takeaways)**：
+  1. 带 Avatar、Badge 和尾部操作的富 Option 不应直接套用纯文本 Option 的紧凑行高。
+  2. 同一列表中的特殊选项与普通选项必须共享高度和对齐基线。
