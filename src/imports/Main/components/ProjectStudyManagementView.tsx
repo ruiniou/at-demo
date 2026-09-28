@@ -92,8 +92,8 @@ export function OwnerPicker({ value, onSelect, disabled = false, disabledAppeara
 
   return (
     <div className="relative min-w-0">
-      <button ref={buttonRef} type="button" disabled={isDisabled} onClick={() => !isDisabled && setOpen((current) => !current)} aria-haspopup="dialog" aria-expanded={open && !isDisabled} className={`flex h-[32px] w-full min-w-0 items-center gap-[8px] rounded-[4px] border px-[8px] text-left transition-[border-color,box-shadow,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-1/20 ${isDisabled ? 'cursor-not-allowed border-form-border bg-bg-panel' : 'border-form-border bg-white hover:border-graphite-50'}`}>
-        <Avatar name={value || undefined} initials={currentUser?.initials} color={currentUser?.color} level="menu" disabled={isDisabled} />
+      <button ref={buttonRef} type="button" disabled={isDisabled} onClick={() => !isDisabled && setOpen((current) => !current)} aria-haspopup="dialog" aria-expanded={open && !isDisabled} className="flex min-h-[40px] w-full min-w-0 items-center gap-[6px] rounded-[4px] border-0 bg-transparent px-[6px] text-left transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-1/20 disabled:cursor-not-allowed disabled:hover:bg-transparent">
+        <Avatar name={value || undefined} initials={currentUser?.initials} color={currentUser?.color} level="modal" disabled={isDisabled} />
         <span className={`truncate text-[12px] ${isDisabled ? 'text-graphite-40' : value ? 'text-text-primary' : 'text-text-secondary'}`}>{value || 'No Assignee'}</span>
       </button>
       {open && !isDisabled && position && createPortal(
