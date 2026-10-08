@@ -598,3 +598,25 @@
 * **经验教训 (Takeaways)**：
   1. 带 Avatar、Badge 和尾部操作的富 Option 不应直接套用纯文本 Option 的紧凑行高。
   2. 同一列表中的特殊选项与普通选项必须共享高度和对齐基线。
+
+---
+
+### [2026-10-08] Shell 单独显示时 Metadata 面板无法拖到最大宽度
+
+* **现象 (Symptom)**：
+  在宽屏 Shell 视图中拖动 Metadata 左侧分隔线，面板在达到设计上限 640px 前就停止扩展。
+* **根本原因 (Root Cause)**：
+  `metadataMaxWidth` 始终取 `shellPreviewWidth` 与设计上限的较小值。Shell 单独显示时，容器通过 Flexbox 铺满可用区域，但 `shellPreviewWidth` 仍是分屏布局保存的旧尺寸，导致拖拽被提前截断。
+* **解决方案 (Solution)**：
+  Shell 单独显示时改用 `contentAreaWidth` 计算实际可用宽度；分屏时继续使用 `shellPreviewWidth`。同步更新宽度收缩时的钳制逻辑，保留 640px 设计上限。
+* **经验教训 (Takeaways)**：
+面板在不同布局模式下应使用对应的实际容器宽度计算拖拽边界，不应把分屏保存值用于铺满模式。
+
+---
+
+### [2026-10-08] Metadata Changes 计数 Badge 数字偏离中心
+
+* **现象 (Symptom)**：16px 计数 Badge 内的数字视觉上没有居中。
+* **根本原因 (Root Cause)**：Badge 固定高度 16px，同时设置了上下 `py-px`；内部又嵌套 `leading-[0]` 容器与 `leading-[14px]` 段落，文字行盒在有限空间内受到挤压。
+* **解决方案 (Solution)**：移除多余的内部容器与垂直内边距，让数字直接由 Badge 的 Flexbox 居中，并统一为 `leading-none`。
+* **经验教训 (Takeaways)**：小尺寸计数标记应只保留一层行盒和一套居中规则，避免固定高度、内边距与嵌套行高相互冲突。

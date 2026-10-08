@@ -5,6 +5,8 @@ export interface OptionLabelProps {
   label: string;
   sub?: string;
   description?: string;
+  truncateDescription?: boolean;
+  showLabelTitle?: boolean;
   selected?: boolean;
   disabled?: boolean;
   type?: "single" | "multi" | "highlight";
@@ -15,13 +17,15 @@ export interface OptionLabelProps {
 }
 
 /** Existing 32px option row; description is opt-in and may grow past 48px. */
-export function OptionLabel({ label, sub, description, selected = false, disabled = false,
+export function OptionLabel({ label, sub, description, truncateDescription = false, showLabelTitle = true, selected = false, disabled = false,
   type = "single", leading, trailing, onClick, className = "" }: OptionLabelProps) {
   return (
     <OptionRow
       label={label}
       sub={sub}
       description={description}
+      truncateDescription={truncateDescription}
+      showLabelTitle={showLabelTitle}
       selected={selected}
       disabled={disabled}
       selectionMode={type}

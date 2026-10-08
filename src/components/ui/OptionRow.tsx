@@ -7,6 +7,8 @@ export interface OptionRowProps {
   label: string;
   sub?: string;
   description?: string;
+  truncateDescription?: boolean;
+  showLabelTitle?: boolean;
   selected?: boolean;
   disabled?: boolean;
   selectionMode?: "single" | "multi" | "highlight";
@@ -21,6 +23,8 @@ export function OptionRow({
   label,
   sub,
   description,
+  truncateDescription = false,
+  showLabelTitle = true,
   selected = false,
   disabled = false,
   selectionMode = "single",
@@ -52,9 +56,9 @@ export function OptionRow({
       )}
       {leading && <span className="inline-flex shrink-0 items-center">{leading}</span>}
       <span className="min-w-0 flex-1 text-[12px] font-normal leading-[18px]">
-        <span title={label} className="block truncate">{label}</span>
+        <span title={showLabelTitle ? label : undefined} className="block truncate">{label}</span>
         {description && (
-          <span className={`block whitespace-normal ${disabled ? "text-graphite-40" : "text-text-secondary"}`}>
+          <span className={`block ${truncateDescription ? "truncate" : "whitespace-normal"} ${disabled ? "text-graphite-40" : "text-text-secondary"}`}>
             {description}
           </span>
         )}

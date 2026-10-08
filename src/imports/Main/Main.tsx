@@ -113,6 +113,7 @@ import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 import groupIconUrl from "../../icons/group.svg";
 import { GroupCodePanel, type GroupCodeItem } from "../../components/ui/GroupCodePanel";
 import { AssigneeOccupancyButton } from "./components/AssigneeOccupancyButton";
+import { ReferenceCaseField, REFERENCE_CASES, CURRENT_STUDY_ID, referenceDiffValue, type ReferenceCase } from "./components/ReferenceCaseField";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -126,6 +127,10 @@ export interface MetaDiffItem {
   label: string;
   oldValue: string;
   newValue: string;
+  referenceChange?: {
+    oldReference: ReferenceCase | null;
+    newReference: ReferenceCase | null;
+  };
 }
 
 export const MOCK_GROUP_CODES: Record<string, GroupCodeItem[]> = {
@@ -6893,9 +6898,11 @@ function ListingShellPreview({
             <div className="shrink-0 h-full p-[4px] relative z-20" style={{ width: `${metadataWidth}px` }}>
               <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
                 <MetadataPanel
+                  key={selectedItemName}
                   onClose={onCloseMetadata}
                   isLocked={isLocked}
                   docType="listing"
+                  currentTflTitle={selectedItemName}
                   frozenUntilIndex={frozenUntilIndex}
                   pageSepActive={pageSepActive}
                   pageColumnCounts={pageColumnCounts}
@@ -7837,7 +7844,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
-              <MetadataPanel onClose={onMetadataClose} docType={docType} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} onMetaCancel={onMetaCancel} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
+              <MetadataPanel key={selectedItemName} onClose={onMetadataClose} docType={docType} currentTflTitle={selectedItemName} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} onMetaCancel={onMetaCancel} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
             </div>
           )}
         </div>
@@ -8962,6 +8969,7 @@ interface MetadataPanelProps {
   onClose: () => void;
   isLocked?: boolean;
   docType?: string;
+  currentTflTitle?: string;
   frozenUntilIndex?: number | null;
   pageSepActive?: boolean;
   pageColumnCounts?: Record<string, number>;
@@ -9087,7 +9095,7 @@ const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
 ];
 
 function MetadataPanel({
-  onClose, docType = 'table', isLocked, frozenUntilIndex, pageSepActive, pageColumnCounts = {},
+  onClose, docType = 'table', currentTflTitle = '', isLocked, frozenUntilIndex, pageSepActive, pageColumnCounts = {},
   pageBreakColumns = [], columnCount = 11,
   repeatColumnBaseline = null, onRepeatColumnBaselineChange,
   pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
@@ -9116,6 +9124,26 @@ function MetadataPanel({
   const setFigureComponents = propsSetFigureComponents || setInternalFigureComponents;
 
   const loadFromSession = <T,>(key: string, fallback: T): T => { try { const raw = sessionStorage.getItem(key); return raw ? (JSON.parse(raw) as T) : fallback; } catch { return fallback; } };
+
+  const referenceKind = docType === 'listing' ? 'listing' : 'table';
+  const currentTflId = currentTflTitle.match(/^\d+(?:\.\d+)+/)?.[0];
+  const referenceStorageKey = `metadataReferenceCase_${currentTflId || referenceKind}`;
+  const [selectedReference, setSelectedReference] = useState<ReferenceCase | null>(() => {
+    const savedId = loadFromSession<string | null>(referenceStorageKey, null);
+    return REFERENCE_CASES.find(reference => reference.id === savedId && reference.tflId !== currentTflId)
+      ?? REFERENCE_CASES.find(reference => reference.kind === referenceKind && reference.studyId === CURRENT_STUDY_ID && reference.tflId !== currentTflId)
+      ?? null;
+  });
+  const [referenceBaseline, setReferenceBaseline] = useState<ReferenceCase | null>(() => {
+    const savedId = loadFromSession<string | null>(`${referenceStorageKey}_baseline`, null);
+    return REFERENCE_CASES.find(reference => reference.id === savedId) ?? selectedReference;
+  });
+  useEffect(() => {
+    sessionStorage.setItem(referenceStorageKey, JSON.stringify(selectedReference?.id ?? null));
+  }, [referenceStorageKey, selectedReference]);
+  useEffect(() => {
+    sessionStorage.setItem(`${referenceStorageKey}_baseline`, JSON.stringify(referenceBaseline?.id ?? null));
+  }, [referenceStorageKey, referenceBaseline]);
 
   const migrateFields = (stored: any[]): any[] => {
     return stored.map(f => {
@@ -9355,6 +9383,19 @@ function MetadataPanel({
 
   const metaDiffItems = useMemo<MetaDiffItem[]>(() => {
     const items: MetaDiffItem[] = [];
+
+    if (docType !== 'figure' && selectedReference?.id !== referenceBaseline?.id) {
+      items.push({
+        fieldId: 'referenceCase',
+        label: 'Reference',
+        oldValue: referenceDiffValue(referenceBaseline),
+        newValue: referenceDiffValue(selectedReference),
+        referenceChange: { oldReference: referenceBaseline, newReference: selectedReference },
+        blockId: 'referenceCase',
+        blockName: docType === 'listing' ? 'Basic Info' : 'Basic Information',
+        changeType: 'modified',
+      });
+    }
 
     if (docType === 'figure') {
       // 1. Basic Block Field Edits (skip tag fields)
@@ -9625,7 +9666,7 @@ function MetadataPanel({
     docType,
     figureBlocks, figureComponents, figureFieldBaseline, figureComponentDeprecatedBaseline, figureComponentListBaseline,
     listingBlocks, listingColumnFields, listingFieldBaseline, isRepeatColumnEdited, isPageBreakColumnEdited, repeatColumnBaseline, frozenUntilIndex, pageBreakColumnBaseline, pageBreakColumns,
-    blocks, selectedGroupIdx, tableBlocks, tableFieldBaseline
+    blocks, selectedGroupIdx, tableBlocks, tableFieldBaseline, selectedReference, referenceBaseline
   ]);
 
   const newDiffItems = useMemo<MetaDiffItem[]>(() => {
@@ -9685,6 +9726,9 @@ function MetadataPanel({
   const [lastBaselineTrigger, setLastBaselineTrigger] = useState(0);
   useEffect(() => {
     if (baselineAdvanceTrigger && baselineAdvanceTrigger > lastBaselineTrigger) {
+      if (submittedDiffItems.some(sub => sub.fieldId === 'referenceCase')) {
+        setReferenceBaseline(selectedReference);
+      }
       if (docType === 'table') {
         setTableFieldBaseline(prev => {
           const updated = { ...prev };
@@ -9797,7 +9841,7 @@ function MetadataPanel({
 
       setLastBaselineTrigger(baselineAdvanceTrigger);
     }
-  }, [baselineAdvanceTrigger, submittedDiffItems, docType, figureComponents, lastBaselineTrigger]);
+  }, [baselineAdvanceTrigger, submittedDiffItems, docType, figureComponents, lastBaselineTrigger, selectedReference]);
 
   const reviewItems = useMemo<ReviewItem[]>(() => {
     const items: ReviewItem[] = [];
@@ -10381,6 +10425,15 @@ function MetadataPanel({
       <div className={`min-h-0 flex-1 ${activeTab === "blocks" && !showPanelDiff ? 'flex flex-col' : 'overflow-auto p-[4px]'}`}>
         {activeTab === "basic" && (
           <div className="flex flex-col gap-[4px]">
+            {docType !== 'figure' && !showPanelDiff && (
+              <ReferenceCaseField
+                value={selectedReference}
+                disabled={isLocked}
+                kind={referenceKind}
+                currentTflId={currentTflId}
+                onChange={setSelectedReference}
+              />
+            )}
             {docType === 'listing' ? (
               // Listing Basic Tab
               showPanelDiff ? (
@@ -12040,8 +12093,12 @@ function WorkspaceContent({
     aiCopilot: { min: 300, max: 1000 },
   };
 
-  // Dynamic metadata max: can't exceed Shell width (no fixed deduction)
-  const metadataMaxWidth = Math.min(constraints.metadata.max, shellPreviewWidth);
+  // Shell-only mode flexes to the available area; shellPreviewWidth is only
+  // the saved width for split layouts and can be smaller than the rendered shell.
+  const renderedShellWidth = panelView === 'shell' && contentAreaWidth > 0
+    ? contentAreaWidth - 12 // content area horizontal padding
+    : shellPreviewWidth;
+  const metadataMaxWidth = Math.max(constraints.metadata.min, Math.min(constraints.metadata.max, renderedShellWidth));
 
   // ── Dynamic panel max widths: prevent panels from pushing others off-screen ──
   const DIVIDER_W = 1;
@@ -12080,11 +12137,11 @@ function WorkspaceContent({
 
   // Clamp metadata width if shell shrinks below metadata
   useEffect(() => {
-    const maxAllowed = Math.min(constraints.metadata.max, shellPreviewWidth);
+    const maxAllowed = metadataMaxWidth;
     if (metadataWidth > maxAllowed) {
-      setMetadataWidth(Math.max(constraints.metadata.min, maxAllowed));
+      setMetadataWidth(maxAllowed);
     }
-  }, [shellPreviewWidth, panelView]);
+  }, [metadataMaxWidth, metadataWidth]);
 
   // Measure content area dimensions via ResizeObserver
   useEffect(() => {

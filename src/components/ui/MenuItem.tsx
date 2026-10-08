@@ -3,7 +3,7 @@ import React, { forwardRef } from "react";
 export interface MenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   danger?: boolean;
   icon?: React.ReactNode;
-  shortcut?: string;
+  shortcut?: React.ReactNode;
 }
 
 /** Action semantics are separate from selectable OptionLabel rows. */
