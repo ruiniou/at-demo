@@ -9138,6 +9138,11 @@ function MetadataPanel({
     const savedId = loadFromSession<string | null>(`${referenceStorageKey}_baseline`, null);
     return REFERENCE_CASES.find(reference => reference.id === savedId) ?? selectedReference;
   });
+  const [referenceConfirmed, setReferenceConfirmed] = useState(false);
+  const handleReferenceChange = (reference: ReferenceCase) => {
+    setSelectedReference(reference);
+    setReferenceConfirmed(false);
+  };
   useEffect(() => {
     sessionStorage.setItem(referenceStorageKey, JSON.stringify(selectedReference?.id ?? null));
   }, [referenceStorageKey, selectedReference]);
@@ -10104,18 +10109,18 @@ function MetadataPanel({
   const isBasicTab = activeTab === 'basic';
   
   // Table stats
-  const basicTotalFields = blocks.reduce((s, b) => s + b.fields.length, 0) + 1;
-  const basicConfirmedCount = blocks.reduce((s, b) => s + b.fields.filter(f => f.confirmed).length, 0) + (groupConfirmed ? 1 : 0);
+  const basicTotalFields = blocks.reduce((s, b) => s + b.fields.length, 0) + 2;
+  const basicConfirmedCount = blocks.reduce((s, b) => s + b.fields.filter(f => f.confirmed).length, 0) + (groupConfirmed ? 1 : 0) + (referenceConfirmed ? 1 : 0);
   const blocksTotalFields = METADATA_BLOCK_ITEMS_DATA.reduce((sum, b) => sum + b.fields.length, 0);
   const blocksConfirmedCount = METADATA_BLOCK_ITEMS_DATA.reduce((sum, b) => sum + b.fields.filter(f => blockItemConfirmed[`${b.id}_${f.id}`]).length, 0);
 
   // Listing stats
-  const listingTotalFields = listingBlocks.reduce((s, b) => s + b.fields.length, 0);
+  const listingTotalFields = listingBlocks.reduce((s, b) => s + b.fields.length, 0) + 1;
   const listingConfirmedCount = listingBlocks.reduce((s, b) => s + b.fields.filter(f => {
     if (f.id === 'idlist') return !isRepeatColumnEdited && f.confirmed;
     if (f.id === 'idpage') return !isPageBreakColumnEdited && f.confirmed;
     return f.confirmed;
-  }).length, 0);
+  }).length, 0) + (referenceConfirmed ? 1 : 0);
   const listingColumnTotalFields = listingColumnFields.length;
   const listingColumnConfirmedCount = listingColumnFields.filter(f => f.confirmed).length;
 
@@ -10214,6 +10219,7 @@ function MetadataPanel({
     const confirm = selectAllState === 'empty' || selectAllState === 'indeterminate';
     if (docType === 'listing') {
       if (isBasicTab) {
+        setReferenceConfirmed(confirm);
         if (confirm) {
           if (isRepeatColumnEdited) {
             onRepeatColumnBaselineChange?.({ frozenUntilIndex: frozenUntilIndex ?? null });
@@ -10243,6 +10249,7 @@ function MetadataPanel({
       }
     } else {
       if (isBasicTab) {
+        setReferenceConfirmed(confirm);
         if (groupStatus !== 'edited') setGroupConfirmed(confirm);
         setBlocks(prev => prev.map(b => ({ ...b, fields: b.fields.map(f => ({ ...f, confirmed: confirm })) })));
       } else {
@@ -10429,9 +10436,12 @@ function MetadataPanel({
               <ReferenceCaseField
                 value={selectedReference}
                 disabled={isLocked}
+                confirmed={referenceConfirmed}
+                onConfirm={() => setReferenceConfirmed(confirmed => !confirmed)}
+                confirmIcon={<SvgIcon className="size-4" viewBox="0 0 20 20">{fieldCheckboxIcon(referenceConfirmed)}</SvgIcon>}
                 kind={referenceKind}
                 currentTflId={currentTflId}
-                onChange={setSelectedReference}
+                onChange={handleReferenceChange}
               />
             )}
             {docType === 'listing' ? (

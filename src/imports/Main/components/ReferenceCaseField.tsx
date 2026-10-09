@@ -104,12 +104,15 @@ function ReferenceNavigationRow({ children, description, trailing, label, render
 interface ReferenceCaseFieldProps {
   value: ReferenceCase | null;
   disabled?: boolean;
+  confirmed: boolean;
+  onConfirm: () => void;
+  confirmIcon: React.ReactNode;
   kind: 'table' | 'listing';
   currentTflId?: string;
   onChange: (reference: ReferenceCase) => void;
 }
 
-export function ReferenceCaseField({ value, disabled, kind, currentTflId, onChange }: ReferenceCaseFieldProps) {
+export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, confirmIcon, kind, currentTflId, onChange }: ReferenceCaseFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [level, setLevel] = useState<'studies' | 'tfls'>('tfls');
   const [studyId, setStudyId] = useState(CURRENT_STUDY_ID);
@@ -159,7 +162,13 @@ export function ReferenceCaseField({ value, disabled, kind, currentTflId, onChan
 
   return (
     <div id="reference-case-field" className="rounded-[calc(var(--radius-xs)*2)] border border-transparent bg-white p-2">
-      <FormItem label="Reference" labelClassName="t-small" disabled={disabled}>
+      <FormItem label="Reference" labelClassName="t-small" disabled={disabled} actionButton={
+        <button type="button" onClick={onConfirm} disabled={disabled}
+          className={`flex size-4 items-center justify-center ${disabled ? 'cursor-not-allowed opacity-40' : 'hover:bg-bg-panel active:scale-[0.96]'}`}
+          aria-label={confirmed ? 'Unconfirm Reference' : 'Confirm Reference'} aria-pressed={confirmed}>
+          {confirmIcon}
+        </button>
+      }>
         <button ref={triggerRef} type="button" disabled={disabled}
             aria-haspopup="dialog" aria-expanded={isOpen && !disabled}
             aria-controls={isOpen && !disabled ? popoverId : undefined}
