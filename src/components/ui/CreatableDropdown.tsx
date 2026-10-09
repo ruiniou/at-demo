@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import arrowIconUrl from "../../icons/arrow-down-s-line.svg";
 import { FormItem } from "./FormItem";
 import { SearchBar } from "./SearchBar";
+import { DropdownEmpty } from "./DropdownParts";
 import { Badge } from "./Badge";
 
 export type CreatableOption = {
@@ -207,9 +208,7 @@ export function CreatableDropdown({
                   );
                 })
               ) : !canCreateNew ? (
-                <div className="px-[8px] py-[10px] text-center t-small text-text-secondary">
-                  No results found.
-                </div>
+                <DropdownEmpty />
               ) : null}
             </div>
           </div>

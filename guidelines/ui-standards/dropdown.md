@@ -23,6 +23,7 @@
 - Danger: status-error text/icon, existing shallow status-error-bg hover/pressed fill. Always retain explicit action text.
 - Normal option appearance, group labels and member content are retained. Do not add emails or descriptions simply because the component supports them.
 - Multi-select rows remain on the default surface when checked. Selection is communicated by CheckboxIndicator only; apply the row background on hover, not as a persistent selected fill.
+- Search-filtered dropdown lists use `DropdownEmpty` with `No Results Found` when there are no matches. Keep its shared typography, secondary text color, and padding across list levels.
 - A checked or mixed disabled CheckboxIndicator keeps the same outline geometry as its enabled state and uses `graphite-40` for both fill and outline; the check or mixed mark stays white (`--color-white`).
 
 ## Behavior and semantics
@@ -39,6 +40,7 @@
 - Action menus and selection dropdowns share an 8px outer surface and 4px interactive option corners. Component defaults own the shape; do not introduce different radius scales for menu semantics versus selection semantics. Global radius tokens are unchanged.
 - Compact menu lists use 4px surface padding, approximately matching outer radius = inner radius + inset. Include borders in visual checks. Composite filter panels, table grids and large modal content retain their own spacing; do not mechanically apply this equation across headers or large whitespace.
 - `SearchBar` owns its shape through `variant="default" | "embedded"`, independently of `size="default" | "compact"`. Use the variant rather than overriding radius through a caller's `className`.
+- Search clear icon buttons use `text-text-secondary` in both default and embedded searches, including custom search fields with filter chips. Render monochrome SVG assets through a `currentColor` mask; keep the icon color secondary on hover.
 - The default variant retains the existing 8px outer / 6px inner shape. The embedded variant uses 4px outer / 2px inner corners with the existing 2px inset. Search heights remain 36px by default and 32px for compact.
 - These values reference existing theme tokens: `rounded-md` / `rounded-sm` resolve to 8px / 6px in the current theme; `--radius-xs` is 2px. Use `rounded-[calc(var(--radius-xs)*2)]` for changed 4px corners and `rounded-xs` for the embedded search interior. Do not confuse these runtime names with the differently named primitives in `guidelines/Style/radius.json`.
 - Use embedded search inside dropdowns and tightly grouped form/toolbars: `CreatableDropdown` (both Project Code and Study Code), `UploadCard`, the active inline variable dropdown, `MemberSingleSelect` owner search and Event Team assignment/member searches. Existing native people/code searches already using 4px remain in place without a component rewrite.

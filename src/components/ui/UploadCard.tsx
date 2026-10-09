@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "./Button";
 import { SegmentedControl } from "./SegmentedControl";
 import { SearchBar } from "./SearchBar";
+import { DropdownEmpty } from "./DropdownParts";
 import { Tooltip } from "./Tooltip";
 import { FormItem } from "./FormItem";
 import { Badge } from "./Badge";
@@ -324,9 +325,7 @@ export function UploadCard({
                       );
                     })
                   ) : (
-                    <div className="px-[8px] py-[14px] text-center t-small text-text-secondary">
-                      No results found.
-                    </div>
+                    <DropdownEmpty />
                   )}
                 </div>
               </div>

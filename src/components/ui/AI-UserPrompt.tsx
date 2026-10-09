@@ -5,6 +5,7 @@ import fileInfoLineUrl from "../../icons/file-info-line.svg";
 import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 import type { AttachmentItem } from "../../imports/Main/components/ChatBox";
 import { ImagePreviewModal } from "./ImagePreviewModal";
+import type { ReferenceCase } from "../../imports/Main/components/ReferenceCaseField";
 
 export type MetaChangeType = 'modified' | 'added' | 'removed';
 
@@ -13,6 +14,7 @@ export interface MetaDiffItem {
   label: string;
   oldValue: string;
   newValue: string;
+  referenceChange?: { oldReference: ReferenceCase | null; newReference: ReferenceCase | null };
   blockId?: string;
   blockName?: string;
   changeType?: MetaChangeType;
@@ -293,11 +295,25 @@ export function AIUserPrompt({
                               <span className="text-[11px] font-medium text-text-secondary leading-[14px]">
                                 {diff.label}
                               </span>
-                              <div className="text-[12px] leading-[16px] break-words whitespace-pre-wrap text-text-primary">
+                              {diff.referenceChange ? (
+                                <div className="flex flex-col gap-[4px] text-[12px] leading-[16px]">
+                                  {([
+                                    [diff.referenceChange.oldReference, false],
+                                    [diff.referenceChange.newReference, true],
+                                  ] as const).map(([reference, isNew]) => (
+                                    <div key={isNew ? 'new' : 'old'} className="flex flex-col min-w-0" aria-label={isNew ? 'New Reference' : 'Previous Reference'}>
+                                      <span className={`break-words ${isNew ? 'font-medium text-brand-1' : 'text-text-secondary line-through'}`}>
+                                        {reference ? `${reference.tflId} ${reference.tflTitle}` : 'No Reference'}
+                                      </span>
+                                      {reference && <span className="t-footnote text-text-secondary break-words">{reference.studyId} / {reference.eventTitle}</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : <div className="text-[12px] leading-[16px] break-words whitespace-pre-wrap text-text-primary">
                                 <span className="text-text-secondary line-through mr-[4px]">{oldVal}</span>
                                 <span className="text-text-secondary mr-[4px]">→</span>
                                 <span className="font-medium text-brand-1">{newVal}</span>
-                              </div>
+                              </div>}
                             </div>
                           );
                         })}

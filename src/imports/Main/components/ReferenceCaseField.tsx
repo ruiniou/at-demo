@@ -114,8 +114,9 @@ interface ReferenceCaseFieldProps {
 
 export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, confirmIcon, kind, currentTflId, onChange }: ReferenceCaseFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [level, setLevel] = useState<'studies' | 'tfls'>('tfls');
+  const [level, setLevel] = useState<'studies' | 'events' | 'tfls'>('studies');
   const [studyId, setStudyId] = useState(CURRENT_STUDY_ID);
+  const [eventId, setEventId] = useState('');
   const [query, setQuery] = useState('');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverId = useId();
@@ -131,14 +132,21 @@ export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, conf
   const visibleStudies = studies.filter(([id, title]) =>
     `${id} ${title}`.toLowerCase().includes(normalizedQuery)
   );
+  const events = useMemo(() => Array.from(new Map(available.filter(reference => reference.studyId === studyId).map(reference =>
+    [reference.eventId, reference.eventTitle] as const
+  )).entries()), [available, studyId]);
+  const visibleEvents = events.filter(([, title]) => title.toLowerCase().includes(normalizedQuery));
+  const studyTflMatches = normalizedQuery ? available.filter(reference =>
+    reference.studyId === studyId && `${reference.tflId} ${reference.tflTitle}`.toLowerCase().includes(normalizedQuery)
+  ) : [];
   const visibleTfls = available.filter(reference =>
-    reference.studyId === studyId &&
-    `${reference.tflId} ${reference.tflTitle} ${reference.eventTitle}`.toLowerCase().includes(normalizedQuery)
+    reference.studyId === studyId && reference.eventId === eventId &&
+    `${reference.tflId} ${reference.tflTitle}`.toLowerCase().includes(normalizedQuery)
   );
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (open) { setLevel('tfls'); setStudyId(value?.studyId ?? CURRENT_STUDY_ID); }
+    if (open) { setLevel('studies'); setStudyId(CURRENT_STUDY_ID); setEventId(''); }
     setQuery('');
   };
   const keepSearchFocus = () => document.getElementById(popoverId)?.querySelector('input')?.focus();
@@ -148,12 +156,12 @@ export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, conf
       ? 'border border-brand-1 bg-white shadow-[0px_0px_0px_2px_var(--color-az-secondary)]'
       : 'border border-form-border bg-white hover:border-graphite-50';
 
-  const referenceOption = (reference: ReferenceCase) => (
+  const referenceOption = (reference: ReferenceCase, showEvent = false) => (
       <OptionLabel key={reference.id} label={tflName(reference)}
-        description={reference.eventTitle}
+        description={showEvent ? reference.eventTitle : undefined}
         truncateDescription showLabelTitle={false} selected={reference.id === value?.id}
         className="t-small"
-        renderText={content => <TruncatedTooltip label={<><span className="block">{tflName(reference)}</span><span className="block">{reference.eventTitle}</span></>}>{content}</TruncatedTooltip>}
+        renderText={content => <TruncatedTooltip label={<><span className="block">{tflName(reference)}</span>{showEvent && <span className="block">{reference.eventTitle}</span>}</>}>{content}</TruncatedTooltip>}
         onClick={() => {
           if (reference.id !== value?.id) onChange(reference);
           handleOpenChange(false);
@@ -190,15 +198,15 @@ export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, conf
       <Popover open={isOpen && !disabled} onOpenChange={handleOpenChange} anchorRef={triggerRef}
         id={popoverId} label="Reference" className="flex flex-col gap-1">
         <div className="sticky top-0 z-10 bg-white">
-          <SearchBar value={query} onChange={setQuery} placeholder={level === 'studies' ? 'Search study…' : 'Search TFL or event…'} size="compact" variant="embedded" autoFocus />
+          <SearchBar value={query} onChange={setQuery} placeholder={level === 'studies' ? 'Search study…' : level === 'events' ? 'Search event or TFL…' : 'Search TFL…'} size="compact" variant="embedded" autoFocus />
         </div>
         {level === 'studies' ? (
           <nav aria-label="Studies" className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
-            {visibleStudies.length === 0 && <DropdownEmpty>No results</DropdownEmpty>}
+            {visibleStudies.length === 0 && <DropdownEmpty />}
             {visibleStudies.map(([id, title], index) => (
               <React.Fragment key={id}>
                 {index === 1 && visibleStudies[0][0] === CURRENT_STUDY_ID && <DropdownSeparator />}
-                  <ReferenceNavigationRow onClick={() => { setStudyId(id); setLevel('tfls'); setQuery(''); keepSearchFocus(); }}
+                  <ReferenceNavigationRow onClick={() => { setStudyId(id); setEventId(''); setLevel('events'); setQuery(''); keepSearchFocus(); }}
                     description={title}
                     renderText={content => <TruncatedTooltip label={<><span className="block">{id}</span><span className="block">{title}</span></>}>{content}</TruncatedTooltip>}
                     trailing={<span aria-hidden="true" className="block size-4 bg-current" style={{ mask: `url("${arrowRightIconUrl}") center / contain no-repeat` }} />}>
@@ -215,19 +223,34 @@ export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, conf
             <div className="sticky top-8 z-10 border-b border-border-default bg-white">
               <div className="flex items-center gap-[6px] pb-[4px] pl-[2px] pr-[8px]">
                 <button type="button" onMouseDown={event => event.preventDefault()}
-                  onClick={() => { setLevel('studies'); setQuery(''); keepSearchFocus(); }}
-                  className="flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-text-secondary hover:bg-bg-panel active:bg-graphite-10 focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1"
-                  aria-label="Back to studies">
+                  onClick={() => { setLevel(level === 'tfls' ? 'events' : 'studies'); setQuery(''); keepSearchFocus(); }}
+                  className="flex size-[24px] shrink-0 items-center justify-center rounded-[calc(var(--radius-xs)*2)] text-text-secondary hover:bg-bg-panel active:bg-graphite-10 focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1"
+                  aria-label={level === 'tfls' ? 'Back to events' : 'Back to studies'}>
                   <span aria-hidden="true" className="size-[16px] bg-current" style={{ mask: `url("${arrowLeftIconUrl}") center / contain no-repeat` }} />
                 </button>
                 <span className="t-small-medium min-w-0 flex-1 truncate text-text-secondary">
-                  {studyId} {studies.find(([id]) => id === studyId)?.[1] ?? ''}
+                  {level === 'events' ? `${studyId} ${studies.find(([id]) => id === studyId)?.[1] ?? ''}` : events.find(([id]) => id === eventId)?.[1] ?? ''}
                 </span>
               </div>
             </div>
-            <OptionList empty={visibleTfls.length === 0} emptyContent="No results" className="max-h-64">
+            {level === 'events' ? (
+              <div className="flex flex-col gap-0.5">
+                {visibleEvents.length === 0 && studyTflMatches.length === 0 && <DropdownEmpty />}
+                {visibleEvents.map(([id, title]) => (
+                  <ReferenceNavigationRow key={id} onClick={() => { setEventId(id); setLevel('tfls'); setQuery(''); keepSearchFocus(); }}
+                    renderText={content => <TruncatedTooltip label={title}>{content}</TruncatedTooltip>}
+                    trailing={<span className="flex shrink-0 items-center gap-1"><span className="t-footnote text-text-secondary">{available.filter(reference => reference.studyId === studyId && reference.eventId === id).length}</span><span aria-hidden="true" className="block size-4 bg-current" style={{ mask: `url("${arrowRightIconUrl}") center / contain no-repeat` }} /></span>}>
+                    {title}
+                  </ReferenceNavigationRow>
+                ))}
+                {visibleEvents.length > 0 && studyTflMatches.length > 0 && <DropdownSeparator />}
+                {studyTflMatches.length > 0 && <OptionList>
+                  {studyTflMatches.map(reference => referenceOption(reference, true))}
+                </OptionList>}
+              </div>
+            ) : <OptionList empty={visibleTfls.length === 0} className="max-h-64">
               {visibleTfls.map(reference => referenceOption(reference))}
-            </OptionList>
+            </OptionList>}
           </>
         )}
       </Popover>

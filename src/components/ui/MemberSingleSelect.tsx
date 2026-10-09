@@ -121,7 +121,6 @@ export function MemberSingleSelect({
         />
         <OptionList
           empty={filteredOptions.length === 0}
-          emptyContent="No matching users"
           className={optionListClassName}
         >
           {filteredOptions.map((option) => (

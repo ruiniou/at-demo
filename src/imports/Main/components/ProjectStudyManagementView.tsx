@@ -102,7 +102,7 @@ export function OwnerPicker({ value, onSelect, disabled = false, disabledAppeara
             <img src={searchIconUrl} alt="" className="h-[13px] w-[13px] opacity-40" />
             <input ref={inputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search people..." className="min-w-0 flex-1 bg-transparent text-[12px] text-text-primary outline-none placeholder:text-text-secondary" />
           </div>
-          <OptionList empty={filteredUsers.length === 0} emptyContent="No matching users" className="max-h-[210px]">
+          <OptionList empty={filteredUsers.length === 0} className="max-h-[210px]">
             {filteredUsers.map((user) => {
               const selected = user.name === value;
               return (

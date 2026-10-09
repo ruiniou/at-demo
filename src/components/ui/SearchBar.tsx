@@ -37,6 +37,7 @@ export function SearchBar({
 
   const hasValue = value.length > 0;
   const searchIconMask = `url("${searchIconUrl}") center / contain no-repeat`;
+  const closeIconMask = `url("${closeIconUrl}") center / contain no-repeat`;
   const outerRadius = variant === "embedded" ? "rounded-[calc(var(--radius-xs)*2)]" : "rounded-md";
   const innerRadius = variant === "embedded" ? "rounded-xs" : "rounded-sm";
 
@@ -100,9 +101,10 @@ export function SearchBar({
           <button
             type="button"
             onClick={handleClear}
-            className="relative flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 after:content-[''] after:absolute after:-inset-[8px]"
+            className="relative flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-[4px] text-text-secondary hover:bg-black/5 after:content-[''] after:absolute after:-inset-[8px]"
+            aria-label="Clear search"
           >
-            <img src={closeIconUrl} alt="" className="h-[16px] w-[16px]" />
+            <span aria-hidden="true" className="h-[16px] w-[16px] bg-current" style={{ mask: closeIconMask, WebkitMask: closeIconMask }} />
           </button>
         )}
       </div>

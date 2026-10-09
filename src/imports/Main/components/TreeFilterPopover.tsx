@@ -1,6 +1,7 @@
 import { Avatar } from "../../../components/ui/Avatar";
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { DropdownEmpty } from "../../../components/ui/DropdownParts";
 import closeIconUrl from "../../../icons/close-line.svg";
 import checkIconUrl from "../../../icons/check-line.svg";
 import lockIconUrl from "../../../icons/Lock.svg";
@@ -271,11 +272,11 @@ export function TreeFilterPopover({
             {selectedAssignees.size > 0 && (
               <button
                 type="button"
-                className="relative shrink-0 size-[16px] flex items-center justify-center rounded-[3px] hover:bg-black/5 cursor-pointer"
+                className="relative shrink-0 size-[16px] flex items-center justify-center rounded-[3px] text-text-secondary hover:bg-black/5 cursor-pointer"
                 onClick={onClearAssignees}
                 title="Clear assignees"
               >
-                <img src={closeIconUrl} alt="" className="size-[10px] opacity-70" />
+                <span aria-hidden="true" className="size-[10px] bg-current" style={{ mask: `url("${closeIconUrl}") center / contain no-repeat` }} />
               </button>
             )}
           </div>
@@ -318,9 +319,7 @@ export function TreeFilterPopover({
             );
           })}
           {filteredAssignees.length === 0 && (
-            <p className="text-[11px] text-text-secondary px-[8px] py-[4px]">
-              No members found
-            </p>
+            <DropdownEmpty />
           )}
         </div>
       </div>

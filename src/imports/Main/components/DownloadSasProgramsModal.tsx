@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Checkbox } from "../../../components/ui/Checkbox";
 import { Button } from "../../../components/ui/Button";
 import { SearchBar } from "../../../components/ui/SearchBar";
+import { DropdownEmpty } from "../../../components/ui/DropdownParts";
 import { FilterChip } from "../../../components/ui/FilterChip";
 import { Tooltip } from "../../../components/ui/Tooltip";
 import closeIconUrl from "../../../icons/close-line.svg";
@@ -369,11 +370,11 @@ function OwnerDropdown({ allOwners, selectedOwners, onChange }: OwnerDropdownPro
                 {isActive && (
                   <button
                     type="button"
-                    className="relative shrink-0 size-[20px] flex items-center justify-center rounded-[4px] hover:bg-black/5"
+                    className="relative shrink-0 size-[20px] flex items-center justify-center rounded-[4px] text-text-secondary hover:bg-black/5"
                     onClick={clearAll}
                     title="Clear all"
                   >
-                    <img src={closeIconUrl} alt="" className="size-[12px] opacity-70" />
+                    <span aria-hidden="true" className="size-[12px] bg-current" style={{ mask: `url("${closeIconUrl}") center / contain no-repeat` }} />
                   </button>
                 )}
               </div>
@@ -413,9 +414,7 @@ function OwnerDropdown({ allOwners, selectedOwners, onChange }: OwnerDropdownPro
               );
             })}
             {filteredOptions.length === 0 && (
-              <p className="t-small text-text-secondary px-[8px] py-[6px]">
-                No results
-              </p>
+              <DropdownEmpty />
             )}
           </div>
         </div>

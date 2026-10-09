@@ -512,7 +512,7 @@ export function VariableSpecPicker({
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-[6px] top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary size-[16px] flex items-center justify-center cursor-pointer"
+                  className="absolute right-[6px] top-1/2 -translate-y-1/2 text-text-secondary size-[16px] flex items-center justify-center cursor-pointer"
                   title="Clear search"
                 >
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

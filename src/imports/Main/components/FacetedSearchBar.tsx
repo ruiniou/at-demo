@@ -222,10 +222,10 @@ export function FacetedSearchBar({
               onSearchQueryChange("");
               inputRef.current?.focus();
             }}
-            className="size-[20px] shrink-0 flex items-center justify-center rounded-[4px] hover:bg-black/5 opacity-60 hover:opacity-100 cursor-pointer mr-[1px]"
+            className="size-[20px] shrink-0 flex items-center justify-center rounded-[4px] text-text-secondary hover:bg-black/5 cursor-pointer mr-[1px]"
             title="Clear all"
           >
-            <img src={closeIconUrl} alt="" className="size-[12px]" />
+            <span aria-hidden="true" className="size-[12px] bg-current" style={{ mask: `url("${closeIconUrl}") center / contain no-repeat` }} />
           </button>
         )}
       </div>

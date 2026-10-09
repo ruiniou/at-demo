@@ -6,6 +6,6 @@ export function DropdownGroupLabel({ children }: { children: React.ReactNode }) 
 export function DropdownSeparator() {
   return <div role="separator" className="my-1 border-t border-border-default" />;
 }
-export function DropdownEmpty({ children = "No results" }: { children?: React.ReactNode }) {
+export function DropdownEmpty({ children = "No Results Found" }: { children?: React.ReactNode }) {
   return <div role="status" className="px-2 py-1.5 text-[12px] text-text-secondary">{children}</div>;
 }

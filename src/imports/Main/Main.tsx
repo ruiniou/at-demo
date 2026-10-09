@@ -714,6 +714,7 @@ function MetadataEntryBlock({
   inferredCount = 4,
   onOpen,
   isOutdated = false,
+  description: descriptionOverride,
 }: {
   variant: 'conflict' | 'updated';
   count?: number;
@@ -721,11 +722,11 @@ function MetadataEntryBlock({
   inferredCount?: number;
   onOpen?: () => void;
   isOutdated?: boolean;
+  description?: string;
 }) {
-  const description =
-    variant === 'conflict'
+  const description = descriptionOverride ?? (variant === 'conflict'
       ? 'Some inferred metadata fields may not align with SAP specifications. Verify before proceeding.'
-      : 'Metadata has been updated with new fields for the added Component.';
+      : 'Metadata has been updated with new fields for the added Component.');
 
   const formattedConflicts = formatCount(conflictsCount);
   const formattedInferred = formatCount(inferredCount);
@@ -1216,6 +1217,7 @@ type Message = {
   answers?: { q: string; a: string }[];
   isSkipped?: boolean;
   metaDiffItems?: MetaDiffItem[];
+  referenceChange?: { oldReference: ReferenceCase | null; newReference: ReferenceCase | null };
   isProcessing?: boolean;
   /** Images submitted alongside the user message */
   attachments?: AttachmentItem[];
@@ -2420,7 +2422,26 @@ function ChatConversation({
             )}
             {(msg.type === 'ai_update_complete' || msg.type === 'ai_update_accepted') && (
               <div className="flex flex-col gap-[12px] w-full relative">
-                <div className="flex flex-col w-full relative gap-[8px]">
+                {msg.referenceChange ? (
+                  <div className="flex flex-col w-full relative gap-[8px]">
+                    <div className="flex flex-col gap-[4px] px-[10px]">
+                      <p className="t-body text-text-primary leading-relaxed">Reference update ready for review.</p>
+                      <p className="t-small text-text-secondary leading-relaxed">The current TFL was adjusted using {msg.referenceChange.newReference ? `${msg.referenceChange.newReference.tflId} ${msg.referenceChange.newReference.tflTitle}` : 'the selected Reference'}.</p>
+                    </div>
+                    <div className="relative w-full">
+                      <AICodeDiff summary="Code changes ready for review" additions={[]} deletions={[]} />
+                    </div>
+                    <div className="px-[10px]">
+                      <MetadataEntryBlock
+                        variant="updated"
+                        count={1}
+                        description="Review the Reference in Metadata before accepting the pending changes."
+                        onOpen={() => onJumpToMetadata?.('', 'referenceCase')}
+                        isOutdated={isMetadataOutdated}
+                      />
+                    </div>
+                  </div>
+                ) : <div className="flex flex-col w-full relative gap-[8px]">
                   <div className="flex flex-col gap-[4px] px-[10px]">
                     <p className="t-body text-text-primary leading-relaxed">
                       Component added. SAS code has been generated.
@@ -2437,7 +2458,7 @@ function ChatConversation({
                       isOutdated={isMetadataOutdated}
                     />
                   </div>
-                </div>
+                </div>}
               </div>
             )}
 
@@ -3331,10 +3352,13 @@ function AICopilotPanel({
 
   const handleSubmit = (text: string, attachments?: AttachmentItem[]) => {
     const isUpdate = metaUpdateActive && metaDiffItems && metaDiffItems.length > 0;
+    const submittedReferenceChange = isUpdate ? metaDiffItems?.find(diff => diff.fieldId === 'referenceCase')?.referenceChange : undefined;
     if (!text.trim() && !isUpdate && !attachments?.length) return;
     (document.activeElement as HTMLElement)?.blur();
 
-    const userContent = text.trim() ? text : 'Update code based on the metadata changes above.';
+    const userContent = text.trim() ? text : submittedReferenceChange?.newReference
+      ? `Update this TFL using Reference ${submittedReferenceChange.newReference.tflId} ${submittedReferenceChange.newReference.tflTitle}.`
+      : 'Update code based on the metadata changes above.';
 
     if (isEventCopilot) {
       const sessionId = activeEventSession?.id || "event";
@@ -3570,7 +3594,7 @@ function AICopilotPanel({
 
     // Only show metadata review card if the submission includes an 'add component' change
     const hasAddComponent = metaDiffItems?.some(d => d.changeType === 'added' || d.fieldId.startsWith('add_')) || /add|component|新增|添加|create|make|insert|new/i.test(text);
-    const showMetadataReviewCard = isUpdate && hasAddComponent;
+    const showMetadataReviewCard = isUpdate && (hasAddComponent || !!submittedReferenceChange);
 
     setMessages(prev => [...prev, { 
       type: 'user', 
@@ -3593,6 +3617,13 @@ function AICopilotPanel({
 
     setMessages(prev => [...prev, { type: 'ai_thinking' }]);
     setTimeout(() => {
+      if (submittedReferenceChange) {
+        setMessages(prev => prev.map(m => m.type === 'ai_thinking'
+          ? { type: 'ai_update_complete' as const, referenceChange: submittedReferenceChange }
+          : m));
+        setIsPending(false);
+        return;
+      }
       if (docType === 'figure') {
         if (isAddReq) {
           // Adding a component updates Metadata directly, not Code.
@@ -3864,7 +3895,7 @@ function AICopilotPanel({
                   : undefined
               }
               pending={true} 
-              pendingChangesCount={currentTable?.pendingChanges || 3}
+              pendingChangesCount={messages.some(m => m.type === 'ai_update_complete' && m.referenceChange) ? 1 : (currentTable?.pendingChanges || 3)}
               onAcceptPending={handleAcceptPending}
               onRejectPending={handleRejectPending}
               quoteInsertRef={quoteInsertRef}
