@@ -8535,7 +8535,7 @@ function BlocksTabContent({
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       {/* Row 2: Select navigator (left) + Confirm stats (right) */}
-      <div className="shrink-0 flex items-center justify-between px-[12px] py-[8px] border-b border-[#E5E8E8] bg-bg-panel">
+      <div className="h-12 shrink-0 flex items-center justify-between pl-[12px] pr-[24px] py-[8px] border-b border-[#E5E8E8] bg-bg-panel">
         {/* FilterChip dropdown navigator */}
         <div className="flex-1 min-w-0 mr-[12px]">
           {blocks.length > 0 ? (
@@ -8587,7 +8587,7 @@ function BlocksTabContent({
               key={block.id}
               ref={(el) => { sectionRefs.current[block.id] = el; }}
               data-block-id={block.id}
-              className={`pl-[16px] pr-[4px] py-[14px] ${blockIndex !== arr.length - 1 ? 'border-b border-[#E5E8E8]' : ''}`}
+              className={`px-[12px] py-[14px] ${blockIndex !== arr.length - 1 ? 'border-b border-[#E5E8E8]' : ''}`}
             >
               {block.state === 'loading' ? (
                 <div>
@@ -8600,7 +8600,7 @@ function BlocksTabContent({
                 </div>
               ) : (
                 <>
-                  <div className="group relative flex items-center justify-between gap-[8px] min-h-[24px] mb-[12px]">
+                  <div className="group relative flex items-center justify-between gap-[8px] min-h-[24px] mb-[12px] pr-px">
                     <div className="flex items-center gap-[4px] min-w-0 flex-1">
                       <p className="text-[14px] leading-[20px] font-bold text-text-primary break-words m-0">
                         {blockName}
@@ -8659,7 +8659,7 @@ function BlocksTabContent({
                       const effectiveInputType = field.inputType || (field.type === 'tag' ? 'multiselect' : 'input');
 
                       return (
-                        <div key={field.id} ref={el => { if (el && fieldRefs) fieldRefs.current[field.id] = el; }} className="group relative bg-white rounded-[4px] border border-transparent p-[4px]">
+                        <div key={field.id} ref={el => { if (el && fieldRefs) fieldRefs.current[field.id] = el; }} className="group relative bg-white rounded-[4px] border border-transparent py-[4px]">
                           {onQuoteField && (
                             <button
                               onClick={(e) => { e.stopPropagation(); onQuoteField(field.id, field.label, blockName); }}
@@ -9130,7 +9130,7 @@ function MetadataPanel({
   const referenceStorageKey = `metadataReferenceCase_${currentTflId || referenceKind}`;
   const [selectedReference, setSelectedReference] = useState<ReferenceCase | null>(() => {
     const savedId = loadFromSession<string | null>(referenceStorageKey, null);
-    return REFERENCE_CASES.find(reference => reference.id === savedId && reference.tflId !== currentTflId)
+    return REFERENCE_CASES.find(reference => reference.id === savedId && !(reference.studyId === CURRENT_STUDY_ID && reference.tflId === currentTflId))
       ?? REFERENCE_CASES.find(reference => reference.kind === referenceKind && reference.studyId === CURRENT_STUDY_ID && reference.tflId !== currentTflId)
       ?? null;
   });
@@ -10334,7 +10334,7 @@ function MetadataPanel({
             const tabCount = tab === 'basic' ? basicTabDiffCount : componentsTabDiffCount;
             return (
               <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`relative flex h-full items-center justify-center border-b-2 ${isNarrow ? 'px-[8px]' : 'px-[16px]'} active:scale-[0.96] shrink-0 ${activeTab === tab ? "border-brand-1" : "border-transparent"}`}>
+                className={`relative flex h-full items-center justify-center border-b-2 ${tab === 'basic' ? (isNarrow ? 'pl-[12px] pr-[8px]' : 'pl-[12px] pr-[16px]') : (isNarrow ? 'px-[8px]' : 'px-[16px]')} active:scale-[0.96] shrink-0 ${activeTab === tab ? "border-brand-1" : "border-transparent"}`}>
                 <div className="flex items-center gap-[4px]">
                   <p className={`t-small font-medium ${activeTab === tab ? "text-brand-1" : "text-text-primary"} whitespace-nowrap`}>
                     {tab === "basic" ? (docType === 'listing' ? "Basic info" : docType === 'figure' ? "Basic" : (isNarrow ? "Basic" : "Basic Information")) : (docType === 'listing' ? "Column" : docType === 'figure' ? "Components" : "Blocks")}
@@ -10409,14 +10409,14 @@ function MetadataPanel({
 
       {/* Status Bar: Only show for basic tab (blocks tab has its own confirm bar inside BlocksTabContent) */}
       {!showPanelDiff && activeTab === 'basic' && (
-        <div className="flex items-center justify-end bg-bg-panel px-[12px] py-[8px]">
+        <div className="h-12 shrink-0 flex items-center justify-end bg-bg-panel pl-[12px] pr-[24px] py-[8px]">
           <div className="flex items-center gap-[6px]">
+            <p className="t-small text-text-primary">{confirmedCount}/{totalFields} confirmed</p>
             <button onClick={isLocked ? undefined : handleSelectAll} disabled={isLocked}
               className={`flex h-[16px] w-[16px] items-center justify-center ${isLocked ? 'cursor-not-allowed opacity-40' : 'hover:bg-black/5 active:scale-[0.96]'}`}
               aria-label="Select all">
               <SvgIcon className="h-[16px] w-[16px]" viewBox="0 0 20 20">{selectAllCheckboxIcon()}</SvgIcon>
             </button>
-            <p className="t-small text-text-primary">{confirmedCount}/{totalFields} confirmed</p>
           </div>
         </div>
       )}

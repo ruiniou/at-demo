@@ -12,13 +12,14 @@ export interface OptionLabelProps {
   type?: "single" | "multi" | "highlight";
   leading?: React.ReactNode;
   trailing?: React.ReactNode;
+  renderText?: (content: React.ReactNode) => React.ReactNode;
   onClick?: () => void;
   className?: string;
 }
 
 /** Existing 32px option row; description is opt-in and may grow past 48px. */
 export function OptionLabel({ label, sub, description, truncateDescription = false, showLabelTitle = true, selected = false, disabled = false,
-  type = "single", leading, trailing, onClick, className = "" }: OptionLabelProps) {
+  type = "single", leading, trailing, renderText, onClick, className = "" }: OptionLabelProps) {
   return (
     <OptionRow
       label={label}
@@ -31,6 +32,7 @@ export function OptionLabel({ label, sub, description, truncateDescription = fal
       selectionMode={type}
       leading={leading}
       trailing={trailing}
+      renderText={renderText}
       onSelect={onClick}
       className={className}
     />

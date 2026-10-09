@@ -1258,19 +1258,18 @@ export default function ChatBox({
                                   {diff.label}
                                 </span>
                                 {diff.referenceChange ? (
-                                  <div className="flex flex-col gap-2 min-w-0">
+                                  <div className="flex flex-col gap-1 min-w-0">
                                     {([
-                                      ['Previous', diff.referenceChange.oldReference, false],
-                                      ['New', diff.referenceChange.newReference, true],
-                                    ] as const).map(([caption, reference, isNew]) => (
-                                      <div key={caption} className="flex flex-col min-w-0">
-                                        <span className="t-footnote text-text-secondary">{caption}</span>
+                                      [diff.referenceChange.oldReference, false],
+                                      [diff.referenceChange.newReference, true],
+                                    ] as const).map(([reference, isNew]) => (
+                                      <div key={isNew ? 'new' : 'old'} className="flex flex-col min-w-0" aria-label={isNew ? 'New Reference' : 'Previous Reference'}>
                                         <span className={`t-small break-words ${isNew ? 'font-medium text-brand-1' : 'text-text-secondary line-through'}`}>
                                           {reference ? `${reference.tflId} ${reference.tflTitle}` : 'No Reference'}
                                         </span>
                                         {reference && (
                                           <span className="t-footnote text-text-secondary break-words">
-                                            {reference.studyTitle} / {reference.eventTitle}
+                                            {reference.studyId} / {reference.eventTitle}
                                           </span>
                                         )}
                                       </div>
