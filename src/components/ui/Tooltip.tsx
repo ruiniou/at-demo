@@ -28,8 +28,13 @@ export interface TooltipProps {
   zIndex?: number;
   /** Antd placement */
   placement?: "top" | "bottom" | "left" | "right" | "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
+  /** Distance from the anchor for a caller that needs precise placement. */
+  offset?: [number, number];
+  /** Align the tooltip's text inset with the anchor's left edge. */
+  alignTextToAnchor?: boolean;
 }
 
+const DEFAULT_TOOLTIP_HORIZONTAL_PADDING = 10;
 const TOOLTIP_FONT_FAMILY =
   "'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 
@@ -83,6 +88,8 @@ export function Tooltip({
   maxWidth,
   zIndex = 10050,
   placement,
+  offset,
+  alignTextToAnchor = false,
 }: TooltipProps) {
   const isMetadata = variant === "metadata-table" || variant === "metadata-table-extreme";
   const isExtreme = variant === "metadata-table-extreme";
@@ -104,7 +111,7 @@ export function Tooltip({
       }
     : {
         borderRadius: "4px",
-        padding: "6px 10px",
+        padding: `6px ${DEFAULT_TOOLTIP_HORIZONTAL_PADDING}px`,
         fontSize: "12px",
         lineHeight: "17px",
         fontFamily: TOOLTIP_FONT_FAMILY,
@@ -131,7 +138,9 @@ export function Tooltip({
     <AntdTooltip
       title={title}
       placement={effectivePlacement}
-      align={placement ? undefined : (align === "left" ? undefined : { offset: [0, 2] })}
+      align={alignTextToAnchor
+        ? { offset: [-DEFAULT_TOOLTIP_HORIZONTAL_PADDING, offset?.[1] ?? 0] }
+        : offset ? { offset } : placement ? undefined : (align === "left" ? undefined : { offset: [0, 2] })}
       arrow={false}
       autoAdjustOverflow={true}
       getPopupContainer={() => document.body}

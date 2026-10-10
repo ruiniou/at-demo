@@ -7,11 +7,14 @@ export interface OptionRowProps {
   label: string;
   sub?: string;
   description?: string;
+  truncateDescription?: boolean;
+  showLabelTitle?: boolean;
   selected?: boolean;
   disabled?: boolean;
   selectionMode?: "single" | "multi" | "highlight";
   leading?: React.ReactNode;
   trailing?: React.ReactNode;
+  renderText?: (content: React.ReactNode) => React.ReactNode;
   onSelect?: () => void;
   className?: string;
 }
@@ -21,11 +24,14 @@ export function OptionRow({
   label,
   sub,
   description,
+  truncateDescription = false,
+  showLabelTitle = true,
   selected = false,
   disabled = false,
   selectionMode = "single",
   leading,
   trailing,
+  renderText,
   onSelect,
   className = "",
 }: OptionRowProps) {
@@ -51,14 +57,21 @@ export function OptionRow({
         <CheckboxIndicator checked={selected} disabled={disabled} size={14} />
       )}
       {leading && <span className="inline-flex shrink-0 items-center">{leading}</span>}
-      <span className="min-w-0 flex-1 text-[12px] font-normal leading-[18px]">
-        <span title={label} className="block truncate">{label}</span>
+      {renderText ? renderText(<span className="block min-w-0 w-full text-[12px] font-normal leading-[18px]">
+        <span title={showLabelTitle ? label : undefined} className="block truncate">{label}</span>
         {description && (
-          <span className={`block whitespace-normal ${disabled ? "text-graphite-40" : "text-text-secondary"}`}>
+          <span className={`block ${truncateDescription ? "truncate" : "whitespace-normal"} ${disabled ? "text-graphite-40" : "text-text-secondary"}`}>
             {description}
           </span>
         )}
-      </span>
+      </span>) : <span className="min-w-0 flex-1 text-[12px] font-normal leading-[18px]">
+        <span title={showLabelTitle ? label : undefined} className="block truncate">{label}</span>
+        {description && (
+          <span className={`block ${truncateDescription ? "truncate" : "whitespace-normal"} ${disabled ? "text-graphite-40" : "text-text-secondary"}`}>
+            {description}
+          </span>
+        )}
+      </span>}
       {sub && (
         <span className={`shrink-0 text-[12px] leading-[18px] ${disabled ? "text-graphite-40" : "text-text-secondary"}`}>
           {sub}

@@ -116,6 +116,7 @@ import doubleQuotesLUrl from "../../icons/double-quotes-l.svg";
 import groupIconUrl from "../../icons/group.svg";
 import { GroupCodePanel, type GroupCodeItem } from "../../components/ui/GroupCodePanel";
 import { AssigneeOccupancyButton } from "./components/AssigneeOccupancyButton";
+import { ReferenceCaseField, REFERENCE_CASES, CURRENT_STUDY_ID, referenceDiffValue, type ReferenceCase } from "./components/ReferenceCaseField";
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -129,6 +130,10 @@ export interface MetaDiffItem {
   label: string;
   oldValue: string;
   newValue: string;
+  referenceChange?: {
+    oldReference: ReferenceCase | null;
+    newReference: ReferenceCase | null;
+  };
 }
 
 export const MOCK_GROUP_CODES: Record<string, GroupCodeItem[]> = {
@@ -712,6 +717,7 @@ function MetadataEntryBlock({
   inferredCount = 4,
   onOpen,
   isOutdated = false,
+  description: descriptionOverride,
 }: {
   variant: 'conflict' | 'updated';
   count?: number;
@@ -719,11 +725,11 @@ function MetadataEntryBlock({
   inferredCount?: number;
   onOpen?: () => void;
   isOutdated?: boolean;
+  description?: string;
 }) {
-  const description =
-    variant === 'conflict'
+  const description = descriptionOverride ?? (variant === 'conflict'
       ? 'Some inferred metadata fields may not align with SAP specifications. Verify before proceeding.'
-      : 'Metadata has been updated with new fields for the added Component.';
+      : 'Metadata has been updated with new fields for the added Component.');
 
   const formattedConflicts = formatCount(conflictsCount);
   const formattedInferred = formatCount(inferredCount);
@@ -1214,6 +1220,7 @@ type Message = {
   answers?: { q: string; a: string }[];
   isSkipped?: boolean;
   metaDiffItems?: MetaDiffItem[];
+  referenceChange?: { oldReference: ReferenceCase | null; newReference: ReferenceCase | null };
   isProcessing?: boolean;
   /** Images submitted alongside the user message */
   attachments?: AttachmentItem[];
@@ -2418,7 +2425,26 @@ function ChatConversation({
             )}
             {(msg.type === 'ai_update_complete' || msg.type === 'ai_update_accepted') && (
               <div className="flex flex-col gap-[12px] w-full relative">
-                <div className="flex flex-col w-full relative gap-[8px]">
+                {msg.referenceChange ? (
+                  <div className="flex flex-col w-full relative gap-[8px]">
+                    <div className="flex flex-col gap-[4px] px-[10px]">
+                      <p className="t-body text-text-primary leading-relaxed">Reference update ready for review.</p>
+                      <p className="t-small text-text-secondary leading-relaxed">The current TFL was adjusted using {msg.referenceChange.newReference ? `${msg.referenceChange.newReference.tflId} ${msg.referenceChange.newReference.tflTitle}` : 'the selected Reference'}.</p>
+                    </div>
+                    <div className="relative w-full">
+                      <AICodeDiff summary="Code changes ready for review" additions={[]} deletions={[]} />
+                    </div>
+                    <div className="px-[10px]">
+                      <MetadataEntryBlock
+                        variant="updated"
+                        count={1}
+                        description="Review the Reference in Metadata before accepting the pending changes."
+                        onOpen={() => onJumpToMetadata?.('', 'referenceCase')}
+                        isOutdated={isMetadataOutdated}
+                      />
+                    </div>
+                  </div>
+                ) : <div className="flex flex-col w-full relative gap-[8px]">
                   <div className="flex flex-col gap-[4px] px-[10px]">
                     <p className="t-body text-text-primary leading-relaxed">
                       Component added. SAS code has been generated.
@@ -2435,7 +2461,7 @@ function ChatConversation({
                       isOutdated={isMetadataOutdated}
                     />
                   </div>
-                </div>
+                </div>}
               </div>
             )}
 
@@ -3329,10 +3355,13 @@ function AICopilotPanel({
 
   const handleSubmit = (text: string, attachments?: AttachmentItem[]) => {
     const isUpdate = metaUpdateActive && metaDiffItems && metaDiffItems.length > 0;
+    const submittedReferenceChange = isUpdate ? metaDiffItems?.find(diff => diff.fieldId === 'referenceCase')?.referenceChange : undefined;
     if (!text.trim() && !isUpdate && !attachments?.length) return;
     (document.activeElement as HTMLElement)?.blur();
 
-    const userContent = text.trim() ? text : 'Update code based on the metadata changes above.';
+    const userContent = text.trim() ? text : submittedReferenceChange?.newReference
+      ? `Update this TFL using Reference ${submittedReferenceChange.newReference.tflId} ${submittedReferenceChange.newReference.tflTitle}.`
+      : 'Update code based on the metadata changes above.';
 
     if (isEventCopilot) {
       const sessionId = activeEventSession?.id || "event";
@@ -3568,7 +3597,7 @@ function AICopilotPanel({
 
     // Only show metadata review card if the submission includes an 'add component' change
     const hasAddComponent = metaDiffItems?.some(d => d.changeType === 'added' || d.fieldId.startsWith('add_')) || /add|component|新增|添加|create|make|insert|new/i.test(text);
-    const showMetadataReviewCard = isUpdate && hasAddComponent;
+    const showMetadataReviewCard = isUpdate && (hasAddComponent || !!submittedReferenceChange);
 
     setMessages(prev => [...prev, { 
       type: 'user', 
@@ -3591,6 +3620,13 @@ function AICopilotPanel({
 
     setMessages(prev => [...prev, { type: 'ai_thinking' }]);
     setTimeout(() => {
+      if (submittedReferenceChange) {
+        setMessages(prev => prev.map(m => m.type === 'ai_thinking'
+          ? { type: 'ai_update_complete' as const, referenceChange: submittedReferenceChange }
+          : m));
+        setIsPending(false);
+        return;
+      }
       if (docType === 'figure') {
         if (isAddReq) {
           // Adding a component updates Metadata directly, not Code.
@@ -3862,7 +3898,7 @@ function AICopilotPanel({
                   : undefined
               }
               pending={true} 
-              pendingChangesCount={currentTable?.pendingChanges || 3}
+              pendingChangesCount={messages.some(m => m.type === 'ai_update_complete' && m.referenceChange) ? 1 : (currentTable?.pendingChanges || 3)}
               onAcceptPending={handleAcceptPending}
               onRejectPending={handleRejectPending}
               quoteInsertRef={quoteInsertRef}
@@ -6971,9 +7007,11 @@ function ListingShellPreview({
             <div className="shrink-0 h-full p-[4px] relative z-20" style={{ width: `${metadataWidth}px` }}>
               <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
                 <MetadataPanel
+                  key={selectedItemName}
                   onClose={onCloseMetadata}
                   isLocked={isLocked}
                   docType="listing"
+                  currentTflTitle={selectedItemName}
                   frozenUntilIndex={frozenUntilIndex}
                   pageSepActive={pageSepActive}
                   pageColumnCounts={pageColumnCounts}
@@ -7915,7 +7953,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
-              <MetadataPanel onClose={onMetadataClose} docType={docType} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} onMetaCancel={onMetaCancel} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
+              <MetadataPanel key={selectedItemName} onClose={onMetadataClose} docType={docType} currentTflTitle={selectedItemName} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} onMetaCancel={onMetaCancel} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
             </div>
           )}
         </div>
@@ -9040,6 +9078,7 @@ interface MetadataPanelProps {
   onClose: () => void;
   isLocked?: boolean;
   docType?: string;
+  currentTflTitle?: string;
   frozenUntilIndex?: number | null;
   pageSepActive?: boolean;
   pageColumnCounts?: Record<string, number>;
@@ -9165,7 +9204,7 @@ const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
 ];
 
 function MetadataPanel({
-  onClose, docType = 'table', isLocked, frozenUntilIndex, pageSepActive, pageColumnCounts = {},
+  onClose, docType = 'table', currentTflTitle = '', isLocked, frozenUntilIndex, pageSepActive, pageColumnCounts = {},
   pageBreakColumns = [], columnCount = 11,
   repeatColumnBaseline = null, onRepeatColumnBaselineChange,
   pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
@@ -9194,6 +9233,31 @@ function MetadataPanel({
   const setFigureComponents = propsSetFigureComponents || setInternalFigureComponents;
 
   const loadFromSession = <T,>(key: string, fallback: T): T => { try { const raw = sessionStorage.getItem(key); return raw ? (JSON.parse(raw) as T) : fallback; } catch { return fallback; } };
+
+  const referenceKind = docType === 'listing' ? 'listing' : 'table';
+  const currentTflId = currentTflTitle.match(/^\d+(?:\.\d+)+/)?.[0];
+  const referenceStorageKey = `metadataReferenceCase_${currentTflId || referenceKind}`;
+  const [selectedReference, setSelectedReference] = useState<ReferenceCase | null>(() => {
+    const savedId = loadFromSession<string | null>(referenceStorageKey, null);
+    return REFERENCE_CASES.find(reference => reference.id === savedId && !(reference.studyId === CURRENT_STUDY_ID && reference.tflId === currentTflId))
+      ?? REFERENCE_CASES.find(reference => reference.kind === referenceKind && reference.studyId === CURRENT_STUDY_ID && reference.tflId !== currentTflId)
+      ?? null;
+  });
+  const [referenceBaseline, setReferenceBaseline] = useState<ReferenceCase | null>(() => {
+    const savedId = loadFromSession<string | null>(`${referenceStorageKey}_baseline`, null);
+    return REFERENCE_CASES.find(reference => reference.id === savedId) ?? selectedReference;
+  });
+  const [referenceConfirmed, setReferenceConfirmed] = useState(false);
+  const handleReferenceChange = (reference: ReferenceCase) => {
+    setSelectedReference(reference);
+    setReferenceConfirmed(false);
+  };
+  useEffect(() => {
+    sessionStorage.setItem(referenceStorageKey, JSON.stringify(selectedReference?.id ?? null));
+  }, [referenceStorageKey, selectedReference]);
+  useEffect(() => {
+    sessionStorage.setItem(`${referenceStorageKey}_baseline`, JSON.stringify(referenceBaseline?.id ?? null));
+  }, [referenceStorageKey, referenceBaseline]);
 
   const migrateFields = (stored: any[]): any[] => {
     return stored.map(f => {
@@ -9433,6 +9497,19 @@ function MetadataPanel({
 
   const metaDiffItems = useMemo<MetaDiffItem[]>(() => {
     const items: MetaDiffItem[] = [];
+
+    if (docType !== 'figure' && selectedReference?.id !== referenceBaseline?.id) {
+      items.push({
+        fieldId: 'referenceCase',
+        label: 'Reference',
+        oldValue: referenceDiffValue(referenceBaseline),
+        newValue: referenceDiffValue(selectedReference),
+        referenceChange: { oldReference: referenceBaseline, newReference: selectedReference },
+        blockId: 'referenceCase',
+        blockName: docType === 'listing' ? 'Basic Info' : 'Basic Information',
+        changeType: 'modified',
+      });
+    }
 
     if (docType === 'figure') {
       // 1. Basic Block Field Edits (skip tag fields)
@@ -9703,7 +9780,7 @@ function MetadataPanel({
     docType,
     figureBlocks, figureComponents, figureFieldBaseline, figureComponentDeprecatedBaseline, figureComponentListBaseline,
     listingBlocks, listingColumnFields, listingFieldBaseline, isRepeatColumnEdited, isPageBreakColumnEdited, repeatColumnBaseline, frozenUntilIndex, pageBreakColumnBaseline, pageBreakColumns,
-    blocks, selectedGroupIdx, tableBlocks, tableFieldBaseline
+    blocks, selectedGroupIdx, tableBlocks, tableFieldBaseline, selectedReference, referenceBaseline
   ]);
 
   const newDiffItems = useMemo<MetaDiffItem[]>(() => {
@@ -9763,6 +9840,9 @@ function MetadataPanel({
   const [lastBaselineTrigger, setLastBaselineTrigger] = useState(0);
   useEffect(() => {
     if (baselineAdvanceTrigger && baselineAdvanceTrigger > lastBaselineTrigger) {
+      if (submittedDiffItems.some(sub => sub.fieldId === 'referenceCase')) {
+        setReferenceBaseline(selectedReference);
+      }
       if (docType === 'table') {
         setTableFieldBaseline(prev => {
           const updated = { ...prev };
@@ -9875,7 +9955,7 @@ function MetadataPanel({
 
       setLastBaselineTrigger(baselineAdvanceTrigger);
     }
-  }, [baselineAdvanceTrigger, submittedDiffItems, docType, figureComponents, lastBaselineTrigger]);
+  }, [baselineAdvanceTrigger, submittedDiffItems, docType, figureComponents, lastBaselineTrigger, selectedReference]);
 
   const reviewItems = useMemo<ReviewItem[]>(() => {
     const items: ReviewItem[] = [];
@@ -10138,18 +10218,18 @@ function MetadataPanel({
   const isBasicTab = activeTab === 'basic';
   
   // Table stats
-  const basicTotalFields = blocks.reduce((s, b) => s + b.fields.length, 0) + 1;
-  const basicConfirmedCount = blocks.reduce((s, b) => s + b.fields.filter(f => f.confirmed).length, 0) + (groupConfirmed ? 1 : 0);
+  const basicTotalFields = blocks.reduce((s, b) => s + b.fields.length, 0) + 2;
+  const basicConfirmedCount = blocks.reduce((s, b) => s + b.fields.filter(f => f.confirmed).length, 0) + (groupConfirmed ? 1 : 0) + (referenceConfirmed ? 1 : 0);
   const blocksTotalFields = METADATA_BLOCK_ITEMS_DATA.reduce((sum, b) => sum + b.fields.length, 0);
   const blocksConfirmedCount = METADATA_BLOCK_ITEMS_DATA.reduce((sum, b) => sum + b.fields.filter(f => blockItemConfirmed[`${b.id}_${f.id}`]).length, 0);
 
   // Listing stats
-  const listingTotalFields = listingBlocks.reduce((s, b) => s + b.fields.length, 0);
+  const listingTotalFields = listingBlocks.reduce((s, b) => s + b.fields.length, 0) + 1;
   const listingConfirmedCount = listingBlocks.reduce((s, b) => s + b.fields.filter(f => {
     if (f.id === 'idlist') return !isRepeatColumnEdited && f.confirmed;
     if (f.id === 'idpage') return !isPageBreakColumnEdited && f.confirmed;
     return f.confirmed;
-  }).length, 0);
+  }).length, 0) + (referenceConfirmed ? 1 : 0);
   const listingColumnTotalFields = listingColumnFields.length;
   const listingColumnConfirmedCount = listingColumnFields.filter(f => f.confirmed).length;
 
@@ -10248,6 +10328,7 @@ function MetadataPanel({
     const confirm = selectAllState === 'empty' || selectAllState === 'indeterminate';
     if (docType === 'listing') {
       if (isBasicTab) {
+        setReferenceConfirmed(confirm);
         if (confirm) {
           if (isRepeatColumnEdited) {
             onRepeatColumnBaselineChange?.({ frozenUntilIndex: frozenUntilIndex ?? null });
@@ -10277,6 +10358,7 @@ function MetadataPanel({
       }
     } else {
       if (isBasicTab) {
+        setReferenceConfirmed(confirm);
         if (groupStatus !== 'edited') setGroupConfirmed(confirm);
         setBlocks(prev => prev.map(b => ({ ...b, fields: b.fields.map(f => ({ ...f, confirmed: confirm })) })));
       } else {
@@ -10459,6 +10541,18 @@ function MetadataPanel({
       <div className={`min-h-0 flex-1 ${activeTab === "blocks" && !showPanelDiff ? 'flex flex-col' : 'overflow-auto p-[4px]'}`}>
         {activeTab === "basic" && (
           <div className="flex flex-col gap-[4px]">
+            {docType !== 'figure' && !showPanelDiff && (
+              <ReferenceCaseField
+                value={selectedReference}
+                disabled={isLocked}
+                confirmed={referenceConfirmed}
+                onConfirm={() => setReferenceConfirmed(confirmed => !confirmed)}
+                confirmIcon={<SvgIcon className="size-4" viewBox="0 0 20 20">{fieldCheckboxIcon(referenceConfirmed)}</SvgIcon>}
+                kind={referenceKind}
+                currentTflId={currentTflId}
+                onChange={handleReferenceChange}
+              />
+            )}
             {docType === 'listing' ? (
               // Listing Basic Tab
               showPanelDiff ? (

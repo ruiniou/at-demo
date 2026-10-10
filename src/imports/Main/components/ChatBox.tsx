@@ -9,6 +9,7 @@ import alertIconUrl from "../../../icons/alert-line.svg";
 import { Tooltip } from "../../../components/ui/Tooltip";
 import { ImagePreviewModal } from "../../../components/ui/ImagePreviewModal";
 import type { EventProgressCardData } from "../Main";
+import type { ReferenceCase } from "./ReferenceCaseField";
 
 // ==================== SVGs from Figma ====================
 
@@ -436,6 +437,10 @@ export interface MetaDiffItem {
   label: string;
   oldValue: string;
   newValue: string;
+  referenceChange?: {
+    oldReference: ReferenceCase | null;
+    newReference: ReferenceCase | null;
+  };
   blockId?: string;
   blockName?: string;
   changeType?: MetaChangeType;
@@ -1162,10 +1167,8 @@ export default function ChatBox({
                   <p className="leading-[24px]">Metadata Changes</p>
                 </div>
                 {/* Count badge */}
-                <div className="bg-white border border-graphite-20 flex items-center justify-center px-[4px] py-px relative rounded-[16px] shrink-0 min-w-[16px] h-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-                  <div className="flex flex-col font-['Inter',sans-serif] font-medium justify-center leading-[0] not-italic relative shrink-0 text-[10px] text-text-secondary whitespace-nowrap">
-                    <p className="leading-[14px]">{metadataChangesCount}</p>
-                  </div>
+                <div className="bg-white border border-graphite-20 inline-flex items-center justify-center px-[4px] relative rounded-[16px] shrink-0 min-w-[16px] h-[16px] shadow-[0_1px_2px_rgba(0,0,0,0.04)] font-['Inter',sans-serif] font-medium text-[10px] leading-none text-text-secondary tabular-nums">
+                  {metadataChangesCount}
                 </div>
               </div>
 
@@ -1254,12 +1257,31 @@ export default function ChatBox({
                                 <span className="text-[12px] font-medium text-text-secondary leading-[16px]">
                                   {diff.label}
                                 </span>
-                                {/* Line 2: Diff Values (Stacked, line-wrap allowed, no truncation) */}
-                                <div className="text-[13px] leading-[18px] break-words whitespace-pre-wrap text-text-primary">
-                                  <span className="text-text-secondary line-through mr-[4px]">{oldVal}</span>
-                                  <span className="text-text-secondary mr-[4px]">→</span>
-                                  <span className="font-medium text-brand-1">{newVal}</span>
-                                </div>
+                                {diff.referenceChange ? (
+                                  <div className="flex flex-col gap-1 min-w-0">
+                                    {([
+                                      [diff.referenceChange.oldReference, false],
+                                      [diff.referenceChange.newReference, true],
+                                    ] as const).map(([reference, isNew]) => (
+                                      <div key={isNew ? 'new' : 'old'} className="flex flex-col min-w-0" aria-label={isNew ? 'New Reference' : 'Previous Reference'}>
+                                        <span className={`t-small break-words ${isNew ? 'font-medium text-brand-1' : 'text-text-secondary line-through'}`}>
+                                          {reference ? `${reference.tflId} ${reference.tflTitle}` : 'No Reference'}
+                                        </span>
+                                        {reference && (
+                                          <span className="t-footnote text-text-secondary break-words">
+                                            {reference.studyId} / {reference.eventTitle}
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="text-[13px] leading-[18px] break-words whitespace-pre-wrap text-text-primary">
+                                    <span className="text-text-secondary line-through mr-[4px]">{oldVal}</span>
+                                    <span className="text-text-secondary mr-[4px]">→</span>
+                                    <span className="font-medium text-brand-1">{newVal}</span>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
