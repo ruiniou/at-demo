@@ -246,8 +246,8 @@ export default function EventInformationModal({
       <ConfirmModal
         open={updateOpen}
         title="Update Input Files?"
-        description="This will replace the original files."
-        primaryLabel="Update Inputs"
+        description="AI Copilot will start a new Session to update the input files and any affected TFLs."
+        primaryLabel="Confirm"
         secondaryLabel="Cancel"
         onSecondary={() => setUpdateOpen(false)}
         onPrimary={() => { onUpdateInputs(event.id, files); setUpdateOpen(false); onClose(); }}

@@ -14,6 +14,7 @@ import wipStatusIconUrl from "../../../icons/Status label/Status=WIP.svg";
 import lockedStatusIconUrl from "../../../icons/Lock.svg";
 import { Tooltip } from "../../../components/ui/Tooltip";
 import { Button } from "../../../components/ui/Button";
+import { CountBadge } from "../../../components/ui/CountBadge";
 import untouchedStatusIconUrl from "../../../icons/Status label/Status=Untouched.svg";
 import errorStatusIconUrl from "../../../icons/Status label/Status=Error.svg";
 import arrowDownIconUrl from "../../../icons/arrow-down-s-line.svg";
@@ -1565,10 +1566,13 @@ export interface EventTeamMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
   eventName: string;
+  eventId?: string;
+  inputUpdateCount?: number;
   initialTeamMembers?: TeamMember[];
   initialTFLRows?: TFLRow[];
   onOwnerChange?: (newOwner: string) => void;
   onTeamMembersChange?: (members: TeamMember[]) => void;
+  onTFLRowsChange?: (rows: TFLRow[]) => void;
   currentUserName: string;
   canAddMember: boolean;
   canRemoveMember: boolean;
@@ -1580,10 +1584,13 @@ export default function EventTeamMemberModal({
   isOpen,
   onClose,
   eventName,
+  eventId,
+  inputUpdateCount,
   initialTeamMembers = MOCK_TEAM_MEMBERS,
   initialTFLRows = MOCK_TFL_ROWS,
   onOwnerChange,
   onTeamMembersChange,
+  onTFLRowsChange,
   currentUserName,
   canAddMember,
   canRemoveMember,
@@ -1593,6 +1600,7 @@ export default function EventTeamMemberModal({
   const [activeTab, setActiveTab] = useState<"assignment" | "team">("assignment");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
   const [tflRows, setTflRows] = useState<TFLRow[]>(initialTFLRows);
+  const unassignedCount = tflRows.filter((row) => !row.programmer).length;
 
   useEffect(() => {
     if (isOpen) {
@@ -1600,7 +1608,7 @@ export default function EventTeamMemberModal({
       setTeamMembers(initialTeamMembers);
       setTflRows(initialTFLRows);
     }
-  }, [isOpen, canManageAssignments, initialTeamMembers, initialTFLRows]);
+  }, [isOpen, eventId, inputUpdateCount, canManageAssignments]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1630,7 +1638,9 @@ export default function EventTeamMemberModal({
         }]);
       }
     }
-    setTflRows((prev) => prev.map((r) => r.id === id && !isTflLocked(r) ? { ...r, programmer } : r));
+    const nextRows = tflRows.map((r) => r.id === id && !isTflLocked(r) ? { ...r, programmer } : r);
+    setTflRows(nextRows);
+    onTFLRowsChange?.(nextRows);
   };
 
   const handleBatchUpdateProgrammer = (ids: string[], programmer: string | null) => {
@@ -1646,7 +1656,9 @@ export default function EventTeamMemberModal({
         }]);
       }
     }
-    setTflRows((prev) => prev.map((r) => idSet.has(r.id) && !isTflLocked(r) ? { ...r, programmer } : r));
+    const nextRows = tflRows.map((r) => idSet.has(r.id) && !isTflLocked(r) ? { ...r, programmer } : r);
+    setTflRows(nextRows);
+    onTFLRowsChange?.(nextRows);
   };
 
   const handleRemoveMember = (name: string) => {
@@ -1654,7 +1666,9 @@ export default function EventTeamMemberModal({
     const nextMembers = teamMembers.filter((member) => member.name !== name);
     setTeamMembers(nextMembers);
     onTeamMembersChange?.(nextMembers);
-    setTflRows((prev) => prev.map((r) => r.programmer === name && !isTflLocked(r) ? { ...r, programmer: null } : r));
+    const nextRows = tflRows.map((r) => r.programmer === name && !isTflLocked(r) ? { ...r, programmer: null } : r);
+    setTflRows(nextRows);
+    onTFLRowsChange?.(nextRows);
   };
 
   const handleChangeOwner = (newOwnerName: string) => {
@@ -1720,6 +1734,9 @@ export default function EventTeamMemberModal({
                     active ? "border-brand-1 text-brand-1" : "border-transparent text-text-secondary hover:text-text-primary"
                   }`}>
                   {labels[tab]}
+                  {tab === 'assignment' && unassignedCount > 0 && (
+                    <CountBadge count={unassignedCount} className="ml-[6px]" />
+                  )}
                 </button>
               );
             })}

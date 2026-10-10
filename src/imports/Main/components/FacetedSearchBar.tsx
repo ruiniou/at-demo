@@ -126,7 +126,7 @@ export function FacetedSearchBar({
   const hasContent = hasTokens || searchQuery.length > 0;
 
   const selectedStatusLabels = Array.from(selectedStatuses).map((status) =>
-    STATUS_ITEMS.find((item) => item.id === status)?.label ?? status
+    status === "dashboard-in-progress" ? "In progress" : STATUS_ITEMS.find((item) => item.id === status)?.label ?? status
   );
   const selectedAssigneeLabels = Array.from(selectedAssignees).map((assignee) =>
     assignee === "Sarah Chen" ? "Sarah (You)" : assignee

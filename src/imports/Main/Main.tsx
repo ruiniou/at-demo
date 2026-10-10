@@ -1,4 +1,5 @@
 import { Avatar } from "../../components/ui/Avatar";
+import { CountBadge } from "../../components/ui/CountBadge";
 // AI Copilot Chat Window - Design Tokens & Visual Specs
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
@@ -75,7 +76,9 @@ import DeleteEventModal from "./components/DeleteEventModal";
 import StopEventModal from "./components/StopEventModal";
 import StoppedEventCard from "./components/StoppedEventCard";
 import EventTeamMemberModal from "./components/EventTeamMemberModal";
-import type { TeamMember } from "./components/EventTeamMemberModal";
+import EventDashboard from "./components/EventDashboard";
+import type { DashboardFilter } from "./components/EventDashboard";
+import type { TeamMember, TFLRow } from "./components/EventTeamMemberModal";
 import AccountMenu from "../../components/auth/AccountMenu";
 import { TreeFilterPopover } from "./components/TreeFilterPopover";
 import { FacetedSearchBar } from "./components/FacetedSearchBar";
@@ -3933,6 +3936,65 @@ type ProgramItem = {
   tables: TableItem[];
 };
 
+const INITIAL_EVENT_PROGRAMS: ProgramItem[] = [
+    {
+      id: 'p1',
+      name: '14.1 Demographic Data',
+      status: 'completed',
+      isExpanded: true,
+      tables: [
+        { id: 't1', name: '14.1.1 Disposition', status: 'completed', assignee: 'Sarah Chen' },
+        { id: 't2', name: '14.1.2 Important Protocol Deviations', status: 'analyzing', assignee: 'Sarah Chen' },
+        { id: 't3', name: '14.1.3 Analysis Sets', status: 'pending', assignee: 'Alex Kim' },
+        { id: 't4', name: '14.1.4 Demographics (Full Analysis Set)', status: 'pending', assignee: 'James Park' },
+        { id: 't5', name: '14.1.5 Baseline Characteristics', status: 'completed', assignee: 'James Park' },
+        { id: 't6', name: '14.1.6 Prior Anti-cancer Therapy', status: 'pending', assignee: 'Priya Sharma' },
+        { id: 't8', name: '14.1.8 Medical History by SOC', status: 'locked', assignee: 'Alex Kim' },
+      ],
+    },
+    {
+      id: 'p2',
+      name: '14.2 Efficacy Data',
+      status: 'completed',
+      isExpanded: true,
+      tables: [
+        { id: 't9', name: '14.2.1.1.1 Objective Response Rate', status: 'locked', assignee: 'Priya Sharma' },
+        { id: 't10', name: '14.2.1.1.2 Objective Response in Subgroups', status: 'completed', assignee: 'Sarah Chen' },
+        { id: 'f1', name: '14.2.1.2 Forest Plot for Objective Response', status: 'pending', docType: 'figure', assignee: 'Priya Sharma' },
+      ],
+    },
+    {
+      id: 'p3',
+      name: '16.2 Patient Listings',
+      status: 'completed',
+      isExpanded: true,
+      tables: [
+        { id: 'l1', name: '16.2.1 Subject Enrolment Listing', status: 'completed', docType: 'listing', assignee: 'Sarah Chen' },
+        { id: 'l2', name: '16.2.4 Discontinuation Listing', status: 'error', errorMessage: 'SAS macro execution failed: syntax error', docType: 'listing', assignee: 'Alex Kim' },
+        { id: 'l3', name: '16.2.7 Adverse Events Listing', status: 'locked', docType: 'listing', assignee: 'Sarah Chen' },
+      ],
+    },
+  ];
+
+const UPDATED_INPUT_TFL_ID = 'input-tfl-vitals';
+const withUpdatedInputTfl = (programs: ProgramItem[]): ProgramItem[] => {
+  if (programs.some((program) => program.tables.some((table) => table.id === UPDATED_INPUT_TFL_ID))) return programs;
+  return [...programs, {
+    id: 'p4',
+    name: '14.4 Vital Signs',
+    status: 'completed',
+    isExpanded: true,
+    tables: [{ id: UPDATED_INPUT_TFL_ID, name: '14.4.1 Vital Signs Mean Change from Baseline', status: 'pending' }],
+  }];
+};
+
+const initialProgramsForEvent = (inputUpdateCount = 0): ProgramItem[] => {
+  const programs = structuredClone(INITIAL_EVENT_PROGRAMS);
+  return inputUpdateCount > 0 ? withUpdatedInputTfl(programs) : programs;
+};
+
+const assignmentNoticeKey = (eventId: string, assignee: string, tflId: string) => JSON.stringify([eventId, assignee, tflId]);
+
 // ==================== Event Copilot Types & Mock Data ====================
 
 type TreeListTab = 'tfl' | 'copilot';
@@ -4675,12 +4737,12 @@ function ViewToggleBar({
               <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
             </div>
             {onToggleEventMenu && (
-              <TooltipText label="Event Settings">
+              <TooltipText label="Event Menu">
                 <button
                   ref={eventMenuButtonRef}
                   onClick={onToggleEventMenu}
                   className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[4px] transition-colors hover:bg-black/5 active:scale-[0.96]"
-                  aria-label="Event settings"
+                  aria-label="Event Menu"
                   aria-haspopup="true"
                   aria-expanded={eventMenuOpen}
                 >
@@ -4836,6 +4898,7 @@ function TreeItem({
   hasPendingCodeChanges,
   occupancyMap = {},
   currentUserName,
+  unreadAssignmentIds,
   forceAiProcessing = false,
 }: {
   program: ProgramItem;
@@ -4846,6 +4909,7 @@ function TreeItem({
   /** Per-TFL occupancy: key = table id, value = { isOccupied, assignee } */
   occupancyMap?: Record<string, { isOccupied: boolean; assignee?: string }>;
   currentUserName?: string;
+  unreadAssignmentIds?: Set<string>;
   forceAiProcessing?: boolean;
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -4903,6 +4967,9 @@ function TreeItem({
             const tflOccupancy = occupancyMap[table.id];
             const isSelf = Boolean(currentUserName && table.assignee === currentUserName);
             const occupant = tflOccupancy?.isOccupied && !isSelf ? table.assignee : undefined;
+            const isNewAssignment = isSelf && Boolean(unreadAssignmentIds?.has(table.id));
+            const hasVisibleStatus = forceAiProcessing || Boolean(occupant) || isQueued ||
+              ['analyzing', 'stopped', 'error', 'modified', 'pending', 'locked'].includes(effectiveItem.status);
 
             return (
               <div
@@ -4933,13 +5000,24 @@ function TreeItem({
                       {table.name}
                     </p>
                   </div>
-                  <TreeStatusIcon
-                    item={effectiveItem}
-                    lockedBy={isProgramLocked ? program.name : undefined}
-                    isFigureQueued={isQueued}
-                    occupant={occupant}
-                    forceAiProcessing={forceAiProcessing}
-                  />
+                  <div className="flex shrink-0 items-center gap-[4px]">
+                    {(!isNewAssignment || hasVisibleStatus) && <TreeStatusIcon
+                      item={effectiveItem}
+                      lockedBy={isProgramLocked ? program.name : undefined}
+                      isFigureQueued={isQueued}
+                      occupant={occupant}
+                      forceAiProcessing={forceAiProcessing}
+                    />}
+                    {isNewAssignment && (
+                      <TooltipText label="New Assignment">
+                        <span role="img" aria-label="New Assignment">
+                          <CodeStatusSlot>
+                            <CodeStatusDot color="var(--color-light-blue-100)" />
+                          </CodeStatusSlot>
+                        </span>
+                      </TooltipText>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -11801,6 +11879,13 @@ function WorkspaceContent({
   onOpenDownloadModal,
   onOpenTeamModal,
   onOpenEditEventModal,
+  onOpenDashboard,
+  initialDashboardFilter,
+  initialTflId,
+  programs,
+  setPrograms,
+  unreadAssignmentIds,
+  onViewAssignment,
   currentEventData,
   onStopEvent,
   onDeleteEvent,
@@ -11819,6 +11904,13 @@ function WorkspaceContent({
   onOpenDownloadModal?: () => void;
   onOpenTeamModal?: () => void;
   onOpenEditEventModal?: () => void;
+  onOpenDashboard?: () => void;
+  initialDashboardFilter?: DashboardFilter | null;
+  initialTflId?: string | null;
+  programs: ProgramItem[];
+  setPrograms: React.Dispatch<React.SetStateAction<ProgramItem[]>>;
+  unreadAssignmentIds: Set<string>;
+  onViewAssignment: (tflId: string) => void;
   currentEventData: EventCardData;
   onStopEvent: (eventId: string, reason: string) => void;
   onDeleteEvent: (event: EventCardData) => void;
@@ -11857,46 +11949,7 @@ function WorkspaceContent({
   const hasInitializedCodeDiffRef = useRef(false);
   const previousCodeDiffRef = useRef(false);
   const codeDiffContextRef = useRef<string | null>(null);
-  const [programs, setPrograms] = useState<ProgramItem[]>([
-    {
-      id: 'p1',
-      name: '14.1 Demographic Data',
-      status: 'completed',
-      isExpanded: true,
-      tables: [
-        { id: 't1', name: '14.1.1 Disposition', status: 'completed', assignee: 'Sarah Chen' },
-        { id: 't2', name: '14.1.2 Important Protocol Deviations', status: 'analyzing', assignee: 'Sarah Chen' },
-        { id: 't3', name: '14.1.3 Analysis Sets', status: 'pending', assignee: 'Alex Kim' },
-        { id: 't4', name: '14.1.4 Demographics (Full Analysis Set)', status: 'pending', assignee: 'James Park' },
-        { id: 't5', name: '14.1.5 Baseline Characteristics', status: 'completed', assignee: 'James Park' },
-        { id: 't6', name: '14.1.6 Prior Anti-cancer Therapy', status: 'pending', assignee: 'Priya Sharma' },
-        { id: 't8', name: '14.1.8 Medical History by SOC', status: 'locked', assignee: 'Alex Kim' },
-      ],
-    },
-    {
-      id: 'p2',
-      name: '14.2 Efficacy Data',
-      status: 'completed',
-      isExpanded: true,
-      tables: [
-        { id: 't9', name: '14.2.1.1.1 Objective Response Rate', status: 'locked', assignee: 'Priya Sharma' },
-        { id: 't10', name: '14.2.1.1.2 Objective Response in Subgroups', status: 'completed', assignee: 'Sarah Chen' },
-        { id: 'f1', name: '14.2.1.2 Forest Plot for Objective Response', status: 'pending', docType: 'figure', assignee: 'Priya Sharma' },
-      ],
-    },
-    {
-      id: 'p3',
-      name: '16.2 Patient Listings',
-      status: 'completed',
-      isExpanded: true,
-      tables: [
-        { id: 'l1', name: '16.2.1 Subject Enrolment Listing', status: 'completed', docType: 'listing', assignee: 'Sarah Chen' },
-        { id: 'l2', name: '16.2.4 Discontinuation Listing', status: 'error', errorMessage: 'SAS macro execution failed: syntax error', docType: 'listing', assignee: 'Alex Kim' },
-        { id: 'l3', name: '16.2.7 Adverse Events Listing', status: 'locked', docType: 'listing', assignee: 'Sarah Chen' },
-      ],
-    },
-  ]);
-  const [selectedId, setSelectedId] = useState<string | null>('t4');
+  const [selectedId, setSelectedId] = useState<string | null>(initialTflId ?? 't4');
   const currentEvent = currentEventData.name;
   const isEventOwner = currentEventData.owner === currentUserName;
   const canStopEvent = isEventOwner && currentEventData.status === 'ai-processing';
@@ -12264,6 +12317,7 @@ function WorkspaceContent({
   // ── Occupancy state & Current User ──────────────────────────────────────
   // The current active user is dynamically driven by currentUserName (synced with Role Switcher & AccountMenu)
   const CURRENT_USER = currentUserName || "Sarah Chen";
+  const unassignedCount = programs.reduce((count, program) => count + program.tables.filter((table) => !table.assignee).length, 0);
 
   const isSelectedTflExecuting = executingTflIds.includes(selectedId ?? '');
   // P0 & PERM-13: If this TFL is not assigned to current user, it is strictly read-only
@@ -12399,11 +12453,17 @@ function WorkspaceContent({
   const [treeFilterOpen, setTreeFilterOpen] = useState(false);
   const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set());
   const [selectedAssignees, setSelectedAssignees] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!initialDashboardFilter) return;
+    setCategoryFilter(initialDashboardFilter.docType ?? 'all');
+    setSelectedAssignees(new Set(initialDashboardFilter.assignee ? [initialDashboardFilter.assignee] : []));
+    setSelectedStatuses(new Set(initialDashboardFilter.status ? [initialDashboardFilter.status === 'in-progress' ? 'dashboard-in-progress' : initialDashboardFilter.status] : []));
+  }, [initialDashboardFilter]);
 
   // Reset selectedAssignees on role switch so filter cleanly targets the active account
   useEffect(() => {
-    setSelectedAssignees(new Set());
-  }, [CURRENT_USER]);
+    if (!initialDashboardFilter?.assignee) setSelectedAssignees(new Set());
+  }, [CURRENT_USER, initialDashboardFilter]);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   // Event settings dropdown state
@@ -12538,6 +12598,7 @@ function WorkspaceContent({
           let matchesStatus = true;
           if (selectedStatuses.size > 0) {
             matchesStatus = Array.from(selectedStatuses).some((s) => {
+              if (s === 'dashboard-in-progress') return table.status !== 'locked' && table.status !== 'error' && table.status !== 'stopped';
               if (s === 'locked') return table.status === 'locked';
               if (s === 'to-do') return table.status === 'pending' || (table.status as string) === 'to-do';
               if (s === 'analyzing') return table.status === 'analyzing';
@@ -12585,6 +12646,7 @@ function WorkspaceContent({
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
+    onViewAssignment(id);
     if (!isTableSelected(id)) {
       setMetadataOpen(false);
     }
@@ -13059,12 +13121,12 @@ function WorkspaceContent({
                   </div>
                   <p className="truncate text-[10px] leading-[15px] text-text-secondary">{currentEvent}</p>
                 </div>
-                <TooltipText label="Event Settings">
+                <TooltipText label="Event Menu">
                   <button
                     ref={treeEventMenuButtonRef}
                     onClick={() => setEventMenuOpen((prev) => !prev)}
                     className="flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors"
-                    aria-label="Event settings"
+                    aria-label="Event Menu"
                     aria-haspopup="true"
                     aria-expanded={eventMenuOpen}
                   >
@@ -13174,6 +13236,13 @@ function WorkspaceContent({
                 role="menu"
                 className="rounded-[8px] border border-border-default bg-white p-[4px] shadow-elevation-overlay flex flex-col gap-[2px] animate-fade-in select-none"
               >
+                {onOpenDashboard && (
+                  <button type="button" role="menuitem" onClick={(event) => { event.stopPropagation(); setEventMenuOpen(false); onOpenDashboard(); }}
+                    className="flex items-center gap-[8px] w-full px-[8px] py-[7px] rounded-[4px] text-[13px] text-text-primary hover:bg-bg-panel focus-visible:outline focus-visible:outline-brand-1 text-left">
+                    <LocalIcon src={barChartIconUrl} className="h-[15px] w-[15px] shrink-0" color="var(--color-text-secondary)" />
+                    <span>View Dashboard</span>
+                  </button>
+                )}
                 {onOpenEditEventModal && (
                   <button
                     type="button"
@@ -13198,6 +13267,9 @@ function WorkspaceContent({
                   >
                     <LocalIcon src={teamIconUrl} className="h-[15px] w-[15px] shrink-0" color="var(--color-text-secondary)" />
                     <span className="flex-1 truncate">Event Team</span>
+                    {isEventOwner && unassignedCount > 0 && (
+                      <CountBadge count={unassignedCount} />
+                    )}
                   </button>
                 )}
                 {isEventOwner && <DropdownSeparator />}
@@ -13246,6 +13318,7 @@ function WorkspaceContent({
                       hasPendingCodeChanges={hasPendingCodeChanges}
                       occupancyMap={occupancyMap}
                       currentUserName={CURRENT_USER}
+                      unreadAssignmentIds={unreadAssignmentIds}
                       forceAiProcessing={currentEventData.status === 'ai-processing'}
                     />
                   ))
@@ -13301,8 +13374,8 @@ function WorkspaceContent({
               currentEvent={currentEvent}
               currentEventStatus={currentEventData.status}
               eventMenuOpen={eventMenuOpen}
-              onToggleEventMenu={isEventStopped ? undefined : () => setEventMenuOpen((prev) => !prev)}
-              eventMenuButtonRef={isEventStopped ? undefined : eventMenuButtonRef}
+              onToggleEventMenu={() => setEventMenuOpen((prev) => !prev)}
+              eventMenuButtonRef={eventMenuButtonRef}
               panelView={panelView}
               onPanelViewChange={handlePanelViewChange}
               panelLayout={panelLayout}
@@ -13699,6 +13772,7 @@ interface EventCardData {
   ta?: string;
   owner: string;
   teamMembers?: TeamMember[];
+  inputUpdateCount?: number;
 }
 
 const homeEvents: EventCardData[] = [
@@ -14146,6 +14220,7 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
 
 function HomePage({
   onEventClick,
+  onOpenDashboard,
   onCreateEvent,
   onCreateEventForStudy,
   events,
@@ -14173,6 +14248,7 @@ function HomePage({
   recentEventIds,
 }: {
   onEventClick: (event: EventCardData) => void;
+  onOpenDashboard: (event: EventCardData) => void;
   onCreateEvent: () => void;
   onCreateEventForStudy: (projectId: string, studyId: string, therapeuticArea: string) => void;
   events: EventCardData[];
@@ -14885,8 +14961,9 @@ function HomePage({
                                           const isEventTeamMember = isEventOwner || Boolean(ev.teamMembers?.some((member) => member.name === currentUserName));
                                           const isStopped = ev.status === 'stopped';
                                           const canReupload = isEventOwner && (isStopped || ev.status === 'error');
+                                          const canViewDashboard = currentRole === 'admin' || isEventOwner || studyOwnerMap[ev.study] === currentUserName;
                                           const actionButtons = [
-                                            { icon: barChartIconUrl, label: 'View Dashboard' },
+                                            ...(canViewDashboard ? [{ icon: barChartIconUrl, label: 'View Dashboard', onClick: () => onOpenDashboard(ev) }] : []),
                                             ...(isEventTeamMember
                                               ? [{ icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) }]
                                               : []),
@@ -14931,6 +15008,8 @@ function HomePage({
                                               <td className="relative px-[16px] py-[10px] text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                                                 <div className="absolute right-[16px] top-1/2 inline-flex -translate-y-1/2 items-center justify-end">
                                                   {canReupload ? (
+                                                    <div className="flex items-center gap-[6px]">
+                                                      {canViewDashboard && <Button variant="secondary" size="sm" type="button" onClick={(event) => { event.stopPropagation(); onOpenDashboard(ev); }}>View Dashboard</Button>}
                                                     <Button
                                                       variant="secondary"
                                                       size="sm"
@@ -14944,11 +15023,12 @@ function HomePage({
                                                       <LocalIcon src={uploadIconUrl} className="h-[14px] w-[14px]" color="currentColor" />
                                                       Re-upload
                                                     </Button>
+                                                    </div>
                                                   ) : (
                                                   <TooltipText label={isStopped ? "No actions available" : "More actions"}>
                                                     <button
                                                       type="button"
-                                                      disabled={isStopped}
+                                                      disabled={isStopped && !canViewDashboard}
                                                       onClick={(e) => {
                                                         e.stopPropagation();
                                                         setOpenActionMenuId((prev) => (prev === `table-${ev.id}` ? null : `table-${ev.id}`));
@@ -14956,14 +15036,14 @@ function HomePage({
                                                       className={`flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96] transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent ${
                                                         isMenuOpen ? 'bg-black/5' : ''
                                                       }`}
-                                                      aria-label={isStopped ? "More actions unavailable" : "More actions"}
+                                                      aria-label={isStopped && !canViewDashboard ? "More actions unavailable" : "More actions"}
                                                     >
                                                       <MoreIcon color="var(--color-text-secondary)" />
                                                     </button>
                                                   </TooltipText>
                                                   )}
 
-                                                  {!isStopped && isMenuOpen && (
+                                                  {isMenuOpen && (!isStopped || canViewDashboard) && (
                                                     <div
                                                       onClick={(e) => e.stopPropagation()}
                                                       className="absolute right-0 top-[28px] bg-white border border-graphite-10 rounded-md shadow-elevation-overlay p-1 w-[140px] z-50 animate-fade-in"
@@ -15013,7 +15093,13 @@ function HomePage({
 }
 
 export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
-  const [page, setPage] = useState<'home' | 'event'>('home');
+  const [page, setPage] = useState<'home' | 'event' | 'dashboard'>('home');
+  const [dashboardOrigin, setDashboardOrigin] = useState<'home' | 'event'>('home');
+  const [dashboardFilter, setDashboardFilter] = useState<DashboardFilter | null>(null);
+  const [dashboardTflId, setDashboardTflId] = useState<string | null>(null);
+  const [programs, setPrograms] = useState<ProgramItem[]>(() => structuredClone(INITIAL_EVENT_PROGRAMS));
+  const eventProgramsRef = useRef<Record<string, ProgramItem[]>>({});
+  const selectedEventIdRef = useRef<string | null>(null);
   const [treeListOpen, setTreeListOpen] = useState(true);
   const [treeListWidth, setTreeListWidth] = useState(240);
   const [createEventModalOpen, setCreateEventModalOpen] = useState(false);
@@ -15033,11 +15119,28 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [selectedTeamEvent, setSelectedTeamEvent] = useState<EventCardData | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string>('e1');
   const [events, setEvents] = useState<EventCardData[]>(homeEvents);
+  const [unreadAssignmentKeys, setUnreadAssignmentKeys] = useState<Set<string>>(() => new Set());
   const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
   const [currentRole, setCurrentRole] = useState<UserRole>('event-owner');
   const [activeNav, setActiveNav] = useState<'events' | 'management'>('events');
   const [currentUserName, setCurrentUserName] = useState<string>('Emily Liu');
   const [recentEventIdsByUser, setRecentEventIdsByUser] = useState<Record<string, string[]>>({});
+
+  const unreadAssignmentIds = new Set(
+    programs.flatMap((program) => program.tables)
+      .filter((table) => table.assignee && unreadAssignmentKeys.has(assignmentNoticeKey(selectedEventId, table.assignee, table.id)))
+      .map((table) => table.id),
+  );
+
+  const handleViewAssignment = (tflId: string) => {
+    setUnreadAssignmentKeys((previous) => {
+      const key = assignmentNoticeKey(selectedEventId, currentUserName, tflId);
+      if (!previous.has(key)) return previous;
+      const next = new Set(previous);
+      next.delete(key);
+      return next;
+    });
+  };
 
   const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
   const [newStudyModalOpen, setNewStudyModalOpen] = useState(false);
@@ -15130,12 +15233,37 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setTeamModalOpen(true);
   };
 
+  const canViewEventDashboard = (event: EventCardData) => currentRole === 'admin' || event.owner === currentUserName ||
+    projects.some((project) => project.studies.some((study) => study.id === event.study && study.owner === currentUserName));
+
+  const selectEventPrograms = (event: EventCardData) => {
+    if (selectedEventId === event.id) return;
+    eventProgramsRef.current[selectedEventId] = programs;
+    const savedPrograms = eventProgramsRef.current[event.id] ?? initialProgramsForEvent(event.inputUpdateCount);
+    setPrograms(event.inputUpdateCount ? withUpdatedInputTfl(savedPrograms) : savedPrograms);
+  };
+
+  const handleOpenDashboard = (event: EventCardData, origin: 'home' | 'event') => {
+    if (!canViewEventDashboard(event)) return;
+    selectEventPrograms(event);
+    setSelectedEventId(event.id);
+    selectedEventIdRef.current = event.id;
+    setDashboardOrigin(origin);
+    setDashboardFilter(null);
+    setDashboardTflId(null);
+    setPage('dashboard');
+  };
+
   const handleOpenEvent = (event: EventCardData) => {
     setRecentEventIdsByUser((previous) => ({
       ...previous,
       [currentUserName]: [event.id, ...(previous[currentUserName] ?? []).filter((eventId) => eventId !== event.id)].slice(0, 5),
     }));
+    selectEventPrograms(event);
     setSelectedEventId(event.id);
+    selectedEventIdRef.current = event.id;
+    setDashboardFilter(null);
+    setDashboardTflId(null);
     setPage('event');
   };
 
@@ -15208,9 +15336,13 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     window.setTimeout(() => {
       setEvents((previous) => previous.map((event) => (
         event.id === eventId
-          ? { ...event, status: 'to-do', progress: event.progress ? { ...event.progress, completed: 0 } : event.progress }
+          ? { ...event, status: 'to-do', inputUpdateCount: (event.inputUpdateCount ?? 0) + 1, progress: event.progress ? { ...event.progress, completed: 0 } : event.progress }
           : event
       )));
+      if (eventProgramsRef.current[eventId]) {
+        eventProgramsRef.current[eventId] = withUpdatedInputTfl(eventProgramsRef.current[eventId]);
+      }
+      if (selectedEventIdRef.current === eventId) setPrograms(withUpdatedInputTfl);
     }, 3000);
   };
 
@@ -15253,12 +15385,20 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   };
 
   const currentEventData = events.find((event) => event.id === selectedEventId) ?? events[0];
+  const currentDashboardTfls = programs.flatMap((program) => program.tables);
+  const firstDashboardMatch = (filter: DashboardFilter) => currentDashboardTfls.find((table) =>
+    (!filter.docType || (table.docType ?? 'table') === filter.docType) &&
+    (!filter.assignee || table.assignee === filter.assignee) &&
+    (!filter.status || (filter.status === 'in-progress'
+      ? !['locked', 'error', 'stopped'].includes(table.status) : table.status === filter.status))
+  );
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {page === 'home' ? (
         <HomePage
           onEventClick={handleOpenEvent}
+          onOpenDashboard={(event) => handleOpenDashboard(event, 'home')}
           onCreateEvent={() => {
             setEventCreationContext(null);
             setEventInformationEvent(null);
@@ -15300,9 +15440,30 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           onToggleStudyStatus={handleToggleStudyStatus}
           recentEventIds={recentEventIdsByUser[currentUserName] ?? []}
         />
+      ) : page === 'dashboard' && currentEventData && canViewEventDashboard(currentEventData) ? (
+        <EventDashboard
+          event={currentEventData}
+          tfls={currentDashboardTfls}
+          canAssign={currentEventData.owner === currentUserName && currentEventData.status !== 'stopped'}
+          onBack={() => setPage(dashboardOrigin)}
+          onOpenTfl={(filter) => { setDashboardFilter(filter); setDashboardTflId(firstDashboardMatch(filter)?.id ?? null); setPage('event'); }}
+          onOpenAssignment={() => { if (currentEventData.owner === currentUserName && currentEventData.status !== 'stopped') handleOpenTeam(currentEventData); }}
+        />
+      ) : page === 'dashboard' ? (
+        <div className="flex h-full flex-1 flex-col items-center justify-center gap-3 bg-bg-panel text-text-primary" role="alert">
+          <p>You no longer have access to this Dashboard.</p>
+          <Button variant="secondary" onClick={() => setPage('home')}>Back to Events</Button>
+        </div>
       ) : currentEventData ? (
         <WorkspaceContent
           onNavigateHome={() => setPage('home')}
+          onOpenDashboard={canViewEventDashboard(currentEventData) ? () => handleOpenDashboard(currentEventData, 'event') : undefined}
+          initialDashboardFilter={dashboardFilter}
+          initialTflId={dashboardTflId}
+          programs={programs}
+          setPrograms={setPrograms}
+          unreadAssignmentIds={unreadAssignmentIds}
+          onViewAssignment={handleViewAssignment}
           treeListOpen={treeListOpen}
           setTreeListOpen={setTreeListOpen}
           treeListWidth={treeListWidth}
@@ -15373,6 +15534,33 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         isOpen={teamModalOpen}
         onClose={() => setTeamModalOpen(false)}
         eventName={selectedTeamEvent?.name ?? ''}
+        eventId={selectedTeamEvent?.id}
+        inputUpdateCount={events.find((event) => event.id === selectedTeamEvent?.id)?.inputUpdateCount}
+        initialTFLRows={selectedTeamEvent?.id === selectedEventId ? programs.flatMap((program) => program.tables.map((table): TFLRow => ({
+          id: table.id,
+          type: table.docType ?? 'table',
+          title: table.name,
+          program: program.id,
+          status: table.status === 'locked' ? 'locked' : table.status === 'error' ? 'error' : table.status === 'analyzing' ? 'ai-processing' : table.status === 'idle' || table.status === 'pending' ? 'to-do' : 'in-progress',
+          programmer: table.assignee ?? null,
+        }))) : undefined}
+        onTFLRowsChange={(rows) => {
+          if (selectedTeamEvent?.id !== selectedEventId) return;
+          const assignees = new Map(rows.map((row) => [row.id, row.programmer]));
+          setUnreadAssignmentKeys((previous) => {
+            const next = new Set(previous);
+            for (const table of programs.flatMap((program) => program.tables)) {
+              if (!assignees.has(table.id)) continue;
+              const newAssignee = assignees.get(table.id) ?? undefined;
+              if (newAssignee === table.assignee) continue;
+              if (table.assignee) next.delete(assignmentNoticeKey(selectedEventId, table.assignee, table.id));
+              if (newAssignee) next.add(assignmentNoticeKey(selectedEventId, newAssignee, table.id));
+            }
+            return next;
+          });
+          setPrograms((previous) => previous.map((program) => ({ ...program, tables: program.tables.map((table) =>
+            assignees.has(table.id) ? { ...table, assignee: assignees.get(table.id) ?? undefined } : table) })));
+        }}
         initialTeamMembers={selectedTeamEvent ? (() => {
           const baseMembers = selectedTeamEvent.teamMembers ?? [];
           const ownerExists = baseMembers.some((member) => member.name === selectedTeamEvent.owner);
