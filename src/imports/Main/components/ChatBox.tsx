@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import aiSubmitIconUrl from "../../../icons/AI-submit.svg";
+import stoppedIconUrl from "../../../icons/Status label/Status=Stopped.svg";
+import StopCircleFillIcon from "./StopCircleFillIcon";
 import fileInfoLineUrl from "../../../icons/file-info-line.svg";
 import doubleQuotesLUrl from "../../../icons/double-quotes-l.svg";
 import aiProcessingIconUrl from "../../../icons/Status label/Status=AI Processing.svg";
@@ -480,6 +482,9 @@ export interface ChatBoxProps {
   disabled?: boolean;
   disabledTooltip?: string;
   onSkipEventProgressItem?: (tflId: string) => void;
+  onStopEventProgressItem?: (tflId: string) => void;
+  stopState?: 'idle' | 'running' | 'stopping';
+  onStop?: () => void;
   placeholder?: string;
   className?: string;
   panelTone?: 'panel' | 'white';
@@ -505,6 +510,9 @@ export default function ChatBox({
   eventProgressData,
   onCloseEventProgress,
   onSkipEventProgressItem,
+  onStopEventProgressItem,
+  stopState = 'idle',
+  onStop,
   onJumpToTfl,
   mentionOptions,
   showMention = true,
@@ -884,6 +892,7 @@ export default function ChatBox({
 
   // ---- handleSend ----
   const handleSend = useCallback(() => {
+    if (disabled || submitDisabled || stopState !== 'idle') return;
     const el = editableRef.current;
     if (!el) return;
     const serialized = serializeEditable(el).replace(/\u00A0/g, " ").trim();
@@ -906,7 +915,7 @@ export default function ChatBox({
       setIsMultiLine(false);
       setIsFocused(false);
     }
-  }, [metadataChangesCount, onSubmit, onSubmitWithAttachments]);
+  }, [disabled, submitDisabled, stopState, metadataChangesCount, onSubmit, onSubmitWithAttachments]);
 
   // ---- Keyboard handling inside contenteditable ----
   const handleEditableKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -1329,7 +1338,7 @@ export default function ChatBox({
               {/* Status text */}
               <div className="flex items-center gap-[6px] shrink-0">
                 <span className="text-[11px] text-text-secondary font-medium">
-                  {eventProgressData.items.filter((i) => i.status === "done" || i.status === "skipped").length} of {eventProgressData.items.length} completed
+                  {eventProgressData.items.filter((i) => i.status === "done").length} of {eventProgressData.items.length} completed
                 </span>
               </div>
             </div>
@@ -1343,7 +1352,9 @@ export default function ChatBox({
                   const isQueued = item.status === "queued";
                   const isNeedsAction = item.status === "needs_action";
                   const isSkipped = item.status === "skipped";
-                  const canSkip = isQueued || isNeedsAction;
+                  const isStopping = item.status === "stopping";
+                  const isInterrupted = item.status === "interrupted";
+                  const canSkip = isQueued;
 
                   return (
                     <div
@@ -1353,8 +1364,11 @@ export default function ChatBox({
                     >
                       <div className="flex items-center gap-[8px] min-w-0 flex-1">
                         <div className="w-[14px] h-[14px] shrink-0 flex items-center justify-center">
-                          {isRunning && (
+                          {(isRunning || isStopping) && (
                             <SpinnerIcon className="w-[14px] h-[14px]" />
+                          )}
+                          {isInterrupted && (
+                            <img src={stoppedIconUrl} className="w-[14px] h-[14px] opacity-60" alt="" />
                           )}
                           {isDone && (
                             <img src={checkIconUrl} className="w-[12px] h-[12px]" alt="" />
@@ -1373,7 +1387,7 @@ export default function ChatBox({
                         <div className="flex flex-col min-w-0 flex-1">
                           <span
                             className={`text-[13px] leading-[18px] truncate transition-colors ${
-                              isRunning
+                              isRunning || isStopping
                                 ? "text-brand-1 font-medium"
                                 : isDone
                                 ? "text-text-primary font-medium"
@@ -1381,6 +1395,8 @@ export default function ChatBox({
                                 ? "text-text-primary font-medium"
                                 : isSkipped
                                 ? "text-text-secondary line-through opacity-70"
+                                : isInterrupted
+                                ? "text-text-secondary font-medium"
                                 : "text-text-secondary"
                             }`}
                           >
@@ -1389,6 +1405,10 @@ export default function ChatBox({
                           <span className="text-[11px] leading-[14px] text-text-secondary">
                             {isRunning
                               ? "Updating SAS code & metadata…"
+                              : isStopping
+                              ? "Stopping…"
+                              : isInterrupted
+                              ? "Interrupted"
                               : isDone
                               ? "Completed"
                               : isNeedsAction
@@ -1401,16 +1421,32 @@ export default function ChatBox({
                       </div>
 
                       <div className="flex items-center gap-[6px] shrink-0">
+                        {isRunning && (
+                          <button
+                            type="button"
+                            aria-label={`Stop ${item.name}`}
+                            title="Stop"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onStopEventProgressItem?.(item.tflId);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 size-[20px] shrink-0 flex items-center justify-center rounded-[4px] text-brand-1 hover:bg-brand-1/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-1 transition-all"
+                          >
+                            <StopCircleFillIcon className="size-[16px]" />
+                          </button>
+                        )}
                         {canSkip && (
                           <button
                             type="button"
+                            aria-label={`Stop ${item.name}`}
+                            title="Stop"
                             onClick={(e) => {
                               e.stopPropagation();
                               onSkipEventProgressItem?.(item.tflId);
                             }}
-                            className="opacity-0 group-hover:opacity-100 px-[6px] py-[1px] rounded text-[11px] font-medium text-brand-1 hover:bg-brand-1/10 transition-all"
+                            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 size-[20px] shrink-0 flex items-center justify-center rounded-[4px] text-brand-1 hover:bg-brand-1/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-1 transition-all"
                           >
-                            Skip
+                            <StopCircleFillIcon className="size-[16px]" />
                           </button>
                         )}
                         <ChevronRightIcon className="size-[12px] opacity-0 group-hover:opacity-100 transition-opacity text-text-secondary" />
@@ -1601,22 +1637,32 @@ export default function ChatBox({
 
               {/* Right: Submit CTA Button */}
               <button
-                onClick={isActuallyDisabled ? undefined : handleSend}
-                disabled={isActuallyDisabled}
-                title={disabled ? (disabledTooltip || "Historical session is read-only") : hasUploadingAttachments ? "Waiting for images to finish uploading…" : undefined}
+                type="button"
+                onClick={stopState === 'running' ? onStop : stopState === 'stopping' || isActuallyDisabled ? undefined : handleSend}
+                disabled={stopState === 'stopping' || (stopState === 'idle' && isActuallyDisabled)}
+                aria-label={stopState === 'stopping' ? "Stopping" : stopState === 'running' ? "Stop" : "Send"}
+                title={stopState === 'stopping' ? "Stopping…" : stopState === 'running' ? "Stop" : disabled ? (disabledTooltip || "Historical session is read-only") : hasUploadingAttachments ? "Waiting for images to finish uploading…" : undefined}
                 className={`${
-                  isActuallyDisabled
-                    ? "bg-graphite-20 cursor-not-allowed opacity-50 pointer-events-none"
-                    : "bg-brand-1 hover:bg-az-warning cursor-pointer active:scale-95"
-                } relative rounded-[4px] shrink-0 size-[24px] flex items-center justify-center transition-colors select-none`}
+                  stopState === 'idle'
+                    ? isActuallyDisabled
+                      ? "bg-graphite-20 cursor-not-allowed opacity-50 pointer-events-none"
+                      : "bg-brand-1 hover:bg-az-warning cursor-pointer active:scale-95"
+                    : stopState === 'stopping'
+                      ? "text-graphite-40 cursor-not-allowed pointer-events-none"
+                      : "text-brand-1 hover:bg-graphite-10 cursor-pointer active:scale-95"
+                } relative after:content-[''] after:absolute after:-inset-[8px] rounded-[4px] shrink-0 size-[24px] flex items-center justify-center transition-colors select-none`}
               >
-                <img
-                  src={aiSubmitIconUrl}
-                  alt=""
-                  aria-hidden="true"
-                  className="w-[11px] h-[12px] block shrink-0"
-                  style={{ filter: "brightness(0) invert(1)" }}
-                />
+                {stopState === 'idle' ? (
+                  <img
+                    src={aiSubmitIconUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-[11px] h-[12px] block shrink-0"
+                    style={{ filter: "brightness(0) invert(1)" }}
+                  />
+                ) : (
+                  <StopCircleFillIcon />
+                )}
               </button>
             </div>
           </div>

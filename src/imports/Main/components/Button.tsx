@@ -99,8 +99,8 @@ export function SecondaryButton({
   const fontSize = size === "sm" ? 12 : 14;
   const iconSize = 16;
   const bgClass = disabled
-    ? "bg-white border border-graphite-20"
-    : "bg-az-secondary hover:bg-az-secondary-hover";
+    ? "bg-white border-graphite-20"
+    : "bg-az-secondary border-transparent hover:bg-az-secondary-hover";
   const textColor = disabled ? "var(--color-graphite-40)" : "var(--color-brand-1)";
   const hitAreaClass = size === "sm"
     ? "relative after:content-[''] after:absolute after:-inset-y-[6px] after:inset-x-0"
@@ -111,7 +111,7 @@ export function SecondaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`flex items-center gap-[4px] rounded-[4px] whitespace-nowrap ${padding} ${bgClass} ${hitAreaClass} active:scale-[0.96] ${className}`}
+      className={`flex items-center gap-[4px] rounded-[4px] border-[1.5px] border-solid whitespace-nowrap ${padding} ${bgClass} ${hitAreaClass} active:scale-[0.96] ${className}`}
     >
       {icon && (
         <span

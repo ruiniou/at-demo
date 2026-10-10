@@ -42,6 +42,7 @@ import completedStatusIconUrl from "../../icons/Status label/Status=Completed.sv
 import untouchedStatusIconUrl from "../../icons/Status label/Status=Untouched.svg";
 import errorStatusIconUrl from "../../icons/Status label/Status=Error.svg";
 import stoppedStatusIconUrl from "../../icons/Status label/Status=Stopped.svg";
+import StopCircleFillIcon from "./components/StopCircleFillIcon";
 import addMetadiffIconUrl from "../../icons/Add metadiff.svg";
 import dashboardIconUrl from "../../icons/dashboard-3-line.svg";
 import usageIconUrl from "../../icons/bar-chart-2-line.svg";
@@ -1148,7 +1149,7 @@ export type EventScopeCardData = {
 export type EventProgressItem = {
   tflId: string;
   name: string;
-  status: 'queued' | 'running' | 'done' | 'blocked' | 'failed' | 'needs_action' | 'skipped';
+  status: 'queued' | 'running' | 'stopping' | 'interrupted' | 'done' | 'blocked' | 'failed' | 'needs_action' | 'skipped';
   itemStatus?: 'normal' | 'pending' | 'locked' | 'error';
   reason?: string;
   isRetrying?: boolean;
@@ -1163,7 +1164,7 @@ export type EventProgressCardData = {
 export type EventSummaryItem = {
   tflId: string;
   name: string;
-  status?: 'updated' | 'blocked' | 'failed' | 'skipped' | 'needs_action';
+  status?: 'updated' | 'blocked' | 'failed' | 'skipped' | 'needs_action' | 'interrupted' | 'queued';
   reason?: string;
   isRetrying?: boolean;
 };
@@ -1217,7 +1218,8 @@ type Message = {
     | 'event_summary_card'
     | 'event_dispatched_task'
     | 'tfl_task_executing'
-    | 'tfl_task_completed';
+    | 'tfl_task_completed'
+    | 'tfl_task_interrupted';
   content?: string;
   hasTag?: boolean;
   toBeUpdatedCount?: number;
@@ -1478,15 +1480,17 @@ function EventProgressCard({
   data,
   onJumpToTfl,
   onSkipItem,
+  onStopItem,
 }: {
   data: EventProgressCardData;
   onJumpToTfl?: (tflId: string) => void;
   onSkipItem?: (tflId: string) => void;
+  onStopItem?: (tflId: string) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [headerHovered, setHeaderHovered] = useState(false);
   const totalCount = data.items.length;
-  const completedCount = data.items.filter((i) => i.status === "done" || i.status === "skipped").length;
+  const completedCount = data.items.filter((i) => i.status === "done").length;
   const isAllDone = data.isCompleted || (totalCount > 0 && completedCount === totalCount);
 
   return (
@@ -1540,7 +1544,9 @@ function EventProgressCard({
             const isBlocked = item.status === "blocked" || item.status === "needs_action";
             const isFailed = item.status === "failed";
             const isSkipped = item.status === "skipped";
-            const canSkip = isQueued || isBlocked;
+            const isStopping = item.status === "stopping";
+            const isInterrupted = item.status === "interrupted";
+            const canSkip = isQueued;
 
             return (
               <div
@@ -1550,8 +1556,11 @@ function EventProgressCard({
               >
                 <div className="flex items-center gap-[8px] min-w-0 flex-1">
                   <div className="w-[16px] h-[16px] shrink-0 flex items-center justify-center">
-                    {isRunning && (
+                    {(isRunning || isStopping) && (
                       <SpinnerIcon className="w-[14px] h-[14px]" />
+                    )}
+                    {isInterrupted && (
+                      <LocalIcon src={stoppedStatusIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
                     )}
                     {isDone && (
                       <LocalIcon src={tableIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
@@ -1573,7 +1582,7 @@ function EventProgressCard({
                   <div className="flex flex-col min-w-0 flex-1">
                     <span
                       className={`text-[13px] leading-[18px] truncate transition-colors ${
-                        isRunning
+                        isRunning || isStopping
                           ? "text-brand-1 font-medium"
                           : isDone
                           ? "text-text-primary font-medium"
@@ -1581,8 +1590,10 @@ function EventProgressCard({
                           ? "text-text-primary font-medium"
                           : isFailed
                           ? "text-status-error font-medium"
-                          : isSkipped
+                        : isSkipped
                           ? "text-text-secondary line-through opacity-70"
+                        : isInterrupted
+                          ? "text-text-secondary font-medium"
                           : "text-text-secondary"
                       }`}
                     >
@@ -1591,6 +1602,10 @@ function EventProgressCard({
                     <span className="text-[11px] leading-[14px] text-text-secondary">
                       {isRunning
                         ? "Updating SAS code & metadata…"
+                        : isStopping
+                        ? "Stopping…"
+                        : isInterrupted
+                        ? "Interrupted"
                         : isDone
                         ? "Completed"
                         : isBlocked
@@ -1605,16 +1620,32 @@ function EventProgressCard({
                 </div>
 
                 <div className="flex items-center gap-[6px] shrink-0">
+                  {isRunning && (
+                    <button
+                      type="button"
+                      aria-label={`Stop ${item.name}`}
+                      title="Stop"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStopItem?.(item.tflId);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 size-[20px] shrink-0 flex items-center justify-center rounded-[4px] text-brand-1 hover:bg-brand-1/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-1 transition-all"
+                    >
+                      <StopCircleFillIcon className="size-[16px]" />
+                    </button>
+                  )}
                   {canSkip && (
                     <button
                       type="button"
+                      aria-label={`Stop ${item.name}`}
+                      title="Stop"
                       onClick={(e) => {
                         e.stopPropagation();
                         onSkipItem?.(item.tflId);
                       }}
-                      className="opacity-0 group-hover:opacity-100 px-[6px] py-[1px] rounded text-[11px] font-medium text-brand-1 hover:bg-brand-1/10 transition-all"
+                      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 size-[20px] shrink-0 flex items-center justify-center rounded-[4px] text-brand-1 hover:bg-brand-1/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-1 transition-all"
                     >
-                      Skip
+                      <StopCircleFillIcon className="size-[16px]" />
                     </button>
                   )}
                   <LocalIcon
@@ -1644,10 +1675,13 @@ function EventSummaryCard({
   const updatedCount = data.items.filter((i) => !i.status || i.status === "updated").length;
   const blockedCount = data.items.filter((i) => i.status === "blocked" || i.status === "needs_action").length;
   const failedCount = data.items.filter((i) => i.status === "failed").length;
+  const interruptedCount = data.items.filter((i) => i.status === "interrupted").length;
 
   // Single concise title line: "Edited N Files, N Blocked"
   const fileWord = updatedCount === 1 ? "File" : "Files";
-  const defaultHeaderTitle = blockedCount > 0
+  const defaultHeaderTitle = interruptedCount > 0
+    ? `${interruptedCount} Interrupted`
+    : blockedCount > 0
     ? `Edited ${updatedCount} ${fileWord}, ${blockedCount} Blocked`
     : failedCount > 0
     ? `Edited ${updatedCount} ${fileWord}, ${failedCount} Failed`
@@ -1674,7 +1708,9 @@ function EventSummaryCard({
           const isBlocked = item.status === "blocked" || item.status === "needs_action";
           const isFailed = item.status === "failed";
           const isSkipped = item.status === "skipped";
-          const isUpdated = !isBlocked && !isFailed && !isSkipped;
+          const isInterrupted = item.status === "interrupted";
+          const isQueued = item.status === "queued";
+          const isUpdated = !isBlocked && !isFailed && !isSkipped && !isInterrupted && !isQueued;
           const hasErrorReason = (isBlocked || isFailed) && !!item.reason;
 
           return (
@@ -1698,6 +1734,12 @@ function EventSummaryCard({
                   {isSkipped && (
                     <div className="w-[10px] h-[1.5px] rounded bg-graphite-30" />
                   )}
+                  {isInterrupted && (
+                    <LocalIcon src={stoppedStatusIconUrl} className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
+                  )}
+                  {isQueued && (
+                    <PauseCircleIcon className="w-[14px] h-[14px]" color="var(--color-text-secondary)" />
+                  )}
                 </div>
 
                 <div className="flex flex-col min-w-0 flex-1">
@@ -1705,6 +1747,8 @@ function EventSummaryCard({
                     className={`text-[13px] leading-[18px] truncate transition-colors ${
                       isSkipped
                         ? "text-text-secondary line-through opacity-70"
+                        : isInterrupted || isQueued
+                        ? "text-text-secondary font-medium"
                         : isBlocked
                         ? "text-text-primary font-medium group-hover:text-brand-1"
                         : isFailed
@@ -1726,12 +1770,17 @@ function EventSummaryCard({
                       </span>
                     </Tooltip>
                   )}
+                  {(isInterrupted || isQueued) && (
+                    <span className="text-[11px] leading-[15px] text-text-secondary mt-[1px]">
+                      {isInterrupted ? "Interrupted" : "Not started"}
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* Action column: Design System Button (variant="secondary", size="sm") */}
               <div className="flex items-center gap-[6px] shrink-0 self-center">
-                {isBlocked && (
+                {(isBlocked || isInterrupted) && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -1982,6 +2031,29 @@ function createInitialTflMessages(tflId: string, foundTable: TableItem | null, i
   ];
 }
 
+function recordInterruptedTflTask(tflId: string, table: TableItem | null, eventSessionId: string, eventTitle: string, runId: number) {
+  const sessionId = `${tflId}-event-${eventSessionId}-${runId}`;
+  const previous = tflSessionStore[tflId];
+  if (previous?.tflSessionMessages[sessionId]?.some((message) => message.type === 'tfl_task_interrupted')) return;
+
+  const dispatchedMessages = createInitialTflMessages(tflId, table, true).map((message) =>
+    message.type === 'event_dispatched_task'
+      ? { ...message, dispatchedTaskData: { ...message.dispatchedTaskData, eventTitle } }
+      : message
+  );
+  const messages: Message[] = [...dispatchedMessages, { type: 'tfl_task_interrupted' }];
+  tflSessionStore[tflId] = {
+    sessionOptions: [
+      { id: sessionId, name: `Event: ${eventTitle}` },
+      ...(previous?.sessionOptions || []).filter((option) => option.id !== sessionId),
+    ],
+    selectedSession: sessionId,
+    tflSessionMessages: { ...previous?.tflSessionMessages, [sessionId]: messages },
+    messages,
+    stopAudit: previous?.stopAudit,
+  };
+}
+
 function ChatConversation({ 
   messages, 
   isPending,
@@ -1999,6 +2071,7 @@ function ChatConversation({
   onConfirmScope,
   onCancelScope,
   onSkipProgressItem,
+  onStopProgressItem,
   onRetrySummaryItem,
   programs,
   isExecutingInEventCopilot = false,
@@ -2021,6 +2094,7 @@ function ChatConversation({
   onConfirmScope?: (msgIndex: number) => void;
   onCancelScope?: (msgIndex: number) => void;
   onSkipProgressItem?: (tflId: string) => void;
+  onStopProgressItem?: (tflId: string) => void;
   onRetrySummaryItem?: (tflId: string) => void;
   programs?: ProgramItem[];
   isExecutingInEventCopilot?: boolean;
@@ -2182,6 +2256,7 @@ function ChatConversation({
                   data={msg.progressCardData}
                   onJumpToTfl={onJumpToTfl}
                   onSkipItem={onSkipProgressItem}
+                  onStopItem={onStopProgressItem}
                 />
               </div>
             )}
@@ -2475,6 +2550,13 @@ function ChatConversation({
               </div>
             )}
 
+            {msg.type === 'tfl_task_interrupted' && (
+              <div className="flex items-center gap-[8px] px-[10px] py-[6px] text-text-secondary t-body" role="status">
+                <img src={stoppedStatusIconUrl} alt="" className="size-[16px] shrink-0" />
+                <span>Task stopped in Event Copilot.</span>
+              </div>
+            )}
+
             </div>
           </React.Fragment>;
           })}
@@ -2489,7 +2571,15 @@ interface TflStoreEntry {
   selectedSession: string;
   tflSessionMessages: Record<string, Message[]>;
   messages: Message[];
+  stopAudit?: StopAuditRecord[];
 }
+
+type StopAuditRecord = {
+  actor: string;
+  at: number;
+  scope: 'tfl' | 'global' | 'item';
+  interruptedTflIds: string[];
+};
 
 const tflSessionStore: Record<string, TflStoreEntry> = {};
 
@@ -2525,6 +2615,7 @@ function AICopilotPanel({
   onStartEventExecution,
   onCompleteTflExecution,
   onSkipTflExecution,
+  onInterruptTflExecution,
   onFinishEventExecution,
   isExecutingInEventCopilot = false,
   executingSessionTitle,
@@ -2535,6 +2626,7 @@ function AICopilotPanel({
   currentTableId,
   onHandoffToEventCopilot,
   onComposerDirtyChange,
+  actorName = 'Unknown user',
   copilotScope = 'tfl',
   onSelectScope,
   eventSessions = [],
@@ -2577,6 +2669,7 @@ function AICopilotPanel({
   onStartEventExecution?: (sessionId: string, sessionTitle: string, tflIds: string[]) => void;
   onCompleteTflExecution?: (completedTflId: string) => void;
   onSkipTflExecution?: (skippedTflId: string) => void;
+  onInterruptTflExecution?: (tflIds: string[]) => void;
   onFinishEventExecution?: (sessionId: string, allTflIds: string[]) => void;
   isExecutingInEventCopilot?: boolean;
   executingSessionTitle?: string | null;
@@ -2587,6 +2680,7 @@ function AICopilotPanel({
   currentTableId?: string;
   onHandoffToEventCopilot?: (userPrompt: string, targetTflIds: string[], sourceTflId: string) => void;
   onComposerDirtyChange?: (hasUnsentContent: boolean) => void;
+  actorName?: string;
 }) {
   const mapEventSessionMessage = (m: EventSessionMessage): Message => {
     if (m.summaryCardData) {
@@ -2648,6 +2742,18 @@ function AICopilotPanel({
     });
   };
 
+  const recordStop = (scope: StopAuditRecord['scope'], interruptedTflIds: string[]) => {
+    const record: StopAuditRecord = { actor: actorName, at: Date.now(), scope, interruptedTflIds };
+    if (isEventCopilot) {
+      onUpdateEventSession?.(activeEventSession?.id || 'event', {
+        stopAudit: [...(activeEventSession?.stopAudit || []), record],
+      });
+    } else {
+      const store = tflSessionStore[currentTableId || 'tfl'];
+      if (store) store.stopAudit = [...(store.stopAudit || []), record];
+    }
+  };
+
   const currentTable = useMemo(() => {
     return findTableItem(programs, currentTableId);
   }, [programs, currentTableId]);
@@ -2688,8 +2794,12 @@ function AICopilotPanel({
   }, [isEventCopilot, activeEventSession?.id, currentTableId]);
 
   const [isPending, setIsPending] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const stoppingRef = useRef(false);
+  const runEpochRef = useRef(0);
+  const tflRunPhaseRef = useRef<'idle' | 'running' | 'waiting'>('idle');
   const [dockedProgressData, setDockedProgressData] = useState<EventProgressCardData | null>(null);
-  const activeProgressData = eventProgressData !== undefined && eventProgressData !== null ? eventProgressData : dockedProgressData;
+  const activeProgressData = dockedProgressData ?? eventProgressData ?? null;
 
   const [sessionOptions, setSessionOptions] = useState<{ id: string; name: string }[]>(() => {
     const tflKey = currentTableId || 'tfl';
@@ -2738,7 +2848,13 @@ function AICopilotPanel({
     };
   });
 
+  const tflStoreContextRef = useRef(`${isEventCopilot}:${currentTableId || ''}`);
   useEffect(() => {
+    const context = `${isEventCopilot}:${currentTableId || ''}`;
+    if (tflStoreContextRef.current !== context) {
+      tflStoreContextRef.current = context;
+      return;
+    }
     if (!isEventCopilot && currentTableId) {
       tflSessionStore[currentTableId] = {
         sessionOptions,
@@ -2748,6 +2864,7 @@ function AICopilotPanel({
           [selectedSession]: messages,
         },
         messages,
+        stopAudit: tflSessionStore[currentTableId]?.stopAudit,
       };
     }
   }, [messages, sessionOptions, selectedSession, tflSessionMessages, isEventCopilot, currentTableId]);
@@ -3009,11 +3126,16 @@ function AICopilotPanel({
   };
 
   const activeProgressItemsRef = useRef<EventProgressItem[]>([]);
+  const itemTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const stepTimerRef = useRef<any>(null);
   const advanceStepRef = useRef<() => void>(() => {});
+  const finishExecutionRef = useRef<() => void>(() => {});
   const currentIdxRef = useRef<number>(0);
+  const retryTflIdRef = useRef<string | null>(null);
 
   const handleSkipItem = (tflId: string) => {
+    if (stoppingRef.current) return;
+    if (activeProgressItemsRef.current.find((item) => item.tflId === tflId)?.status !== "queued") return;
     // 1. Immediately notify parent Main.tsx so eventProgressData has status: 'skipped' synchronously
     onSkipTflExecution?.(tflId);
 
@@ -3038,7 +3160,7 @@ function AICopilotPanel({
       return { ...prev, items: updated };
     });
 
-    // 4. If currently active waiting/running item was skipped, immediately abort timer and advance to next item
+    // Queued items are excluded from this run; active work uses Stop instead.
     if (wasActive && stepTimerRef.current) {
       clearTimeout(stepTimerRef.current);
       stepTimerRef.current = null;
@@ -3051,6 +3173,9 @@ function AICopilotPanel({
     const targetItems = scopeMsg?.scopeCardData?.items?.filter((item) => !item.isExcluded) || [];
 
     if (targetItems.length === 0) return;
+    const runEpoch = ++runEpochRef.current;
+    stoppingRef.current = false;
+    setIsStopping(false);
 
     const confirmedMessages = messages.map((msg, idx) => {
       if (idx !== msgIndex || !msg.scopeCardData) return msg;
@@ -3074,17 +3199,14 @@ function AICopilotPanel({
     onStartEventExecution?.(sessionId, sessionTitle, targetTflIds);
 
     // 2. Set docked progress card above input box
-    const initialProgressItems: EventProgressItem[] = targetItems.map((t, idx) => {
+    const initialProgressItems: EventProgressItem[] = targetItems.map((t) => {
       const liveTable = programs ? findTableItem(programs, t.tflId) : null;
       const effectiveStatus = liveTable
         ? (liveTable.status === 'locked' ? 'locked' : liveTable.status === 'error' ? 'error' : liveTable.status === 'pending' ? 'pending' : 'normal')
         : (t.itemStatus || 'normal');
       const isLocked = effectiveStatus === "locked";
       const isError = effectiveStatus === "error";
-      let status: EventProgressItem['status'] = 'queued';
-      if (idx === 0) {
-        status = isLocked ? 'blocked' : isError ? 'failed' : 'running';
-      }
+      const status: EventProgressItem['status'] = isLocked ? 'blocked' : isError ? 'failed' : 'running';
       return {
         tflId: t.tflId,
         name: liveTable?.name || t.name,
@@ -3103,12 +3225,15 @@ function AICopilotPanel({
     });
     setIsPending(true);
 
-    // 3. Sequentially process each TFL deliverable
-    let currentIdx = 0;
-    currentIdxRef.current = 0;
+    // Each eligible TFL starts in parallel; completion and Stop are tracked per item.
+    itemTimersRef.current.forEach(clearTimeout);
+    itemTimersRef.current.clear();
 
     const finishExecution = () => {
+      if (finishExecutionRef.current !== finishExecution) return;
+      finishExecutionRef.current = () => {};
       setIsPending(false);
+      onInterruptTflExecution?.(activeProgressItemsRef.current.filter((item) => item.status !== "done" && item.status !== "skipped").map((item) => item.tflId));
       onFinishEventExecution?.(sessionId, targetTflIds);
 
       setTimeout(() => {
@@ -3116,8 +3241,10 @@ function AICopilotPanel({
         onCloseEventProgress?.();
 
         const summaryItems: EventSummaryItem[] = activeProgressItemsRef.current.map((it) => {
-          let outcome: "updated" | "blocked" | "failed" | "skipped" = "updated";
+          let outcome: EventSummaryItem['status'] = "updated";
           if (it.status === "skipped") outcome = "skipped";
+          else if (it.status === "interrupted") outcome = "interrupted";
+          else if (it.status === "queued") outcome = "queued";
           else if (it.status === "blocked" || it.itemStatus === "locked" || it.status === "needs_action") outcome = "blocked";
           else if (it.status === "failed" || it.itemStatus === "error") outcome = "failed";
           return {
@@ -3132,6 +3259,7 @@ function AICopilotPanel({
         const blockedCount = summaryItems.filter((i) => i.status === "blocked").length;
         const failedCount = summaryItems.filter((i) => i.status === "failed").length;
         const skippedCount = summaryItems.filter((i) => i.status === "skipped").length;
+        const interruptedCount = summaryItems.filter((i) => i.status === "interrupted").length;
 
         const parts: string[] = [];
         if (updatedCount > 0) parts.push(`${updatedCount} Updated`);
@@ -3140,7 +3268,9 @@ function AICopilotPanel({
         if (skippedCount > 0) parts.push(`${skippedCount} Skipped`);
 
         const fileWord = updatedCount === 1 ? "File" : "Files";
-        const summaryTitle = blockedCount > 0
+        const summaryTitle = interruptedCount > 0
+          ? `${interruptedCount} Interrupted`
+          : blockedCount > 0
           ? `Edited ${updatedCount} ${fileWord}, ${blockedCount} Blocked`
           : failedCount > 0
           ? `Edited ${updatedCount} ${fileWord}, ${failedCount} Failed`
@@ -3158,89 +3288,193 @@ function AICopilotPanel({
         updateEventSessionMessages(finalMessages, { status: "completed" });
       }, 600);
     };
+    finishExecutionRef.current = finishExecution;
 
-    const runStep = () => {
-      while (currentIdx < targetItems.length && activeProgressItemsRef.current[currentIdx]?.status === "skipped") {
-        currentIdx++;
-        currentIdxRef.current = currentIdx;
-      }
-
-      if (currentIdx >= targetItems.length) {
+    const finishIfSettled = () => {
+      if (activeProgressItemsRef.current.every((item) => item.status !== "running" && item.status !== "stopping")) {
         finishExecution();
-        return;
       }
+    };
+    advanceStepRef.current = finishIfSettled;
 
-      currentIdxRef.current = currentIdx;
+    initialProgressItems.forEach((item, index) => {
+      if (item.status !== "running") return;
+      const timer = setTimeout(() => {
+        itemTimersRef.current.delete(item.tflId);
+        if (runEpochRef.current !== runEpoch) return;
+        const current = activeProgressItemsRef.current.find((entry) => entry.tflId === item.tflId);
+        if (current?.status !== "running") return;
+        activeProgressItemsRef.current = activeProgressItemsRef.current.map((entry) =>
+          entry.tflId === item.tflId ? { ...entry, status: "done" as const } : entry
+        );
+        setDockedProgressData((prev) => prev ? { ...prev, items: activeProgressItemsRef.current } : prev);
+        onCompleteTflExecution?.(item.tflId);
+        finishIfSettled();
+      }, 1600 + index * 450);
+      itemTimersRef.current.set(item.tflId, timer);
+    });
+    finishIfSettled();
+  };
 
-      const activeItem = targetItems[currentIdx];
-      const liveTable = programs ? findTableItem(programs, activeItem.tflId) : null;
-      const effectiveStatus = liveTable
-        ? (liveTable.status === 'locked' ? 'locked' : liveTable.status === 'error' ? 'error' : liveTable.status === 'pending' ? 'pending' : 'normal')
-        : (activeItem.itemStatus || 'normal');
-      const isLocked = effectiveStatus === "locked";
-      const isError = effectiveStatus === "error";
+  const finishInterruptedRetry = (tflId: string) => {
+    retryTflIdRef.current = null;
+    setIsPending(false);
+    const next = messages.map((message) => {
+      if (message.type !== "event_summary_card" || !message.summaryCardData) return message;
+      const items = message.summaryCardData.items.map((item) =>
+        item.tflId === tflId ? { ...item, status: "interrupted" as const, isRetrying: false } : item
+      );
+      return { ...message, summaryCardData: {
+        ...message.summaryCardData,
+        title: `${items.filter((item) => item.status === "interrupted").length} Interrupted`,
+        items,
+      } };
+    });
+    setMessages(next);
+    updateEventSessionMessages(next, { status: "completed" });
+    onFinishEventExecution?.(activeEventSession?.id || "event", [tflId]);
+    setTimeout(() => setDockedProgressData(null), 600);
+  };
 
-      if (isLocked || isError) {
-        const itemStatus: EventProgressItem['status'] = isLocked ? "blocked" : "failed";
-        activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
-          if (idx === currentIdx && it.status !== "skipped") {
-            return { ...it, status: itemStatus };
-          }
-          return it;
-        });
-        setDockedProgressData((prev) => {
-          if (!prev) return prev;
-          return { ...prev, items: activeProgressItemsRef.current };
-        });
-
-        // Advance to next after showing blocked/failed state
-        stepTimerRef.current = setTimeout(() => {
-          currentIdx++;
-          currentIdxRef.current = currentIdx;
-          runStep();
-        }, 2200);
+  const handleStopItem = (tflId: string) => {
+    const current = activeProgressItemsRef.current.find((item) => item.tflId === tflId);
+    if (!current || current.status !== "running") return;
+    const itemTimer = itemTimersRef.current.get(tflId);
+    if (itemTimer) clearTimeout(itemTimer);
+    itemTimersRef.current.delete(tflId);
+    if (retryTflIdRef.current === tflId) {
+      if (stepTimerRef.current) clearTimeout(stepTimerRef.current);
+      ++runEpochRef.current;
+    }
+    const stopEpoch = runEpochRef.current;
+    activeProgressItemsRef.current = activeProgressItemsRef.current.map((item) =>
+      item.tflId === tflId ? { ...item, status: "stopping" as const } : item
+    );
+    setDockedProgressData((prev) => prev ? { ...prev, items: activeProgressItemsRef.current } : prev);
+    setTimeout(() => {
+      if (runEpochRef.current !== stopEpoch) return;
+      activeProgressItemsRef.current = activeProgressItemsRef.current.map((item) =>
+        item.tflId === tflId && item.status === "stopping" ? { ...item, status: "interrupted" as const } : item
+      );
+      setDockedProgressData((prev) => prev ? { ...prev, items: activeProgressItemsRef.current } : prev);
+      onInterruptTflExecution?.([tflId]);
+      recordInterruptedTflTask(tflId, findTableItem(programs, tflId), activeEventSession?.id || 'event', activeEventSession?.name || 'Event Copilot', stopEpoch);
+      recordStop('item', [tflId]);
+      if (retryTflIdRef.current === tflId) {
+        finishInterruptedRetry(tflId);
       } else {
-        // Normal item running
-        activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
-          if (idx === currentIdx && it.status !== "skipped") {
-            return { ...it, status: "running" as const };
-          }
-          return it;
-        });
-        setDockedProgressData((prev) => {
-          if (!prev) return prev;
-          return { ...prev, items: activeProgressItemsRef.current };
-        });
-
-        stepTimerRef.current = setTimeout(() => {
-          activeProgressItemsRef.current = activeProgressItemsRef.current.map((it, idx) => {
-            if (idx === currentIdx && it.status !== "skipped") {
-              return { ...it, status: "done" as const };
-            }
-            return it;
-          });
-          setDockedProgressData((prev) => {
-            if (!prev) return prev;
-            return { ...prev, items: activeProgressItemsRef.current };
-          });
-
-          currentIdx++;
-          currentIdxRef.current = currentIdx;
-          runStep();
-        }, 1200);
+        advanceStepRef.current();
       }
-    };
+    }, 500);
+  };
 
-    advanceStepRef.current = () => {
-      currentIdx++;
-      currentIdxRef.current = currentIdx;
-      runStep();
-    };
+  const handleStop = () => {
+    if (!isPending || stoppingRef.current) return;
+    if (!isEventCopilot && tflRunPhaseRef.current !== 'running') return;
+    stoppingRef.current = true;
+    setIsStopping(true);
+    ++runEpochRef.current;
+    if (stepTimerRef.current) {
+      clearTimeout(stepTimerRef.current);
+      stepTimerRef.current = null;
+    }
+    itemTimersRef.current.forEach(clearTimeout);
+    itemTimersRef.current.clear();
 
-    setTimeout(runStep, 400);
+    if (isEventCopilot && retryTflIdRef.current) {
+      const retryId = retryTflIdRef.current;
+      activeProgressItemsRef.current = activeProgressItemsRef.current.map((item) =>
+        item.tflId === retryId && item.status === "running" ? { ...item, status: "stopping" as const } : item
+      );
+      setDockedProgressData((prev) => prev ? { ...prev, items: activeProgressItemsRef.current } : prev);
+      setTimeout(() => {
+        activeProgressItemsRef.current = activeProgressItemsRef.current.map((item) =>
+          item.tflId === retryId && item.status === "stopping" ? { ...item, status: "interrupted" as const } : item
+        );
+        setDockedProgressData((prev) => prev ? { ...prev, items: activeProgressItemsRef.current } : prev);
+        onInterruptTflExecution?.([retryId]);
+        recordInterruptedTflTask(retryId, findTableItem(programs, retryId), activeEventSession?.id || 'event', activeEventSession?.name || 'Event Copilot', runEpochRef.current);
+        recordStop('global', [retryId]);
+        retryTflIdRef.current = null;
+        setIsPending(false);
+        setIsStopping(false);
+        stoppingRef.current = false;
+        finishInterruptedRetry(retryId);
+      }, 500);
+      return;
+    }
+
+    if (!isEventCopilot) {
+      setTimeout(() => {
+        setMessages((prev) => {
+          const next = prev.filter((message) => message.type !== "ai_thinking" && message.type !== "ai_ask_user");
+          const stopped: Message[] = [...next, { type: "ai_complete", content: "Stopped. Send a new instruction to start another run." }];
+          const tflKey = currentTableId || "tfl";
+          if (tflSessionStore[tflKey]) {
+            tflSessionStore[tflKey].messages = stopped;
+            tflSessionStore[tflKey].tflSessionMessages[selectedSession] = stopped;
+          }
+          return stopped;
+        });
+        setIsPending(false);
+        tflRunPhaseRef.current = 'idle';
+        recordStop('tfl', currentTableId ? [currentTableId] : []);
+        setIsStopping(false);
+        stoppingRef.current = false;
+      }, 500);
+      return;
+    }
+
+    const runningIds = activeProgressItemsRef.current
+      .filter((item) => item.status === "running")
+      .map((item) => item.tflId);
+    if (activeProgressItemsRef.current.length === 0) {
+      setTimeout(() => {
+        const stoppedMessages: Message[] = [
+          ...messages.filter((message) => message.type !== "ai_thinking"),
+          { type: "ai_complete", content: "Stopped. Send a new instruction to start another run." },
+        ];
+        setMessages(stoppedMessages);
+        updateEventSessionMessages(stoppedMessages, { status: "completed" });
+        recordStop('global', []);
+        setIsPending(false);
+        setIsStopping(false);
+        stoppingRef.current = false;
+      }, 500);
+      return;
+    }
+
+    if (runningIds.length === 0) {
+      setTimeout(() => {
+        onInterruptTflExecution?.(activeProgressItemsRef.current.filter((item) => item.status === "queued").map((item) => item.tflId));
+        recordStop('global', []);
+        setIsStopping(false);
+        stoppingRef.current = false;
+        finishExecutionRef.current();
+      }, 500);
+      return;
+    }
+
+    activeProgressItemsRef.current = activeProgressItemsRef.current.map((item) =>
+      item.status === "running" ? { ...item, status: "stopping" as const } : item
+    );
+    setDockedProgressData((prev) => prev ? { ...prev, items: activeProgressItemsRef.current } : prev);
+    setTimeout(() => {
+      activeProgressItemsRef.current = activeProgressItemsRef.current.map((item) =>
+        item.status === "stopping" ? { ...item, status: "interrupted" as const } : item
+      );
+      setDockedProgressData((prev) => prev ? { ...prev, items: activeProgressItemsRef.current } : prev);
+      onInterruptTflExecution?.(activeProgressItemsRef.current.filter((item) => item.status === "interrupted" || item.status === "queued").map((item) => item.tflId));
+      runningIds.forEach((tflId) => recordInterruptedTflTask(tflId, findTableItem(programs, tflId), activeEventSession?.id || 'event', activeEventSession?.name || 'Event Copilot', runEpochRef.current));
+      recordStop('global', runningIds);
+      setIsStopping(false);
+      stoppingRef.current = false;
+      finishExecutionRef.current();
+    }, 500);
   };
 
   const handleRetrySummaryItem = (tflId: string) => {
+    if (isPending) return;
     // 1. Mark item as retrying in current summary card
     const summaryMsgIdx = messages.findIndex((m) => m.type === 'event_summary_card' && m.summaryCardData);
     if (summaryMsgIdx === -1) return;
@@ -3287,6 +3521,9 @@ function AICopilotPanel({
       itemStatus: 'normal',
       reason: targetSummaryItem?.reason,
     };
+    retryTflIdRef.current = tflId;
+    activeProgressItemsRef.current = [retryProgressItem];
+    const retryEpoch = ++runEpochRef.current;
 
     setDockedProgressData({
       title: "Retrying Update",
@@ -3297,6 +3534,7 @@ function AICopilotPanel({
 
     // 4. Run retry execution steps: running -> done -> update summary card
     stepTimerRef.current = setTimeout(() => {
+      if (runEpochRef.current !== retryEpoch) return;
       // Step 4a: mark as done in progress
       setDockedProgressData({
         title: "Retrying Update",
@@ -3309,7 +3547,9 @@ function AICopilotPanel({
 
       // Step 4b: after brief delay, close progress and update summary card
       setTimeout(() => {
+        if (runEpochRef.current !== retryEpoch) return;
         setIsPending(false);
+        retryTflIdRef.current = null;
         setDockedProgressData(null);
         onCloseEventProgress?.();
         onFinishEventExecution?.(sessionId, [tflId]);
@@ -3357,10 +3597,15 @@ function AICopilotPanel({
     }, 1400);
   };
 
+  const composerStopState: 'idle' | 'running' | 'stopping' =
+    isStopping || (isPending && activeProgressData?.items.some((item) => item.status === "stopping") && !activeProgressData?.items.some((item) => item.status === "running"))
+      ? 'stopping' : isPending && (isEventCopilot || tflRunPhaseRef.current === 'running') ? 'running' : 'idle';
+
   const handleSubmit = (text: string, attachments?: AttachmentItem[]) => {
     const isUpdate = metaUpdateActive && metaDiffItems && metaDiffItems.length > 0;
     const submittedReferenceChange = isUpdate ? metaDiffItems?.find(diff => diff.fieldId === 'referenceCase')?.referenceChange : undefined;
     if (!text.trim() && !isUpdate && !attachments?.length) return;
+    const runEpoch = ++runEpochRef.current;
     (document.activeElement as HTMLElement)?.blur();
 
     const userContent = text.trim() ? text : submittedReferenceChange?.newReference
@@ -3368,6 +3613,8 @@ function AICopilotPanel({
       : 'Update code based on the metadata changes above.';
 
     if (isEventCopilot) {
+      activeProgressItemsRef.current = [];
+      setDockedProgressData(null);
       const sessionId = activeEventSession?.id || "event";
       const isInitialNewSession = !activeEventSession?.messages?.length || activeEventSession?.name === "New Session" || activeEventSession?.name === "New Event Session";
 
@@ -3399,6 +3646,7 @@ function AICopilotPanel({
 
       // Phase 1: show thinking block in "thinking" state (3 reasoning phases)
       setTimeout(() => {
+        if (runEpochRef.current !== runEpoch) return;
         const thinkingMsg: Message = {
           type: "event_thinking_block" as const,
           thinkingCardData: {
@@ -3459,6 +3707,7 @@ function AICopilotPanel({
 
         // Phase 2: complete thinking (auto-collapses to single-line summary), then present target TFLs scope card
         setTimeout(() => {
+          if (runEpochRef.current !== runEpoch) return;
           const completedThinkingMsg: Message = {
             type: "event_thinking_block" as const,
             thinkingCardData: {
@@ -3567,6 +3816,7 @@ function AICopilotPanel({
           setMessages(completedMsgs);
 
           setTimeout(() => {
+            if (runEpochRef.current !== runEpoch) return;
             const finalMsgs = [...completedMsgs, aiMsg, scopeMsg];
             setMessages(finalMsgs);
             setIsPending(false);
@@ -3623,12 +3873,15 @@ function AICopilotPanel({
     }
 
     setMessages(prev => [...prev, { type: 'ai_thinking' }]);
+    tflRunPhaseRef.current = 'running';
     setTimeout(() => {
+      if (runEpochRef.current !== runEpoch) return;
       if (submittedReferenceChange) {
         setMessages(prev => prev.map(m => m.type === 'ai_thinking'
           ? { type: 'ai_update_complete' as const, referenceChange: submittedReferenceChange }
           : m));
         setIsPending(false);
+        tflRunPhaseRef.current = 'idle';
         return;
       }
       if (docType === 'figure') {
@@ -3637,11 +3890,14 @@ function AICopilotPanel({
           // No Pending changes state, directly return to Default state.
           setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_complete' as const } : m));
           setIsPending(false);
+          tflRunPhaseRef.current = 'idle';
         } else {
           setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_update_complete' as const } : m));
           setIsPending(false);
+          tflRunPhaseRef.current = 'idle';
         }
       } else {
+        tflRunPhaseRef.current = 'waiting';
         setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_ask_user' as const } : m));
         // for listing, keep original behavior
       }
@@ -3813,6 +4069,7 @@ function AICopilotPanel({
               onConfirmScope={handleConfirmScope}
               onCancelScope={handleCancelScope}
               onSkipProgressItem={handleSkipItem}
+              onStopProgressItem={handleStopItem}
               onRetrySummaryItem={handleRetrySummaryItem}
               programs={programs}
               isExecutingInEventCopilot={!isEventCopilot && isExecutingInEventCopilot}
@@ -3881,6 +4138,9 @@ function AICopilotPanel({
                 onCloseEventProgress?.();
               }}
               onSkipEventProgressItem={handleSkipItem}
+              onStopEventProgressItem={handleStopItem}
+              stopState={composerStopState}
+              onStop={handleStop}
               onJumpToTfl={onJumpToTfl}
               mentionOptions={mentionOptions}
               showMention={true}
@@ -3910,6 +4170,9 @@ function AICopilotPanel({
               eventProgressData={null}
               onCloseEventProgress={() => {}}
               onSkipEventProgressItem={handleSkipItem}
+              onStopEventProgressItem={handleStopItem}
+              stopState={composerStopState}
+              onStop={handleStop}
               onJumpToTfl={onJumpToTfl}
               mentionOptions={mentionOptions}
               showMention={true}
@@ -3938,6 +4201,9 @@ function AICopilotPanel({
                 onCloseEventProgress?.();
               }}
               onSkipEventProgressItem={handleSkipItem}
+              onStopEventProgressItem={handleStopItem}
+              stopState={composerStopState}
+              onStop={handleStop}
               onJumpToTfl={onJumpToTfl}
               mentionOptions={mentionOptions}
               showMention={true}
@@ -4070,6 +4336,7 @@ export type EventSession = {
   parentId?: string;       // set on branch sessions
   parentName?: string;     // display name of the parent session
   messages?: EventSessionMessage[];
+  stopAudit?: StopAuditRecord[];
   branches?: EventSession[];
 };
 
@@ -12071,6 +12338,7 @@ function WorkspaceContent({
   const [executingTflIds, setExecutingTflIds] = useState<string[]>([]);
   const [executingSessionTitle, setExecutingSessionTitle] = useState<string | null>(null);
   const [eventProgressData, setEventProgressData] = useState<EventProgressCardData | null>(null);
+  const preExecutionStatusRef = useRef<Record<string, ItemStatus>>({});
 
   // If TreeList is opened (e.g. manually by the user), clear the auto-collapsed flag
   useEffect(() => {
@@ -12842,6 +13110,10 @@ function WorkspaceContent({
   };
 
   const handleStartEventExecution = (sessionId: string, sessionTitle: string, tflIds: string[]) => {
+    for (const id of tflIds) {
+      const table = findTableItem(programs, id);
+      if (table) preExecutionStatusRef.current[id] = table.status;
+    }
     setExecutingTflIds(tflIds);
     setExecutingSessionTitle(sessionTitle);
 
@@ -12853,12 +13125,14 @@ function WorkspaceContent({
       prev.map((prog) => ({
         ...prog,
         tables: prog.tables.map((t) =>
-          tflIds.includes(t.id) ? { ...t, status: 'analyzing' as const } : t
+          tflIds.includes(t.id) && t.status !== 'locked' && t.status !== 'error'
+            ? { ...t, status: 'analyzing' as const }
+            : t
         ),
       }))
     );
 
-    const initialProgressItems: EventProgressItem[] = tflIds.map((id, idx) => {
+    const initialProgressItems: EventProgressItem[] = tflIds.map((id) => {
       let foundName = id;
       for (const prog of programs) {
         const found = prog.tables.find((t) => t.id === id);
@@ -12870,7 +13144,7 @@ function WorkspaceContent({
       return {
         tflId: id,
         name: foundName,
-        status: idx === 0 ? ('running' as const) : ('queued' as const),
+        status: 'running' as const,
       };
     });
 
@@ -12879,6 +13153,18 @@ function WorkspaceContent({
       items: initialProgressItems,
       isCompleted: false,
     });
+  };
+
+  const handleInterruptTflExecution = (tflIds: string[]) => {
+    setExecutingTflIds((prev) => prev.filter((id) => !tflIds.includes(id)));
+    setPrograms((prev) => prev.map((program) => ({
+      ...program,
+      tables: program.tables.map((table) =>
+        tflIds.includes(table.id) && table.status === "analyzing"
+          ? { ...table, status: preExecutionStatusRef.current[table.id] || "idle" }
+          : table
+      ),
+    })));
   };
 
   const handleCompleteTflExecution = (completedTflId: string) => {
@@ -12898,34 +13184,30 @@ function WorkspaceContent({
     const initialMsgs = createInitialTflMessages(completedTflId, foundTable, true);
     const s1Id = `${completedTflId}-session-1`;
     const tflName = foundTable?.name ? foundTable.name.replace(/^[\d.]+\s*/, '') : 'Analysis';
+    const previous = tflSessionStore[completedTflId];
     tflSessionStore[completedTflId] = {
       sessionOptions: [
         { id: s1Id, name: `Session: ${tflName}` },
-        { id: `${completedTflId}-session-2`, name: `Session: Safety Analysis` },
-        { id: `${completedTflId}-session-3`, name: `Session: Exploratory Analysis` },
+        ...(previous?.sessionOptions || [
+          { id: `${completedTflId}-session-2`, name: `Session: Safety Analysis` },
+          { id: `${completedTflId}-session-3`, name: `Session: Exploratory Analysis` },
+        ]).filter((option) => option.id !== s1Id),
       ],
       selectedSession: s1Id,
       tflSessionMessages: {
+        ...previous?.tflSessionMessages,
         [s1Id]: initialMsgs,
       },
       messages: initialMsgs,
+      stopAudit: previous?.stopAudit,
     };
 
     setEventProgressData((prev) => {
       if (!prev) return prev;
-      const completedIdx = prev.items.findIndex((it) => it.tflId === completedTflId);
-      let nextRunningIdx = -1;
-      for (let i = completedIdx + 1; i < prev.items.length; i++) {
-        if (prev.items[i].status !== 'skipped') {
-          nextRunningIdx = i;
-          break;
-        }
-      }
       return {
         ...prev,
-        items: prev.items.map((it, idx) => {
+        items: prev.items.map((it) => {
           if (it.tflId === completedTflId) return { ...it, status: 'done' as const };
-          if (idx === nextRunningIdx && it.status !== 'skipped') return { ...it, status: 'running' as const };
           return it;
         }),
       };
@@ -13099,6 +13381,7 @@ function WorkspaceContent({
         onStartEventExecution={handleStartEventExecution}
         onCompleteTflExecution={handleCompleteTflExecution}
         onSkipTflExecution={handleSkipTflExecution}
+        onInterruptTflExecution={handleInterruptTflExecution}
         onFinishEventExecution={handleFinishEventExecution}
         isExecutingInEventCopilot={isSelectedTflExecuting}
         executingSessionTitle={executingSessionTitle}
@@ -13112,6 +13395,7 @@ function WorkspaceContent({
         currentTableId={selectedTable?.id || selectedId}
         onHandoffToEventCopilot={handleHandoffToEventCopilot}
         onComposerDirtyChange={setIsAiComposerDirty}
+        actorName={currentUserName}
         quoteInsertRef={quoteInsertRef}
         panelWidth={aiCopilotWidth}
         onClose={handleCloseAICopilot}
