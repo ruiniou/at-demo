@@ -1965,7 +1965,7 @@ function createInitialTflMessages(tflId: string, foundTable: TableItem | null, i
     return msgs;
   }
 
-  if (foundTable?.status === 'pending' || tflId === 't4') {
+  if (foundTable?.status === 'pending') {
     return [
       { type: 'user', content: `Update ${foundTable?.name || 'demographics table'} to reflect amended protocol SAP v2.1 criteria.` },
       { type: 'ai_update_complete' }
@@ -4024,12 +4024,21 @@ const withUpdatedInputTfl = (programs: ProgramItem[]): ProgramItem[] => {
   }];
 };
 
-const initialProgramsForEvent = (inputUpdateCount = 0): ProgramItem[] => {
+const initialProgramsForEvent = (eventId: string, inputUpdateCount = 0): ProgramItem[] => {
   const programs = structuredClone(INITIAL_EVENT_PROGRAMS);
+  if (eventId === 'e5') {
+    for (const program of programs) {
+      program.tables = program.tables.map((table) => table.status === 'pending'
+        ? { ...table, status: 'idle' }
+        : table);
+    }
+  }
   return inputUpdateCount > 0 ? withUpdatedInputTfl(programs) : programs;
 };
 
 const assignmentNoticeKey = (eventId: string, assignee: string, tflId: string) => JSON.stringify([eventId, assignee, tflId]);
+// Review fixture: Alex has not opened this assigned TFL yet.
+const INITIAL_UNREAD_ASSIGNMENT_KEYS = [assignmentNoticeKey('e5', 'Alex Kim', 't3')];
 
 // ==================== Event Copilot Types & Mock Data ====================
 
@@ -4839,6 +4848,19 @@ function TreeStatusIcon({
     );
   }
 
+  if (item.status === 'modified' || item.status === 'pending') {
+    const pendingCount = 'pendingChanges' in item ? item.pendingChanges : undefined;
+    return (
+      <TooltipText label={pendingCount && pendingCount > 0 ? `${pendingCount} Pending changes` : 'Pending changes'}>
+        <span className="cursor-help">
+          <CodeStatusSlot>
+            <CodeStatusDot color="var(--color-status-warning-icon)" />
+          </CodeStatusSlot>
+        </span>
+      </TooltipText>
+    );
+  }
+
   if (occupant) {
     return (
       <TooltipText label={`${occupant} is editing`}>
@@ -4899,19 +4921,6 @@ function TreeStatusIcon({
     );
   }
 
-  if (item.status === 'modified' || item.status === 'pending') {
-    const pendingCount = 'pendingChanges' in item ? item.pendingChanges : undefined;
-    return (
-      <TooltipText label={pendingCount && pendingCount > 0 ? `${pendingCount} Pending changes` : 'Pending changes'}>
-        <span className="cursor-help">
-          <CodeStatusSlot>
-            <CodeStatusDot color="var(--color-status-warning-icon)" />
-          </CodeStatusSlot>
-        </span>
-      </TooltipText>
-    );
-  }
-
   if (item.status === 'locked') {
     const label = lockedBy ? `Locked by ${lockedBy}` : 'Locked';
     return (
@@ -4931,7 +4940,6 @@ function TreeItem({
   selectedId,
   onSelect,
   onToggleExpand,
-  hasPendingCodeChanges,
   occupancyMap = {},
   currentUserName,
   unreadAssignmentIds,
@@ -4941,7 +4949,6 @@ function TreeItem({
   selectedId: string | null;
   onSelect: (id: string) => void;
   onToggleExpand: (programId: string) => void;
-  hasPendingCodeChanges?: boolean;
   /** Per-TFL occupancy: key = table id, value = { isOccupied, assignee } */
   occupancyMap?: Record<string, { isOccupied: boolean; assignee?: string }>;
   currentUserName?: string;
@@ -4987,14 +4994,11 @@ function TreeItem({
           {program.tables.map((table) => {
             const isTableHovered = hoveredId === table.id;
             const isTableSelected = selectedId === table.id;
-            const isCurrentTablePending = table.id === selectedId && hasPendingCodeChanges;
             const effectiveItem: TableItem = table.status === 'stopped'
               ? table
               : isProgramLocked || table.status === 'locked'
               ? { ...table, status: 'locked' }
-              : isCurrentTablePending
-                ? { ...table, status: 'modified' }
-                : table;
+              : table;
 
             const isQueued = table.docType === 'figure' && table.status === 'queued';
 
@@ -5004,8 +5008,6 @@ function TreeItem({
             const isSelf = Boolean(currentUserName && table.assignee === currentUserName);
             const occupant = tflOccupancy?.isOccupied && !isSelf ? table.assignee : undefined;
             const isNewAssignment = isSelf && Boolean(unreadAssignmentIds?.has(table.id));
-            const hasVisibleStatus = forceAiProcessing || Boolean(occupant) || isQueued ||
-              ['analyzing', 'stopped', 'error', 'modified', 'pending', 'locked'].includes(effectiveItem.status);
 
             return (
               <div
@@ -5025,35 +5027,29 @@ function TreeItem({
               >
                 <div className="flex h-full items-center justify-between pl-[24px] pr-[12px]">
                   <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[4px]">
-                    {table.docType === 'listing' ? (
-                      <ListingTreeIcon color={isProgramLocked ? "#B2B4B4" : isTableSelected ? "#830051" : "#888E8E"} />
-                    ) : table.docType === 'figure' ? (
-                      <FigureTreeIcon color={isProgramLocked ? "#B2B4B4" : isTableSelected ? "#830051" : "#888E8E"} />
-                    ) : (
-                      <TableTreeIcon color={isProgramLocked ? "#B2B4B4" : isTableSelected ? "#830051" : "#888E8E"} />
-                    )}
-                    <p className={`t-small min-w-0 truncate ${isProgramLocked ? 'text-[#B2B4B4]' : isTableSelected ? 'text-brand-1' : 'text-text-primary'}`}>
-                      {table.name}
-                    </p>
+                    <span className="relative flex h-[16px] w-[16px] shrink-0 items-center justify-center" role={isNewAssignment ? 'img' : undefined} aria-label={isNewAssignment ? 'New Assignment' : undefined}>
+                      {table.docType === 'listing' ? (
+                        <ListingTreeIcon color="var(--color-text-secondary)" />
+                      ) : table.docType === 'figure' ? (
+                        <FigureTreeIcon color="var(--color-text-secondary)" />
+                      ) : (
+                        <TableTreeIcon color="var(--color-text-secondary)" />
+                      )}
+                      {isNewAssignment && <span aria-hidden="true" className={`pointer-events-none absolute -right-[2px] -top-[2px] h-[7px] w-[7px] rounded-full bg-brand-1 ring-[1.5px] ${isTableSelected ? 'ring-az-secondary' : isTableHovered ? 'ring-graphite-10' : 'ring-bg-panel'}`} />}
+                    </span>
+                    <TooltipText label={table.name} align="left" className="min-w-0 flex-1">
+                      <p className={`t-small ${isProgramLocked ? 'text-graphite-40' : isTableSelected ? 'text-brand-1' : 'text-text-primary'} min-w-0 w-full truncate`}>
+                        {table.name}
+                      </p>
+                    </TooltipText>
                   </div>
-                  <div className="flex shrink-0 items-center gap-[4px]">
-                    {(!isNewAssignment || hasVisibleStatus) && <TreeStatusIcon
-                      item={effectiveItem}
-                      lockedBy={isProgramLocked ? program.name : undefined}
-                      isFigureQueued={isQueued}
-                      occupant={occupant}
-                      forceAiProcessing={forceAiProcessing}
-                    />}
-                    {isNewAssignment && (
-                      <TooltipText label="New Assignment">
-                        <span role="img" aria-label="New Assignment">
-                          <CodeStatusSlot>
-                            <CodeStatusDot color="var(--color-light-blue-100)" />
-                          </CodeStatusSlot>
-                        </span>
-                      </TooltipText>
-                    )}
-                  </div>
+                  <TreeStatusIcon
+                    item={effectiveItem}
+                    lockedBy={isProgramLocked ? program.name : undefined}
+                    isFigureQueued={isQueued}
+                    occupant={occupant}
+                    forceAiProcessing={forceAiProcessing}
+                  />
                 </div>
               </div>
             );
@@ -12059,14 +12055,7 @@ function WorkspaceContent({
       return;
     }
 
-    if (currentEventData.status === 'to-do') {
-      setPrograms((previousPrograms) => previousPrograms.map((program) => ({
-        ...program,
-        status: 'completed',
-        tables: program.tables.map((table) => ({ ...table, status: 'idle' })),
-      })));
-    }
-  }, [currentEventData.status, isEventStopped]);
+  }, [isEventStopped]);
   const [panelView, setPanelView] = useState<PanelView>('both');
   const shellPreviewOpen = panelView !== 'code';
   const codeOpen = panelView !== 'shell';
@@ -13409,7 +13398,6 @@ function WorkspaceContent({
                       selectedId={selectedId}
                       onSelect={handleSelect}
                       onToggleExpand={handleToggleExpand}
-                      hasPendingCodeChanges={hasPendingCodeChanges}
                       occupancyMap={occupancyMap}
                       currentUserName={CURRENT_USER}
                       unreadAssignmentIds={unreadAssignmentIds}
@@ -13930,7 +13918,7 @@ const homeEvents: EventCardData[] = [
     creator: 'Emily',
     owner: 'Emily Liu',
     createdDate: '2025-11-11',
-    status: 'in-progress',
+    status: 'to-do',
     progress: { completed: 6, total: 15 },
     ta: 'Oncology',
     teamMembers: [
@@ -15213,7 +15201,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [selectedTeamEvent, setSelectedTeamEvent] = useState<EventCardData | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string>('e1');
   const [events, setEvents] = useState<EventCardData[]>(homeEvents);
-  const [unreadAssignmentKeys, setUnreadAssignmentKeys] = useState<Set<string>>(() => new Set());
+  const [unreadAssignmentKeys, setUnreadAssignmentKeys] = useState<Set<string>>(() => new Set(INITIAL_UNREAD_ASSIGNMENT_KEYS));
   const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
   const [currentRole, setCurrentRole] = useState<UserRole>('event-owner');
   const [activeNav, setActiveNav] = useState<'events' | 'management'>('events');
@@ -15333,7 +15321,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const selectEventPrograms = (event: EventCardData) => {
     if (selectedEventId === event.id) return;
     eventProgramsRef.current[selectedEventId] = programs;
-    const savedPrograms = eventProgramsRef.current[event.id] ?? initialProgramsForEvent(event.inputUpdateCount);
+    const savedPrograms = eventProgramsRef.current[event.id] ?? initialProgramsForEvent(event.id, event.inputUpdateCount);
     setPrograms(event.inputUpdateCount ? withUpdatedInputTfl(savedPrograms) : savedPrograms);
   };
 
