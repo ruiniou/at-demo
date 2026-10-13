@@ -620,3 +620,29 @@
 * **根本原因 (Root Cause)**：Badge 固定高度 16px，同时设置了上下 `py-px`；内部又嵌套 `leading-[0]` 容器与 `leading-[14px]` 段落，文字行盒在有限空间内受到挤压。
 * **解决方案 (Solution)**：移除多余的内部容器与垂直内边距，让数字直接由 Badge 的 Flexbox 居中，并统一为 `leading-none`。
 * **经验教训 (Takeaways)**：小尺寸计数标记应只保留一层行盒和一套居中规则，避免固定高度、内边距与嵌套行高相互冲突。
+
+---
+
+### [2026-10-12] 演示 Event 无法重复更新输入且 TFL 图标颜色不一致
+
+* **现象 (Symptom)**：
+  `[Review] Multiplayer Editing` 无法操作 Update Inputs；Tree List 中 TFL 图标在选中和锁定状态下偏离统一的次级文字色。
+* **根本原因 (Root Cause)**：
+  `EventInformationModal` 在 Event 状态为 `in-progress` 时设置 `inputsDisabled`，而该演示 Event 初始状态正是 `in-progress`。`TreeItem` 还根据选中和锁定状态给三种 TFL 图标传入不同的 `color` 值。
+* **解决方案 (Solution)**：
+  将该演示 Event 的初始状态设为 `to-do`，并统一给 Table、Listing、Figure 图标传入 `var(--color-text-secondary)`；保留 TFL 状态和 New 角标各自的表达。
+* **经验教训 (Takeaways)**：
+  演示可重复操作的功能时，先检查 Event 级禁用条件；个人提醒应由独立角标表达，不改变主体图标颜色。
+
+---
+
+### [2026-10-12] Pending 状态依赖点击且 New 走查 Event 显示旧待确认内容
+
+* **现象 (Symptom)**：
+  Tree List 的 Pending 看起来要点击 TFL 才出现；用于走查 New 的 Event 中，初始 TFL 已无 Pending 点，但打开后仍显示 Pending Changes。
+* **根本原因 (Root Cause)**：
+  Event 页面在所有 `to-do` Event 打开时将 `programs` 内全部 TFL 状态重置为 `idle`。`createInitialTflMessages` 又用 `tflId === 't4'` 强制生成 `ai_update_complete` 消息，与 TFL 实际状态脱节。
+* **解决方案 (Solution)**：
+  仅在 e5 演示 Event 的初始数据中清除 Pending TFL；其他 Event 保留静态状态，Tree List 直接显示对应右侧状态点。移除 t4 的强制待确认消息，改由实际 Pending 状态决定。
+* **经验教训 (Takeaways)**：
+  Event 演示数据的状态调整应限定到指定 Event，且聊天待确认内容应与 TFL 状态使用同一来源。

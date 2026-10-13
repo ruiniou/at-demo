@@ -1455,7 +1455,7 @@ export default function ChatBox({
               {/* Mention Dropdown */}
               {showMention && showMentionMenu && filteredMentionOptions.length > 0 && (
                 <div
-                  className="absolute bottom-full left-0 mb-[8px] w-[310px] max-h-[260px] bg-white border border-border-default rounded-[8px] shadow-[0_6px_20px_rgba(0,0,0,0.12)] overflow-hidden z-50 flex flex-col select-none"
+                  className="absolute bottom-full left-0 mb-[8px] w-[310px] max-h-[260px] bg-white border border-border-default rounded-[8px] shadow-elevation-overlay overflow-hidden z-50 flex flex-col select-none"
                   onMouseDown={(e) => e.preventDefault()}
                 >
                   <div className="px-[10px] py-[6px] bg-graphite-5 border-b border-border-default flex items-center justify-between text-[11px] text-text-secondary font-medium uppercase tracking-wider">

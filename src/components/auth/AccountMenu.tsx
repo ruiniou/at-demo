@@ -50,7 +50,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
       </button>
 
       {/* Popover Menu with only 'Log out' option */}
-      <Popover open={isOpen} onOpenChange={setIsOpen} anchorRef={triggerRef} role="menu" label="Account actions" placement="top" offset={6} className="rounded-[8px] shadow-lg">
+      <Popover open={isOpen} onOpenChange={setIsOpen} anchorRef={triggerRef} role="menu" label="Account actions" placement="top" offset={6}>
           <MenuItem danger onClick={handleLogoutClick} className="px-[10px] py-[8px] text-[13px]" icon={<svg
               className="h-[14px] w-[14px] shrink-0"
               viewBox="0 0 24 24"

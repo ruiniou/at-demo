@@ -156,7 +156,7 @@ export function ZoomControl({
 
       {/* 展开的下拉选项列表 */}
       {isOpen && !disabled && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-[100%] z-[100] mt-[4px] min-w-[88px] flex flex-col gap-[2px] rounded-md border border-form-border bg-white p-[4px] shadow-[0px_2px_8px_rgba(0,0,0,0.12)] animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute left-1/2 -translate-x-1/2 top-[100%] z-[100] mt-[4px] min-w-[88px] flex flex-col gap-[2px] rounded-md border border-form-border bg-white p-[4px] shadow-elevation-overlay animate-in fade-in zoom-in-95 duration-100">
           <div className="flex flex-col gap-[2px]">
             {options.map((opt) => {
               const isSelected = opt.value === value;

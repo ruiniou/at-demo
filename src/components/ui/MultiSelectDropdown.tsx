@@ -169,7 +169,7 @@ export function MultiSelectDropdown({
 
       {isOpen && !disabled && (
         <div
-          className={`absolute left-0 top-[100%] z-[100] mt-[4px] rounded-md border border-form-border bg-white shadow-[0px_2px_6px_rgba(0,0,0,0.1)] ${
+          className={`absolute left-0 top-[100%] z-[100] mt-[4px] rounded-md border border-form-border bg-white shadow-elevation-overlay ${
             hasDerivation ? "w-[640px]" : "right-0"
           }`}
         >

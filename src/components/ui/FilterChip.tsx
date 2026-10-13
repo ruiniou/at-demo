@@ -323,7 +323,7 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
               overflowY: "auto",
               zIndex: 10050,
             }}
-            className="filter-chip-menu relative rounded-md border border-[#D8DADA] bg-white p-[4px] shadow-[0px_4px_12px_rgba(0,0,0,0.12)] flex flex-col gap-[2px] before:content-[''] before:absolute before:-top-[8px] before:left-0 before:right-0 before:h-[8px]"
+            className="filter-chip-menu relative rounded-md border border-[#D8DADA] bg-white p-[4px] shadow-elevation-overlay flex flex-col gap-[2px] before:content-[''] before:absolute before:-top-[8px] before:left-0 before:right-0 before:h-[8px]"
           >
             {multiSelect ? (
               options.map((opt) => {
