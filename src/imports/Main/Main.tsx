@@ -10995,7 +10995,7 @@ function MetadataPanel({
                         {!isLocked && <SvgIcon className="h-[16px] w-[16px]" shrink-0><path d="M9.29 6.71C8.9 6.32 8.9 5.68 9.29 5.29C9.68 4.9 10.32 4.9 10.71 5.29L16.71 11.29C17.1 11.68 17.1 12.32 16.71 12.71L10.71 18.71C10.32 19.1 9.68 19.1 9.29 18.71C8.9 18.32 8.9 17.68 9.29 17.29L14.59 12L9.29 6.71Z" fill="#999" /></SvgIcon>}
                       </button>
                       {groupDropdownOpen && !isLocked && (
-                        <div className="absolute top-full left-0 right-0 mt-[2px] bg-white border border-border-default rounded-md p-1 shadow-lg z-[60] max-h-[200px] overflow-auto">
+                        <div className="absolute top-full left-0 right-0 mt-[2px] bg-white border border-border-default rounded-md p-1 shadow-elevation-overlay z-[60] max-h-[200px] overflow-auto">
                           {GROUP_OPTIONS.map((opt, idx) => (
                             <button key={idx} onClick={() => handleGroupSelect(idx)}
                               className={`w-full text-left rounded-[calc(var(--radius-xs)*2)] px-1 py-[6px] t-small hover:bg-bg-panel ${idx === selectedGroupIdx ? 'text-brand-1 font-medium' : 'text-text-primary'}`}>{opt.name}</button>
@@ -14285,7 +14285,7 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
                 {showMoreMenu && (
                   <div 
                     onClick={(e) => e.stopPropagation()}
-                    className="absolute right-0 bottom-[32px] sm:bottom-auto sm:top-[28px] mt-[4px] bg-white border border-[#D8DADA] rounded-md shadow-lg p-1 w-[150px] z-50 animate-fade-in"
+                    className="absolute right-0 bottom-[32px] sm:bottom-auto sm:top-[28px] mt-[4px] bg-white border border-[#D8DADA] rounded-md shadow-elevation-overlay p-1 w-[150px] z-50 animate-fade-in"
                   >
                     {actionButtons.map((btn, i) => (
                       <button

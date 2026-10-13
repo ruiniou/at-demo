@@ -320,7 +320,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
         <div
           ref={menuRef}
           style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, width: `${menuPos.width}px`, maxHeight: `${menuPos.maxHeight}px` }}
-          className="fixed z-[9999] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          className="fixed z-[9999] bg-white border border-border-default rounded-[8px] shadow-elevation-overlay flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-1 flex flex-col gap-[2px]">
@@ -387,7 +387,7 @@ export const CopilotScopeHeader: React.FC<CopilotScopeHeaderProps> = ({
         <div
           ref={menuRef}
           style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, width: `${menuPos.width}px`, maxHeight: `${menuPos.maxHeight}px` }}
-          className="fixed z-[9999] bg-white border border-border-default rounded-[8px] shadow-[0_6px_24px_rgba(0,0,0,0.14)] flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+          className="fixed z-[9999] bg-white border border-border-default rounded-[8px] shadow-elevation-overlay flex flex-col select-none overflow-hidden animate-in fade-in zoom-in-95 duration-100"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="min-h-0 flex-1 overflow-y-auto p-1 flex flex-col gap-[2px]">

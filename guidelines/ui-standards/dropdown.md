@@ -14,6 +14,7 @@
 - DropdownGroupLabel / DropdownSeparator / DropdownEmpty: reusable list anatomy.
 
 ## Appearance
+- Selection dropdowns, filter dropdowns, session lists, and action menus use `shadow-elevation-overlay` on the floating surface (`0 4px 16px rgba(0, 0, 0, 0.08)`). The shared `Popover` supplies this by default; callers should not override it with one-off shadow values. This does not apply to trigger focus rings, tooltips, modals, or inline editing surfaces.
 - Selector values and option labels use the same body typography: font family, size, line height and normal weight. Selection state is communicated through color, surface and indicators rather than heavier text.
 - Selectors do not show an inline clear control by default. Their arrow keeps the same orientation in default and expanded states.
 - Existing avatar hierarchy remains unchanged: page 24px; modal/menu 20px.

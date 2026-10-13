@@ -150,7 +150,7 @@ export function CreatableDropdown({
 
         {/* Dropdown Menu */}
         {isOpen && !disabled && (
-          <div className="absolute left-0 right-0 top-[100%] z-[100] mt-[4px] flex flex-col gap-[6px] rounded-md border border-form-border bg-white p-1 shadow-[0px_4px_12px_rgba(0,0,0,0.12)]">
+          <div className="absolute left-0 right-0 top-[100%] z-[100] mt-[4px] flex flex-col gap-[6px] rounded-md border border-form-border bg-white p-1 shadow-elevation-overlay">
             {/* Search / Custom entry input */}
             <div className="w-full">
               <SearchBar
