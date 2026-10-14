@@ -11,6 +11,7 @@ import { Tag } from '../../../components/ui/Tag';
 import { Tooltip } from '../../../components/ui/Tooltip';
 import { ProjectItem, StudyItem, SYSTEM_USERS, UserRole } from '../types/management';
 import databaseIconUrl from '../../../icons/database-2-line.svg';
+import dashboardIconUrl from '../../../icons/dashboard-3-line.svg';
 import capsuleIconUrl from '../../../icons/capsule-line.svg';
 import stackIconUrl from '../../../icons/stack-line.svg';
 import searchIconUrl from '../../../icons/search-line.svg';
@@ -132,9 +133,10 @@ interface ProjectStudyManagementViewProps {
   onChangeOwner: (projectId: string, studyId: string, owner: string) => void;
   onToggleProjectStatus: (projectId: string) => void;
   onToggleStudyStatus: (projectId: string, studyId: string) => void;
+  onOpenStudyDashboard: (studyId: string) => void;
 }
 
-export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProps> = ({ headerLeading, currentRole, currentUserName, projects, onOpenNewProject, onOpenNewStudy, onChangeOwner, onToggleProjectStatus, onToggleStudyStatus }) => {
+export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProps> = ({ headerLeading, currentRole, currentUserName, projects, onOpenNewProject, onOpenNewStudy, onChangeOwner, onToggleProjectStatus, onToggleStudyStatus, onOpenStudyDashboard }) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'enabled' | 'disabled'>('all');
   const [taFilter, setTaFilter] = useState('All');
@@ -234,7 +236,7 @@ export const ProjectStudyManagementView: React.FC<ProjectStudyManagementViewProp
                       <td className="py-0 pl-[40px] pr-[16px]"><div className="flex h-[48px] items-center gap-[8px]"><MaskIcon src={stackIconUrl} className={`h-[16px] w-[16px] text-text-secondary ${effectiveDisabled ? 'opacity-50' : ''}`} /><span className={`font-medium ${effectiveDisabled ? 'text-graphite-40' : 'text-text-primary'}`}>{study.id}</span><Tag className={`h-[20px] py-0 pointer-events-none ${effectiveDisabled ? 'opacity-50' : ''}`}>{study.ta}</Tag></div></td>
                       <td className="px-[10px] py-[4px]">{canMaintainOwner ? <OwnerPicker value={study.owner} disabledAppearance={effectiveDisabled} ariaLabel="Select Study Owner" onSelect={(owner) => onChangeOwner(project.id, study.id, owner)} /> : <div className="flex min-h-[40px] items-center gap-[6px] px-[6px]"><Avatar name={study.owner || undefined} level="modal" disabled={effectiveDisabled} /><span className={`truncate text-[12px] ${effectiveDisabled ? 'text-graphite-40' : study.owner ? 'text-text-primary' : 'text-text-secondary'}`}>{study.owner || 'No Assignee'}</span></div>}</td>
                       <td className="px-[16px] py-0"><AvailabilitySwitch checked={!effectiveDisabled} disabled={!isAdmin || projectDisabled} label={`${study.id} availability`} onChange={() => onToggleStudyStatus(project.id, study.id)} /></td>
-                      <td className="w-[80px] px-[16px] py-0" />
+                      <td className="w-[80px] px-[16px] py-0 text-right"><Tooltip label="View Dashboard"><Button type="button" variant="icon" size="icon" onClick={() => onOpenStudyDashboard(study.id)} aria-label={`View Dashboard for ${study.id}`} className="text-brand-1"><MaskIcon src={dashboardIconUrl} className="size-4" /></Button></Tooltip></td>
                     </tr>;
                   })}
                 </React.Fragment>;

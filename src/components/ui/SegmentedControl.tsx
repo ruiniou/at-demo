@@ -15,7 +15,7 @@ export interface SegmentedControlProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
-  size?: "sm" | "lg";
+  size?: "sm" | "lg" | "panel";
 }
 
 export function SegmentedControl({
@@ -25,6 +25,21 @@ export function SegmentedControl({
   className = "",
   size = "lg",
 }: SegmentedControlProps) {
+  if (size === "panel") {
+    return <div className={`flex h-[28px] shrink-0 items-center gap-px rounded-[4px] border border-graphite-10 bg-bg-panel p-px ${className}`}>
+      {options.map((opt) => {
+        const active = value === opt.value;
+        const icon = typeof opt.icon === "function" ? opt.icon(active) : opt.icon;
+        const button = <button key={opt.value} type="button" disabled={opt.disabled} aria-label={opt.ariaLabel ?? opt.label} aria-pressed={active} onClick={() => onChange(opt.value)}
+          className={`relative flex h-[24px] items-center justify-center gap-1 rounded-[3px] px-2 t-small whitespace-nowrap transition-colors focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1 disabled:opacity-40 disabled:cursor-not-allowed ${active ? "bg-white text-text-primary" : "text-text-secondary hover:bg-black/5"}`}>
+          <span aria-hidden="true" className={`pointer-events-none absolute inset-0 rounded-[3px] border-[0.6px] border-border-default ${active ? "opacity-100" : "opacity-0"}`} />
+          {icon}{opt.label}
+        </button>;
+        return opt.tooltip ? <Tooltip key={opt.value} label={opt.tooltip}>{button}</Tooltip> : button;
+      })}
+    </div>;
+  }
+
   if (size === "sm") {
     // Figma 646:2294 — small variant for upload card
     return (

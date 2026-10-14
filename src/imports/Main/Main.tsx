@@ -1,5 +1,7 @@
+import { ReadOnlyOwner } from "../../components/ui/ReadOnlyOwner";
 import { Avatar } from "../../components/ui/Avatar";
 import { CountBadge } from "../../components/ui/CountBadge";
+import { SidebarPrimaryNavItem } from "../../components/ui/SidebarPrimaryNavItem";
 // AI Copilot Chat Window - Design Tokens & Visual Specs
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
@@ -42,6 +44,7 @@ import errorStatusIconUrl from "../../icons/Status label/Status=Error.svg";
 import stoppedStatusIconUrl from "../../icons/Status label/Status=Stopped.svg";
 import addMetadiffIconUrl from "../../icons/Add metadiff.svg";
 import dashboardIconUrl from "../../icons/dashboard-3-line.svg";
+import usageIconUrl from "../../icons/bar-chart-2-line.svg";
 import taskIconUrl from "../../icons/task-line.svg";
 import stackIconUrl from "../../icons/stack-line.svg";
 import capsuleIconUrl from "../../icons/capsule-line.svg";
@@ -76,8 +79,9 @@ import DeleteEventModal from "./components/DeleteEventModal";
 import StopEventModal from "./components/StopEventModal";
 import StoppedEventCard from "./components/StoppedEventCard";
 import EventTeamMemberModal from "./components/EventTeamMemberModal";
-import EventDashboard from "./components/EventDashboard";
+import EventDashboard from "./components/EventDashboardV2";
 import type { DashboardFilter } from "./components/EventDashboard";
+import { GlobalDashboard, StudyDashboard, type DashboardStudy } from "./components/StudyGlobalDashboards";
 import type { TeamMember, TFLRow } from "./components/EventTeamMemberModal";
 import AccountMenu from "../../components/auth/AccountMenu";
 import { TreeFilterPopover } from "./components/TreeFilterPopover";
@@ -4304,17 +4308,6 @@ function LocalIcon({
   }
   const filter = color ? iconFilters[color] : undefined;
   return <img src={src} alt="" aria-hidden="true" className={`${className} block shrink-0`} style={filter ? { filter } : undefined} />;
-}
-
-function ReadOnlyOwner({ name }: { name?: string }) {
-  return (
-    <div className="flex min-h-[40px] min-w-0 items-center gap-[6px] px-[6px]">
-      <Avatar name={name} level="modal" />
-      <span className={`truncate text-[12px] font-normal ${name ? 'text-text-primary' : 'text-text-secondary'}`}>
-        {name || 'No Assignee'}
-      </span>
-    </div>
-  );
 }
 
 function LockStateIcon({ locked = true, className = "w-[16px] h-[16px]" }: { locked?: boolean; className?: string }) {
@@ -14307,6 +14300,8 @@ function EventCard({ event, onEventClick, onUpdateStatus, onOpenDownload, onDele
 function HomePage({
   onEventClick,
   onOpenDashboard,
+  onOpenStudyDashboard,
+  onOpenGlobalDashboard,
   onCreateEvent,
   onCreateEventForStudy,
   events,
@@ -14332,9 +14327,14 @@ function HomePage({
   onToggleProjectStatus,
   onToggleStudyStatus,
   recentEventIds,
+  dashboardStudies,
+  selectedDashboardStudy,
+  eventDashboard,
 }: {
   onEventClick: (event: EventCardData) => void;
   onOpenDashboard: (event: EventCardData) => void;
+  onOpenStudyDashboard: (studyId: string) => void;
+  onOpenGlobalDashboard: () => void;
   onCreateEvent: () => void;
   onCreateEventForStudy: (projectId: string, studyId: string, therapeuticArea: string) => void;
   events: EventCardData[];
@@ -14350,20 +14350,24 @@ function HomePage({
   onLogout?: () => void;
   projects: ProjectItem[];
   currentRole: UserRole;
-  activeNav: 'events' | 'management';
+  activeNav: 'events' | 'management' | 'global-dashboard' | 'study-dashboard' | 'event-dashboard';
   currentUserName: string;
   onSwitchRole: (role: UserRole) => void;
-  onSelectNav: (nav: 'events' | 'management') => void;
+  onSelectNav: (nav: 'events' | 'management' | 'global-dashboard' | 'study-dashboard' | 'event-dashboard') => void;
   onOpenNewProject: () => void;
   onOpenNewStudy: (projectId?: string) => void;
   onChangeOwner: (projectId: string, studyId: string, owner: string) => void;
   onToggleProjectStatus: (projectId: string) => void;
   onToggleStudyStatus: (projectId: string, studyId: string) => void;
   recentEventIds: string[];
+  dashboardStudies: DashboardStudy[];
+  selectedDashboardStudy?: DashboardStudy;
+  eventDashboard?: React.ReactNode;
 }) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedTA, setSelectedTA] = useState<string>('All');
   const [assignedToMeOnly, setAssignedToMeOnly] = useState(true);
+  useEffect(() => { setAssignedToMeOnly(currentRole !== 'admin'); }, [currentRole]);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'name-asc'>('date-desc');
   const [isResizing, setIsResizing] = useState(false);
@@ -14625,41 +14629,25 @@ function HomePage({
             {/* Top Navigation: Projects & Studies (Admin & Study Owner only) */}
             {(currentRole === 'admin' || currentRole === 'study-owner') && (
               <div className="px-[8px] pt-[2px] pb-[6px] border-b border-border-default/60">
-                <button
-                  type="button"
-                  onClick={() => onSelectNav('management')}
-                  className={`flex h-[32px] w-full items-center gap-[8px] rounded-[6px] px-[8px] text-[13px] transition-colors cursor-pointer ${
-                    activeNav === 'management'
-                      ? 'bg-az-secondary text-brand-1 font-semibold'
-                      : 'text-text-primary hover:bg-black/5 font-medium'
-                  }`}
-                >
-                  <LocalIcon src={stackIconUrl} className="h-[16px] w-[16px] shrink-0" color={activeNav === 'management' ? '#830051' : '#888E8E'} />
-                  <span>Projects &amp; Studies</span>
-                </button>
+                <SidebarPrimaryNavItem label="Projects & Studies" selected={activeNav === 'management' || activeNav === 'study-dashboard'} onClick={() => onSelectNav('management')} icon={<LocalIcon src={stackIconUrl} className="size-4 shrink-0" color={activeNav === 'management' || activeNav === 'study-dashboard' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />} />
               </div>
             )}
+            {currentRole === 'admin' && <div className="px-2 pb-2 pt-1"><SidebarPrimaryNavItem label="Usage" selected={activeNav === 'global-dashboard'} onClick={onOpenGlobalDashboard} icon={<LocalIcon src={usageIconUrl} className="size-4 shrink-0" color={activeNav === 'global-dashboard' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />} /></div>}
 
             {/* Events section: Events nav, Recents, and 3-tier hierarchy tree all grouped together */}
             <div className="flex min-h-0 flex-1 flex-col pt-[4px]">
               {/* Events Primary Nav Button */}
               <div className="px-[8px] pb-[4px]">
-                <button
-                  type="button"
+                <SidebarPrimaryNavItem
+                  label="Events"
+                  selected={activeNav === 'events' || activeNav === 'event-dashboard'}
                   onClick={() => {
                     onSelectNav('events');
                     setSelectedTA('All');
                     setSearchValue('');
                   }}
-                  className={`flex h-[32px] w-full items-center gap-[8px] rounded-[6px] px-[8px] text-[13px] transition-colors cursor-pointer ${
-                    activeNav === 'events'
-                      ? 'bg-az-secondary text-brand-1 font-semibold'
-                      : 'text-text-primary hover:bg-black/5 font-medium'
-                  }`}
-                >
-                  <LocalIcon src={taskIconUrl} className="h-[16px] w-[16px] shrink-0" color={activeNav === 'events' ? '#830051' : '#888E8E'} />
-                  <span>Events</span>
-                </button>
+                  icon={<LocalIcon src={taskIconUrl} className="size-4 shrink-0" color={activeNav === 'events' || activeNav === 'event-dashboard' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />}
+                />
               </div>
 
               {/* Recents section (5 most recent events, name only) */}
@@ -14836,7 +14824,13 @@ function HomePage({
               </div>
             )}
 
-            {activeNav === 'management' ? (
+            {activeNav === 'event-dashboard' && eventDashboard ? (
+              eventDashboard
+            ) : activeNav === 'global-dashboard' && currentRole === 'admin' ? (
+              <GlobalDashboard studies={dashboardStudies} onBack={() => onSelectNav('management')} />
+            ) : activeNav === 'study-dashboard' && selectedDashboardStudy && (currentRole === 'admin' || selectedDashboardStudy.owner === currentUserName) ? (
+              <StudyDashboard study={selectedDashboardStudy} onBack={() => onSelectNav('management')} showBack={currentRole !== 'admin'} />
+            ) : activeNav === 'management' || activeNav === 'study-dashboard' || activeNav === 'global-dashboard' ? (
               <ProjectStudyManagementView
                 headerLeading={expandTreeListButton}
                 currentRole={currentRole}
@@ -14847,6 +14841,7 @@ function HomePage({
                 onChangeOwner={onChangeOwner}
                 onToggleProjectStatus={onToggleProjectStatus}
                 onToggleStudyStatus={onToggleStudyStatus}
+                onOpenStudyDashboard={onOpenStudyDashboard}
               />
             ) : (
               <>
@@ -15050,6 +15045,7 @@ function HomePage({
                                           const canViewDashboard = currentRole === 'admin' || isEventOwner || studyOwnerMap[ev.study] === currentUserName;
                                           const actionButtons = [
                                             ...(canViewDashboard ? [{ icon: barChartIconUrl, label: 'View Dashboard', onClick: () => onOpenDashboard(ev) }] : []),
+                                            ...(canReupload ? [{ icon: uploadIconUrl, label: 'Re-upload', onClick: () => onReuploadEvent(ev) }] : []),
                                             ...(isEventTeamMember
                                               ? [{ icon: downloadIconUrl, label: 'Download', onClick: () => onOpenDownloadModal?.(ev) }]
                                               : []),
@@ -15092,26 +15088,8 @@ function HomePage({
 
                                               {/* Actions - Collapsed into Ellipsis (...) */}
                                               <td className="relative px-[16px] py-[10px] text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                                                <div className="absolute right-[16px] top-1/2 inline-flex -translate-y-1/2 items-center justify-end">
-                                                  {canReupload ? (
-                                                    <div className="flex items-center gap-[6px]">
-                                                      {canViewDashboard && <Button variant="secondary" size="sm" type="button" onClick={(event) => { event.stopPropagation(); onOpenDashboard(ev); }}>View Dashboard</Button>}
-                                                    <Button
-                                                      variant="secondary"
-                                                      size="sm"
-                                                      type="button"
-                                                      onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        onReuploadEvent(ev);
-                                                      }}
-                                                      aria-label={`Re-upload files for ${ev.name}`}
-                                                    >
-                                                      <LocalIcon src={uploadIconUrl} className="h-[14px] w-[14px]" color="currentColor" />
-                                                      Re-upload
-                                                    </Button>
-                                                    </div>
-                                                  ) : (
-                                                  <TooltipText label={isStopped ? "No actions available" : "More actions"}>
+                                                <div className="relative flex items-center justify-end">
+                                                  <TooltipText label={isStopped && !canViewDashboard ? "No actions available" : "More actions"}>
                                                     <button
                                                       type="button"
                                                       disabled={isStopped && !canViewDashboard}
@@ -15127,7 +15105,6 @@ function HomePage({
                                                       <MoreIcon color="var(--color-text-secondary)" />
                                                     </button>
                                                   </TooltipText>
-                                                  )}
 
                                                   {isMenuOpen && (!isStopped || canViewDashboard) && (
                                                     <div
@@ -15179,8 +15156,9 @@ function HomePage({
 }
 
 export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
-  const [page, setPage] = useState<'home' | 'event' | 'dashboard'>('home');
+  const [page, setPage] = useState<'home' | 'event' | 'dashboard' | 'study-dashboard' | 'global-dashboard'>('home');
   const [dashboardOrigin, setDashboardOrigin] = useState<'home' | 'event'>('home');
+  const [selectedDashboardStudyId, setSelectedDashboardStudyId] = useState<string | null>(null);
   const [dashboardFilter, setDashboardFilter] = useState<DashboardFilter | null>(null);
   const [dashboardTflId, setDashboardTflId] = useState<string | null>(null);
   const [programs, setPrograms] = useState<ProgramItem[]>(() => structuredClone(INITIAL_EVENT_PROGRAMS));
@@ -15202,13 +15180,14 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDeleteEvent, setSelectedDeleteEvent] = useState<EventCardData | null>(null);
   const [teamModalOpen, setTeamModalOpen] = useState(false);
+  const [assignmentFromDashboard, setAssignmentFromDashboard] = useState(false);
   const [selectedTeamEvent, setSelectedTeamEvent] = useState<EventCardData | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string>('e1');
   const [events, setEvents] = useState<EventCardData[]>(homeEvents);
   const [unreadAssignmentKeys, setUnreadAssignmentKeys] = useState<Set<string>>(() => new Set(INITIAL_UNREAD_ASSIGNMENT_KEYS));
   const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
   const [currentRole, setCurrentRole] = useState<UserRole>('event-owner');
-  const [activeNav, setActiveNav] = useState<'events' | 'management'>('events');
+  const [activeNav, setActiveNav] = useState<'events' | 'management' | 'global-dashboard' | 'study-dashboard' | 'event-dashboard'>('events');
   const [currentUserName, setCurrentUserName] = useState<string>('Emily Liu');
   const [recentEventIdsByUser, setRecentEventIdsByUser] = useState<Record<string, string[]>>({});
 
@@ -15315,6 +15294,14 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   };
 
   const handleOpenTeam = (event: EventCardData) => {
+    setAssignmentFromDashboard(false);
+    setSelectedTeamEvent(event);
+    setTeamModalOpen(true);
+  };
+
+  const handleOpenDashboardAssignment = (event: EventCardData) => {
+    if (!canViewEventDashboard(event)) return;
+    setAssignmentFromDashboard(true);
     setSelectedTeamEvent(event);
     setTeamModalOpen(true);
   };
@@ -15337,7 +15324,12 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
     setDashboardOrigin(origin);
     setDashboardFilter(null);
     setDashboardTflId(null);
-    setPage('dashboard');
+    if (origin === 'home') {
+      setActiveNav('event-dashboard');
+      setPage('home');
+    } else {
+      setPage('dashboard');
+    }
   };
 
   const handleOpenEvent = (event: EventCardData) => {
@@ -15472,6 +15464,20 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
 
   const currentEventData = events.find((event) => event.id === selectedEventId) ?? events[0];
   const currentDashboardTfls = programs.flatMap((program) => program.tables);
+  const dashboardStudies: DashboardStudy[] = projects.flatMap((project) => project.studies.map((study) => ({
+    id: study.id,
+    ta: study.ta,
+    owner: study.owner,
+    events: events.filter((event) => event.study === study.id).map((event) => ({
+      id: event.id,
+      name: event.name,
+      study: event.study,
+      owner: event.owner,
+      status: event.status,
+      tfls: (event.id === selectedEventId ? programs : eventProgramsRef.current[event.id] ?? initialProgramsForEvent(event.id, event.inputUpdateCount)).flatMap((program) => program.tables),
+    })),
+  })));
+  const selectedDashboardStudy = dashboardStudies.find((study) => study.id === selectedDashboardStudyId);
   const firstDashboardMatch = (filter: DashboardFilter) => currentDashboardTfls.find((table) =>
     (!filter.docType || (table.docType ?? 'table') === filter.docType) &&
     (!filter.assignee || table.assignee === filter.assignee) &&
@@ -15485,6 +15491,13 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
         <HomePage
           onEventClick={handleOpenEvent}
           onOpenDashboard={(event) => handleOpenDashboard(event, 'home')}
+          onOpenStudyDashboard={(studyId) => {
+            const study = dashboardStudies.find((item) => item.id === studyId);
+            if (!study || (currentRole !== 'admin' && study.owner !== currentUserName)) return;
+            setSelectedDashboardStudyId(studyId);
+            setActiveNav('study-dashboard');
+          }}
+          onOpenGlobalDashboard={() => { if (currentRole === 'admin') setActiveNav('global-dashboard'); }}
           onCreateEvent={() => {
             setEventCreationContext(null);
             setEventInformationEvent(null);
@@ -15525,17 +15538,29 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           onToggleProjectStatus={handleToggleProjectStatus}
           onToggleStudyStatus={handleToggleStudyStatus}
           recentEventIds={recentEventIdsByUser[currentUserName] ?? []}
+          dashboardStudies={dashboardStudies}
+          selectedDashboardStudy={selectedDashboardStudy}
+          eventDashboard={currentEventData && canViewEventDashboard(currentEventData) ? <EventDashboard
+            event={currentEventData}
+            tfls={currentDashboardTfls}
+            onBack={() => setActiveNav('events')}
+            onOpenTfl={(filter) => { setDashboardFilter(filter); setDashboardTflId(firstDashboardMatch(filter)?.id ?? null); setPage('event'); }}
+            onOpenAssignment={() => handleOpenDashboardAssignment(currentEventData)}
+          /> : undefined}
         />
+      ) : page === 'global-dashboard' && currentRole === 'admin' ? (
+        <GlobalDashboard studies={dashboardStudies} onBack={() => { setActiveNav('management'); setPage('home'); }} />
+      ) : page === 'study-dashboard' && selectedDashboardStudy && (currentRole === 'admin' || selectedDashboardStudy.owner === currentUserName) ? (
+        <StudyDashboard study={selectedDashboardStudy} onBack={() => { setActiveNav('management'); setPage('home'); }} />
       ) : page === 'dashboard' && currentEventData && canViewEventDashboard(currentEventData) ? (
         <EventDashboard
           event={currentEventData}
           tfls={currentDashboardTfls}
-          canAssign={currentEventData.owner === currentUserName && currentEventData.status !== 'stopped'}
           onBack={() => setPage(dashboardOrigin)}
           onOpenTfl={(filter) => { setDashboardFilter(filter); setDashboardTflId(firstDashboardMatch(filter)?.id ?? null); setPage('event'); }}
-          onOpenAssignment={() => { if (currentEventData.owner === currentUserName && currentEventData.status !== 'stopped') handleOpenTeam(currentEventData); }}
+          onOpenAssignment={() => handleOpenDashboardAssignment(currentEventData)}
         />
-      ) : page === 'dashboard' ? (
+      ) : page === 'dashboard' || page === 'study-dashboard' || page === 'global-dashboard' ? (
         <div className="flex h-full flex-1 flex-col items-center justify-center gap-3 bg-bg-panel text-text-primary" role="alert">
           <p>You no longer have access to this Dashboard.</p>
           <Button variant="secondary" onClick={() => setPage('home')}>Back to Events</Button>
@@ -15669,6 +15694,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           projects.some((project) => project.studies.some((study) => study.id === selectedTeamEvent.study && study.owner === currentUserName))
         ))}
         canManageAssignments={Boolean(selectedTeamEvent && selectedTeamEvent.owner === currentUserName)}
+        canViewAssignments={assignmentFromDashboard}
       />
       {toastMessage && (
         <div className="fixed left-1/2 top-[24px] z-[10060] flex -translate-x-1/2 items-center gap-[8px] rounded-[6px] border border-graphite-10 bg-white px-[16px] py-[10px] text-text-primary shadow-elevation-overlay animate-slide-in-down" role="status">

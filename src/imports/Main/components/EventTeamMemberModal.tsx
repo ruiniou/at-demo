@@ -1578,6 +1578,7 @@ export interface EventTeamMemberModalProps {
   canRemoveMember: boolean;
   canChangeOwner: boolean;
   canManageAssignments: boolean;
+  canViewAssignments?: boolean;
 }
 
 export default function EventTeamMemberModal({
@@ -1596,6 +1597,7 @@ export default function EventTeamMemberModal({
   canRemoveMember,
   canChangeOwner,
   canManageAssignments,
+  canViewAssignments = false,
 }: EventTeamMemberModalProps) {
   const [activeTab, setActiveTab] = useState<"assignment" | "team">("assignment");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialTeamMembers);
@@ -1604,11 +1606,11 @@ export default function EventTeamMemberModal({
 
   useEffect(() => {
     if (isOpen) {
-      setActiveTab(canManageAssignments ? "assignment" : "team");
+      setActiveTab(canManageAssignments || canViewAssignments ? "assignment" : "team");
       setTeamMembers(initialTeamMembers);
       setTflRows(initialTFLRows);
     }
-  }, [isOpen, eventId, inputUpdateCount, canManageAssignments]);
+  }, [isOpen, eventId, inputUpdateCount, canManageAssignments, canViewAssignments]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1715,7 +1717,7 @@ export default function EventTeamMemberModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-[20px] py-[14px] border-b border-graphite-10 shrink-0">
-          <h2 className="text-[14px] font-semibold text-text-primary shrink-0">Event Team Configuration</h2>
+          <h2 className="text-[14px] font-semibold text-text-primary shrink-0">{canViewAssignments && !canManageAssignments ? 'Assignment' : 'Event Team Configuration'}</h2>
           <button type="button" onClick={onClose} aria-label="Close"
             className="w-[24px] h-[24px] flex items-center justify-center rounded-[4px] hover:bg-black/5 transition-colors shrink-0">
             <CloseIcon size={15} />
@@ -1723,7 +1725,7 @@ export default function EventTeamMemberModal({
         </div>
 
         {/* Assignment is an Event Owner workspace. Other users open Team Members directly. */}
-        {canManageAssignments && (
+        {(canManageAssignments || canViewAssignments) && (
           <div className="flex items-end px-[20px] border-b border-graphite-10 shrink-0 bg-white">
             {(["assignment", "team"] as const).map((tab) => {
               const labels = { assignment: "Assignment", team: "Team Members" };
@@ -1745,7 +1747,7 @@ export default function EventTeamMemberModal({
 
         {/* Tab Body */}
         <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
-          {canManageAssignments && activeTab === "assignment" ? (
+          {(canManageAssignments || canViewAssignments) && activeTab === "assignment" ? (
             <AssignmentTab
               tflRows={tflRows}
               teamMembers={membersWithCounts}

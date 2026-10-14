@@ -646,3 +646,55 @@
   仅在 e5 演示 Event 的初始数据中清除 Pending TFL；其他 Event 保留静态状态，Tree List 直接显示对应右侧状态点。移除 t4 的强制待确认消息，改由实际 Pending 状态决定。
 * **经验教训 (Takeaways)**：
   Event 演示数据的状态调整应限定到指定 Event，且聊天待确认内容应与 TFL 状态使用同一来源。
+
+---
+
+### [2026-10-12] Parse Failed Event 的 Dashboard 入口不可见
+
+* **现象 (Symptom)**：首页 Parse Failed Event 的 `View Dashboard` 入口在操作列中被挤出可见区域。
+* **根本原因 (Root Cause)**：可重新上传的 Event 使用独立分支，并排显示 `View Dashboard` 和 `Re-upload` 按钮；这两个按钮比其他 Event 的 `…` 入口占用更多宽度。操作按钮还依赖绝对定位，增加了窄面板下的点击偏差风险。
+* **解决方案 (Solution)**：所有 Event 统一使用随表格行布局的 `…` 操作菜单；有权限时显示 `View Dashboard`，可重新上传时追加 `Re-upload`。
+* **经验教训 (Takeaways)**：状态专属操作应加入统一菜单，避免替换或挤占常驻导航入口。
+
+---
+
+### [2026-10-12] Dashboard 深背景预览误将内容面板铺成 Mulberry
+
+* **现象 (Symptom)**：Admin 和 Study Owner Dashboard 的深背景预览中，右侧主面板整块变成深 Mulberry，破坏现有 Tree List、页面背景与白色内容卡片的层级；Admin Dashboard 还出现多余的 Back 按钮。
+* **根本原因 (Root Cause)**：把“深背景”误解为内容面板配色，`dashboard.css` 的 `.dashboard-surface-dark` 将 `<main>` 背景设为 `var(--color-dark-mulberry)`；`DashboardFrame` 无条件渲染 Back 按钮，没有考虑 Admin 已有左侧导航。
+* **解决方案 (Solution)**：深背景预览恢复为现有 `var(--color-bg-panel)`，保留 Tree List 和白色内容卡片；`DashboardFrame` 增加 `showBack` 控制，Admin 的 Global 和 Study Dashboard 隐藏 Back，Study Owner 仍保留返回管理页的入口。
+* **经验教训 (Takeaways)**：
+  1. 讨论“背景色”时先确认指向 Tree List、页面底色还是内容面板，不跨层级套用品牌色。
+  2. 在已有常驻导航的角色页面中检查返回操作是否重复。
+
+---
+
+### [2026-10-13] Sprint 8 预览缺少 Dashboard 1.0 页面
+
+* **现象 (Symptom)**：5174 预览只显示旧 Event Dashboard，Admin 左侧没有 Global Dashboard，Projects & Studies 也没有 Study Dashboard 入口。
+* **根本原因 (Root Cause)**：5174 服务的 `sprint8/base` 未包含提交 `54511ee`；该提交位于 `codex/sprint8-copilot-stop`，其中才有 `GlobalDashboard`、`StudyDashboard`、`EventDashboardV2` 与 `Main.tsx` 的角色导航。此前误把旧 `EventDashboard.tsx` 当作当前 UI 基线修改。
+* **解决方案 (Solution)**：将 `54511ee` 的 Dashboard 页面和导航接入 `sprint8/base`，撤回旧页面的误改；在新版共享组件上统一页面间距、卡片和表格样式，并验证 Admin、Study Owner、Event Owner 三类入口。
+* **经验教训 (Takeaways)**：开始跨分支 UI 迭代前，先核对预览端口、工作区分支和用户指定的基线提交；按角色逐一打开页面，不能只依据组件名称判断最新版本。
+
+---
+
+### [2026-10-13] Dashboard 白底与控件样式偏离已确认设计
+
+* **现象 (Symptom)**：Dashboard 底色变灰，日期入口与 Segmented 不符合现有页面控件风格。
+* **根本原因 (Root Cause)**：共享 DashboardFrame 被误改为 bg-bg-panel；Dashboard 选用上传卡片的 sm Segmented 并叠加局部高度、边框覆盖，日期入口则独立手写。
+* **解决方案 (Solution)**：恢复白底；共享 Segmented 新增沿用详情视窗控制样式的 panel 变体，移除 Dashboard 覆盖；日期入口复用 FilterChip 和 Popover。同步将 TA 合并为 Study 标签，展开列命名为 Study / Event。
+* **经验教训 (Takeaways)**：已确认的页面底色应作为约束保留；复用组件时同时核对变体和局部覆盖，不能仅检查组件名称。
+
+### [2026-10-13] Dashboard 人员与表格文字层级不一致
+
+* **现象 (Symptom)**：Dashboard Owner 姓名比 Projects & Studies、Events 更大，表格正文偏紧偏重。
+* **根本原因 (Root Cause)**：Owner 继承 13px 表格文字而非已有页面的 12px；t-table 使用 16px 行高和 500 字重，tbody th 又被统一加重。
+* **解决方案 (Solution)**：将 Events 的 ReadOnlyOwner 提取为共享组件用于 Dashboard；正文改为 13px/20px、400，Owner 为 12px/20px、400，区块标题为 16px/22px、600；父级名称单独加重。构建通过，并在浏览器核对实际计算样式。
+* **经验教训 (Takeaways)**：人员展示应复用相同组件；字体一致性需同时核对字号、字重、行高及继承规则。
+
+### [2026-10-13] Dashboard 表格工具栏遗漏嵌入式搜索框变体
+
+* **现象**：表格工具栏搜索框圆角过大，与相邻紧凑控件不一致。
+* **根本原因 (Root Cause)**：调用 SearchBar 时仅指定尺寸或使用默认值，未指定 variant="embedded"，导致采用默认 8px / 6px 圆角。
+* **解决方案 (Solution)**：Global 和 Event Dashboard 表格工具栏统一使用 embedded、compact，复用组件已有外 4px / 内 2px、2px 内边距规则。
+* **经验教训 (Takeaways)**：检查 SearchBar 调用时同时核对布局语境、variant 和 size；尺寸不负责选择圆角。
