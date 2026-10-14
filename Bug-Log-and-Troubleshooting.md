@@ -698,3 +698,17 @@
 * **根本原因 (Root Cause)**：调用 SearchBar 时仅指定尺寸或使用默认值，未指定 variant="embedded"，导致采用默认 8px / 6px 圆角。
 * **解决方案 (Solution)**：Global 和 Event Dashboard 表格工具栏统一使用 embedded、compact，复用组件已有外 4px / 内 2px、2px 内边距规则。
 * **经验教训 (Takeaways)**：检查 SearchBar 调用时同时核对布局语境、variant 和 size；尺寸不负责选择圆角。
+
+### [2026-10-14] 展示型 Tag 错误显示 Hover 背景
+
+* **现象**：Owner、Metadata Reference 的 Current 等只读 Tag 在鼠标悬停时变色，暗示可以交互。
+* **根本原因 (Root Cause)**：共用 `Tag` 的 `baseClasses` 无条件包含 `hover:bg-graphite-20` 或 `hover:bg-az-secondary-hover`；`GroupTag` 的条目也无条件包含 `hover:bg-graphite-20`。
+* **解决方案 (Solution)**：仅当 Tag 有 `onClose`、GroupTag 有可用的 `onRemoveItem` 时添加 Hover 背景。只读标签维持默认背景。
+* **经验教训 (Takeaways)**：标签的 Hover 反馈应由实际可执行的操作决定；检查共用组件时同时核对只读和可移除状态。
+
+### [2026-10-14] Event Dashboard 可排序表头字号与其他列不一致
+
+* **现象**：Assigned 和 Completed 列标题比其他列略大、略粗。
+* **根本原因 (Root Cause)**：这两列的标题改为 `<button>` 后，按钮继承全局 `button` 的 13px、500 字重和 1.5 行高，没有继承 `<th>` 的 `t-small`。
+* **解决方案 (Solution)**：给排序按钮加 `t-small`，与其余表头统一为 12px、400 字重、18px 行高；在 5174 检查计算样式和排序前后列宽。
+* **经验教训 (Takeaways)**：在表格标题中嵌入交互控件时，需同时核对控件和表头的计算字体样式。

@@ -18,7 +18,7 @@ export type DashboardEvent = { id: string; name: string; study: string; owner: s
 export type DashboardStudy = { id: string; ta: string; owner: string; events: DashboardEvent[] };
 const number = (value: number) => new Intl.NumberFormat('en-US').format(value);
 
-export function StudyDashboard({ study, onBack, showBack = true, loadState = 'ready' }: { study: DashboardStudy; onBack: () => void; showBack?: boolean; loadState?: 'ready' | 'error' }) {
+export function StudyDashboard({ study, onBack, showBack = true, loadState = 'ready', headerLeading }: { study: DashboardStudy; onBack: () => void; showBack?: boolean; loadState?: 'ready' | 'error'; headerLeading?: React.ReactNode }) {
   const [updatedAt, setUpdatedAt] = useState(() => new Date());
   const tfls = study.events.flatMap((event) => event.tfls);
   const totals = countStatuses(tfls, mockDashboardDataSource);
@@ -26,28 +26,26 @@ export function StudyDashboard({ study, onBack, showBack = true, loadState = 're
   const usage = sumUsage(records);
   const unattributed = sumUsage(records.filter((row) => row.eventId === null));
   const percent = totals.total ? Math.round(totals.locked / totals.total * 100) : 0;
-  const subtitle = `${totals.locked} of ${totals.total} TFLs locked · ${study.events.length} Events · ${study.ta} · Study Owner: ${study.owner}`;
-  return <DashboardFrame title={`Study ${study.id}`} subtitle={subtitle} updatedAt={updatedAt} onBack={onBack} onRefresh={() => setUpdatedAt(new Date())} showBack={showBack}>
+  return <DashboardFrame title={`Study ${study.id}`} updatedPlacement="title" headerLeading={headerLeading} updatedAt={updatedAt} onBack={onBack} onRefresh={() => setUpdatedAt(new Date())} showBack={showBack}>
     {loadState === 'error' ? <DashboardError onRetry={() => setUpdatedAt(new Date())} /> : !tfls.length ? <section className="rounded-md border border-graphite-10 bg-white p-[24px] text-center t-body">No TFLs in this Study yet.</section> : <>
       <section aria-label="Study Metrics" className="dashboard-metric-grid gap-3">
-        <MetricCard label="Locked" value={totals.locked} detail={`of ${totals.total} TFLs · ${percent}%`} icon={metricIcons.locked} status="locked" lockedTooltip />
-        <MetricCard label="In Progress" value={totals.inProgress} status="in-progress" />
-        <MetricCard label="Error" value={totals.error} icon={metricIcons.error} status="error" />
+        <MetricCard label="Completion" value={`${totals.locked} / ${totals.total}`} detail={`${percent}% locked`} icon={metricIcons.locked} iconTone="brand" />
+        <MetricCard label="In Progress" value={totals.inProgress} detail="Active TFLs" icon={metricIcons.inProgress} iconTone="warning" />
+        <MetricCard label="Error" value={totals.error} detail="Needs attention" icon={metricIcons.error} iconTone="danger" />
         <MetricCard label="Token Usage" value={number(usage.total)} detail="Cumulative" icon={metricIcons.token} />
       </section>
       <DashboardTable title="Events" minWidth="min-w-4xl">
-        <thead><tr>{['Event', 'Event Owner', 'TFLs', 'Progress', 'Input', 'Output', 'Total'].map((label) => <th key={label} scope="col" className={`${thClass} ${['TFLs', 'Input', 'Output', 'Total'].includes(label) ? 'text-right' : ''}`}>{label}</th>)}</tr></thead>
+        <thead><tr>{['Event', 'Event Owner', 'Completion', 'Input', 'Output', 'Total'].map((label) => <th key={label} scope="col" className={`${thClass} ${['Input', 'Output', 'Total'].includes(label) ? 'text-right' : ''}`}>{label}</th>)}</tr></thead>
         <tbody>{study.events.length ? study.events.map((event) => {
           const counts = countStatuses(event.tfls, mockDashboardDataSource);
           const eventUsage = sumUsage(records.filter((row) => row.eventId === event.id));
           return <tr key={event.id}>
-            <th scope="row" className={tdClass}>{event.name}</th><td className="px-[10px] py-[4px]"><ReadOnlyOwner name={event.owner} /></td>
-            <td className={`${tdClass} text-right tabular-nums`}>{counts.total}</td>
-            <td className={tdClass}><div className="flex min-w-32 items-center gap-3"><ProgressBar locked={counts.locked} inProgress={counts.inProgress} error={counts.error} stopped={counts.stopped} total={counts.total} label={`${event.name} progress`} /><span className="tabular-nums">{counts.locked}</span></div></td>
+            <th scope="row" className={tdClass}><span className="inline-flex min-w-0 items-center gap-2"><span className="truncate">{event.name}</span>{counts.error > 0 && <span className="shrink-0 rounded-[calc(var(--radius-xs)*2)] bg-status-error-bg px-[6px] py-[2px] t-small text-status-error">{counts.error} Error</span>}</span></th><td className="px-[10px] py-[4px]"><ReadOnlyOwner name={event.owner} /></td>
+            <td className={tdClass}><div className="flex min-w-40 items-center gap-3"><ProgressBar locked={counts.locked} inProgress={0} error={0} total={counts.total} label={`${event.name} completion`} /><span className="whitespace-nowrap tabular-nums">{counts.locked} / {counts.total}</span></div></td>
             <td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.input)}</td><td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.output)}</td><td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.total)}</td>
           </tr>;
         }) : null}
-        {unattributed.total > 0 && <tr className="bg-bg-panel"><th scope="row" className={tdClass}>Unattributed</th><td className={tdClass} /><td className={tdClass} /><td className={tdClass} /><td className={`${tdClass} text-right`}>{number(unattributed.input)}</td><td className={`${tdClass} text-right`}>{number(unattributed.output)}</td><td className={`${tdClass} text-right`}>{number(unattributed.total)}</td></tr>}
+        {unattributed.total > 0 && <tr className="bg-bg-panel"><th scope="row" className={tdClass}>Unattributed</th><td className={tdClass} /><td className={tdClass} /><td className={`${tdClass} text-right`}>{number(unattributed.input)}</td><td className={`${tdClass} text-right`}>{number(unattributed.output)}</td><td className={`${tdClass} text-right`}>{number(unattributed.total)}</td></tr>}
         </tbody>
       </DashboardTable>
     </>}
@@ -66,7 +64,7 @@ function groupedUsage(records: TokenUsageRecord[], month: dayjs.Dayjs): GroupedU
   });
 }
 
-export function GlobalDashboard({ studies, onBack, onExport, loadState = 'ready' }: { studies: DashboardStudy[]; onBack: () => void; onExport?: () => void; loadState?: 'ready' | 'error' }) {
+export function GlobalDashboard({ studies, onBack, onExport, loadState = 'ready', headerLeading }: { studies: DashboardStudy[]; onBack: () => void; onExport?: () => void; loadState?: 'ready' | 'error'; headerLeading?: React.ReactNode }) {
   const [updatedAt, setUpdatedAt] = useState(() => new Date());
   const [month, setMonth] = useState(() => dayjs().startOf('month'));
   const start = month.format('YYYY-MM-DD');
@@ -93,7 +91,7 @@ export function GlobalDashboard({ studies, onBack, onExport, loadState = 'ready'
   const taGroups = [...new Set(visibleStudies.map((study) => study.ta))].sort();
   const cell = (value: number) => <td className={`${tdClass} text-right tabular-nums`}>{number(value)}</td>;
   const onKey = (event: React.KeyboardEvent<HTMLTableRowElement>, key: string) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(key); } };
-  return <DashboardFrame title="Usage" titleIcon={usagePageIcon} updatedAt={updatedAt} onBack={onBack} onRefresh={() => setUpdatedAt(new Date())} showBack={false} actions={<>
+  return <DashboardFrame title="Usage" titleIcon={usagePageIcon} headerLeading={headerLeading} updatedPlacement="title" updatedAt={updatedAt} onBack={onBack} onRefresh={() => setUpdatedAt(new Date())} showBack={false} actions={<>
     <ConfigProvider theme={{ token: { colorPrimary: 'var(--color-brand-1)', colorPrimaryHover: 'var(--color-brand-1-hover)', colorText: 'var(--color-text-primary)', colorBorder: 'var(--color-border-default)' } }}>
       <FilterChip ref={dateAnchorRef} type="Dropdown" variant="select" showIcon={false} state={calendarOpen ? 'Active' : 'Default'} aria-label="Month" aria-expanded={calendarOpen} onClick={() => { setCalendarMonth(month); setCalendarOpen((open) => !open); }} label={month.format('MMMM YYYY')} />
       <Popover anchorRef={dateAnchorRef} align="end" width={304} label="Month" open={calendarOpen} onOpenChange={setCalendarOpen}><Calendar
@@ -114,7 +112,7 @@ export function GlobalDashboard({ studies, onBack, onExport, loadState = 'ready'
     </ConfigProvider>
 
     {/* TODO (Proposal §3.1): wire the Admin export entry to an approved export contract. */}
-    <Button type="button" variant="ghost" size="sm" onClick={onExport} disabled={!onExport} className="h-8 border border-border-default t-small text-text-secondary disabled:text-graphite-40">Export</Button>
+    <Button type="button" variant="primary" size="sm" onClick={onExport} disabled={!onExport} className="h-8">Export</Button>
   </>}>
     {loadState === 'error' ? <DashboardError onRetry={() => setUpdatedAt(new Date())} /> : <>
       <>

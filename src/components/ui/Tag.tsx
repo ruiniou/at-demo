@@ -16,7 +16,7 @@ export interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
 /**
  * Tag component — Figma node 1156:6715
  * Status=Default: bg graphite-10 (#EBECEC), text text-primary (#3C4242)
- * Status=Hovered: bg graphite-20 (#D8DADA)
+ * Removable tags hover to graphite-20 (#D8DADA); display-only tags stay static.
  *
  * Layout: row, padding 2px 6px, gap 4px, hug content
  * Text: PingFang SC, Regular 400, 12px / 20px
@@ -27,8 +27,8 @@ const Tag = forwardRef<HTMLSpanElement, TagProps>(
     const isBrand = variant === "brand" || variant === "filter";
 
     const baseClasses = isBrand
-      ? "bg-az-secondary hover:bg-az-secondary-hover text-brand-1"
-      : "bg-graphite-10 hover:bg-graphite-20 text-text-primary";
+      ? `bg-az-secondary text-brand-1 ${onClose ? "hover:bg-az-secondary-hover" : ""}`
+      : `bg-graphite-10 text-text-primary ${onClose ? "hover:bg-graphite-20" : ""}`;
 
     const textColor = isBrand ? "var(--color-brand-1, #830051)" : "var(--color-text-primary)";
 
@@ -124,7 +124,7 @@ const GroupTag = forwardRef<HTMLSpanElement, GroupTagProps>(
         <span className="inline-flex items-center flex-wrap gap-x-[2px] gap-y-[1px] ml-[2px]">
           {items.map((item, idx) => (
             <React.Fragment key={item.key}>
-              <span className="inline-flex items-center gap-[2px] rounded-[2px] px-[2px] py-[0px] hover:bg-graphite-20 transition-colors group/item">
+              <span className={`inline-flex items-center gap-[2px] rounded-[2px] px-[2px] py-[0px] group/item ${onRemoveItem && !disabled ? "hover:bg-graphite-20 transition-colors" : ""}`}>
                 <span
                   className="text-text-primary font-medium text-[12px] leading-[20px]"
                   style={{ fontFamily: "'PingFang SC', sans-serif" }}

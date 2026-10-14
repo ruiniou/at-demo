@@ -14646,7 +14646,7 @@ function HomePage({
   recentEventIds: string[];
   dashboardStudies: DashboardStudy[];
   selectedDashboardStudy?: DashboardStudy;
-  eventDashboard?: React.ReactNode;
+  eventDashboard?: (headerLeading: React.ReactNode) => React.ReactNode;
 }) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedTA, setSelectedTA] = useState<string>('All');
@@ -15109,11 +15109,11 @@ function HomePage({
             )}
 
             {activeNav === 'event-dashboard' && eventDashboard ? (
-              eventDashboard
+              eventDashboard(expandTreeListButton)
             ) : activeNav === 'global-dashboard' && currentRole === 'admin' ? (
-              <GlobalDashboard studies={dashboardStudies} onBack={() => onSelectNav('management')} />
+              <GlobalDashboard studies={dashboardStudies} onBack={() => onSelectNav('management')} headerLeading={expandTreeListButton} />
             ) : activeNav === 'study-dashboard' && selectedDashboardStudy && (currentRole === 'admin' || selectedDashboardStudy.owner === currentUserName) ? (
-              <StudyDashboard study={selectedDashboardStudy} onBack={() => onSelectNav('management')} showBack={currentRole !== 'admin'} />
+              <StudyDashboard study={selectedDashboardStudy} onBack={() => onSelectNav('management')} headerLeading={expandTreeListButton} />
             ) : activeNav === 'management' || activeNav === 'study-dashboard' || activeNav === 'global-dashboard' ? (
               <ProjectStudyManagementView
                 headerLeading={expandTreeListButton}
@@ -15824,7 +15824,8 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           recentEventIds={recentEventIdsByUser[currentUserName] ?? []}
           dashboardStudies={dashboardStudies}
           selectedDashboardStudy={selectedDashboardStudy}
-          eventDashboard={currentEventData && canViewEventDashboard(currentEventData) ? <EventDashboard
+          eventDashboard={currentEventData && canViewEventDashboard(currentEventData) ? (headerLeading) => <EventDashboard
+            headerLeading={headerLeading}
             event={currentEventData}
             tfls={currentDashboardTfls}
             onBack={() => setActiveNav('events')}
