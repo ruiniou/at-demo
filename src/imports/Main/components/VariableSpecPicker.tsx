@@ -1,8 +1,11 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/Button";
 import { Checkbox } from "../../../components/ui/Checkbox";
-import { FilterChip } from "../../../components/ui/FilterChip";
+import { SearchBar } from "../../../components/ui/SearchBar";
+import { SegmentedControl } from "../../../components/ui/SegmentedControl";
+import { Tooltip } from "../../../components/ui/Tooltip";
+import { variableKey, variableStandard, normalizeSelection, buildCodelists, buildConditions } from "./variablePickerData";
 import { Variable, VlmRow, AdamCodeListRow, SdtmCodeListRow } from "./BrowseVariablesModal";
 
 export interface VariableSpecPickerProps {
@@ -19,40 +22,32 @@ export interface VariableSpecPickerProps {
   mode?: "table" | "listing";
 }
 
-function DerivationCell({ text, isTruncatedOnly }: { text: string; isTruncatedOnly?: boolean }) {
+function DerivationCell({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
+  const [canExpand, setCanExpand] = useState(false);
+  const previewRef = useRef<HTMLSpanElement>(null);
+
+  useLayoutEffect(() => {
+    setExpanded(false);
+  }, [text]);
+  useLayoutEffect(() => {
+    if (expanded || !text || !previewRef.current) return;
+    const preview = previewRef.current;
+    const measure = () => setCanExpand(preview.scrollHeight > preview.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(preview);
+    return () => observer.disconnect();
+  }, [text, expanded]);
+
   if (!text) return <span className="t-small text-text-secondary">-</span>;
-
-  if (isTruncatedOnly) {
-    return (
-      <span className="t-small text-text-primary truncate block w-full" title={text}>
-        {text}
-      </span>
-    );
-  }
-
-  const lines = text.split("\n").filter(Boolean);
-  const isMultiLine = lines.length > 1;
-  const isLongText = text.length > 100;
-  const shouldTruncate = isMultiLine || isLongText;
-
-  const firstLine = lines[0] || "";
-  const previewText = firstLine.length > 100 ? `${firstLine.slice(0, 100)}...` : firstLine;
-
   return (
     <div className="flex flex-col items-start gap-[2px]">
-      <span className="t-small text-text-primary whitespace-normal">
-        {expanded || !shouldTruncate ? text : `${previewText}${isMultiLine && firstLine.length <= 100 ? "..." : ""}`}
+      <span ref={previewRef} className={`t-small text-text-primary whitespace-pre-wrap break-words ${expanded ? "" : "line-clamp-3"}`}>
+        {text}
       </span>
-      {shouldTruncate && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded(!expanded);
-          }}
-          className="t-footnote text-brand-1 hover:underline cursor-pointer font-medium"
-        >
+      {(canExpand || expanded) && (
+        <button type="button" onClick={event => { event.stopPropagation(); setExpanded(!expanded); }} className="t-footnote text-brand-1 hover:underline cursor-pointer font-medium">
           {expanded ? "Show less" : "Show more"}
         </button>
       )}
@@ -86,372 +81,142 @@ function ArrowLeftIcon({ className = "size-[16px]" }: { className?: string }) {
   );
 }
 
-export function VariableSpecPicker({
-  isOpen,
-  onClose,
-  onConfirm,
-  initialSelected,
-  variables,
-  vlmData = [],
-  adamCodeListData = [],
-  sdtmCodeListData = [],
-  sourceDatasets = [],
-  onDatasetsExpand,
-  mode = "table",
-}: VariableSpecPickerProps) {
-  const isTableMode = mode !== "listing";
+// Derived from Button with the existing neutral Tag treatment.
+function PickerJumpButton({ label, children, onClick }: { label: string; children: React.ReactNode; onClick: React.MouseEventHandler<HTMLButtonElement> }) {
+  return <Tooltip label={label}><Button variant="ghost" size="sm" aria-label={label} onClick={onClick} className="!bg-bg-panel !text-text-primary border border-graphite-10 !px-1.5 !py-0.5 t-small hover:!bg-graphite-10">{children}</Button></Tooltip>;
+}
+type PickerTab = "variables" | "vlm" | "codelist";
+const EMPTY_VARIABLES: Variable[] = [];
+const EMPTY_VLM: VlmRow[] = [];
+const EMPTY_CODELISTS: AdamCodeListRow[] = [];
+const EMPTY_DATASETS: string[] = [];
 
-  // --- Selection & Filter State ---
+export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected, variables = EMPTY_VARIABLES, vlmData = EMPTY_VLM, adamCodeListData = EMPTY_CODELISTS, sourceDatasets = EMPTY_DATASETS, onDatasetsExpand, mode = "table" }: VariableSpecPickerProps) {
+  const isTableMode = mode !== "listing";
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
-  const [selectedNavStandard, setSelectedNavStandard] = useState<"ADaM" | "SDTM" | null>(
-    isTableMode ? "ADaM" : null
-  );
+  const [vlmSearch, setVlmSearch] = useState("");
+  const [codelistSearch, setCodelistSearch] = useState("");
+  const [selectedNavStandard, setSelectedNavStandard] = useState<"ADaM" | "SDTM" | null>(isTableMode ? "ADaM" : null);
   const [selectedNavDataset, setSelectedNavDataset] = useState<string | null>(null);
-  const [hasVlmFilter, setHasVlmFilter] = useState(false);
-  const [hasCodelistFilter, setHasCodelistFilter] = useState(false);
   const [isShowingSelectedOnly, setIsShowingSelectedOnly] = useState(false);
-
-  // --- Tree List Expand/Collapse State ---
   const [isAdamExpanded, setIsAdamExpanded] = useState(true);
   const [isSdtmExpanded, setIsSdtmExpanded] = useState(!isTableMode);
-
-  // --- Right Panel (Collapsible Inspector) State ---
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
   const [activeVariable, setActiveVariable] = useState<Variable | null>(null);
   const [predecessorReturnVariable, setPredecessorReturnVariable] = useState<Variable | null>(null);
-  const [isDerivationExpanded, setIsDerivationExpanded] = useState(false);
-  const [codelistSearch, setCodelistSearch] = useState("");
-
-  // Sync state when modal opens
-  const prevIsOpenRef = useRef(false);
-  useEffect(() => {
-    if (isOpen && !prevIsOpenRef.current) {
-      setSelected([...initialSelected]);
-      setSearch("");
-      setHasVlmFilter(false);
-      setHasCodelistFilter(false);
-      setIsShowingSelectedOnly(false);
-      setIsRightPanelOpen(false);
-      setActiveVariable(null);
-      setPredecessorReturnVariable(null);
-
-      // Initialize navigation scope based on mode and sourceDatasets
-      if (sourceDatasets && sourceDatasets.length === 1) {
-        const singleDs = sourceDatasets[0];
-        setSelectedNavDataset(singleDs);
-        const std = singleDs.startsWith("AD") ? "ADaM" : "SDTM";
-        setSelectedNavStandard(std);
-        if (std === "ADaM") {
-          setIsAdamExpanded(true);
-          setIsSdtmExpanded(false);
-        } else {
-          setIsAdamExpanded(false);
-          setIsSdtmExpanded(true);
-        }
-      } else if (isTableMode) {
-        setSelectedNavStandard("ADaM");
-        setSelectedNavDataset(null);
-        setIsAdamExpanded(true);
-        setIsSdtmExpanded(false); // Collapsed by default in Table mode to prevent accidental selection
-      } else {
-        // Listing mode: cross-domain all datasets
-        setSelectedNavStandard(null);
-        setSelectedNavDataset(null);
-        setIsAdamExpanded(true);
-        setIsSdtmExpanded(true);
-      }
-    }
-    prevIsOpenRef.current = isOpen;
-  }, [isOpen, initialSelected, sourceDatasets, isTableMode]);
-
-  // Handle ESC key to close
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        if (predecessorReturnVariable) {
-          setActiveVariable(predecessorReturnVariable);
-          setPredecessorReturnVariable(null);
-        } else if (isRightPanelOpen) {
-          setIsRightPanelOpen(false);
-        } else {
-          onClose();
-        }
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, predecessorReturnVariable, isRightPanelOpen, onClose]);
-
-  // Compute standard for any variable
-  const getVarStandard = useCallback((v: Variable): "ADaM" | "SDTM" => {
-    if (v.standard) return v.standard;
-    return v.datasetName.startsWith("AD") ? "ADaM" : "SDTM";
-  }, []);
-
-  // Filter variables
-  const filteredVariables = useMemo(() => {
-    const q = search.toLowerCase().trim();
-
-    return variables.filter((v) => {
-      const vStd = getVarStandard(v);
-
-      // 1. Navigation Scope Filter (Selected only, Dataset, or Standard level)
-      if (isShowingSelectedOnly) {
-        const itemKey = `${v.datasetName}.${v.variable}`;
-        const isSelected = selected.includes(itemKey) || selected.includes(v.variable);
-        if (!isSelected) return false;
-      } else if (selectedNavDataset) {
-        if (v.datasetName !== selectedNavDataset) return false;
-      } else if (selectedNavStandard) {
-        if (vStd !== selectedNavStandard) return false;
-      }
-
-      // 2. Has VLM Filter
-      if (hasVlmFilter && !v.hasVlm) return false;
-
-      // 3. Has Codelist Filter
-      if (hasCodelistFilter && !v.hasCodelist) return false;
-
-      // 4. Global Keyword Search (Variable Name, Label, Dataset, Derivation)
-      if (q) {
-        const matchVar = v.variable.toLowerCase().includes(q);
-        const matchLabel = v.label.toLowerCase().includes(q);
-        const matchDs = v.datasetName.toLowerCase().includes(q);
-        const matchDeriv = (v.derivation || "").toLowerCase().includes(q);
-        if (!matchVar && !matchLabel && !matchDs && !matchDeriv) return false;
-      }
-
-      return true;
-    });
-  }, [
-    variables,
-    search,
-    isShowingSelectedOnly,
-    selectedNavStandard,
-    selectedNavDataset,
-    hasVlmFilter,
-    hasCodelistFilter,
-    selected,
-    getVarStandard,
-  ]);
-
-  // Compute Dataset Nav list grouped by Standard with matching counts (Faceted Navigation)
+  const [tab, setTab] = useState<PickerTab>("variables");
+  const [codelistId, setCodelistId] = useState("");
+  const [termPage, setTermPage] = useState(0);
+  const [vlmAnchor, setVlmAnchor] = useState("");
+  const [scrollTarget, setScrollTarget] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollPositions = useRef<Record<PickerTab, number>>({ variables: 0, vlm: 0, codelist: 0 });
+  const predecessorContext = useRef<{ dataset: string | null; standard: "ADaM" | "SDTM" | null; selectedOnly: boolean; search: string; scroll: number } | null>(null);
+  const codelists = useMemo(() => buildCodelists(adamCodeListData, variables), [adamCodeListData, variables]);
+  const unlinked = selectedNavDataset === "__unlinked__" && !isShowingSelectedOnly;
+  const crossDataset = isShowingSelectedOnly || !selectedNavDataset;
+  const isSdtm = selectedNavStandard === "SDTM";
+  const conditions = useMemo(() => buildConditions(selectedNavDataset, vlmData, variables), [selectedNavDataset, vlmData, variables]);
+  const datasetCodelists = codelists.filter(c => unlinked ? !c.links.length : c.links.some(link => link.dataset === selectedNavDataset));
+  const currentCodelist = datasetCodelists.find(c => c.id === codelistId) ?? datasetCodelists[0];
+  const available = { variables: !unlinked, vlm: !unlinked && !crossDataset && !isSdtm && conditions.length > 0, codelist: unlinked || (!crossDataset && !isSdtm && datasetCodelists.length > 0) };
+  const activeTab: PickerTab = available[tab] ? tab : unlinked ? "codelist" : "variables";
+  const resetScroll = (target: PickerTab) => { scrollPositions.current[target] = 0; if (activeTab === target && scrollRef.current) scrollRef.current.scrollTop = 0; };
+  const clearReturn = () => { setPredecessorReturnVariable(null); predecessorContext.current = null; };
+  const resetContext = () => {
+    setVlmSearch(""); setCodelistSearch(""); setVlmAnchor(""); setCodelistId(""); setTermPage(0);
+    clearReturn(); setActiveVariable(null); setIsRightPanelOpen(false); setScrollTarget(null);
+    scrollPositions.current = { variables: 0, vlm: 0, codelist: 0 };
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  };
+  const selectScope = (dataset: string | null, standard: "ADaM" | "SDTM" | null) => {
+    resetContext(); setIsShowingSelectedOnly(false); setSelectedNavDataset(dataset); setSelectedNavStandard(standard);
+    if (standard === "SDTM") setTab("variables");
+  };
+  const toggleSelectedOnly = () => {
+    clearReturn(); setIsShowingSelectedOnly(!isShowingSelectedOnly); setTab("variables"); resetScroll("variables");
+  };
+  const getVarStandard = variableStandard;
   const navDatasets = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    const candidatePool = variables.filter((v) => {
-      if (hasVlmFilter && !v.hasVlm) return false;
-      if (hasCodelistFilter && !v.hasCodelist) return false;
-      if (q) {
-        const matchVar = v.variable.toLowerCase().includes(q);
-        const matchLabel = v.label.toLowerCase().includes(q);
-        const matchDs = v.datasetName.toLowerCase().includes(q);
-        const matchDeriv = (v.derivation || "").toLowerCase().includes(q);
-        if (!matchVar && !matchLabel && !matchDs && !matchDeriv) return false;
-      }
-      return true;
-    });
-
-    const adamMap = new Map<string, number>();
-    const sdtmMap = new Map<string, number>();
-
-    candidatePool.forEach((v) => {
-      const std = getVarStandard(v);
-      if (std === "ADaM") {
-        adamMap.set(v.datasetName, (adamMap.get(v.datasetName) || 0) + 1);
-      } else {
-        sdtmMap.set(v.datasetName, (sdtmMap.get(v.datasetName) || 0) + 1);
-      }
-    });
-
-    const adamList = Array.from(adamMap.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([name, count]) => ({ name, count, standard: "ADaM" as const }));
-
-    const sdtmList = Array.from(sdtmMap.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([name, count]) => ({ name, count, standard: "SDTM" as const }));
-
-    return {
-      totalCount: candidatePool.length,
-      adam: adamList,
-      sdtm: sdtmList,
-    };
-  }, [
-    variables,
-    search,
-    hasVlmFilter,
-    hasCodelistFilter,
-    getVarStandard,
-  ]);
-
-  // Toggle variable selection
-  const toggleVariable = useCallback((itemKey: string) => {
-    setSelected((prev) => {
-      const isCurrentlySelected = prev.includes(itemKey) || prev.includes(itemKey.split(".").pop() || "");
-      if (isCurrentlySelected) {
-        return prev.filter((v) => v !== itemKey && v !== itemKey.split(".").pop());
-      } else {
-        return [...prev, itemKey];
-      }
-    });
-  }, []);
-
-  // Inspect row click (open right panel)
-  const handleRowClick = useCallback((v: Variable) => {
-    setActiveVariable(v);
-    setIsRightPanelOpen(true);
-    setPredecessorReturnVariable(null);
-    setIsDerivationExpanded(false);
-    setCodelistSearch("");
-  }, []);
-
-  // Resolve predecessor information and verify existence in SDTM spec
+    const names = (standard: "ADaM" | "SDTM") => [...new Set(variables.filter(v => variableStandard(v) === standard).map(v => v.datasetName))].sort().map(name => ({ name }));
+    return { adam: names("ADaM"), sdtm: names("SDTM") };
+  }, [variables]);
+  const filteredVariables = useMemo(() => variables.filter(v => {
+    if (isShowingSelectedOnly ? !selected.includes(variableKey(v)) : selectedNavDataset ? v.datasetName !== selectedNavDataset : selectedNavStandard && variableStandard(v) !== selectedNavStandard) return false;
+    const q = search.trim().toLowerCase();
+    return !q || [v.variable, v.label, v.derivation].some(text => text?.toLowerCase().includes(q));
+  }), [variables, isShowingSelectedOnly, selected, selectedNavDataset, selectedNavStandard, search]);
+  const prevOpen = useRef(false);
+  useEffect(() => {
+    if (isOpen && !prevOpen.current) {
+      const normalized = normalizeSelection(initialSelected, variables, sourceDatasets);
+      setSelected(normalized); setSearch(""); setTab("variables"); resetContext(); setIsShowingSelectedOnly(false);
+      const dataset = sourceDatasets.length === 1 ? sourceDatasets[0] : null;
+      const standard = dataset ? variableStandard(variables.find(v => v.datasetName === dataset) ?? { datasetName: dataset } as Variable) : isTableMode ? "ADaM" : null;
+      setSelectedNavDataset(dataset); setSelectedNavStandard(standard);
+      setIsAdamExpanded(standard !== "SDTM"); setIsSdtmExpanded(standard !== "ADaM");
+    }
+    prevOpen.current = isOpen;
+  }, [isOpen, initialSelected, variables, sourceDatasets, isTableMode]);
+  useEffect(() => { if (tab !== activeTab) setTab(activeTab); }, [tab, activeTab]);
+  useLayoutEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollPositions.current[activeTab];
+  }, [isOpen, activeTab, selectedNavDataset, isShowingSelectedOnly]);
+  useLayoutEffect(() => {
+    if (!isOpen || activeTab !== "variables" || !scrollTarget) return;
+    const row = Array.from(scrollRef.current?.querySelectorAll<HTMLElement>("[data-variable-key]") ?? []).find(row => row.dataset.variableKey === scrollTarget);
+    if (row) { row.scrollIntoView({ block: "nearest" }); setScrollTarget(null); }
+  }, [isOpen, activeTab, scrollTarget, filteredVariables]);
+  const handleRowClick = (v: Variable) => { clearReturn(); setActiveVariable(v); setIsRightPanelOpen(true); };
+  const toggleVariable = (key: string) => setSelected(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  const selectedDatasets = [...new Set(selected.map(key => key.split(".")[0]))].sort();
+  const newlyAddedDatasets = sourceDatasets.length ? selectedDatasets.filter(ds => !sourceDatasets.includes(ds)) : [];
+  const handleConfirm = () => { if (newlyAddedDatasets.length) onDatasetsExpand?.(newlyAddedDatasets); onConfirm(selected); onClose(); };
+  const codelistForVariable = (v: Variable) => codelists.find(c => c.links.some(link => link.dataset === v.datasetName && link.variable === v.variable));
+  const variableHasVlm = (v: Variable) => variableStandard(v) === "ADaM" && (vlmData.some(r => r.datasetName === v.datasetName && r.variableName === v.variable) || Boolean(v.vlmParameters?.length));
+  const jump = (target: "vlm" | "codelist", v: Variable) => {
+    selectScope(v.datasetName, variableStandard(v)); setIsAdamExpanded(true); setTab(target); setActiveVariable(v);
+    if (target === "vlm") setVlmAnchor(v.variable); else setCodelistId(codelistForVariable(v)?.id ?? "");
+  };
   const parsedPredecessor = useMemo(() => {
     if (!activeVariable) return null;
-    const isPredecessorOrigin = activeVariable.origin === "Predecessor";
-
-    let sourceDs = activeVariable.predecessor?.dataset;
-    let sourceVar = activeVariable.predecessor?.variable;
-
-    if (!sourceDs || !sourceVar) {
-      // Try to parse "DATASET.VARIABLE" pattern from derivation (e.g., "DM.ACTARMUD", "DM.AGE")
-      const match = activeVariable.derivation?.match(/\b([A-Z]{2,8})\.([A-Z0-9_]{1,8})\b/);
-      if (match) {
-        sourceDs = match[1];
-        sourceVar = match[2];
-      }
-    }
-
-    // Only proceed if it is Predecessor origin or an explicit predecessor is referenced
-    if (!isPredecessorOrigin && !activeVariable.predecessor && !sourceDs) {
-      return null;
-    }
-
-    if (!sourceDs || !sourceVar) {
-      return {
-        hasReference: true,
-        sourceDs: null,
-        sourceVar: null,
-        existsInSdtm: false,
-        sdtmVariable: null,
-      };
-    }
-
-    // Check if target SDTM variable exists in variables list
-    const sdtmVar = variables.find(
-      (v) =>
-        (v.standard === "SDTM" || !v.standard) &&
-        v.datasetName.toUpperCase() === sourceDs!.toUpperCase() &&
-        v.variable.toUpperCase() === sourceVar!.toUpperCase()
-    );
-
-    // If activeVariable has predecessor object with label/type, it also counts as resolved
-    const hasPredecessorMetadata = Boolean(activeVariable.predecessor?.label || activeVariable.predecessor?.type);
-    const exists = Boolean(sdtmVar || hasPredecessorMetadata);
-
-    return {
-      hasReference: true,
-      sourceDs,
-      sourceVar,
-      existsInSdtm: exists,
-      sdtmVariable: sdtmVar || (activeVariable.predecessor ? {
-        id: `sdtm_${sourceDs}_${sourceVar}`,
-        datasetName: sourceDs,
-        variable: sourceVar,
-        label: activeVariable.predecessor.label || `${sourceVar} (SDTM)`,
-        type: activeVariable.predecessor.type || activeVariable.type || "Char",
-        length: activeVariable.predecessor.length || activeVariable.length || 8,
-        displayFormat: activeVariable.displayFormat || "",
-        derivation: activeVariable.predecessor.derivation || "Collected (CRF)",
-        hasVlm: false,
-        standard: "SDTM" as const,
-        origin: "Collected (CRF)",
-      } : null),
-    };
+    const match = activeVariable.derivation?.match(/^\s*([A-Za-z][A-Za-z0-9_]*)\.([A-Za-z][A-Za-z0-9_]*)\b/);
+    const dataset = activeVariable.predecessor?.dataset ?? match?.[1];
+    const variable = activeVariable.predecessor?.variable ?? match?.[2];
+    if (!dataset || !variable) return null;
+    return { name: `${dataset}.${variable}`, target: variables.find(v => v.datasetName.toUpperCase() === dataset.toUpperCase() && v.variable.toUpperCase() === variable.toUpperCase()) };
   }, [activeVariable, variables]);
-
-  const handleDrillDownToPredecessor = useCallback((pred: NonNullable<typeof parsedPredecessor>) => {
-    if (!pred || !pred.sourceDs || !pred.sourceVar || !activeVariable) return;
-
-    // Save current active variable as return target
-    setPredecessorReturnVariable(activeVariable);
-
-    // Find the SDTM variable entity or use constructed metadata
-    const sdtmVar = pred.sdtmVariable || variables.find(
-      (v) =>
-        (v.standard === "SDTM" || !v.standard) &&
-        v.datasetName.toUpperCase() === pred.sourceDs!.toUpperCase() &&
-        v.variable.toUpperCase() === pred.sourceVar!.toUpperCase()
-    );
-
-    if (sdtmVar) {
-      setActiveVariable(sdtmVar);
-      setIsDerivationExpanded(false);
-      setCodelistSearch("");
-    }
-  }, [activeVariable, variables]);
-
-  const handleBackFromPredecessor = useCallback(() => {
-    if (predecessorReturnVariable) {
-      setActiveVariable(predecessorReturnVariable);
-      setPredecessorReturnVariable(null);
-      setIsDerivationExpanded(false);
-      setCodelistSearch("");
-    }
-  }, [predecessorReturnVariable]);
-
-  // Compute selected datasets for footer and summary
-  const selectedDatasets = useMemo(() => {
-    const dsSet = new Set<string>();
-    selected.forEach((key) => {
-      if (key.includes(".")) {
-        dsSet.add(key.split(".")[0]);
-      } else {
-        const found = variables.find((v) => v.variable === key);
-        if (found) dsSet.add(found.datasetName);
-      }
-    });
-    return Array.from(dsSet).sort();
-  }, [selected, variables]);
-
-  // Datasets newly added that weren't in sourceDatasets
-  const newlyAddedDatasets = useMemo(() => {
-    if (!sourceDatasets || sourceDatasets.length === 0) return [];
-    return selectedDatasets.filter((ds) => !sourceDatasets.includes(ds));
-  }, [selectedDatasets, sourceDatasets]);
-
-  // Confirm and close
-  const handleConfirm = () => {
-    if (newlyAddedDatasets.length > 0 && onDatasetsExpand) {
-      onDatasetsExpand(newlyAddedDatasets);
-    }
-    onConfirm(selected);
-    onClose();
+  const handleDrillDownToPredecessor = () => {
+    const target = parsedPredecessor?.target;
+    if (!target || !activeVariable) return;
+    const context = { dataset: selectedNavDataset, standard: selectedNavStandard, selectedOnly: isShowingSelectedOnly, search, scroll: scrollPositions.current.variables };
+    const origin = activeVariable;
+    selectScope(target.datasetName, variableStandard(target)); setSearch(""); setTab("variables");
+    predecessorContext.current = context; setPredecessorReturnVariable(origin);
+    setActiveVariable(target); setIsRightPanelOpen(true); setScrollTarget(variableKey(target));
+    if (variableStandard(target) === "SDTM") setIsSdtmExpanded(true); else setIsAdamExpanded(true);
   };
-
-  // Reset/Clear all filters
-  const defaultNavStandard = isTableMode ? "ADaM" : null;
-  const hasActiveFilters =
-    isShowingSelectedOnly ||
-    selectedNavStandard !== defaultNavStandard ||
-    selectedNavDataset !== null ||
-    hasVlmFilter ||
-    hasCodelistFilter ||
-    search.trim().length > 0;
-
-  const handleClearFilters = () => {
-    setIsShowingSelectedOnly(false);
-    setSelectedNavStandard(defaultNavStandard);
-    setSelectedNavDataset(null);
-    setHasVlmFilter(false);
-    setHasCodelistFilter(false);
-    setSearch("");
+  const handleBackFromPredecessor = () => {
+    if (!predecessorReturnVariable || !predecessorContext.current) return;
+    const context = predecessorContext.current;
+    setSelectedNavDataset(context.dataset); setSelectedNavStandard(context.standard); setIsShowingSelectedOnly(context.selectedOnly); setSearch(context.search);
+    setActiveVariable(predecessorReturnVariable); setScrollTarget(variableKey(predecessorReturnVariable));
+    scrollPositions.current.variables = context.scroll; clearReturn();
   };
-
+  useEffect(() => {
+    if (!isOpen) return;
+    const keydown = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); if (activeTab === "variables" && predecessorReturnVariable) handleBackFromPredecessor(); else if (activeTab === "variables" && isRightPanelOpen) { setIsRightPanelOpen(false); clearReturn(); } else onClose(); } };
+    window.addEventListener("keydown", keydown); return () => window.removeEventListener("keydown", keydown);
+  }, [isOpen, activeTab, predecessorReturnVariable, isRightPanelOpen, onClose]);
+  const workspaceTitle = isShowingSelectedOnly ? "Selected only" : unlinked ? "Unlinked codelists" : selectedNavDataset ?? selectedNavStandard ?? "All datasets";
+  const unavailableReason = (target: PickerTab) => unlinked ? "Select a dataset to view variables or VLM" : crossDataset ? "Select a dataset to view VLM or codelists" : isSdtm ? "SDTM VLM / Codelist is not in scope yet" : target === "vlm" ? "No VLM for this dataset" : "No codelist for this dataset";
+  const terms = (currentCodelist?.terms ?? []).filter(t => !codelistSearch.trim() || [t.value, t.label].some(text => text.toLowerCase().includes(codelistSearch.trim().toLowerCase())));
+  const pageCount = Math.max(1, Math.ceil(terms.length / 100));
+  const page = Math.min(termPage, pageCount - 1);
+  const matchingConditions = conditions.filter(c => !vlmSearch.trim() || [c.identifier, c.expression].some(text => text.toLowerCase().includes(vlmSearch.trim().toLowerCase())));
+  const onScroll = (event: React.UIEvent<HTMLDivElement>) => { scrollPositions.current[activeTab] = event.currentTarget.scrollTop; };
   if (!isOpen) return null;
-
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center pointer-events-auto p-[16px]">
       {/* Backdrop: Clean solid black/40 without backdrop-blur to eliminate halo/gradient artifacts */}
@@ -484,75 +249,13 @@ export function VariableSpecPicker({
           </button>
         </div>
 
-        {/* ================= 2. Filter Bar ================= */}
-        <div className="flex shrink-0 items-center justify-between gap-[12px] border-b border-graphite-10 pl-[8px] pr-[20px] py-[8px] bg-bg-panel/40">
-          <div className="flex items-center gap-[10px] flex-1 min-w-0">
-            {/* Global Omni Search Input */}
-            <div className="relative w-[340px] shrink-0">
-              <svg
-                className="absolute left-[8px] top-1/2 -translate-y-1/2 size-[16px] text-text-secondary pointer-events-none"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search variable, label, dataset, derivation…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-[28px] rounded-[4px] border border-graphite-10 bg-white pl-[30px] pr-[24px] t-small text-text-primary placeholder:text-text-secondary focus:border-[#830051] focus:outline-none transition-colors"
-              />
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  className="absolute right-[6px] top-1/2 -translate-y-1/2 text-text-secondary size-[16px] flex items-center justify-center cursor-pointer"
-                  title="Clear search"
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            <div className="h-[16px] w-[1px] bg-graphite-10 shrink-0" />
-
-            {/* Quick Property Filters */}
-            <FilterChip
-              type="Toggle"
-              variant="filter"
-              showIcon={false}
-              label="Has VLM"
-              active={hasVlmFilter}
-              onClick={() => setHasVlmFilter(!hasVlmFilter)}
-            />
-
-            <FilterChip
-              type="Toggle"
-              variant="filter"
-              showIcon={false}
-              label="Has Codelist"
-              active={hasCodelistFilter}
-              onClick={() => setHasCodelistFilter(!hasCodelistFilter)}
-            />
-          </div>
-        </div>
-
         {/* ================= 3. Main 3-Column Area ================= */}
         <div className="flex flex-1 min-h-0 overflow-hidden bg-white">
           {/* ----- Column 1: Left Dataset Tree List (Aligned with Detail Page Tree List) ----- */}
           <div className="w-[200px] shrink-0 border-r border-graphite-10 bg-bg-panel/40 flex flex-col overflow-hidden">
             {/* Top Header: Selected only switch (Exact height 36px, full width, border-b aligned with right table header) */}
             <div
-              onClick={() => setIsShowingSelectedOnly(!isShowingSelectedOnly)}
+              onClick={() => toggleSelectedOnly()}
               className={`h-[36px] w-full shrink-0 flex items-center justify-between px-[16px] border-b border-graphite-10 cursor-pointer select-none transition-colors ${
                 isShowingSelectedOnly
                   ? "bg-[#F4E8EE]/80 text-brand-1"
@@ -583,7 +286,7 @@ export function VariableSpecPicker({
                 aria-checked={isShowingSelectedOnly}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIsShowingSelectedOnly(!isShowingSelectedOnly);
+                  toggleSelectedOnly();
                 }}
                 className={`relative inline-flex h-[16px] w-[28px] shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
                   isShowingSelectedOnly ? "bg-brand-1" : "bg-[#CBCED4]"
@@ -610,15 +313,7 @@ export function VariableSpecPicker({
                       ? "bg-[#F4E8EE] text-brand-1 font-medium"
                       : "text-text-primary hover:bg-graphite-10"
                   }`}
-                  onClick={() => {
-                    setIsShowingSelectedOnly(false);
-                    if (selectedNavStandard === "ADaM" && selectedNavDataset === null) {
-                      setSelectedNavStandard(null);
-                    } else {
-                      setSelectedNavStandard("ADaM");
-                      setSelectedNavDataset(null);
-                    }
-                  }}
+                  onClick={() => selectScope(null, selectedNavStandard === "ADaM" && selectedNavDataset === null ? null : "ADaM")}
                 >
                   <div className="flex h-full items-center justify-between px-[10px]">
                     <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[6px]">
@@ -653,16 +348,7 @@ export function VariableSpecPicker({
                       return (
                         <div
                           key={ds.name}
-                          onClick={() => {
-                            setIsShowingSelectedOnly(false);
-                            if (isNavActive) {
-                              setSelectedNavDataset(null);
-                              setSelectedNavStandard("ADaM");
-                            } else {
-                              setSelectedNavDataset(ds.name);
-                              setSelectedNavStandard("ADaM");
-                            }
-                          }}
+                          onClick={() => selectScope(isNavActive ? null : ds.name, "ADaM")}
                           className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors select-none ${
                             isNavActive
                               ? "bg-[#F4E8EE] text-brand-1 font-medium"
@@ -690,15 +376,7 @@ export function VariableSpecPicker({
                       ? "bg-[#F4E8EE] text-brand-1 font-medium"
                       : "text-text-primary hover:bg-graphite-10"
                   }`}
-                  onClick={() => {
-                    setIsShowingSelectedOnly(false);
-                    if (selectedNavStandard === "SDTM" && selectedNavDataset === null) {
-                      setSelectedNavStandard(null);
-                    } else {
-                      setSelectedNavStandard("SDTM");
-                      setSelectedNavDataset(null);
-                    }
-                  }}
+                  onClick={() => selectScope(null, selectedNavStandard === "SDTM" && selectedNavDataset === null ? null : "SDTM")}
                 >
                   <div className="flex h-full items-center justify-between px-[10px]">
                     <div className="flex h-[20px] min-w-0 flex-1 items-center gap-[6px]">
@@ -733,16 +411,7 @@ export function VariableSpecPicker({
                       return (
                         <div
                           key={ds.name}
-                          onClick={() => {
-                            setIsShowingSelectedOnly(false);
-                            if (isNavActive) {
-                              setSelectedNavDataset(null);
-                              setSelectedNavStandard("SDTM");
-                            } else {
-                              setSelectedNavDataset(ds.name);
-                              setSelectedNavStandard("SDTM");
-                            }
-                          }}
+                          onClick={() => selectScope(isNavActive ? null : ds.name, "SDTM")}
                           className={`relative h-[28px] w-full cursor-pointer rounded-[4px] transition-colors select-none ${
                             isNavActive
                               ? "bg-[#F4E8EE] text-brand-1 font-medium"
@@ -759,168 +428,81 @@ export function VariableSpecPicker({
                 )}
               </div>
             )}
+            <button type="button" onClick={() => { selectScope("__unlinked__", null); setTab("codelist"); }} className={`mt-2 w-full rounded-sm px-2 py-1 text-left t-small ${unlinked ? "bg-az-secondary text-brand-1" : "text-text-primary hover:bg-graphite-10"}`}>Unlinked codelists</button>
             </div>
           </div>
 
-          {/* ----- Column 2: Middle Variable Table (Pilot Single-line Row Style) ----- */}
-          {(() => {
-            const gridCols = isRightPanelOpen
-              ? "grid-cols-[36px_56px_84px_120px_46px_minmax(0,1fr)]"
-              : "grid-cols-[36px_72px_104px_160px_54px_minmax(0,1fr)]";
-            const colPadding = isRightPanelOpen ? "px-[6px]" : "px-[8px]";
-
-            return (
-              <div className="flex-1 min-w-0 flex flex-col overflow-hidden bg-white">
-                {/* Table Header: Fixed 36px bar strictly OUTSIDE the vertical scroll container */}
-                <div className="h-[36px] shrink-0 bg-bg-panel border-b border-graphite-10 select-none">
-                  <div className={`grid ${gridCols} h-full items-center w-full`}>
-                    <div className="flex items-center justify-center">
-                      <Checkbox
-                        checked={
-                          filteredVariables.length > 0 &&
-                          filteredVariables.every((v) => {
-                            const key = `${v.datasetName}.${v.variable}`;
-                            return selected.includes(key) || selected.includes(v.variable);
-                          })
-                        }
-                        onChange={() => {
-                          const isAllChecked = filteredVariables.every((v) => {
-                            const key = `${v.datasetName}.${v.variable}`;
-                            return selected.includes(key) || selected.includes(v.variable);
-                          });
-                          if (isAllChecked) {
-                            const keysToRemove = new Set(filteredVariables.map((v) => `${v.datasetName}.${v.variable}`));
-                            const shortKeys = new Set(filteredVariables.map((v) => v.variable));
-                            setSelected((prev) => prev.filter((k) => !keysToRemove.has(k) && !shortKeys.has(k)));
-                          } else {
-                            const keysToAdd = filteredVariables.map((v) => `${v.datasetName}.${v.variable}`);
-                            setSelected((prev) => Array.from(new Set([...prev, ...keysToAdd])));
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className={`${colPadding} min-w-0`}>
-                      <span className="t-small font-medium text-[#888E8E] truncate block">Dataset</span>
-                    </div>
-                    <div className={`${colPadding} min-w-0`}>
-                      <span className="t-small font-medium text-[#888E8E] truncate block">Variable</span>
-                    </div>
-                    <div className={`${colPadding} min-w-0`}>
-                      <span className="t-small font-medium text-[#888E8E] truncate block">Label</span>
-                    </div>
-                    <div className={`${colPadding} min-w-0`}>
-                      <span className="t-small font-medium text-[#888E8E] truncate block">Type</span>
-                    </div>
-                    <div className={`${colPadding} min-w-0`}>
-                      <span className="t-small font-medium text-[#888E8E] truncate block">Derivation</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Table Body: Dedicated vertical scroll container (NO horizontal scroll! Truncate fields!) */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                  {filteredVariables.length === 0 ? (
-                    <div className="px-[20px] py-[48px] text-center">
-                      <p className="t-small text-text-secondary">
-                        {isShowingSelectedOnly ? "No variables selected yet" : "No matching variables found"}
-                      </p>
-                      {isShowingSelectedOnly ? (
-                        <p className="t-footnote text-text-secondary mt-[4px]">
-                          Select variables from the datasets on the left to review them here.
-                        </p>
-                      ) : hasActiveFilters ? (
-                        <button
-                          type="button"
-                          onClick={handleClearFilters}
-                          className="t-small text-brand-1 hover:underline mt-[6px] font-medium cursor-pointer"
-                        >
-                          Reset filters
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col w-full">
-                      {filteredVariables.map((v) => {
-                        const itemKey = `${v.datasetName}.${v.variable}`;
-                        const isChecked = selected.includes(itemKey) || selected.includes(v.variable);
-                        const isInspecting = isRightPanelOpen && (activeVariable?.id === v.id || predecessorReturnVariable?.id === v.id);
-
-                        return (
-                          <div
-                            key={v.id}
-                            onClick={() => handleRowClick(v)}
-                            className={`grid ${gridCols} items-center min-h-[36px] py-[6px] border-b border-graphite-10 transition-colors cursor-pointer select-none group ${
-                              isInspecting
-                                ? "bg-[#F4E8EE]/40 hover:bg-[#F4E8EE]/60"
-                                : isChecked
-                                ? "bg-bg-panel/40 hover:bg-bg-panel"
-                                : "hover:bg-bg-panel"
-                            }`}
-                          >
-                            {/* Checkbox */}
-                            <div
-                              className="flex items-center justify-center shrink-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleVariable(itemKey);
-                              }}
-                            >
-                              <Checkbox
-                                checked={isChecked}
-                                onChange={() => toggleVariable(itemKey)}
-                              />
-                            </div>
-
-                            {/* Dataset */}
-                            <div className={`${colPadding} min-w-0`}>
-                              <span className="t-small truncate block text-text-primary font-mono" title={v.datasetName}>
-                                {v.datasetName}
-                              </span>
-                            </div>
-
-                            {/* Variable */}
-                            <div className={`${colPadding} min-w-0`}>
-                              <span className="t-small font-medium truncate block text-text-primary font-mono" title={v.variable}>
-                                {v.variable}
-                              </span>
-                            </div>
-
-                            {/* Label */}
-                            <div className={`${colPadding} min-w-0`}>
-                              <span
-                                className={`t-small text-text-primary ${
-                                  isRightPanelOpen ? "truncate block" : "whitespace-normal line-clamp-2"
-                                }`}
-                                title={v.label}
-                              >
-                                {v.label}
-                              </span>
-                            </div>
-
-                            {/* Type */}
-                            <div className={`${colPadding} min-w-0`}>
-                              <span className="t-small truncate block text-text-primary font-mono" title={v.type}>
-                                {v.type || "-"}
-                              </span>
-                            </div>
-
-                            {/* Derivation */}
-                            <div className={`${colPadding} min-w-0`}>
-                              <DerivationCell text={v.derivation} isTruncatedOnly={isRightPanelOpen} />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+          <div className="flex flex-1 min-w-0 flex-col overflow-hidden">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-graphite-10 px-4 py-2">
+              <span className="t-body-medium text-text-primary" style={{ fontWeight: "var(--font-weight-semibold)" }}>{workspaceTitle}</span>
+              {!isSdtm && <SegmentedControl size="sm" value={activeTab} onChange={value => { setTab(value as PickerTab); if (value === "vlm") setVlmAnchor(""); }} options={([
+                ["variables", "Variables"], ["vlm", "VLM"], ["codelist", "Codelist"],
+              ] as const).map(([value, label]) => ({ value, label, disabled: !available[value], tooltip: !available[value] ? unavailableReason(value) : undefined }))} />}
+            </div>
+            <div className="border-b border-graphite-10 px-4 py-2 shrink-0">
+              <SearchBar size="compact" className="max-w-sm" value={activeTab === "variables" ? search : activeTab === "vlm" ? vlmSearch : codelistSearch}
+                placeholder={activeTab === "variables" ? "Search variable, label, derivation…" : activeTab === "vlm" ? "Search condition…" : "Search terms…"}
+                onChange={value => { resetScroll(activeTab); if (activeTab === "variables") setSearch(value); else if (activeTab === "vlm") setVlmSearch(value); else { setCodelistSearch(value); setTermPage(0); } }} />
+            </div>
+            <div className="flex flex-1 min-h-0 overflow-hidden">
+            {activeTab === "variables" && <div ref={scrollRef} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto">
+              <table className="w-full min-w-xl table-fixed border-collapse t-small text-text-primary">
+                <colgroup><col className="w-10" />{crossDataset && <col className="w-20" />}<col className="w-20" /><col className="w-28" /><col className="w-12" /><col /><col className="w-32" /></colgroup>
+                <thead className="sticky top-0 z-10 bg-bg-panel text-text-secondary font-normal text-left"><tr>
+                  <th className="px-3 py-2 w-10"><Checkbox aria-label="Select all visible variables" checked={filteredVariables.length > 0 && filteredVariables.every(v => selected.includes(variableKey(v)))} indeterminate={filteredVariables.some(v => selected.includes(variableKey(v))) && !filteredVariables.every(v => selected.includes(variableKey(v)))} onChange={checked => {
+                    const keys = filteredVariables.map(variableKey); setSelected(prev => checked ? [...new Set([...prev, ...keys])] : prev.filter(key => !keys.includes(key)));
+                  }} /></th>
+                  {crossDataset && <th className="px-2 py-2 font-medium">Dataset</th>}
+                  {["Variable", "Label", "Type", "Derivation", "VLM / Codelist"].map(label => <th key={label} className="px-2 py-2 font-normal whitespace-nowrap">{label}</th>)}
+                </tr></thead>
+                <tbody>{filteredVariables.map(v => {
+                  const key = variableKey(v), checked = selected.includes(key), inspecting = activeVariable && variableKey(activeVariable) === key;
+                  return <tr key={key} data-variable-key={key} onClick={() => handleRowClick(v)} className={`border-b border-graphite-10 cursor-pointer ${inspecting ? "bg-az-secondary" : checked ? "bg-bg-panel" : "hover:bg-bg-panel"}`}>
+                    <td className="px-3 py-2 align-top"><Checkbox aria-label={`Select ${key}`} checked={checked} onChange={() => toggleVariable(key)} /></td>
+                    {crossDataset && <td className="px-2 py-2 align-top font-mono whitespace-nowrap">{v.datasetName}</td>}
+                    <td className="px-2 py-2 align-top font-mono">{v.variable}</td>
+                    <td className="px-2 py-2 align-top min-w-24">{v.label}</td>
+                    <td className="px-2 py-2 align-top font-mono">{v.type || "—"}</td>
+                    <td className="px-2 py-2 align-top min-w-32"><DerivationCell text={v.derivation} /></td>
+                    <td className="px-2 py-2 align-top"><div className="flex flex-wrap gap-1">
+                      {variableHasVlm(v) && <PickerJumpButton onClick={event => { event.stopPropagation(); jump("vlm", v); }} label={`Open ${v.datasetName} VLM for ${v.variable}`}>VLM</PickerJumpButton>}
+                      {variableStandard(v) === "ADaM" && codelistForVariable(v) && <PickerJumpButton onClick={event => { event.stopPropagation(); jump("codelist", v); }} label={`Open codelist for ${key}`}>Codelist</PickerJumpButton>}
+                    </div></td>
+                  </tr>;
+                })}</tbody>
+              </table>
+              {!filteredVariables.length && <p className="t-small text-text-primary text-center p-8">{isShowingSelectedOnly && !selected.length ? "No variables selected yet" : "No matching variables found"}</p>}
+            </div>}
+            {activeTab === "vlm" && <div ref={scrollRef} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto">
+              <table className="w-full border-collapse t-small text-text-primary text-left">
+                <thead className="sticky top-0 bg-bg-panel text-text-secondary font-normal"><tr><th className="px-4 py-2 font-normal w-1/3">Condition</th><th className="px-4 py-2 font-normal">Definitions</th></tr></thead>
+                <tbody>{matchingConditions.map(condition => <tr key={condition.key} className="border-b border-graphite-10">
+                  <td className="p-4 align-top break-words"><div className="font-medium">{condition.identifier === "*DEFAULT*" ? "Default definition" : condition.identifier}</div><div className="font-mono whitespace-pre-wrap break-words">{condition.expression}</div></td>
+                  <td className="p-4 align-top"><div className="flex flex-col gap-2">{[...condition.definitions].sort((a, b) => Number(b.variable === vlmAnchor) - Number(a.variable === vlmAnchor)).map((definition, index) => <div key={`${definition.variable}-${index}`} className={`rounded-sm p-2 ${definition.variable === vlmAnchor ? "bg-az-secondary" : ""}`}><div className="font-mono font-medium">{definition.variable}</div><div className="whitespace-pre-wrap break-words">{definition.text}</div></div>)}{!condition.definitions.length && "—"}</div></td>
+                </tr>)}</tbody>
+              </table>
+              {!matchingConditions.length && <p className="t-small text-center p-8">No match.</p>}
+            </div>}
+            {activeTab === "codelist" && <div className="flex flex-1 min-w-0 min-h-0">
+              <div className="w-48 shrink-0 border-r border-graphite-10 p-2 overflow-auto">
+                {datasetCodelists.map(c => <button key={c.id} type="button" onClick={() => { setCodelistId(c.id); setCodelistSearch(""); setTermPage(0); resetScroll("codelist"); }} title={c.name} className={`flex min-h-7 w-full items-center text-left rounded-[4px] px-2 py-1 t-small break-words transition-colors ${currentCodelist?.id === c.id ? "bg-az-secondary text-brand-1" : "text-text-primary hover:bg-graphite-10"}`}>{c.name}</button>)}
               </div>
-            );
-          })()}
-
+              <div className="flex flex-col flex-1 min-w-0">
+                {currentCodelist ? <>
+                  <div className="px-4 py-2 border-b border-graphite-10 t-body-medium text-text-primary break-words" style={{ fontWeight: "var(--font-weight-semibold)" }}>{currentCodelist.name}</div>
+                  <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-auto">
+                    <table className="w-full border-collapse t-small text-text-primary text-left"><thead className="sticky top-0 bg-bg-panel text-text-secondary font-normal"><tr><th className="px-4 py-2 font-normal">Value</th><th className="px-4 py-2 font-normal">Label</th></tr></thead><tbody>
+                      {terms.slice(page * 100, (page + 1) * 100).map((term, index) => <tr key={`${term.value}-${index}`} className="border-b border-graphite-10"><td className="px-4 py-2 align-top font-mono break-words">{term.value}</td><td className="px-4 py-2 break-words">{term.label}</td></tr>)}
+                    </tbody></table>
+                    {!terms.length && <p className="p-8 text-center t-small text-text-primary">{codelistSearch ? "No match." : "No terms available."}</p>}
+                  </div>
+                  {pageCount > 1 && <div className="flex items-center justify-end gap-3 px-4 py-2 border-t border-graphite-10 t-small text-text-primary"><Button variant="ghost" size="sm" disabled={page === 0} onClick={() => { setTermPage(page - 1); resetScroll("codelist"); }}>Previous</Button><span>Page {page + 1} of {pageCount}</span><Button variant="ghost" size="sm" disabled={page === pageCount - 1} onClick={() => { setTermPage(page + 1); resetScroll("codelist"); }}>Next</Button></div>}
+                </> : <p className="p-8 text-center t-small text-text-primary">No codelists available.</p>}
+              </div>
+            </div>}
           {/* ----- Column 3: Right Collapsible Detail Panel ----- */}
-          {isRightPanelOpen && activeVariable && (
-            <div className="w-[360px] shrink-0 border-l border-graphite-10 bg-white flex flex-col overflow-hidden">
+          {activeTab === "variables" && isRightPanelOpen && activeVariable && (
+            <div className="w-90 shrink-0 border-l border-graphite-10 bg-white flex flex-col overflow-hidden">
               {/* Panel Top Header: No background color, no divider line, minimal gap between Dataset and Variable */}
               <div className="px-[16px] pt-[12px] pb-[4px] shrink-0 select-none">
                 <div className="flex items-center justify-between">
@@ -943,7 +525,7 @@ export function VariableSpecPicker({
                     type="button"
                     onClick={() => {
                       setIsRightPanelOpen(false);
-                      setPredecessorReturnVariable(null);
+                      clearReturn();
                     }}
                     className="size-[20px] flex items-center justify-center rounded-[4px] text-text-secondary hover:text-text-primary hover:bg-black/5 transition-colors cursor-pointer shrink-0"
                     title="Collapse details panel (Esc)"
@@ -1003,187 +585,21 @@ export function VariableSpecPicker({
                       </div>
                     </div>
 
-                    {/* Derivation Section */}
-                    <div className="flex flex-col gap-[6px]">
+                    <div className="flex flex-col gap-1.5">
                       <span className="t-small font-semibold text-text-primary">Derivation</span>
-                      <div className="rounded-[8px] bg-bg-panel/40 border border-graphite-10 p-[12px] flex flex-col gap-[6px]">
-                        <p
-                          className={`t-small text-text-primary break-words leading-relaxed ${
-                            isDerivationExpanded ? "" : "line-clamp-4"
-                          }`}
-                        >
-                          {activeVariable.derivation || "No derivation specified."}
-                        </p>
-                        {activeVariable.derivation && activeVariable.derivation.length > 120 && (
-                          <button
-                            type="button"
-                            onClick={() => setIsDerivationExpanded(!isDerivationExpanded)}
-                            className="t-footnote text-brand-1 hover:underline self-start font-medium cursor-pointer"
-                          >
-                            {isDerivationExpanded ? "Show less ↑" : "Show more ↓"}
-                          </button>
-                        )}
-
-                        {/* Direct Predecessor Single-Ended Info Row */}
-                        {parsedPredecessor?.hasReference && (
-                          <div className="mt-[4px] pt-[8px] border-t border-graphite-10 flex items-center justify-between">
-                            <div className="flex items-center gap-[6px] min-w-0">
-                              <span className="t-footnote text-text-secondary shrink-0">Predecessor:</span>
-                              <span className="t-footnote font-mono font-medium text-text-primary truncate">
-                                {parsedPredecessor.sourceDs && parsedPredecessor.sourceVar
-                                  ? `${parsedPredecessor.sourceDs}.${parsedPredecessor.sourceVar}`
-                                  : "Unresolved"}
-                              </span>
-                            </div>
-
-                            {parsedPredecessor.existsInSdtm ? (
-                              <button
-                                type="button"
-                                onClick={() => handleDrillDownToPredecessor(parsedPredecessor)}
-                                className="t-footnote text-brand-1 hover:underline font-medium cursor-pointer shrink-0 ml-[8px]"
-                              >
-                                View details →
-                              </button>
-                            ) : (
-                              <span className="t-micro px-[6px] py-[2px] rounded bg-[#FFF8E6] text-[#8C6B00] border border-[#FFE082] font-medium shrink-0 ml-[8px]">
-                                not in SDTM
-                              </span>
-                            )}
-                          </div>
-                        )}
+                      <div className="rounded-lg bg-bg-panel/40 border border-graphite-10 p-3 flex flex-col gap-1.5">
+                        <p className="t-small text-text-primary whitespace-pre-wrap break-words leading-relaxed">{activeVariable.derivation || "No derivation specified."}</p>
+                        {parsedPredecessor && <div className="mt-1 pt-2 border-t border-graphite-10 flex items-center gap-1.5">
+                          <span className="t-footnote text-text-primary">Predecessor:</span>
+                          {parsedPredecessor.target ? <button type="button" onClick={handleDrillDownToPredecessor} className="t-footnote font-mono text-brand-1 underline focus-visible:outline-brand-1">{parsedPredecessor.name}</button> : <span className="t-footnote font-mono text-text-primary">{parsedPredecessor.name}</span>}
+                        </div>}
                       </div>
                     </div>
-
-                    {/* Section: VLM (Directly rendered if present, no tabs!) */}
-                    {activeVariable.hasVlm && (
-                      <div className="flex flex-col gap-[6px]">
-                        <span className="t-small font-semibold text-text-primary">VLM</span>
-
-                        <div className="rounded-[8px] border border-graphite-10 overflow-hidden bg-white">
-                          <table className="w-full border-collapse">
-                            <thead className="bg-bg-panel border-b border-graphite-10">
-                              <tr>
-                                <th className="px-[10px] py-[6px] text-left t-footnote font-medium text-text-secondary w-[72px]">
-                                  Param
-                                </th>
-                                <th className="px-[10px] py-[6px] text-left t-footnote font-medium text-text-secondary">
-                                  Derivation / Condition
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-graphite-10">
-                              {activeVariable.vlmParameters && activeVariable.vlmParameters.length > 0 ? (
-                                activeVariable.vlmParameters.map((vp, idx) => (
-                                  <tr key={idx} className="hover:bg-bg-panel/40 transition-colors">
-                                    <td className="px-[10px] py-[8px] align-top">
-                                      <span className="t-small font-mono font-medium text-text-primary block">
-                                        {vp.param}
-                                      </span>
-                                    </td>
-                                    <td className="px-[10px] py-[8px] align-top">
-                                      <span className="t-footnote font-mono text-text-secondary block mb-[2px]">
-                                        {vp.condition}
-                                      </span>
-                                      <p className="t-small text-text-primary leading-snug">
-                                        {vp.derivation}
-                                      </p>
-                                    </td>
-                                  </tr>
-                                ))
-                              ) : (
-                                vlmData
-                                  .filter((item) => item.datasetName === activeVariable.datasetName)
-                                  .slice(0, 5)
-                                  .map((vlm) => (
-                                    <tr key={vlm.id} className="hover:bg-bg-panel/40 transition-colors">
-                                      <td className="px-[10px] py-[8px] align-top">
-                                        <span className="t-small font-mono font-medium text-text-primary block">
-                                          {vlm.parameterName}
-                                        </span>
-                                      </td>
-                                      <td className="px-[10px] py-[8px] align-top">
-                                        <span className="t-footnote font-mono text-text-secondary block mb-[2px]">
-                                          {vlm.whereClause}
-                                        </span>
-                                        <p className="t-small text-text-primary leading-snug">
-                                          {vlm.derivation}
-                                        </p>
-                                      </td>
-                                    </tr>
-                                  ))
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Section: Codelist / Controlled Terminology (Directly rendered if present, no tabs!) */}
-                    {activeVariable.hasCodelist && (
-                      <div className="flex flex-col gap-[6px]">
-                        <span className="t-small font-semibold text-text-primary">
-                          Controlled Terminology
-                          {activeVariable.codelistRef && (
-                            <span className="ml-[6px] font-mono font-normal text-text-secondary">
-                              ({activeVariable.codelistRef})
-                            </span>
-                          )}
-                        </span>
-
-                        {/* Filter Input if > 4 values */}
-                        {(activeVariable.codelistValues?.length ?? 0) > 4 && (
-                          <input
-                            type="text"
-                            placeholder="Filter codes or labels…"
-                            value={codelistSearch}
-                            onChange={(e) => setCodelistSearch(e.target.value)}
-                            className="h-[26px] px-[8px] rounded-[4px] border border-graphite-10 bg-white t-footnote text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-brand-1"
-                          />
-                        )}
-
-                        <div className="rounded-[8px] border border-graphite-10 overflow-hidden bg-white">
-                          <table className="w-full border-collapse">
-                            <thead className="bg-bg-panel border-b border-graphite-10">
-                              <tr>
-                                <th className="px-[10px] py-[6px] text-left t-footnote font-medium text-text-secondary w-[72px]">
-                                  Code
-                                </th>
-                                <th className="px-[10px] py-[6px] text-left t-footnote font-medium text-text-secondary">
-                                  Decoded Label
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-graphite-10">
-                              {(activeVariable.codelistValues || [
-                                { value: "Y", label: "Yes" },
-                                { value: "N", label: "No" },
-                              ])
-                                .filter((cv) => {
-                                  if (!codelistSearch.trim()) return true;
-                                  const cs = codelistSearch.toLowerCase();
-                                  return (
-                                    cv.value.toLowerCase().includes(cs) ||
-                                    cv.label.toLowerCase().includes(cs)
-                                  );
-                                })
-                                .map((cv, idx) => (
-                                  <tr key={idx} className="hover:bg-bg-panel/40 transition-colors">
-                                    <td className="px-[10px] py-[6px] t-small font-mono font-medium text-text-primary">
-                                      {cv.value}
-                                    </td>
-                                    <td className="px-[10px] py-[6px] t-small text-text-primary">
-                                      {cv.label}
-                                    </td>
-                                  </tr>
-                                ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
               </div>
             </div>
           )}
+            </div>
+          </div>
         </div>
 
         {/* ================= 4. Footer ================= */}
