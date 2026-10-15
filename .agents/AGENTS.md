@@ -11,3 +11,5 @@
 | Bug/报错/排障/样式异常/行为异常 | Troubleshooter | `.agents/skills/troubleshooter/SKILL.md` |
 | 走查/checklist/测试单 | Checklist Generator | `.agents/skills/checklist_generator/SKILL.md` |
 | 记录 bug 根因和方案 | Bug Logger | `.agents/skills/bug_logger/SKILL.md` |
+
+UI 任务：修改 JSX 或样式前，先读 `guidelines/ui-standards/component-usage.md`，按用途和交互匹配组件，并检查产品中可对照的现有用法。参考 HTML 和截图仅提供视觉证据，不决定组件语义；变体与 Token 遵循 UI Design Skill。
