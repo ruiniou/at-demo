@@ -2508,7 +2508,7 @@ function ChatConversation({
                   <div className="flex flex-col w-full relative gap-[8px]">
                     <div className="flex flex-col gap-[4px] px-[10px]">
                       <p className="t-body text-text-primary leading-relaxed">Reference update ready for review.</p>
-                      <p className="t-small text-text-secondary leading-relaxed">The current TFL was adjusted using {msg.referenceChange.newReference ? `${msg.referenceChange.newReference.tflId} ${msg.referenceChange.newReference.tflTitle}` : 'the selected Reference'}.</p>
+                      <p className="t-small text-text-secondary leading-relaxed">{msg.referenceChange.newReference ? `The current TFL was adjusted using ${msg.referenceChange.newReference.tflId} ${msg.referenceChange.newReference.tflTitle}.` : 'The Reference was removed from the current TFL.'}</p>
                     </div>
                     <div className="relative w-full">
                       <AICodeDiff summary="Code changes ready for review" additions={[]} deletions={[]} />
@@ -3608,8 +3608,10 @@ function AICopilotPanel({
     const runEpoch = ++runEpochRef.current;
     (document.activeElement as HTMLElement)?.blur();
 
-    const userContent = text.trim() ? text : submittedReferenceChange?.newReference
-      ? `Update this TFL using Reference ${submittedReferenceChange.newReference.tflId} ${submittedReferenceChange.newReference.tflTitle}.`
+    const userContent = text.trim() ? text : submittedReferenceChange
+      ? submittedReferenceChange.newReference
+        ? `Update this TFL using Reference ${submittedReferenceChange.newReference.tflId} ${submittedReferenceChange.newReference.tflTitle}.`
+        : 'Update this TFL without a Reference.'
       : 'Update code based on the metadata changes above.';
 
     if (isEventCopilot) {
@@ -9495,16 +9497,14 @@ function MetadataPanel({
   const referenceStorageKey = `metadataReferenceCase_${currentTflId || referenceKind}`;
   const [selectedReference, setSelectedReference] = useState<ReferenceCase | null>(() => {
     const savedId = loadFromSession<string | null>(referenceStorageKey, null);
-    return REFERENCE_CASES.find(reference => reference.id === savedId && !(reference.studyId === CURRENT_STUDY_ID && reference.tflId === currentTflId))
-      ?? REFERENCE_CASES.find(reference => reference.kind === referenceKind && reference.studyId === CURRENT_STUDY_ID && reference.tflId !== currentTflId)
-      ?? null;
+    return REFERENCE_CASES.find(reference => reference.id === savedId && !(reference.studyId === CURRENT_STUDY_ID && reference.tflId === currentTflId)) ?? null;
   });
   const [referenceBaseline, setReferenceBaseline] = useState<ReferenceCase | null>(() => {
     const savedId = loadFromSession<string | null>(`${referenceStorageKey}_baseline`, null);
     return REFERENCE_CASES.find(reference => reference.id === savedId) ?? selectedReference;
   });
   const [referenceConfirmed, setReferenceConfirmed] = useState(false);
-  const handleReferenceChange = (reference: ReferenceCase) => {
+  const handleReferenceChange = (reference: ReferenceCase | null) => {
     setSelectedReference(reference);
     setReferenceConfirmed(false);
   };

@@ -303,7 +303,7 @@ export function AIUserPrompt({
                                   ] as const).map(([reference, isNew]) => (
                                     <div key={isNew ? 'new' : 'old'} className="flex flex-col min-w-0" aria-label={isNew ? 'New Reference' : 'Previous Reference'}>
                                       <span className={`break-words ${isNew ? 'font-medium text-brand-1' : 'text-text-secondary line-through'}`}>
-                                        {reference ? `${reference.tflId} ${reference.tflTitle}` : 'No Reference'}
+                                        {reference ? `${reference.tflId} ${reference.tflTitle}` : 'No reference'}
                                       </span>
                                       {reference && <span className="t-footnote text-text-secondary break-words">{reference.studyId} / {reference.eventTitle}</span>}
                                     </div>
