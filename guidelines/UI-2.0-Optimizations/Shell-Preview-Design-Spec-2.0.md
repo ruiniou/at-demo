@@ -53,6 +53,8 @@
 | **数值单元格** | `Small Text/Footnote` (`t-footnote`) | `10px / Regular (400) / 14px lh` | `text-primary` (`#3C4242`) | Table & Listing 数值/数据 |
 | **Footnote & Study Info** | `Small Text/Footnote` (`t-footnote`) | `10px / Regular (400) / 14px lh` | `text-secondary` (`#656969`) | 页眉 AZ/Study 行、页脚 Footnote |
 
+Figure Shell 的固定排版以 Figure 组件为准：标题使用 `t-small-medium`（12px / 500 / 20px），页眉、subtitle、population、Page by 及页脚中的 `Programming Note` / `Standard Note` 标签使用 `text-primary`；普通脚注使用 `t-footnote` 和 `text-secondary`。Figure 页眉各区块间距为 12px，页眉到图表为 16px，图表到脚注为 16px；Table / Listing 保持上表规范。
+
 ---
 
 ## 三、表格与数据行渲染规范 (Table / Listing / Figure Table Specs)
@@ -86,28 +88,24 @@
 3. **Line 3 (`rule: {内容}`)**：`10px Regular text-secondary` 派生规则，超过 2 行自动截断显示 `...`。
 * **列冻结交互隔离**：列冻结手柄由原本 Hover Column Header 转移至**列与列之间的分割线边界**，释放表头区域供元数据展示与点击。
 
-### 4.3 Figure 按 Component 独立 Hover 拆分
-* **拆分机制**：Figure (如 KM Plot) 按照 Metadata 的 Component 进行区域拆分：
-  * **KM Plot Chart 区域**：仅包含 SVG 曲线图，Hover 时触发局部 `hover:bg-black/5`。
-  * **Number at Risk Table 区域**：仅包含下方的风险人数表格，Hover 时触发局部 `hover:bg-black/5`。
+### 4.3 Figure Shell 静态展示
+* Figure Shell 的图表与其下方的小 Table 构成同一连续内容，不使用独立卡片、Hover 或点击跳转。其他 Figure 内容也平铺展示。
 
 ---
 
 ## 五、全局点击跳转 Metadata 机制 (Global Click-to-Metadata Deep-Linking)
 
-点击跳转 Metadata 为 **全局通用交互规则**，对 Table、Listing、Figure 全面生效：
+点击跳转 Metadata 适用于 Table 和 Listing；Figure Shell 为静态展示：
 
 ```mermaid
 flowchart LR
     A["用户点击 Shell Preview 中的目标区域"] --> B{"判断文档类型 (docType)"}
     B -- "Table" --> C["自动展开 Metadata 面板 -> 切换至 Blocks Tab -> 选中并定位对应 Block"]
     B -- "Listing" --> D["自动展开 Metadata 面板 -> 切换至 Columns Tab -> 选中并定位对应 Column/Rule"]
-    B -- "Figure" --> E["自动展开 Metadata 面板 -> 切换至 Component Tab -> 选中并定位对应 Component (KM Plot Chart / Risk Table)"]
 ```
 
 1. **Table 点击**：点击 Parent 行或数据区域 -> 自动展开侧边栏 -> 切至 `Blocks` Tab -> 高亮并定位当前 Block。
 2. **Listing 点击**：点击 Column Header 或 Line 3 (Rule) -> 自动展开侧边栏 -> 切至 `Columns` Tab -> 高亮并定位当前列元数据。
-3. **Figure 点击**：点击 `KM Plot Chart` 或 `Number at Risk Table` -> 自动展开侧边栏 -> 切至 `Component` Tab -> 高亮并定位 `kmCurve` 或 `riskTable` 组件卡片。
 
 ---
 

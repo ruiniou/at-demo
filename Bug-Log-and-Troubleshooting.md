@@ -698,3 +698,10 @@
 * **根本原因 (Root Cause)**：调用 SearchBar 时仅指定尺寸或使用默认值，未指定 variant="embedded"，导致采用默认 8px / 6px 圆角。
 * **解决方案 (Solution)**：Global 和 Event Dashboard 表格工具栏统一使用 embedded、compact，复用组件已有外 4px / 内 2px、2px 内边距规则。
 * **经验教训 (Takeaways)**：检查 SearchBar 调用时同时核对布局语境、variant 和 size；尺寸不负责选择圆角。
+
+### [2026-10-16] Figure Shell 被拆成可点击卡片
+
+* **现象 (Symptom)**：Figure 图表与下方的小 Table 分离为多张卡片，Hover 会强调边框，点击会跳转 Metadata。
+* **根本原因 (Root Cause)**：`KMPlot` 的 Shell 分支为图表、风险人数表和森林图分别加了 `border`、`rounded`、`cursor-pointer`、Hover 样式和 `onBlockClick`，并把风险人数表放在图表容器之外。
+* **解决方案 (Solution)**：将图表与风险人数表合并到同一平铺容器，移除 Figure Shell 内容的卡片样式与点击事件，并同步更新 Shell 规范。
+* **经验教训 (Takeaways)**：调整 Shell Preview 时按文档类型核对展示语义，避免把 Table/Listing 的 Metadata 跳转规则直接套用到 Figure。
