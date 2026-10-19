@@ -117,3 +117,6 @@ Thumbs.db
 
 # Qoder cache
 .qoder/
+
+# Local Clarity ADaM reference workbook; never include it in Git.
+/src/data/reference/20250919_Clarity_ADaM_spec_CSRandIDMCandCDX.xlsx
