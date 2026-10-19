@@ -57,7 +57,7 @@ export const REFERENCE_CASES: ReferenceCase[] = [
 const tflName = (reference: ReferenceCase) => `${reference.tflId} ${reference.tflTitle}`;
 const studyEventPath = (reference: ReferenceCase) => `${reference.studyId} / ${reference.eventTitle}`;
 export const referencePath = (reference: ReferenceCase) => `${reference.studyTitle} / ${reference.eventTitle} / ${tflName(reference)}`;
-export const referenceDiffValue = (reference: ReferenceCase | null) => reference ? referencePath(reference) : 'No Reference';
+export const referenceDiffValue = (reference: ReferenceCase | null) => reference ? referencePath(reference) : 'No reference';
 
 function TruncatedTooltip({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   const contentRef = useRef<HTMLSpanElement>(null);
@@ -110,7 +110,7 @@ interface ReferenceCaseFieldProps {
   confirmIcon: React.ReactNode;
   kind: 'table' | 'listing';
   currentTflId?: string;
-  onChange: (reference: ReferenceCase) => void;
+  onChange: (reference: ReferenceCase | null) => void;
 }
 
 export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, confirmIcon, kind, currentTflId, onChange }: ReferenceCaseFieldProps) {
@@ -181,7 +181,7 @@ export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, conf
           <TruncatedTooltip label={value && <><span className="block">{value.studyId} {value.studyTitle}</span><span className="block">{value.eventTitle}</span><span className="block">{tflName(value)}</span></>}>
             <span className="min-w-0 flex-1">
               <span className={`block truncate t-small ${disabled ? 'text-graphite-40' : value ? 'text-text-primary' : 'text-text-secondary'}`}>
-                {value ? tflName(value) : 'No Reference'}
+                {value ? tflName(value) : 'No reference'}
               </span>
               {value && <span className={`block truncate t-footnote ${disabled ? 'text-graphite-40' : 'text-text-secondary'}`}>
                 {studyEventPath(value)}
@@ -201,9 +201,18 @@ export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, conf
             {searchResults.map(reference => referenceOption(reference, studyEventPath(reference)))}
           </OptionList>
         ) : level === 'studies' ? (
-          <nav aria-label="Studies" className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
-            {studies.length === 0 && <DropdownEmpty />}
-            {studies.map(([id, title], index) => (
+          <div className="flex max-h-64 flex-col overflow-y-auto">
+            <OptionList>
+              <OptionLabel label="No reference" selected={value === null} className="t-small"
+                onClick={() => {
+                  if (value !== null) onChange(null);
+                  handleOpenChange(false);
+                }} />
+            </OptionList>
+            <DropdownSeparator />
+            <nav aria-label="Studies" className="flex flex-col gap-0.5">
+              {studies.length === 0 && <DropdownEmpty />}
+              {studies.map(([id, title], index) => (
               <React.Fragment key={id}>
                 {index === 1 && studies[0][0] === CURRENT_STUDY_ID && <DropdownSeparator />}
                   <ReferenceNavigationRow onClick={() => { setStudyId(id); setEventId(''); setLevel('events'); setQuery(''); keepSearchFocus(); }}
@@ -216,8 +225,9 @@ export function ReferenceCaseField({ value, disabled, confirmed, onConfirm, conf
                     </span>
                   </ReferenceNavigationRow>
               </React.Fragment>
-            ))}
-          </nav>
+              ))}
+            </nav>
+          </div>
         ) : (
           <>
             <div className="sticky top-8 z-10 border-b border-border-default bg-white">

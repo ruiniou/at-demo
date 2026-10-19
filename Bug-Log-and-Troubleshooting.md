@@ -712,3 +712,10 @@
 * **根本原因 (Root Cause)**：这两列的标题改为 `<button>` 后，按钮继承全局 `button` 的 13px、500 字重和 1.5 行高，没有继承 `<th>` 的 `t-small`。
 * **解决方案 (Solution)**：给排序按钮加 `t-small`，与其余表头统一为 12px、400 字重、18px 行高；在 5174 检查计算样式和排序前后列宽。
 * **经验教训 (Takeaways)**：在表格标题中嵌入交互控件时，需同时核对控件和表头的计算字体样式。
+
+### [2026-10-16] Figure Shell 被拆成可点击卡片
+
+* **现象 (Symptom)**：Figure 图表与下方的小 Table 分离为多张卡片，Hover 会强调边框，点击会跳转 Metadata。
+* **根本原因 (Root Cause)**：`KMPlot` 的 Shell 分支为图表、风险人数表和森林图分别加了 `border`、`rounded`、`cursor-pointer`、Hover 样式和 `onBlockClick`，并把风险人数表放在图表容器之外。
+* **解决方案 (Solution)**：将图表与风险人数表合并到同一平铺容器，移除 Figure Shell 内容的卡片样式与点击事件，并同步更新 Shell 规范。
+* **经验教训 (Takeaways)**：调整 Shell Preview 时按文档类型核对展示语义，避免把 Table/Listing 的 Metadata 跳转规则直接套用到 Figure。

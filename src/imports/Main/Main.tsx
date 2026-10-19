@@ -2508,7 +2508,7 @@ function ChatConversation({
                   <div className="flex flex-col w-full relative gap-[8px]">
                     <div className="flex flex-col gap-[4px] px-[10px]">
                       <p className="t-body text-text-primary leading-relaxed">Reference update ready for review.</p>
-                      <p className="t-small text-text-secondary leading-relaxed">The current TFL was adjusted using {msg.referenceChange.newReference ? `${msg.referenceChange.newReference.tflId} ${msg.referenceChange.newReference.tflTitle}` : 'the selected Reference'}.</p>
+                      <p className="t-small text-text-secondary leading-relaxed">{msg.referenceChange.newReference ? `The current TFL was adjusted using ${msg.referenceChange.newReference.tflId} ${msg.referenceChange.newReference.tflTitle}.` : 'The Reference was removed from the current TFL.'}</p>
                     </div>
                     <div className="relative w-full">
                       <AICodeDiff summary="Code changes ready for review" additions={[]} deletions={[]} />
@@ -3608,8 +3608,10 @@ function AICopilotPanel({
     const runEpoch = ++runEpochRef.current;
     (document.activeElement as HTMLElement)?.blur();
 
-    const userContent = text.trim() ? text : submittedReferenceChange?.newReference
-      ? `Update this TFL using Reference ${submittedReferenceChange.newReference.tflId} ${submittedReferenceChange.newReference.tflTitle}.`
+    const userContent = text.trim() ? text : submittedReferenceChange
+      ? submittedReferenceChange.newReference
+        ? `Update this TFL using Reference ${submittedReferenceChange.newReference.tflId} ${submittedReferenceChange.newReference.tflTitle}.`
+        : 'Update this TFL without a Reference.'
       : 'Update code based on the metadata changes above.';
 
     if (isEventCopilot) {
@@ -7321,23 +7323,24 @@ interface ShellTableData {
 const shellTableData: Record<string, ShellTableData> = {
   'Figure 15.1.1': {
     tableNumber: 'Figure 15.1.1',
-    tableTitle: 'Kaplan-Meier Plot of Progression-Free Survival (PFS) with Subgroup Analysis',
-    studyInfo: 'AstraZeneca Page 1 of 1\nStudy number D9802C00001 Clarity Gastric 01 - Double-Blind, Randomized Phase III Study, <<Data cut-off 15OCT2025>>',
+    tableTitle: 'Kaplan-Meier plot of progression-free survival by treatment group',
+    studyInfo: 'AstraZeneca Page [X]\nStudy number D9802C00001 Clarity Gastric 01 - Dry Run 1, Dummy Treatment, <<Data cut-off ddmmmyyyy>>',
     pageInfo: '',
-    population: '(Safety Analysis Set / Intent-to-Treat Population)',
+    population: '(Safety analysis set)',
     subHeader: [
-      'Treatment Comparison: AZD999 1 mg/kg vs. Placebo (Stratification Factors: ECOG PS, Prior Systemic Lines)',
+      'Page by: TRTA (Planned Treatment Group: <<AZD999>>)',
     ],
     footnotes: [
-      '[a] ITT Population: All randomized subjects. Safety Analysis Set includes all subjects who received at least one dose of study medication.',
-      '[b] Kaplan-Meier product-limit estimates are used for PFS curves. Two-sided 95% confidence intervals are calculated using the log-log transformation method.',
-      '[c] Cross marks (+) indicate censored observations (e.g., ongoing progression-free follow-up or administrative data cut-off).',
-      '[d] Unstratified Hazard Ratio (HR) and 95% Wald confidence intervals for subgroups are estimated using Cox proportional hazards regression models.',
-      '[e] P for interaction (P-int) is obtained from the likelihood ratio test of the treatment-by-subgroup interaction term.',
-      'Source: eTMF Data Snapshot <<15OCT2025>>. ADaM datasets: adam.adtte, adam.adsl.',
-      'Program: /study/D9802C00001/csr/prod/figures/f_kmplot_subgroup.sas',
+      '[a] ITT Population: All randomized subjects. Subjects are summarised in the arm to which they were randomised.',
+      '[b] Kaplan-Meier estimates are used for survival curves. Median survival time and 95% CI are calculated.',
+      '[c] Cross marks indicate censored observations (e.g., lost to follow-up or administrative censoring).',
+      'Source: eTMF Data snapshot <<Data cut-off ddmmmyyyy>>.',
+      'Programming Note',
+      'Program: /study/D9802C00001/csr/prod/figures/f_kmplot.sas',
       'Output: /study/D9802C00001/csr/prod/output/f_15_1_1.rtf',
-      'Generated on: 15OCT2025 14:32  |  AZ Global Standard for Statistical Programming v3.2 (SAS® 9.4).'
+      'Generated on: <<ddmmmyyyy hh:mm>>',
+      'Standard Note',
+      'This figure was produced in compliance with AZ Global Standard for Statistical Programming v3.2. SAS® version 9.4 was used.'
     ],
     columnGroups: [],
     columns: [],
@@ -7868,7 +7871,9 @@ function ShellPreview({
 }) {
   const [logExpanded, setLogExpanded] = useState(false);
   const activeLogData = successStructuredLog;
-  const shellData = shellTableData[selectedItemName] || shellTableData['Table 14.1.6.1'];
+  const shellData = docType === 'figure'
+    ? shellTableData['Figure 15.1.1']
+    : shellTableData[selectedItemName] || shellTableData['Table 14.1.6.1'];
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
   const [targetBlockName, setTargetBlockName] = useState<string | null>(null);
   const [targetBlockTrigger, setTargetBlockTrigger] = useState(0);
@@ -7942,36 +7947,36 @@ function ShellPreview({
           <div className="flex-1 min-w-0 h-full flex">
             <div className={`flex-1 min-w-0 h-full overflow-auto ${metadataOpen && !rtfOpen ? 'border-r border-graphite-10' : ''}`}>
               <ZoomContainer scale={zoomScale} className="min-w-max p-[16px]">
-              <div className={`w-max bg-white text-text-primary rounded-[4px] p-[20px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
-                <div className="flex flex-col gap-[12px] w-full">
+              <div className={`w-[940px] box-border bg-white text-text-primary p-[20px] ${!rtfOpen && !metadataOpen ? 'mx-auto' : ''}`}>
+                <div className="flex flex-col gap-[12px] w-full mb-[16px]">
                   {/* Study Info & Page Info */}
                   {(shellData.studyInfo || shellData.pageInfo) && (
                     <div className="flex justify-between items-end w-full">
-                      <div className="t-footnote text-text-secondary whitespace-pre-wrap">{shellData.studyInfo}</div>
-                      <div className="t-footnote text-text-secondary text-right">{shellData.pageInfo}</div>
+                      <div className="t-footnote text-text-primary whitespace-pre-wrap">{shellData.studyInfo}</div>
+                      <div className="t-footnote text-text-primary text-right">{shellData.pageInfo}</div>
                     </div>
                   )}
                   {/* Title header */}
-                  <div className="flex flex-col items-center justify-center pb-[12px] bg-white text-text-primary gap-[4px]">
-                    <h1 className="t-table text-center tracking-[-0.01em]">
+                  <div className="flex flex-col items-center justify-center bg-white text-text-primary">
+                    <h1 className="t-small-medium text-center">
                       {shellData.tableNumber}
                     </h1>
                     {shellData.tableTitle && (
-                      <h2 className="t-footnote text-text-secondary text-center font-normal">
+                      <h2 className="t-footnote text-text-primary text-center font-normal">
                         {shellData.tableTitle}
                       </h2>
                     )}
                     {shellData.population && (
-                      <h2 className="t-footnote text-text-secondary text-center font-normal">
+                      <h2 className="t-footnote text-text-primary text-center font-normal">
                         {shellData.population}
                       </h2>
                     )}
                   </div>
                   {/* Subheader / Left-aligned Header Info (e.g. Page by variable) */}
                   {shellData.subHeader && shellData.subHeader.length > 0 && (
-                    <div className="w-full text-left t-footnote mb-[8px] text-text-secondary">
+                    <div className="w-full text-left t-footnote text-text-primary">
                       {shellData.subHeader.map((line, idx) => (
-                        <p key={idx} className="m-0 leading-[16px]">{line}</p>
+                        <p key={idx} className="m-0">{line}</p>
                       ))}
                     </div>
                   )}
@@ -7991,7 +7996,7 @@ function ShellPreview({
                 {shellData.footnotes && shellData.footnotes.length > 0 && (
                   <div className="flex flex-col gap-[4px] w-full text-left mt-[16px]">
                     {shellData.footnotes.map((fn, idx) => (
-                      <p key={idx} className="t-footnote text-text-secondary whitespace-pre-wrap m-0">
+                      <p key={idx} className={`t-footnote whitespace-pre-wrap m-0 ${fn === 'Programming Note' || fn === 'Standard Note' ? 'text-text-primary' : 'text-text-secondary'}`}>
                         {fn}
                       </p>
                     ))}
@@ -9495,16 +9500,14 @@ function MetadataPanel({
   const referenceStorageKey = `metadataReferenceCase_${currentTflId || referenceKind}`;
   const [selectedReference, setSelectedReference] = useState<ReferenceCase | null>(() => {
     const savedId = loadFromSession<string | null>(referenceStorageKey, null);
-    return REFERENCE_CASES.find(reference => reference.id === savedId && !(reference.studyId === CURRENT_STUDY_ID && reference.tflId === currentTflId))
-      ?? REFERENCE_CASES.find(reference => reference.kind === referenceKind && reference.studyId === CURRENT_STUDY_ID && reference.tflId !== currentTflId)
-      ?? null;
+    return REFERENCE_CASES.find(reference => reference.id === savedId && !(reference.studyId === CURRENT_STUDY_ID && reference.tflId === currentTflId)) ?? null;
   });
   const [referenceBaseline, setReferenceBaseline] = useState<ReferenceCase | null>(() => {
     const savedId = loadFromSession<string | null>(`${referenceStorageKey}_baseline`, null);
     return REFERENCE_CASES.find(reference => reference.id === savedId) ?? selectedReference;
   });
   const [referenceConfirmed, setReferenceConfirmed] = useState(false);
-  const handleReferenceChange = (reference: ReferenceCase) => {
+  const handleReferenceChange = (reference: ReferenceCase | null) => {
     setSelectedReference(reference);
     setReferenceConfirmed(false);
   };

@@ -380,493 +380,55 @@ export function KMPlot({
     );
   }
 
-  // Full Shell View
+  // Full Shell View: the plot and its risk table are one static figure.
+  const shellWidth = 900;
+  const shellHeight = 516;
+  const shellLeft = 50;
+  const shellRight = 850;
+  const shellTop = 15;
+  const shellBottom = 355;
+  const shellX = (month: number) => shellLeft + (month / 99) * (shellRight - shellLeft);
+  const shellY = (survival: number) => shellBottom - survival * (shellBottom - shellTop);
+  const shellGroups = [
+    { label: 'Group A', color: 'var(--color-brand-1)', points: [[0, 1], [8, 1], [8, .83], [18, .83], [18, .78], [33, .78], [33, .65], [42, .65], [42, .52], [50, .52], [50, .41], [58, .41], [58, .36], [68, .36], [68, .32], [75, .32], [75, .26], [82, .26], [82, .21], [91, .21], [91, .20]] },
+    { label: 'Group B', color: '#D5A442', points: [[0, 1], [6, 1], [6, .83], [19, .83], [19, .67], [33, .67], [33, .62], [40, .62], [40, .55], [55, .55], [55, .49], [64, .49], [64, .46], [77, .46], [77, .39], [88, .39], [88, .33]] },
+  ] as const;
+  const shellTicks = [0, 17, 33, 50, 66, 83, 99];
   return (
-    <div className="flex flex-col select-none font-sans w-full max-w-[800px] mx-auto text-text-primary gap-[16px]">
-      {/* ================= COMPONENT 1: KM SURVIVAL PLOT ================= */}
-      <div 
-        className="flex flex-col w-full cursor-pointer hover:ring-1 hover:ring-[#830051]/30 p-[12px] rounded-[6px] transition-all bg-white border border-[#EBECEC]"
-        onClick={(e) => {
-          e.stopPropagation();
-          onBlockClick?.('Component 1: KM Plot Chart');
-        }}
-      >
-        <div className="flex items-center justify-between px-[8px] pb-[8px] border-b border-[#F0F1F1] mb-[8px]">
-          <div className="flex items-center gap-[6px]">
-            <img src={figureIconUrl} alt="" className="w-[14px] h-[14px]" style={{ filter: filterBrand }} />
-            <span className="text-[12px] font-semibold text-text-primary">Kaplan-Meier Progression-Free Survival (PFS) Curves</span>
-          </div>
-          <div className="flex items-center gap-[12px] text-[11px] text-text-secondary">
-            <span>Stratified Log-rank <strong className="text-text-primary">p &lt; 0.0001</strong></span>
-            <span>Unstratified HR = <strong className="text-text-primary">0.54</strong> (95% CI: 0.38, 0.76)</span>
-          </div>
-        </div>
-
-        {/* SVG Plot */}
-        <div className="flex justify-center p-[4px] overflow-x-auto">
-          <svg width={width} height={height} className="overflow-visible">
-            {/* Grid Lines */}
-            {gridYValues.map((val) => (
-              <line
-                key={val}
-                x1={getX(0)}
-                y1={getY(val)}
-                x2={getX(maxTime)}
-                y2={getY(val)}
-                stroke="#F0F1F1"
-                strokeWidth="1"
-                strokeDasharray="3,3"
-              />
-            ))}
-
-            {/* X Axis Ticks */}
-            {ticksX.map((val) => (
-              <g key={val}>
-                <line
-                  x1={getX(val)}
-                  y1={getY(0)}
-                  x2={getX(val)}
-                  y2={getY(0) + 4}
-                  stroke="#888E8E"
-                  strokeWidth="1"
-                />
-                <text
-                  x={getX(val)}
-                  y={getY(0) + 16}
-                  textAnchor="middle"
-                  className="text-[9px] fill-[#656969] font-mono"
-                >
-                  {val}
-                </text>
-              </g>
-            ))}
-
-            {/* Y Axis Ticks */}
-            {[0.0, 0.2, 0.4, 0.6, 0.8, 1.0].map((val) => (
-              <g key={val}>
-                <line
-                  x1={getX(0) - 4}
-                  y1={getY(val)}
-                  x2={getX(0)}
-                  y2={getY(val)}
-                  stroke="#888E8E"
-                  strokeWidth="1"
-                />
-                <text
-                  x={getX(0) - 8}
-                  y={getY(val) + 3}
-                  textAnchor="end"
-                  className="text-[9px] fill-[#656969] font-mono"
-                >
-                  {val.toFixed(1)}
-                </text>
-              </g>
-            ))}
-
-            {/* Axes Lines */}
-            <line
-              x1={getX(0)}
-              y1={getY(0)}
-              x2={getX(maxTime)}
-              y2={getY(0)}
-              stroke="#888E8E"
-              strokeWidth="1.2"
-            />
-            <line
-              x1={getX(0)}
-              y1={getY(0)}
-              x2={getX(0)}
-              y2={getY(1.0)}
-              stroke="#888E8E"
-              strokeWidth="1.2"
-            />
-
-            {/* Axis Titles */}
-            <text
-              x={getX(maxTime / 2)}
-              y={getY(0) + 34}
-              textAnchor="middle"
-              className="text-[11px] fill-text-primary font-medium"
-            >
-              Time from Randomization ({timeUnit})
-            </text>
-            
-            <text
-              x={getX(0) - 38}
-              y={getY(0.5)}
-              textAnchor="middle"
-              transform={`rotate(-90, ${getX(0) - 38}, ${getY(0.5)})`}
-              className="text-[11px] fill-text-primary font-medium"
-            >
-              Progression-Free Survival Probability
-            </text>
-
-            {/* CI Bands */}
-            {showCI && (
-              <>
-                <path
-                  d={buildCIBandPath(group1.ciUpper, group1.ciLower)}
-                  fill={group1.color}
-                  fillOpacity="0.12"
-                  stroke="none"
-                />
-                <path
-                  d={buildCIBandPath(group2.ciUpper, group2.ciLower)}
-                  fill={group2.color}
-                  fillOpacity="0.12"
-                  stroke="none"
-                />
-              </>
-            )}
-
-            {/* Median Reference Lines */}
-            {showMedianLines && (
-              <>
-                {/* Group 1 Median Line */}
-                <line
-                  x1={getX(0)}
-                  y1={getY(0.5)}
-                  x2={getX(group1.medianTime)}
-                  y2={getY(0.5)}
-                  stroke={group1.color}
-                  strokeWidth="1"
-                  strokeDasharray="3,3"
-                  opacity="0.75"
-                />
-                <line
-                  x1={getX(group1.medianTime)}
-                  y1={getY(0.5)}
-                  x2={getX(group1.medianTime)}
-                  y2={getY(0)}
-                  stroke={group1.color}
-                  strokeWidth="1"
-                  strokeDasharray="3,3"
-                  opacity="0.75"
-                />
-                <circle cx={getX(group1.medianTime)} cy={getY(0.5)} r="3" fill={group1.color} />
-
-                {/* Group 2 Median Line */}
-                <line
-                  x1={getX(0)}
-                  y1={getY(0.5)}
-                  x2={getX(group2.medianTime)}
-                  y2={getY(0.5)}
-                  stroke={group2.color}
-                  strokeWidth="1"
-                  strokeDasharray="3,3"
-                  opacity="0.75"
-                />
-                <line
-                  x1={getX(group2.medianTime)}
-                  y1={getY(0.5)}
-                  x2={getX(group2.medianTime)}
-                  y2={getY(0)}
-                  stroke={group2.color}
-                  strokeWidth="1"
-                  strokeDasharray="3,3"
-                  opacity="0.75"
-                />
-                <circle cx={getX(group2.medianTime)} cy={getY(0.5)} r="3" fill={group2.color} />
-              </>
-            )}
-
-            {/* KM Curves */}
-            <path
-              d={buildStepPath(group1.points)}
-              fill="none"
-              stroke={group1.color}
-              strokeWidth="2.2"
-              strokeLinecap="round"
-            />
-            <path
-              d={buildStepPath(group2.points)}
-              fill="none"
-              stroke={group2.color}
-              strokeWidth="2.0"
-              strokeLinecap="round"
-              strokeDasharray="5,4"
-            />
-
-            {/* Censor Marks */}
-            {showCensorMarks && (
-              <>
-                {group1.censors.map((t) => {
-                  const s = getYOnCurve(group1.points, t);
-                  return (
-                    <line
-                      key={t}
-                      x1={getX(t)}
-                      y1={getY(s) - 4}
-                      x2={getX(t)}
-                      y2={getY(s) + 4}
-                      stroke={group1.color}
-                      strokeWidth="1.5"
-                    />
-                  );
-                })}
-                {group2.censors.map((t) => {
-                  const s = getYOnCurve(group2.points, t);
-                  return (
-                    <line
-                      key={t}
-                      x1={getX(t)}
-                      y1={getY(s) - 4}
-                      x2={getX(t)}
-                      y2={getY(s) + 4}
-                      stroke={group2.color}
-                      strokeWidth="1.5"
-                    />
-                  );
-                })}
-              </>
-            )}
-
-            {/* Legend & Stats Overlay Box */}
-            <g transform={`translate(${width - 240}, ${paddingTop + 8})`}>
-              <rect
-                x="0"
-                y="0"
-                width="225"
-                height="62"
-                rx="4"
-                fill="#FFFFFF"
-                stroke="#E8EAEB"
-                strokeWidth="1"
-                opacity="0.95"
-              />
-              <g transform="translate(10, 14)">
-                <line x1="0" y1="4" x2="20" y2="4" stroke={group1.color} strokeWidth="2.5" />
-                <text x="26" y="8" className="text-[10px] fill-text-primary font-medium">{group1.shortLabel}</text>
-                <text x="135" y="8" className="text-[9px] fill-[#656969] font-mono">Med: 26.4 mo</text>
-              </g>
-              <g transform="translate(10, 34)">
-                <line x1="0" y1="4" x2="20" y2="4" stroke={group2.color} strokeWidth="2" strokeDasharray="4,3" />
-                <text x="26" y="8" className="text-[10px] fill-text-primary font-medium">{group2.shortLabel}</text>
-                <text x="135" y="8" className="text-[9px] fill-[#656969] font-mono">Med: 11.2 mo</text>
-              </g>
-              <text x="10" y="54" className="text-[8.5px] fill-[#888E8E]">
-                + Censored observation (vertical tick)
-              </text>
-            </g>
-          </svg>
-        </div>
-      </div>
-
-      {/* ================= COMPONENT 2: AT-RISK TABLE ================= */}
-      {showRiskTable && (
-        <div 
-          className="w-full overflow-x-auto cursor-pointer hover:ring-1 hover:ring-[#830051]/30 p-[12px] rounded-[6px] transition-all bg-white border border-[#EBECEC]"
-          onClick={(e) => {
-            e.stopPropagation();
-            onBlockClick?.('Component 2: Number at Risk Table');
-          }}
-        >
-          <div className="flex items-center gap-[6px] pb-[6px] mb-[6px] border-b border-[#F0F1F1]">
-            <img src={tableIconUrl} alt="" className="w-[14px] h-[14px]" style={{ filter: filterBrand }} />
-            <span className="text-[12px] font-semibold text-text-primary">Number of Subjects at Risk</span>
-          </div>
-          <table className="w-full text-[10px] border-collapse font-sans">
-            <thead>
-              <tr className="border-b border-[#E8EAEB]">
-                <th className="text-left font-semibold py-[4px] px-[8px] text-text-primary w-[160px]">
-                  Treatment Arm
-                </th>
-                {ticksX.map((tick) => (
-                  <th key={tick} className="text-center font-semibold py-[4px] px-[4px] text-text-secondary">
-                    {tick}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-[#F0F1F1]">
-                <td className="text-left font-medium py-[5px] px-[8px]" style={{ color: group1.color }}>
-                  <span className="font-mono font-bold mr-[4px]">──</span> {group1.shortLabel}
-                </td>
-                {group1.risk.map((val, idx) => (
-                  <td key={idx} className="text-center py-[5px] px-[4px] text-text-primary font-mono">
-                    {val}
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <td className="text-left font-medium py-[5px] px-[8px]" style={{ color: group2.color }}>
-                  <span className="font-mono font-bold mr-[4px]">- -</span> {group2.shortLabel}
-                </td>
-                {group2.risk.map((val, idx) => (
-                  <td key={idx} className="text-center py-[5px] px-[4px] text-text-primary font-mono">
-                    {val}
-                  </td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* ================= COMPONENT 3: SUBGROUP ANALYSIS FOREST PLOT ================= */}
-      {showSubgroupForest && (
-        <div 
-          className="w-full overflow-x-auto cursor-pointer hover:ring-1 hover:ring-[#830051]/30 p-[12px] rounded-[6px] transition-all bg-white border border-[#EBECEC]"
-          onClick={(e) => {
-            e.stopPropagation();
-            onBlockClick?.('Component 3: Subgroup Analysis Forest Plot');
-          }}
-        >
-          <div className="flex items-center justify-between pb-[8px] mb-[8px] border-b border-[#F0F1F1]">
-            <div className="flex items-center gap-[6px]">
-              <img src={barChartIconUrl} alt="" className="w-[14px] h-[14px]" style={{ filter: filterBrand }} />
-              <span className="text-[12px] font-semibold text-text-primary">Subgroup Analysis: Hazard Ratio for Progression-Free Survival</span>
-            </div>
-            <span className="text-[11px] text-text-secondary">
-              Cox Proportional Hazards Model (Unstratified)
-            </span>
-          </div>
-
-          <table className="w-full text-[10px] border-collapse font-sans">
-            <thead>
-              <tr className="border-b border-[#3C4242] text-[10px] text-text-primary font-semibold">
-                <th className="text-left py-[6px] px-[6px] w-[150px]">Subgroup</th>
-                <th className="text-center py-[6px] px-[4px] w-[95px]">AZD999 (n/N)</th>
-                <th className="text-center py-[6px] px-[4px] w-[95px]">Placebo (n/N)</th>
-                <th className="text-center py-[6px] px-[4px] w-[260px]">
-                  <span>Hazard Ratio (95% CI)</span>
-                  <div className="flex justify-between text-[8px] text-[#888E8E] font-normal px-[12px] pt-[2px]">
-                    <span>← Favors AZD999</span>
-                    <span>Favors Placebo →</span>
-                  </div>
-                </th>
-                <th className="text-center py-[6px] px-[4px] w-[90px]">HR (95% CI)</th>
-                <th className="text-right py-[6px] px-[6px] w-[60px]">P-int</th>
-              </tr>
-            </thead>
-            <tbody>
-              {subgroupData.map((item, idx) => {
-                if (item.isHeader && item.hr === 0) {
-                  return (
-                    <tr key={idx} className="bg-[#FAFBFB] border-t border-[#EBECEC]">
-                      <td colSpan={6} className="py-[4px] px-[6px] font-semibold text-text-primary text-[10px]">
-                        {item.subgroup}
-                      </td>
-                    </tr>
-                  );
-                }
-
-                const isOverall = item.category === 'Overall';
-                const rowBg = isOverall ? 'bg-[#F4E8EE]/40 font-semibold' : 'hover:bg-black/5';
-
-                return (
-                  <tr key={idx} className={`border-b border-[#F0F1F1] ${rowBg} transition-colors`}>
-                    <td className={`py-[5px] px-[6px] text-left text-text-primary ${isOverall ? 'font-bold text-[#830051]' : ''}`}>
-                      {item.subgroup}
-                    </td>
-                    <td className="py-[5px] px-[4px] text-center font-mono text-[#656969] text-[9.5px]">
-                      {item.nTrt}
-                    </td>
-                    <td className="py-[5px] px-[4px] text-center font-mono text-[#656969] text-[9.5px]">
-                      {item.nCtrl}
-                    </td>
-                    
-                    {/* SVG Forest Bar */}
-                    <td className="py-[2px] px-[4px] text-center align-middle">
-                      <div className="flex items-center justify-center">
-                        <svg width={fpWidth} height="20" className="overflow-visible">
-                          {/* Background Overall CI Band */}
-                          <rect
-                            x={getFpX(0.38)}
-                            y="0"
-                            width={Math.max(2, getFpX(0.76) - getFpX(0.38))}
-                            height="20"
-                            fill="#830051"
-                            opacity="0.06"
-                          />
-
-                          {/* Reference vertical line at HR = 1.0 */}
-                          <line
-                            x1={getFpX(1.0)}
-                            y1="0"
-                            x2={getFpX(1.0)}
-                            y2="20"
-                            stroke="#B2B4B4"
-                            strokeWidth="1"
-                            strokeDasharray="2,2"
-                          />
-
-                          {/* Horizontal CI Whisker Line */}
-                          <line
-                            x1={getFpX(item.ciLow)}
-                            y1="10"
-                            x2={getFpX(item.ciHigh)}
-                            y2="10"
-                            stroke={isOverall ? '#830051' : '#3C4242'}
-                            strokeWidth={isOverall ? '1.8' : '1.2'}
-                          />
-                          {/* Left tick */}
-                          <line
-                            x1={getFpX(item.ciLow)}
-                            y1="7"
-                            x2={getFpX(item.ciLow)}
-                            y2="13"
-                            stroke={isOverall ? '#830051' : '#3C4242'}
-                            strokeWidth="1"
-                          />
-                          {/* Right tick */}
-                          <line
-                            x1={getFpX(item.ciHigh)}
-                            y1="7"
-                            x2={getFpX(item.ciHigh)}
-                            y2="13"
-                            stroke={isOverall ? '#830051' : '#3C4242'}
-                            strokeWidth="1"
-                          />
-
-                          {/* Point Estimate Marker (Diamond for Overall, Square for subgroups) */}
-                          {isOverall ? (
-                            <polygon
-                              points={`
-                                ${getFpX(item.hr)},6 
-                                ${getFpX(item.hr) + 5},10 
-                                ${getFpX(item.hr)},14 
-                                ${getFpX(item.hr) - 5},10
-                              `}
-                              fill="#830051"
-                            />
-                          ) : (
-                            <rect
-                              x={getFpX(item.hr) - (2 + item.weight * 2)}
-                              y={10 - (2 + item.weight * 2)}
-                              width={4 + item.weight * 4}
-                              height={4 + item.weight * 4}
-                              fill="#3C4242"
-                              rx="0.5"
-                            />
-                          )}
-                        </svg>
-                      </div>
-                    </td>
-
-                    {/* HR Text */}
-                    <td className="py-[5px] px-[4px] text-center font-mono text-text-primary text-[9.5px]">
-                      {item.hr.toFixed(2)} ({item.ciLow.toFixed(2)}, {item.ciHigh.toFixed(2)})
-                    </td>
-
-                    {/* P-interaction */}
-                    <td className="py-[5px] px-[6px] text-right font-mono text-[#888E8E] text-[9px]">
-                      {item.pInt || ''}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-
-          {/* Scale Axis at bottom of Forest Plot */}
-          <div className="flex justify-between items-center px-[8px] pt-[8px] mt-[4px] border-t border-[#E8EAEB] text-[9px] text-text-secondary">
-            <span>Log scale: 0.2, 0.5, 1.0 (Neutral), 2.0</span>
-            <span className="italic">Point estimate size is proportional to subgroup sample size</span>
-          </div>
-        </div>
-      )}
+    <div className="w-[900px] max-w-full bg-white text-text-primary" aria-label="Kaplan-Meier plot with number at risk">
+      <svg viewBox={`0 0 ${shellWidth} ${shellHeight}`} className="block w-full h-auto" role="img" aria-label="Kaplan-Meier survival curves for Group A and Group B, with number at risk below">
+        {[0, .2, .4, .6, .8, 1].map((value) => (
+          <g key={value}>
+            <line x1={shellLeft} x2={shellRight} y1={shellY(value)} y2={shellY(value)} stroke="var(--color-border-default)" strokeWidth="1" />
+            <text x={shellLeft - 8} y={shellY(value) + 4} textAnchor="end" className="fill-text-secondary text-[10px]">{Math.round(value * 100)}%</text>
+          </g>
+        ))}
+        {shellTicks.map((tick) => (
+          <text key={tick} x={shellX(tick)} y={shellBottom + 18} textAnchor="middle" className="fill-text-secondary text-[10px]">{tick}</text>
+        ))}
+        <text x={(shellLeft + shellRight) / 2} y={shellBottom + 42} textAnchor="middle" className="fill-text-primary text-[11px]">Time ({timeUnit})</text>
+        {shellGroups.map((group) => (
+          <polyline key={group.label} points={group.points.map(([month, survival]) => `${shellX(month)},${shellY(survival)}`).join(' ')} fill="none" stroke={group.color} strokeWidth="2" strokeLinejoin="miter" />
+        ))}
+        {shellGroups.map((group, index) => (
+          <g key={group.label} transform={`translate(${shellRight - 115}, ${shellTop + 20 + index * 20})`}>
+            <line x1="0" x2="16" y1="0" y2="0" stroke={group.color} strokeWidth="2" />
+            <text x="22" y="4" className="fill-text-primary text-[10px]">{group.label}</text>
+          </g>
+        ))}
+        {showRiskTable && (
+          <g>
+            <line x1="0" x2={shellWidth} y1="424" y2="424" stroke="var(--color-border-default)" strokeWidth="1" />
+            <text x="0" y="440" fill="var(--color-text-primary)" className="text-[10px]">Number at</text>
+            <text x="0" y="452" fill="var(--color-text-primary)" className="text-[10px]">risk</text>
+            {shellTicks.map((tick) => <text key={tick} x={shellX(tick)} y="440" textAnchor="middle" fill="var(--color-text-secondary)" className="text-[10px]">{tick}</text>)}
+            <text x="0" y="474" fill="var(--color-brand-1)" className="text-[10px]">Group A</text>
+            {[39, 32, 21, 16, 11, 10, 10].map((value, index) => <text key={index} x={shellX(shellTicks[index])} y="474" textAnchor="middle" fill="var(--color-brand-1)" className="text-[10px]">{value}</text>)}
+            <text x="0" y="496" fill="#D5A442" className="text-[10px]">Group B</text>
+            {[30, 28, 26, 20, 17, 14, 14].map((value, index) => <text key={index} x={shellX(shellTicks[index])} y="496" textAnchor="middle" fill="#D5A442" className="text-[10px]">{value}</text>)}
+          </g>
+        )}
+      </svg>
     </div>
   );
 }
