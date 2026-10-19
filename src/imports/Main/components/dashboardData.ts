@@ -13,13 +13,16 @@ export type TokenUsageRecord = TokenUsage & {
   studyId: string;
   eventId: string;
 };
+// One Copilot request. Single-TFL requests carry the TFL they were sent on; Event requests carry none.
+// diffAccepted is null when the request has no source link to a Diff.
+export type CopilotRequest = { eventId: string; initiator: string; tflId: string | null; type: 'single-tfl' | 'event'; diffAccepted: boolean | null };
 export type RequestCounts = { singleTfl: number; event: number };
-export type TflActivity = { requests: number; diffRounds: number };
+// diffRounds is null when none of the TFL's requests links to a Diff, so it reads as "no record" rather than 0.
+export type TflActivity = { requests: number; diffRounds: number | null };
 
 export interface DashboardDataSource {
   statusOf(tfl: DashboardTfl): DashboardStatus;
-  requestsFor(eventId: string, member: string): RequestCounts;
-  activityFor(eventId: string, tfl: DashboardTfl): TflActivity;
+  requestLog(eventId: string, tfls: DashboardTfl[], members: string[]): CopilotRequest[];
   usageRecords(): TokenUsageRecord[];
 }
 
@@ -48,41 +51,43 @@ const mockRecords: TokenUsageRecord[] = [
   { date: '2026-10-12', studyId: 'AZE2001-301', eventId: 'e13', input: 10600, output: 4400, total: 15000 },
 ];
 
-const mockRequestCounts: Record<string, Record<string, RequestCounts>> = {
-  e1: { 'Emily Liu': { singleTfl: 2, event: 1 }, 'Sarah Chen': { singleTfl: 1, event: 0 } },
-  e2: {
-    'Alex Kim': { singleTfl: 1, event: 0 },
-    'Emily Liu': { singleTfl: 0, event: 2 },
-    'James Park': { singleTfl: 2, event: 1 },
-    'Priya Sharma': { singleTfl: 1, event: 0 },
-    'Sarah Chen': { singleTfl: 3, event: 1 },
-  },
-  e3: { 'Emily Liu': { singleTfl: 1, event: 2 } },
-  e4: { 'Emily Liu': { singleTfl: 2, event: 1 } },
-  e5: { 'Emily Liu': { singleTfl: 0, event: 2 }, 'James Park': { singleTfl: 2, event: 0 }, 'Alex Kim': { singleTfl: 1, event: 1 } },
-  e6: { 'Sarah Chen': { singleTfl: 3, event: 1 } },
-  e7: { 'Sarah Chen': { singleTfl: 1, event: 0 } },
-  e8: { 'James Park': { singleTfl: 2, event: 1 } },
-  e9: { 'James Park': { singleTfl: 1, event: 0 } },
-  e10: { 'Emily Liu': { singleTfl: 1, event: 1 }, 'Alex Kim': { singleTfl: 2, event: 0 } },
-  e11: { 'Emily Liu': { singleTfl: 2, event: 1 } },
-  e12: { 'Emily Liu': { singleTfl: 1, event: 0 } },
-  e13: { 'Emily Liu': { singleTfl: 2, event: 1 } },
+const seedOf = (value: string) => [...value].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+
+// Demo-only request log until request and Diff instrumentation is available. Both Dashboard views read from it,
+// so per-member and per-TFL request counts add up to the same Event total.
+// TODO (needs confirmation): "Diff accept round" = one round in which the user reviews and accepts a Diff.
+const mockRequestLog = (eventId: string, tfls: DashboardTfl[], members: string[]): CopilotRequest[] => {
+  if (!members.length) return [];
+  const log: CopilotRequest[] = [];
+  tfls.forEach((tfl) => {
+    const seed = seedOf(tfl.id);
+    for (let index = 0; index < seed % 4; index += 1) {
+      const step = seed + index;
+      const initiator = tfl.assignee && step % 3 !== 0 ? tfl.assignee : members[step % members.length];
+      log.push({ eventId, initiator, tflId: tfl.id, type: 'single-tfl', diffAccepted: step % 5 === 0 ? null : step % 2 === 0 });
+    }
+  });
+  members.forEach((member) => {
+    for (let index = 0; index < seedOf(eventId + member) % 3; index += 1) log.push({ eventId, initiator: member, tflId: null, type: 'event', diffAccepted: null });
+  });
+  return log;
 };
 
-// Demo-only per-TFL activity derived from the TFL id until request and Diff instrumentation is available.
-// TODO (needs confirmation): "Diff accept round" = one round in which the user reviews and accepts a Diff.
-const mockActivityFor = (tfl: DashboardTfl): TflActivity => {
-  const seed = [...tfl.id].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const requests = 1 + seed % 5;
-  return { requests, diffRounds: Math.min(requests, seed % 4) };
+// Requests count toward the member who sent them, not the TFL's current assignee.
+export const requestsSentBy = (log: CopilotRequest[], member: string): RequestCounts => ({
+  singleTfl: log.filter((row) => row.initiator === member && row.type === 'single-tfl').length,
+  event: log.filter((row) => row.initiator === member && row.type === 'event').length,
+});
+
+export const tflActivity = (log: CopilotRequest[], tflId: string): TflActivity => {
+  const rows = log.filter((row) => row.tflId === tflId);
+  const linked = rows.filter((row) => row.diffAccepted !== null);
+  return { requests: rows.length, diffRounds: linked.length ? linked.filter((row) => row.diffAccepted).length : null };
 };
 
 export const mockDashboardDataSource: DashboardDataSource = {
   statusOf,
-  activityFor: (_eventId, tfl) => mockActivityFor(tfl),
-  // Demo-only counts until per-member request instrumentation is available.
-  requestsFor: (eventId, member) => mockRequestCounts[eventId]?.[member] ?? { singleTfl: 0, event: 0 },
+  requestLog: mockRequestLog,
   // TODO (Proposal §5, red): confirm which Copilot requests contribute to Token Usage.
   // TODO (Proposal §5, yellow): confirm reporting timezone and refresh contract before replacing these fixtures.
   usageRecords: () => mockRecords,

@@ -73,6 +73,7 @@ import resetRightIconUrl from "../../icons/reset-right-line.svg";
 import fileIconUrl from "../../icons/file-icon.svg";
 import { EventThinkingBlock, type EventThinkingData } from "../../components/ui/EventThinkingBlock";
 import { EventStatusBadge } from "../../components/ui/EventStatusBadge";
+import { StatusTag as SharedStatusTag } from "../../components/ui/StatusTag";
 import CreateEventModal from "./components/CreateEventModal";
 import EventInformationModal, { type EventInputFiles } from "./components/EventInformationModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
@@ -14390,19 +14391,7 @@ const statusConfig: Record<EventStatus | 'uploading', { icon: string; label: str
 
 function StatusTag({ status }: { status: EventStatus | 'uploading' }) {
   const config = statusConfig[status];
-  const isUploading = status === 'uploading';
-  return (
-    <div className="flex items-center gap-[4px] rounded-[4px]">
-      {isUploading ? (
-        <svg className="h-[16px] w-[16px] animate-spin block shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="8" cy="8" r="6" stroke="var(--color-text-secondary)" strokeWidth="2" strokeDasharray="12" strokeLinecap="round" />
-        </svg>
-      ) : (
-        <img src={config.icon} alt="" className="h-[16px] w-[16px] block shrink-0" />
-      )}
-      <span className="t-small" style={{ color: config.color }}>{config.label}</span>
-    </div>
-  );
+  return <SharedStatusTag icon={config.icon} label={config.label} color={config.color} loading={status === 'uploading'} />;
 }
 
 interface EventCardProps {

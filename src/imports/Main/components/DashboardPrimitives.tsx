@@ -115,7 +115,8 @@ export function ProgressBar({ locked, inProgress, error, stopped = 0, todo = 0, 
 export function DashboardTable({ title, tools, children, minWidth = 'min-w-2xl' }: { title: string; tools?: React.ReactNode; children: React.ReactNode; minWidth?: string }) {
   return <section className="min-w-0 overflow-hidden rounded-md border border-graphite-10 bg-white">
     <div className="flex flex-wrap items-center justify-between gap-[12px] border-b border-graphite-10 bg-white px-[16px] py-[12px]"><h2 className="t-heading">{title}</h2>{tools}</div>
-    <div className="overflow-x-auto"><table className={`dashboard-data-table w-full ${minWidth} border-collapse text-left t-caption`}>{children}</table></div>
+    {/* Caps the body at about ten rows; longer lists scroll under a sticky header. */}
+    <div className="dashboard-table-scroll overflow-auto"><table className={`dashboard-data-table w-full ${minWidth} border-collapse text-left t-caption`}>{children}</table></div>
   </section>;
 }
 
