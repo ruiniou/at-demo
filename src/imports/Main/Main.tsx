@@ -108,6 +108,7 @@ import { AIUserPrompt } from "../../components/ui/AI-UserPrompt";
 import { AICodeDiff } from "../../components/ui/AI-CodeDiff";
 import { AIThinkingStatus } from "../../components/ui/AI-ThinkingStatus";
 import { AIUpdatedBlock } from "../../components/ui/AI-UpdatedBlock";
+import { AIMetadataDiff } from "../../components/ui/AI-MetadataDiff";
 import ChatBox from "./components/ChatBox";
 import type { AttachmentItem, MentionOption } from "./components/ChatBox";
 import { SearchBar } from "../../components/ui/SearchBar";
@@ -126,7 +127,6 @@ import { ReferenceCaseField, REFERENCE_CASES, CURRENT_STUDY_ID, referenceDiffVal
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 // Lazy-loaded low-frequency components
-const MarkdownTable = lazy(() => import("./components/MarkdownTable"));
 const CodeDiffBlock = lazy(() => import("./components/CodeDiffBlock"));
 const AskUserComponent = lazy(() => import("./components/AskUserComponent"));
 
@@ -1196,9 +1196,8 @@ export type EventDispatchedTaskData = {
 };
 
 export type CodeDiffData = {
-  summary?: string;
-  additions?: { content: string }[];
-  deletions?: { content: string }[];
+  additions?: { content: string; lineNumber?: number }[];
+  deletions?: { content: string; lineNumber?: number }[];
 };
 
 type Message = {
@@ -1211,6 +1210,8 @@ type Message = {
     | 'ai_update_complete'
     | 'ai_update_accepted'
     | 'meta_update_card'
+    | 'metadata_sync_complete'
+    | 'demo_scenario_complete'
     | 'event_thinking_block'
     | 'event_search_block'
     | 'event_scope_card'
@@ -1237,7 +1238,25 @@ type Message = {
   summaryCardData?: EventSummaryCardData;
   dispatchedTaskData?: EventDispatchedTaskData;
   codeDiffData?: CodeDiffData;
+  codeVersion?: number;
+  metadataDiffData?: { fieldId: string; label: string; oldValue: string; newValue: string; group: string }[];
 };
+
+type DemoScenario = 'A' | 'B' | 'C' | 'D';
+type DemoScenarioRequest = { id: number; scenario: Exclude<DemoScenario, 'D'>; codeDiffData?: CodeDiffData; metadataDiffData?: NonNullable<Message['metadataDiffData']> };
+type DemoCodeRequest = { id: number; scenario: DemoScenario };
+type DemoMetadataRequest = { id: number; docType: DocumentType; changes: { fieldId: string; value: string }[] };
+const DEMO_GENERIC_PROGRAM_NAME = { table: 't_dm_reviewed', listing: 'l_safety_reviewed' } as const;
+const DEMO_GENERIC_SECOND_VALUE = { table: 'Intent-to-Treat', listing: '_reviewed' } as const;
+const DEMO_GENERIC_SECOND_FIELD = { table: 'f4', listing: 'suffix' } as const;
+const DEMO_FIGURE_SOURCE_LINE = 'merge adam.adtte(where=(paramcd="PFS" and saffl="Y") in=a)';
+const DEMO_FIGURE_TITLE_LINE = 'entrytitle "Progression-Free Survival and Subgroup Forest Plot (ITT Set)" / textattrs=(size=9pt);';
+const DEMO_FIGURE_UPDATED_TITLE_LINE = 'entrytitle "Kaplan-Meier PFS Curves and Subgroup Forest Plot (ITT Set)" / textattrs=(size=9pt);';
+const DEMO_FIGURE_UPDATED_LABEL = 'Kaplan-Meier PFS Curves';
+const DEMO_FIGURE_RISK_LINE = 'axistable x=tatrisk value=atrisk / class=trt01p title="Number at Risk" position=bottom;';
+const DEMO_FIGURE_UPDATED_RISK_LINE = 'axistable x=tatrisk value=atrisk / class=trt01p title="Participants at Risk" position=bottom;';
+const DEMO_FIGURE_UPDATED_RISK_LABEL = 'Participants at Risk Table';
+const DEMO_FIGURE_FIELD_IDS = ['sourceDataset1', 'compLabel1', 'compLabel2'] as const;
 
 function findTableItem(programs?: ProgramItem[], currentTableId?: string): TableItem | null {
   if (!programs || !currentTableId) return null;
@@ -1998,8 +2017,8 @@ function EventDispatchedTaskCard({
 }
 
 function createInitialTflMessages(tflId: string, foundTable: TableItem | null, isDispatched = false): Message[] {
-  // If this TFL is t1 (14.1.1 Disposition) or t5 (14.1.5 Baseline Characteristics) or any table dispatched from Event Copilot:
-  if (tflId === 't1' || tflId === 't5' || isDispatched) {
+  // A dispatched Event task is a real flow entry, not default sample chat content.
+  if (isDispatched) {
     const tableName = foundTable?.name || (tflId === 't1' ? '14.1.1 Disposition' : (tflId === 't5' ? '14.1.5 Baseline Characteristics' : (tflId === 't8' ? '14.1.8 Medical History by SOC' : (tflId === 't4' ? '14.1.4 Demographics (Full Analysis Set)' : `TFL ${tflId}`))));
 
     const msgs: Message[] = [
@@ -2018,17 +2037,7 @@ function createInitialTflMessages(tflId: string, foundTable: TableItem | null, i
     return msgs;
   }
 
-  if (foundTable?.status === 'pending') {
-    return [
-      { type: 'user', content: `Update ${foundTable?.name || 'demographics table'} to reflect amended protocol SAP v2.1 criteria.` },
-      { type: 'ai_update_complete' }
-    ];
-  }
-
-  return [
-    { type: 'user', content: 'Review and showcase all supported Markdown typography, elements, and styles in this conversation stream.' },
-    { type: 'ai_complete' }
-  ];
+  return foundTable?.docType === 'figure' ? [{ type: 'ai_complete' }] : [];
 }
 
 function recordInterruptedTflTask(tflId: string, table: TableItem | null, eventSessionId: string, eventTitle: string, runId: number) {
@@ -2175,6 +2184,19 @@ function ChatConversation({
                     />
                   </div>
                 )}
+                {msg.type === 'metadata_sync_complete' && (
+                  <div className="w-full flex flex-col gap-[8px]">
+                    <p className="px-[10px] t-body text-text-primary">{msg.metadataDiffData?.length ? 'Metadata updated. Review and confirm the changes.' : 'Metadata is up to date.'}</p>
+                    {!!msg.metadataDiffData?.length && <AIMetadataDiff items={msg.metadataDiffData} onJumpToField={fieldId => onJumpToMetadata?.('', fieldId)} />}
+                  </div>
+                )}
+                {msg.type === 'demo_scenario_complete' && (
+                  <div className="w-full flex flex-col gap-[8px]">
+                    <p className="px-[10px] t-body text-text-primary">{msg.content}</p>
+                    {msg.codeDiffData && <AICodeDiff additions={msg.codeDiffData.additions} deletions={msg.codeDiffData.deletions} />}
+                    {!!msg.metadataDiffData?.length && <AIMetadataDiff items={msg.metadataDiffData} onJumpToField={fieldId => onJumpToMetadata?.('', fieldId)} />}
+                  </div>
+                )}
 
             {msg.type === 'ai_thinking' && (
               <AIThinkingStatus status={showAskUser ? "waiting" : "loading"} />
@@ -2273,6 +2295,7 @@ function ChatConversation({
 
             {msg.type === 'ai_complete' && (
               <div className="flex flex-col gap-[12px] w-full relative">
+                {!!msg.metadataDiffData?.length && <><p className="px-[10px] t-body text-text-primary">Metadata updated. Review and confirm the changes.</p><AIMetadataDiff items={msg.metadataDiffData} onJumpToField={fieldId => onJumpToMetadata?.('', fieldId)} /></>}
                 <div className="flex flex-col w-full relative gap-[12px]">
                   {msg.content ? (
                     <div className="flex flex-col w-full px-[10px]">
@@ -2346,159 +2369,7 @@ function ChatConversation({
                         </div>
                       </div>
                     </>
-                  ) : (
-                    <>
-                      <div className="flex flex-col w-full px-[10px]">
-                        {/* H1 Title */}
-                        <div className="relative w-full">
-                          <h1 className="text-[16px] font-bold text-text-primary mb-[10px]" style={{ fontFamily: 'var(--font-body)' }}>
-                            Markdown Typography & Element Specification (Review)
-                          </h1>
-                        </div>
-
-                        {/* Intro Paragraph */}
-                        <div className="relative w-full mb-[10px]">
-                          <p className="t-body text-text-primary leading-relaxed">
-                            This message demonstrates all supported Markdown typography and component styles in the AI Copilot stream. It covers headings, paragraph formatting, inline highlights (code/variable tags), hyperlinks, list types, blockquotes, semantic callouts, data tables, and syntax code blocks.
-                          </p>
-                        </div>
-
-                        {/* H2 Section 1 */}
-                        <div className="relative w-full mb-[8px]">
-                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
-                            1. Inline Text & Highlighting
-                          </h2>
-                          <p className="t-body text-text-primary leading-relaxed mb-[6px]">
-                            Body text supports standard paragraphs with comfortable line-height, along with <strong className="font-semibold text-text-primary">bold emphasis (Strong)</strong>, <em className="italic">italic citations (Emphasis)</em>, and <del className="line-through text-text-secondary">superseded draft parameters (Strikethrough)</del>.
-                          </p>
-                          <p className="t-body text-text-primary leading-relaxed mb-[6px]">
-                            Inline code and parameter tags use the unified highlight component for clinical data attributes, such as source dataset <InlineHighlight>ADTTTE</InlineHighlight> and primary variables <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>PARAMCD = "OS"</InlineHighlight>, and censoring flag <InlineHighlight>CNSR = 0</InlineHighlight>.
-                          </p>
-                          <p className="t-body text-text-primary leading-relaxed">
-                            Cross-references and links render with interactive hover states: <Hyperlink href="#">Statistical Analysis Plan (SAP) v2.1 Section 4.3</Hyperlink>.
-                          </p>
-                        </div>
-
-                        <Divider className="!my-[10px]" />
-
-                        {/* H2 Section 2: Lists */}
-                        <div className="relative w-full mb-[8px]">
-                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
-                            2. List Structures (Lists)
-                          </h2>
-                          
-                          <p className="text-[13px] font-semibold text-text-secondary mb-[4px]">Unordered List:</p>
-                          <ul className="list-disc pl-[20px] mb-[10px] flex flex-col gap-[4px]">
-                            <li className="t-body text-text-primary">
-                              <strong className="font-semibold">ITT Population</strong>: All randomized subjects analyzed according to assigned treatment group.
-                            </li>
-                            <li className="t-body text-text-primary">
-                              <strong className="font-semibold">Safety Population</strong>: All subjects who received at least one dose of investigational product.
-                            </li>
-                          </ul>
-
-                          <p className="text-[13px] font-semibold text-text-secondary mb-[4px]">Ordered List:</p>
-                          <ol className="list-decimal pl-[20px] mb-[10px] flex flex-col gap-[4px]">
-                            <li className="t-body text-text-primary">Ingest and validate primary source dataset <InlineHighlight>ADTTTE</InlineHighlight></li>
-                            <li className="t-body text-text-primary">Compute Kaplan-Meier survival estimates and 95% Confidence Intervals</li>
-                            <li className="t-body text-text-primary">Generate regulatory-grade TFL summary table and survival figure</li>
-                          </ol>
-
-                          <p className="text-[13px] font-semibold text-text-secondary mb-[4px]">Task Checklist:</p>
-                          <ul className="mb-[10px] flex flex-col gap-[4px] pl-[2px]">
-                            <li className="flex items-center gap-[8px] t-body text-text-primary">
-                              <span className="w-[14px] h-[14px] rounded-[3px] bg-brand-1 flex items-center justify-center shrink-0">
-                                <LocalIcon src={checkIconUrl} className="w-[10px] h-[10px]" color="white" />
-                              </span>
-                              <span className="line-through text-text-secondary">Complete initial ADTTTE dataset integrity check (Approved)</span>
-                            </li>
-                            <li className="flex items-center gap-[8px] t-body text-text-primary">
-                              <span className="w-[14px] h-[14px] rounded-[3px] border border-border-default bg-white flex items-center justify-center shrink-0" />
-                              <span>Perform independent double-programming reconciliation (Pending Review)</span>
-                            </li>
-                          </ul>
-                        </div>
-
-                        <Divider className="!my-[10px]" />
-
-                        {/* H2 Section 3: Quotes & Callouts */}
-                        <div className="relative w-full mb-[8px]">
-                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
-                            3. Blockquote & Semantic Callouts
-                          </h2>
-                          
-                          <p className="text-[13px] font-semibold text-text-secondary mb-[4px]">Standard Blockquote:</p>
-                          <Blockquote>
-                            "All statistical summaries, hazard ratios, and survival estimators strictly conform to CDISC ADaM standards and AstraZeneca core reporting conventions."
-                          </Blockquote>
-
-                          <p className="text-[13px] font-semibold text-text-secondary mb-[6px]">Semantic Callouts:</p>
-                          <Callout type="note" title="Note: Baseline Reference Standard">
-                            Summary metrics are calculated using the ITT population (N=245), with time variable AVAL normalized to Months.
-                          </Callout>
-
-                          <Callout type="tip" title="Tip: Metadata Auto-Synchronization">
-                            You can synchronize Axis Range and stratification variables directly in the Metadata Panel without writing custom SAS macro invocations.
-                          </Callout>
-
-                          <Callout type="warning" title="Warning: Handling Missing Baseline Covariates">
-                            Three subjects have missing Baseline BMI entries. Per SAP guidelines, these records have been automatically excluded from the multivariate Cox model.
-                          </Callout>
-
-                          <Callout type="caution" title="Caution: 21 CFR Part 11 Audit Lock">
-                            This study event has undergone final electronic signature verification. Re-triggering code generation will invalidate prior signatures and create an Audit Trail log entry.
-                          </Callout>
-                        </div>
-
-                        <Divider className="!my-[10px]" />
-
-                        {/* H2 Section 4: Table */}
-                        <div className="relative w-full mb-[8px]">
-                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
-                            4. Tabular Data Presentation (Table)
-                          </h2>
-                          <div className="relative w-full mb-[10px]">
-                            <Suspense fallback={<div className="h-20 animate-pulse bg-gray-100 rounded mb-2" />}>
-                              <MarkdownTable />
-                            </Suspense>
-                          </div>
-                        </div>
-
-                        <Divider className="!my-[10px]" />
-
-                        {/* H2 Section 5: Code Block */}
-                        <div className="relative w-full mb-[8px]">
-                          <h2 className="text-[14px] font-bold text-text-primary mb-[6px]" style={{ fontFamily: 'var(--font-body)' }}>
-                            5. Multi-line Code Block (Code Block)
-                          </h2>
-                          <div className="flex flex-col gap-[6px]">
-                            <p className="text-[13px] font-semibold text-text-secondary">SAS Macro Program:</p>
-                            <CodeBlock 
-                              language="sas" 
-                              code={`%macro run_km_analysis(inds=ADTTTE, endpoint=OS);\n  proc lifetest data=&inds plots=survival(cb=hw);\n    time AVAL * CNSR(1);\n    strata TRTA;\n  run;\n%mend run_km_analysis;`} 
-                            />
-                            <p className="text-[13px] font-semibold text-text-secondary mt-[4px]">Python Script:</p>
-                            <CodeBlock 
-                              language="python" 
-                              code={`import pandas as pd\n\ndef compute_summary_stats(df: pd.DataFrame) -> dict:\n    return {\n        "n_eval": len(df),\n        "median_os": df["AVAL"].median(),\n        "status": "APPROVED"\n    }`} 
-                            />
-                          </div>
-                        </div>
-
-                        <Divider />
-                      </div>
-                      
-                      <div className="relative w-full">
-                        <ToolCallCard toolName="read_file" />
-                      </div>
-                      <div className="relative w-full">
-                        <AICodeDiff />
-                      </div>
-                      <div className="relative w-full">
-                        <ErrorMessageWithRetry />
-                      </div>
-                    </>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )}
@@ -2511,17 +2382,9 @@ function ChatConversation({
                       <p className="t-small text-text-secondary leading-relaxed">{msg.referenceChange.newReference ? `The current TFL was adjusted using ${msg.referenceChange.newReference.tflId} ${msg.referenceChange.newReference.tflTitle}.` : 'The Reference was removed from the current TFL.'}</p>
                     </div>
                     <div className="relative w-full">
-                      <AICodeDiff summary="Code changes ready for review" additions={[]} deletions={[]} />
+                      <AICodeDiff additions={msg.codeDiffData?.additions} deletions={msg.codeDiffData?.deletions} />
                     </div>
-                    <div className="px-[10px]">
-                      <MetadataEntryBlock
-                        variant="updated"
-                        count={1}
-                        description="Review the Reference in Metadata before accepting the pending changes."
-                        onOpen={() => onJumpToMetadata?.('', 'referenceCase')}
-                        isOutdated={isMetadataOutdated}
-                      />
-                    </div>
+                    {!!msg.metadataDiffData?.length && <AIMetadataDiff items={msg.metadataDiffData} onJumpToField={fieldId => onJumpToMetadata?.('', fieldId)} />}
                   </div>
                 ) : <div className="flex flex-col w-full relative gap-[8px]">
                   <div className="flex flex-col gap-[4px] px-[10px]">
@@ -2530,16 +2393,9 @@ function ChatConversation({
                     </p>
                   </div>
                   <div className="relative w-full">
-                    <AICodeDiff />
+                    <AICodeDiff additions={msg.codeDiffData?.additions} deletions={msg.codeDiffData?.deletions} />
                   </div>
-                  <div className="px-[10px]">
-                    <MetadataEntryBlock
-                      variant="updated"
-                      count={3}
-                      onOpen={() => onJumpToMetadata?.('figBasic', 'generalFilter')}
-                      isOutdated={isMetadataOutdated}
-                    />
-                  </div>
+                  {!!msg.metadataDiffData?.length && <AIMetadataDiff items={msg.metadataDiffData} onJumpToField={fieldId => onJumpToMetadata?.('', fieldId)} />}
                 </div>}
               </div>
             )}
@@ -2632,6 +2488,10 @@ function AICopilotPanel({
   eventSessions = [],
   onSelectEventSession,
   onDeleteEventSession,
+  metadataSyncRequest,
+  demoScenarioRequest,
+  onMetadataSyncComplete,
+  onRunningChange,
 }: {
   variant?: 'drawer' | 'incard';
   quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
@@ -2653,7 +2513,11 @@ function AICopilotPanel({
   onMetaCancel?: () => void;
   onMetaProceed?: () => void;
   onCodeDiffChange?: (hasDiff: boolean) => void;
-  onAddComponentPrompt?: (name: string, type: string, inst: string) => void;
+  metadataSyncRequest?: { id: number; codeVersion: number; metadataDiffData: NonNullable<Message['metadataDiffData']> } | null;
+  demoScenarioRequest?: DemoScenarioRequest | null;
+  onMetadataSyncComplete?: (changes: NonNullable<Message['metadataDiffData']>) => void;
+  onRunningChange?: (running: boolean) => void;
+  onAddComponentPrompt?: (name: string, type: string, inst: string) => string | void;
   renderPreviewOpen?: boolean;
   activeRenderVersionLabel?: string;
   onRenderThumbnailClick?: (version: RenderVersion) => void;
@@ -2769,7 +2633,6 @@ function AICopilotPanel({
     if (tflSessionStore[tflKey]?.messages) {
       return tflSessionStore[tflKey].messages;
     }
-    if (docType === 'figure') return [{ type: 'ai_complete' }];
     const foundTable = findTableItem(programs, currentTableId);
     return createInitialTflMessages(tflKey, foundTable);
   });
@@ -2794,6 +2657,54 @@ function AICopilotPanel({
   }, [isEventCopilot, activeEventSession?.id, currentTableId]);
 
   const [isPending, setIsPending] = useState(false);
+  useEffect(() => { setIsPending(false); }, [currentTableId]);
+  useEffect(() => { onRunningChange?.(isPending); }, [isPending, onRunningChange]);
+  useEffect(() => () => onRunningChange?.(false), [onRunningChange]);
+  useEffect(() => {
+    if (!metadataSyncRequest || isEventCopilot) return;
+    setMessages(previous => [...previous,
+      { type: 'user', content: 'Update Metadata', codeVersion: metadataSyncRequest.codeVersion },
+      { type: 'ai_thinking' },
+    ]);
+    setIsPending(true);
+    const timer = window.setTimeout(() => {
+      setMessages(previous => previous.map(message => message.type === 'ai_thinking'
+        ? { type: 'metadata_sync_complete' as const, metadataDiffData: metadataSyncRequest.metadataDiffData }
+        : message));
+      setIsPending(false);
+      onMetadataSyncComplete?.(metadataSyncRequest.metadataDiffData);
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [metadataSyncRequest?.id]);
+  useEffect(() => {
+    if (!demoScenarioRequest || isEventCopilot) return;
+    const { scenario, codeDiffData, metadataDiffData } = demoScenarioRequest;
+    const label = scenario === 'A' ? 'AI changes Code + Meta' : scenario === 'B' ? 'AI changes Code only' : 'AI changes Meta only';
+    setMessages(previous => {
+      let insideDemoRound = false;
+      const retained = previous.filter(message => {
+        if (message.type === 'user') insideDemoRound = message.content?.startsWith('Demo · ') ?? false;
+        return !insideDemoRound;
+      });
+      return [...retained, { type: 'user', content: `Demo · ${label}` }, { type: 'ai_thinking' }];
+    });
+    setIsPending(true);
+    const timer = window.setTimeout(() => {
+      setMessages(previous => {
+        const next = [...previous];
+        const thinkingIndex = next.findLastIndex(message => message.type === 'ai_thinking');
+        if (thinkingIndex >= 0) next[thinkingIndex] = {
+          type: 'demo_scenario_complete',
+          content: scenario === 'A' ? 'Code and Metadata updated. Review both changes.' : scenario === 'B' ? 'Code updated. Metadata did not need a change.' : 'Metadata updated. Code did not need a change.',
+          codeDiffData,
+          metadataDiffData,
+        };
+        return next;
+      });
+      setIsPending(false);
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [demoScenarioRequest?.id]);
   const [isStopping, setIsStopping] = useState(false);
   const stoppingRef = useRef(false);
   const runEpochRef = useRef(0);
@@ -2837,14 +2748,14 @@ function AICopilotPanel({
     const s1Msgs = createInitialTflMessages(tflKey, foundTable);
     return {
       [s1Id]: s1Msgs,
-      [s2Id]: [
+      [s2Id]: foundTable?.docType === 'figure' ? [
         { type: 'user', content: 'Extract safety data and verify dictionary terms.' },
         { type: 'ai_complete', content: 'Safety data extracted successfully. 12 AE terms matched MedDRA 24.0 dictionary.' }
-      ],
-      [s3Id]: [
+      ] : [],
+      [s3Id]: foundTable?.docType === 'figure' ? [
         { type: 'user', content: 'Generate preliminary distribution overview.' },
         { type: 'ai_complete', content: 'Overview generated with summary statistics.' }
-      ],
+      ] : [],
     };
   });
 
@@ -3870,9 +3781,7 @@ function AICopilotPanel({
     }
 
     const isAddReq = /add|component|新增|添加|create|make|insert|new/i.test(text);
-    if (isAddReq && onAddComponentPrompt) {
-      onAddComponentPrompt(text, 'Chart', text);
-    }
+    const generatedComponentId = isAddReq && onAddComponentPrompt ? onAddComponentPrompt(text, 'Chart', text) : undefined;
 
     setMessages(prev => [...prev, { type: 'ai_thinking' }]);
     tflRunPhaseRef.current = 'running';
@@ -3890,7 +3799,11 @@ function AICopilotPanel({
         if (isAddReq) {
           // Adding a component updates Metadata directly, not Code.
           // No Pending changes state, directly return to Default state.
-          setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? { type: 'ai_complete' as const } : m));
+          setMessages(prev => prev.map(m => m.type === 'ai_thinking' ? {
+            type: 'ai_complete' as const,
+            content: 'Component added.',
+            metadataDiffData: generatedComponentId ? [{ fieldId: `${generatedComponentId}_l`, label: 'Component Label', oldValue: '', newValue: text, group: 'Components' }] : undefined,
+          } : m));
           setIsPending(false);
           tflRunPhaseRef.current = 'idle';
         } else {
@@ -4881,12 +4794,12 @@ function ViewToggleBar({
 }) {
 
   const handleCopilotScopeClick = (nextScope: 'event' | 'tfl') => {
-    if (nextScope === copilotScope) {
+    if (!aiCopilotOpen) {
+      onOpenAICopilot?.();
+      onSelectCopilotScope(nextScope);
       return;
     }
-
-    onSelectCopilotScope(nextScope);
-    if (!aiCopilotOpen) onOpenAICopilot?.();
+    if (nextScope !== copilotScope) onSelectCopilotScope(nextScope);
   };
 
 
@@ -7807,8 +7720,11 @@ function ShellPreview({
   metaUpdateProcessing,
   submittedDiffItems,
   targetFieldId,
+  targetFieldTrigger,
+  demoMetadataRequest,
   onReviewItemsChange,
   hasUnreadMetadataUpdate,
+  aiMetadataUpdate,
   figureComponents,
   setFigureComponents,
   isLocked,
@@ -7833,8 +7749,11 @@ function ShellPreview({
   metaUpdateProcessing?: boolean;
   submittedDiffItems?: MetaDiffItem[];
   targetFieldId?: string;
+  targetFieldTrigger?: number;
+  demoMetadataRequest?: DemoMetadataRequest | null;
   onReviewItemsChange?: (items: ReviewItem[]) => void;
   hasUnreadMetadataUpdate?: boolean;
+  aiMetadataUpdate?: { revision: number; fieldIds: string[] } | null;
   figureComponents?: MetadataBlock[];
   setFigureComponents?: React.Dispatch<React.SetStateAction<MetadataBlock[]>>;
   isLocked?: boolean;
@@ -8214,7 +8133,7 @@ function ShellPreview({
         >
           {metadataOpen && (
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-overlay">
-              <MetadataPanel key={selectedItemName} onClose={onMetadataClose} docType={docType} currentTflTitle={selectedItemName} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} onMetaCancel={onMetaCancel} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} onQuoteField={onQuoteField} />
+              <MetadataPanel key={selectedItemName} onClose={onMetadataClose} docType={docType} currentTflTitle={selectedItemName} isLocked={isLocked} onJumpToTL={onJumpToTL} associatedTLStatus={associatedTLStatus} onMetaDiffChange={onMetaDiffChange} onRequestUpdateCode={onRequestUpdateCode} onMetaCancel={onMetaCancel} baselineAdvanceTrigger={baselineAdvanceTrigger} addComponentTrigger={addComponentTrigger} metaUpdateActive={metaUpdateActive} metaUpdateProcessing={metaUpdateProcessing} submittedDiffItems={submittedDiffItems} targetFieldId={targetFieldId} targetFieldTrigger={targetFieldTrigger} demoMetadataRequest={demoMetadataRequest} targetBlockName={targetBlockName} targetBlockTrigger={targetBlockTrigger} onReviewItemsChange={onReviewItemsChange} figureComponents={figureComponents} setFigureComponents={setFigureComponents} aiMetadataUpdate={aiMetadataUpdate} onQuoteField={onQuoteField} />
             </div>
           )}
         </div>
@@ -8232,13 +8151,14 @@ interface MetadataField {
   status: FieldStatus;
   confirmed: boolean;
   dependencyState?: 'S0' | 'S1' | 'S2' | 'S3' | 'S4';
-  badge?: 'ai-infer' | 'conflict';
+  badge?: 'ai-infer' | 'conflict' | 'updated';
+  aiUpdated?: boolean;
   badgeTooltip?: string;
   errorMessage?: string;
 }
 
 interface MetadataBadgeProps {
-  type: 'ai-infer' | 'conflict';
+  type: 'ai-infer' | 'conflict' | 'updated';
   tooltip?: string;
   className?: string;
   interactive?: boolean;
@@ -8246,14 +8166,16 @@ interface MetadataBadgeProps {
 
 function MetadataBadge({ type, tooltip, className = '', interactive = true }: MetadataBadgeProps) {
   const isInfer = type === 'ai-infer';
-  const labelText = isInfer ? 'AI Infer' : 'Conflict';
-  const defaultTooltip = isInfer
+  const labelText = type === 'updated' ? 'Updated' : isInfer ? 'AI Infer' : 'Conflict';
+  const defaultTooltip = type === 'updated' ? 'Updated by Copilot. Review and confirm this field.' : isInfer
     ? 'Inferred from standard TTE dataset naming convention.'
     : 'Conflicting value detected with SAP specification.';
 
   const baseClasses = `inline-flex w-[56px] h-[20px] items-center justify-center px-[4px] text-[13px] leading-[20px] font-normal rounded-[4px] select-none ml-[6px] whitespace-nowrap`;
   
-  const stateClasses = isInfer
+  const stateClasses = type === 'updated'
+    ? `border border-graphite-20 text-brand-1 bg-white ${interactive ? 'cursor-pointer hover:bg-bg-panel transition-colors' : ''}`
+    : isInfer
     ? `border border-[#D8DADA] text-[#888E8E] bg-white ${interactive ? 'cursor-pointer hover:bg-bg-panel transition-all duration-180' : ''}`
     : `bg-status-success-bg text-az-danger ${interactive ? 'cursor-pointer hover:opacity-90 transition-all duration-180' : ''}`;
 
@@ -9365,6 +9287,8 @@ interface MetadataPanelProps {
   /** 'panel' = Track Changes in Metadata panel (Idea 2); 'header' = Sticky Header in Copilot ChatBox (Idea 1). Default is 'header'. */
   diffDisplayMode?: 'header' | 'panel';
   targetFieldId?: string;
+  targetFieldTrigger?: number;
+  demoMetadataRequest?: DemoMetadataRequest | null;
   /** Shell-preview block name to deep-link to: opens the Blocks tab with that block selected. */
   targetBlockName?: string | null;
   targetBlockTrigger?: number;
@@ -9372,6 +9296,7 @@ interface MetadataPanelProps {
   associatedTLStatus?: string;
   figureComponents?: MetadataBlock[];
   setFigureComponents?: React.Dispatch<React.SetStateAction<MetadataBlock[]>>;
+  aiMetadataUpdate?: { revision: number; fieldIds: string[] } | null;
   onJumpToTL?: (name: string) => void;
   /** Called when user clicks the Quote icon on a field/component row */
   onQuoteField?: (fieldId: string, label: string, blockName: string) => void;
@@ -9470,9 +9395,10 @@ function MetadataPanel({
   repeatColumnBaseline = null, onRepeatColumnBaselineChange,
   pageBreakColumnBaseline = null, onPageBreakColumnBaselineChange,
   idpageBaseline = null, idlistBaseline = null, onIdpageBaselineChange, onIdlistBaselineChange,
-  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, onMetaCancel, baselineAdvanceTrigger, addComponentTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], diffDisplayMode = 'header', targetFieldId, targetBlockName, targetBlockTrigger, onReviewItemsChange, associatedTLStatus = 'pending',
+  onAddChangesToChat, onMetaDiffChange, onRequestUpdateCode, onMetaCancel, baselineAdvanceTrigger, addComponentTrigger, metaUpdateActive, metaUpdateProcessing, submittedDiffItems = [], diffDisplayMode = 'header', targetFieldId, targetFieldTrigger, demoMetadataRequest, targetBlockName, targetBlockTrigger, onReviewItemsChange, associatedTLStatus = 'pending',
   figureComponents: propsFigureComponents,
   setFigureComponents: propsSetFigureComponents,
+  aiMetadataUpdate,
   onJumpToTL,
   onQuoteField,
 }: MetadataPanelProps) {
@@ -9598,6 +9524,16 @@ function MetadataPanel({
   const [groupConfirmed, setGroupConfirmed] = useState(() => loadFromSession('metadataGroupConfirmed', false));
   const [groupDropdownOpen, setGroupDropdownOpen] = useState(false);
   const [blockItemConfirmed, setBlockItemConfirmed] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!aiMetadataUpdate?.fieldIds.length) return;
+    setBlockItemConfirmed(previous => {
+      const next = { ...previous };
+      figureComponents.forEach(block => block.fields.forEach(field => {
+        if (aiMetadataUpdate.fieldIds.includes(field.id)) next[`${block.id}_${field.id}`] = false;
+      }));
+      return next;
+    });
+  }, [aiMetadataUpdate?.revision]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => { sessionStorage.setItem('metadataSelectedGroupIdx', JSON.stringify(selectedGroupIdx)); }, [selectedGroupIdx]);
   useEffect(() => { sessionStorage.setItem('metadataGroupStatus', JSON.stringify(groupStatus)); }, [groupStatus]);
@@ -9646,6 +9582,23 @@ function MetadataPanel({
     return stored.map(b => ({ ...b, fields: migrateFields(b.fields || []) }));
   });
   useEffect(() => { sessionStorage.setItem('metadataBlocks_listing', JSON.stringify(listingBlocks)); }, [listingBlocks]);
+
+  useEffect(() => {
+    if (!demoMetadataRequest || demoMetadataRequest.docType !== docType) return;
+    const updateField = (block: MetadataBlock) => ({ ...block, fields: block.fields.map(field => {
+      const change = demoMetadataRequest.changes.find(item => item.fieldId === field.id);
+      return change ? { ...field, value: change.value, confirmed: false } : field;
+    }) });
+    const advanceBaseline = (previous: Record<string, string>) => ({ ...previous, ...Object.fromEntries(demoMetadataRequest.changes.map(change => [change.fieldId, change.value])) });
+    if (docType === 'listing') {
+      setListingBlocks(previous => previous.map(updateField));
+      setListingFieldBaseline(advanceBaseline);
+    }
+    if (docType === 'table') {
+      setBlocks(previous => previous.map(updateField));
+      setTableFieldBaseline(advanceBaseline);
+    }
+  }, [demoMetadataRequest?.id, docType]);
 
   const [listingColumnFields, setListingColumnFields] = useState<{ id: string; label: string; value: string; status: FieldStatus; confirmed: boolean }[]>(() => {
     const fallback = [
@@ -9721,6 +9674,17 @@ function MetadataPanel({
     });
     return baseline;
   });
+  // Copilot-applied Metadata is already reflected in Code, so it moves the baseline instead of becoming an Update Code diff.
+  useEffect(() => {
+    if (!aiMetadataUpdate?.fieldIds.length) return;
+    setFigureFieldBaseline(previous => {
+      const next = { ...previous };
+      figureComponents.forEach(block => block.fields.forEach(field => {
+        if (aiMetadataUpdate.fieldIds.includes(field.id)) next[field.id] = field.value;
+      }));
+      return next;
+    });
+  }, [aiMetadataUpdate?.revision]);
 
   const [figureComponentDeprecatedBaseline, setFigureComponentDeprecatedBaseline] = useState<Record<string, boolean>>(() => {
     const baseline: Record<string, boolean> = {};
@@ -10222,7 +10186,7 @@ function MetadataPanel({
     // 1. Basic Fields with badge
     figureBlocks.forEach(b => {
       b.fields.forEach(f => {
-        if (f.badge && !f.confirmed) {
+        if (f.badge && f.badge !== 'updated' && !f.confirmed) {
           items.push({
             type: f.badge,
             fieldName: f.label,
@@ -10239,7 +10203,7 @@ function MetadataPanel({
       if (b.deprecated || b.state === 'loading') return;
       b.fields.forEach(f => {
         const isConfirmed = blockItemConfirmed[`${b.id}_${f.id}`];
-        if (f.badge && !isConfirmed) {
+        if (f.badge && f.badge !== 'updated' && !isConfirmed) {
           const compName = b.name || 'Component';
           items.push({
             type: f.badge,
@@ -10428,18 +10392,19 @@ function MetadataPanel({
         setActiveTab("basic");
       }
 
-      setTimeout(() => {
+      const scrollTimer = window.setTimeout(() => {
         const el = fieldRefs.current[cleanId] || fieldRefs.current[targetFieldId];
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           const inputEl = el.querySelector('input, select, textarea') as HTMLElement | null;
           if (inputEl) {
-            inputEl.focus();
+            inputEl.focus({ preventScroll: true });
           }
         }
       }, 200);
+      return () => window.clearTimeout(scrollTimer);
     }
-  }, [targetFieldId, figureComponents]);
+  }, [targetFieldId, targetFieldTrigger, figureComponents]);
 
   // Deep-link from a Shell Preview block click: open the Blocks tab with that block selected.
   // Keyed off a trigger so clicking the same block twice still re-selects it.
@@ -10614,6 +10579,7 @@ function MetadataPanel({
           });
         });
         setBlockItemConfirmed(newConfirmed);
+        if (confirm) setFigureComponents(previous => previous.map(block => ({ ...block, fields: block.fields.map(field => ({ ...field, aiUpdated: false })) })));
       }
     } else {
       if (isBasicTab) {
@@ -11524,6 +11490,7 @@ function MetadataPanel({
                     });
                     return next;
                   });
+                  if (nextState) setFigureComponents(previous => previous.map(item => item.id === blockId ? { ...item, fields: item.fields.map(field => ({ ...field, aiUpdated: false })) } : item));
                 }}
                 isLocked={false}
                 onGenerateComponent={handleGenerateComponent}
@@ -11719,6 +11686,14 @@ function CodePanel({
   isOccupied = false,
   lastEditedAt,
   onTakeOver,
+  onSaveCode,
+  metadataBehind = false,
+  metadataNoticeDismissed = false,
+  metadataUpdating = false,
+  onUpdateMetadata,
+  onDismissMetadataNotice,
+  isCopilotRunning = false,
+  demoCodeRequest,
 }: {
   selectedItem: string;
   docType?: DocumentType;
@@ -11743,6 +11718,14 @@ function CodePanel({
   lastEditedAt?: Date;
   /** Called when the current user clicks "Take over" and confirms. */
   onTakeOver?: () => void;
+  onSaveCode?: (previous: string, next: string) => void;
+  metadataBehind?: boolean;
+  metadataNoticeDismissed?: boolean;
+  metadataUpdating?: boolean;
+  onUpdateMetadata?: () => void;
+  onDismissMetadataNotice?: () => void;
+  isCopilotRunning?: boolean;
+  demoCodeRequest?: DemoCodeRequest | null;
 }) {
   const [isLockedLocal, setIsLockedLocal] = useState(Boolean(isLockedProp));
 
@@ -11887,6 +11870,25 @@ ods graphics off;`;
     setLastRunCode(codeContent);
     setSavedCode(codeContent);
   }, [selectedItem, codeContent]);
+  useEffect(() => {
+    if (!demoCodeRequest) return;
+    const firstLine = codeContent.split('\n')[0];
+    const nextCode = docType === 'figure'
+      ? demoCodeRequest.scenario === 'A' || demoCodeRequest.scenario === 'D'
+        ? codeContent.replace(DEMO_FIGURE_TITLE_LINE, DEMO_FIGURE_UPDATED_TITLE_LINE)
+          .replace(DEMO_FIGURE_RISK_LINE, demoCodeRequest.scenario === 'D' ? DEMO_FIGURE_UPDATED_RISK_LINE : DEMO_FIGURE_RISK_LINE)
+        : demoCodeRequest.scenario === 'B'
+          ? codeContent.replace(DEMO_FIGURE_SOURCE_LINE, `${DEMO_FIGURE_SOURCE_LINE} /* reviewed */`)
+          : codeContent
+      : demoCodeRequest.scenario === 'C' ? codeContent : codeContent.replace(firstLine,
+        demoCodeRequest.scenario === 'B' ? `${firstLine} /* reviewed */` : `${firstLine} /* Program: ${DEMO_GENERIC_PROGRAM_NAME[docType]} */`)
+        .replace(codeContent.split('\n')[1], demoCodeRequest.scenario === 'D'
+          ? `${codeContent.split('\n')[1]} /* ${docType === 'table' ? 'Population' : 'Suffix'}: ${DEMO_GENERIC_SECOND_VALUE[docType]} */`
+          : codeContent.split('\n')[1]);
+    setIsLockedLocal(false);
+    setUserCode(nextCode);
+    setSavedCode(demoCodeRequest.scenario === 'D' ? codeContent : nextCode);
+  }, [demoCodeRequest?.id]);
 
   const codeLines = userCode.split('\n');
 
@@ -11993,6 +11995,7 @@ ods graphics off;`;
     setIsSaving(true);
     setTimeout(() => {
       setSavedCode(userCode);
+      onSaveCode?.(savedCode, userCode);
       setIsSaving(false);
     }, 500);
   };
@@ -12008,9 +12011,10 @@ ods graphics off;`;
       {/* 1. Save (Secondary style, h-26px) */}
       <Button
         variant="secondary"
-        disabled={effectiveIsLocked || !isCodeUnsaved || isSaving}
+        size="sm"
+        disabled={effectiveIsLocked || !isCodeUnsaved || isSaving || isCopilotRunning}
         onClick={handleSave}
-        className="h-[26px] px-[8px] py-0 gap-[4px] rounded-[4px]"
+        className="h-[26px] py-0 gap-[4px] rounded-[4px]"
       >
         <div className="flex items-center gap-[4px] justify-center">
           {isSaving ? (
@@ -12076,6 +12080,13 @@ ods graphics off;`;
         }
         actions={toolbarButtons}
       />
+      {metadataBehind && !metadataNoticeDismissed && (
+        <div className="flex min-h-[40px] items-center gap-[8px] border-b border-graphite-10 bg-bg-panel px-[12px] t-small text-text-primary" role="status">
+          <span className="min-w-0 flex-1">{metadataUpdating ? 'Updating Metadata…' : 'Code changed.'}</span>
+          {!metadataUpdating && <button type="button" onClick={onUpdateMetadata} className="text-brand-1 hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1">Update Metadata</button>}
+          {!metadataUpdating && <button type="button" aria-label="Dismiss metadata reminder" onClick={onDismissMetadataNotice} className="flex h-[28px] w-[28px] items-center justify-center rounded-[4px] hover:bg-graphite-10"><img src={closeIconUrl} alt="" className="h-[16px] w-[16px]" /></button>}
+        </div>
+      )}
       <div className="relative min-h-0 flex-1 overflow-hidden">
         {/* Top compact fade (8px, avoids 12px scrollbar on right) */}
         <div className="pointer-events-none absolute top-0 left-0 right-[12px] h-[8px] bg-gradient-to-b from-white to-transparent z-20" />
@@ -12283,11 +12294,39 @@ function WorkspaceContent({
   const [baselineAdvanceTrigger, setBaselineAdvanceTrigger] = useState(0);
   const [addComponentTrigger, setAddComponentTrigger] = useState<{ name: string; type: string; instructions: string } | null>(null);
   const [figureComponents, setFigureComponents] = useState<MetadataBlock[]>(INITIAL_FIGURE_COMPONENTS);
-  const [hasUnreadMetadataUpdate, setHasUnreadMetadataUpdate] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(initialTflId ?? 't4');
+  const selectedTflKey = selectedId || 'tfl';
+  const [hasUnreadMetadataUpdateByTfl, setHasUnreadMetadataUpdateByTfl] = useState<Record<string, boolean>>({});
+  const hasUnreadMetadataUpdate = !!hasUnreadMetadataUpdateByTfl[selectedTflKey];
+  const setHasUnreadMetadataUpdate = (value: boolean) => setHasUnreadMetadataUpdateByTfl(previous => ({ ...previous, [selectedTflKey]: value }));
+  const [metadataBehindByTfl, setMetadataBehindByTfl] = useState<Record<string, boolean>>({});
+  const [metadataNoticeDismissedByTfl, setMetadataNoticeDismissedByTfl] = useState<Record<string, boolean>>({});
+  const [metadataUpdatingByTfl, setMetadataUpdatingByTfl] = useState<Record<string, boolean>>({});
+  const metadataBehind = !!metadataBehindByTfl[selectedTflKey];
+  const metadataNoticeDismissed = !!metadataNoticeDismissedByTfl[selectedTflKey];
+  const metadataUpdating = !!metadataUpdatingByTfl[selectedTflKey];
+  const setMetadataBehind = (value: boolean) => setMetadataBehindByTfl(previous => ({ ...previous, [selectedTflKey]: value }));
+  const setMetadataNoticeDismissed = (value: boolean) => setMetadataNoticeDismissedByTfl(previous => ({ ...previous, [selectedTflKey]: value }));
+  const setMetadataUpdating = (value: boolean) => setMetadataUpdatingByTfl(previous => ({ ...previous, [selectedTflKey]: value }));
+  const [isTflCopilotRunning, setIsTflCopilotRunning] = useState(false);
+  const [codeVersionByTfl, setCodeVersionByTfl] = useState<Record<string, number>>({});
+  const [metadataSyncedVersionByTfl, setMetadataSyncedVersionByTfl] = useState<Record<string, number>>({});
+  const codeVersion = codeVersionByTfl[selectedTflKey] ?? 1;
+  const [savedCodeTextByTfl, setSavedCodeTextByTfl] = useState<Record<string, string>>({});
+  const [metadataCodeBaselineByTfl, setMetadataCodeBaselineByTfl] = useState<Record<string, string>>({});
+  const savedCodeText = savedCodeTextByTfl[selectedTflKey] || '';
+  const setSavedCodeText = (value: string) => setSavedCodeTextByTfl(previous => ({ ...previous, [selectedTflKey]: value }));
+  const [metadataSyncRequest, setMetadataSyncRequest] = useState<{ id: number; codeVersion: number; metadataDiffData: NonNullable<Message['metadataDiffData']> } | null>(null);
+  const [demoScenarioRequest, setDemoScenarioRequest] = useState<DemoScenarioRequest | null>(null);
+  const [demoCodeRequest, setDemoCodeRequest] = useState<DemoCodeRequest | null>(null);
+  const [demoMetadataRequest, setDemoMetadataRequest] = useState<DemoMetadataRequest | null>(null);
+  const [activeDemoScenario, setActiveDemoScenario] = useState<DemoScenario | null>(null);
+  const [aiMetadataUpdate, setAiMetadataUpdate] = useState<{ revision: number; fieldIds: string[] } | null>(null);
   const [renderPreviewOpen, setRenderPreviewOpen] = useState(false);
   const [activeRenderVersionLabel, setActiveRenderVersionLabel] = useState('V1.0');
   const [renderVersions, setRenderVersions] = useState<RenderVersion[]>(INITIAL_FIGURE_RENDER_VERSIONS);
   const [targetMetadataFieldId, setTargetMetadataFieldId] = useState<string | null>(null);
+  const [targetMetadataFieldTrigger, setTargetMetadataFieldTrigger] = useState(0);
   const quoteInsertRef = useRef<((fieldId: string, label: string) => void) | null>(null);
 
   const handleQuoteField = useCallback((fieldId: string, label: string, blockName: string) => {
@@ -12302,7 +12341,6 @@ function WorkspaceContent({
   const hasInitializedCodeDiffRef = useRef(false);
   const previousCodeDiffRef = useRef(false);
   const codeDiffContextRef = useRef<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(initialTflId ?? 't4');
   const currentEvent = currentEventData.name;
   const isEventOwner = currentEventData.owner === currentUserName;
   const canStopEvent = isEventOwner && currentEventData.status === 'ai-processing';
@@ -12397,6 +12435,116 @@ function WorkspaceContent({
   const metadataOpenRef = useRef(metadataOpen);
   metadataOpenRef.current = metadataOpen;
 
+  const handleManualCodeSave = (previous: string, next: string) => {
+    if (previous === next) return;
+    if (!metadataBehind) setMetadataCodeBaselineByTfl(previousBaselines => ({ ...previousBaselines, [selectedTflKey]: previous }));
+    setSavedCodeText(next);
+    setCodeVersionByTfl(previous => ({ ...previous, [selectedTflKey]: (previous[selectedTflKey] ?? 1) + 1 }));
+    if (!metadataBehind) setMetadataNoticeDismissed(false);
+    setMetadataBehind(true);
+  };
+
+  const handleUpdateMetadata = () => {
+    if (!metadataBehind || codeVersion <= (metadataSyncedVersionByTfl[selectedTflKey] ?? 1)) return;
+    // Demo adapter: production must consume the Copilot metadata diff returned for this saved Code version.
+    const readDatasets = (code: string) => [...new Set([...code.matchAll(/\badam\.([a-z][a-z0-9_]*)\b/gi)].map(match => match[1].toUpperCase()))].join(', ');
+    const uniqueDatasets = readDatasets(savedCodeText);
+    // Only a change in the datasets the Code reads should touch Source Dataset(s); spelling gaps in the sample Code must not.
+    const datasetsChanged = uniqueDatasets !== readDatasets(metadataCodeBaselineByTfl[selectedTflKey] ?? savedCodeText);
+    const sourceField = figureComponents[0]?.fields.find(field => field.id === 'sourceDataset1');
+    const labelField = figureComponents[0]?.fields.find(field => field.id === 'compLabel1');
+    const riskLabelField = figureComponents[1]?.fields.find(field => field.id === 'compLabel2');
+    const metadataDiffData: NonNullable<Message['metadataDiffData']> = [];
+    if (docType === 'figure' && sourceField && uniqueDatasets && datasetsChanged && sourceField.value !== uniqueDatasets) {
+      metadataDiffData.push({ fieldId: sourceField.id, label: sourceField.label, oldValue: sourceField.value, newValue: uniqueDatasets, group: 'KM Plot Chart' });
+    }
+    if (docType === 'figure' && labelField && savedCodeText.includes(DEMO_FIGURE_UPDATED_TITLE_LINE) && labelField.value !== DEMO_FIGURE_UPDATED_LABEL) {
+      metadataDiffData.push({ fieldId: labelField.id, label: labelField.label, oldValue: labelField.value, newValue: DEMO_FIGURE_UPDATED_LABEL, group: 'KM Plot Chart' });
+    }
+    if (docType === 'figure' && riskLabelField && savedCodeText.includes(DEMO_FIGURE_UPDATED_RISK_LINE) && riskLabelField.value !== DEMO_FIGURE_UPDATED_RISK_LABEL) {
+      metadataDiffData.push({ fieldId: riskLabelField.id, label: riskLabelField.label, oldValue: riskLabelField.value, newValue: DEMO_FIGURE_UPDATED_RISK_LABEL, group: 'Number at Risk Table' });
+    }
+    if (docType !== 'figure' && savedCodeText.includes(`/* Program: ${DEMO_GENERIC_PROGRAM_NAME[docType]} */`)) {
+      metadataDiffData.push({ fieldId: docType === 'listing' ? 'programName' : 'f2', label: 'Program Name', oldValue: docType === 'listing' ? 'l_safety' : 't_dm', newValue: DEMO_GENERIC_PROGRAM_NAME[docType], group: 'Basic Info' });
+    }
+    if (docType !== 'figure' && savedCodeText.includes(`/* ${docType === 'table' ? 'Population' : 'Suffix'}: ${DEMO_GENERIC_SECOND_VALUE[docType]} */`)) {
+      metadataDiffData.push({ fieldId: DEMO_GENERIC_SECOND_FIELD[docType], label: docType === 'table' ? 'Population' : 'Suffix', oldValue: docType === 'table' ? 'Safety' : '', newValue: DEMO_GENERIC_SECOND_VALUE[docType], group: 'Basic Info' });
+    }
+    setMetadataUpdating(true);
+    setAiCopilotOpen(true);
+    setCopilotScope('tfl');
+    setMetadataSyncRequest({ id: Date.now(), codeVersion, metadataDiffData });
+  };
+
+  const handleMetadataSyncComplete = (changes: NonNullable<Message['metadataDiffData']>) => {
+    if (changes.length) {
+      if (docType === 'figure') {
+        setFigureComponents(previous => previous.map(block => ({ ...block, fields: block.fields.map(field => {
+          const change = changes.find(item => item.fieldId === field.id);
+          return change ? { ...field, value: change.newValue, confirmed: false, aiUpdated: true } : field;
+        }) })));
+        setAiMetadataUpdate({ revision: Date.now(), fieldIds: changes.map(change => change.fieldId) });
+      } else {
+        setDemoMetadataRequest({ id: Date.now(), docType, changes: changes.map(change => ({ fieldId: change.fieldId, value: change.newValue })) });
+      }
+      if (!metadataOpenRef.current) setHasUnreadMetadataUpdate(true);
+    }
+    setMetadataBehind(false);
+    setMetadataCodeBaselineByTfl(previous => { const next = { ...previous }; delete next[selectedTflKey]; return next; });
+    setMetadataSyncedVersionByTfl(previous => ({ ...previous, [selectedTflKey]: codeVersion }));
+    setMetadataUpdating(false);
+    setMetadataNoticeDismissed(false);
+  };
+
+  const handleDemoScenario = (scenario: DemoScenario) => {
+    const tflId = selectedTflKey;
+    setCopilotScope('tfl');
+    setAiCopilotOpen(true);
+    setPanelView('both');
+    setActiveDemoScenario(scenario);
+    const id = Date.now();
+    if (docType === 'figure') setFigureComponents(INITIAL_FIGURE_COMPONENTS);
+    // Resetting the demo fields also resets their Update Code baseline.
+    setAiMetadataUpdate(docType === 'figure' ? { revision: id, fieldIds: [...DEMO_FIGURE_FIELD_IDS] } : null);
+    setHasUnreadMetadataUpdateByTfl(previous => ({ ...previous, [tflId]: false }));
+    setMetadataBehindByTfl(previous => ({ ...previous, [tflId]: false }));
+    setMetadataNoticeDismissedByTfl(previous => ({ ...previous, [tflId]: false }));
+    if (docType !== 'figure') setDemoMetadataRequest({ id, docType, changes: [
+      { fieldId: docType === 'listing' ? 'programName' : 'f2', value: scenario === 'A' || scenario === 'C' ? DEMO_GENERIC_PROGRAM_NAME[docType] : docType === 'listing' ? 'l_safety' : 't_dm' },
+      { fieldId: DEMO_GENERIC_SECOND_FIELD[docType], value: docType === 'table' ? 'Safety' : '' },
+    ] });
+    setDemoCodeRequest({ id, scenario });
+    if (scenario === 'D') {
+      setDemoScenarioRequest(null);
+      return;
+    }
+
+    const sourceLine = docType === 'figure'
+      ? scenario === 'A' ? DEMO_FIGURE_TITLE_LINE : DEMO_FIGURE_SOURCE_LINE
+      : docType === 'listing' ? '/* Setup listing options */' : '/* ========================================================================= */';
+    const changedLine = docType === 'figure'
+      ? scenario === 'A' ? DEMO_FIGURE_UPDATED_TITLE_LINE : `${DEMO_FIGURE_SOURCE_LINE} /* reviewed */`
+      : scenario === 'B' ? `${sourceLine} /* reviewed */` : `${sourceLine} /* Program: ${DEMO_GENERIC_PROGRAM_NAME[docType]} */`;
+    const codeDiffData = scenario === 'C' ? undefined : {
+      deletions: [{ content: sourceLine, lineNumber: docType === 'figure' ? scenario === 'A' ? 55 : 13 : 1 }],
+      additions: [{ content: changedLine, lineNumber: docType === 'figure' ? scenario === 'A' ? 55 : 13 : 1 }],
+    };
+    const metadataDiffData: NonNullable<Message['metadataDiffData']> = scenario === 'B' ? [] : docType === 'figure' ? [{
+      fieldId: 'compLabel1', label: 'Component Label', oldValue: 'Kaplan-Meier Survival Curves', newValue: DEMO_FIGURE_UPDATED_LABEL, group: 'KM Plot Chart',
+    }] : [{
+      fieldId: docType === 'listing' ? 'programName' : 'f2', label: 'Program Name', oldValue: docType === 'listing' ? 'l_safety' : 't_dm', newValue: DEMO_GENERIC_PROGRAM_NAME[docType], group: 'Basic Info',
+    }];
+    if (metadataDiffData.length && docType === 'figure') {
+      setFigureComponents(previous => previous.map(block => ({ ...block, fields: block.fields.map(item => {
+        const change = metadataDiffData.find(candidate => candidate.fieldId === item.id);
+        return change ? { ...item, value: change.newValue, confirmed: false, aiUpdated: scenario !== 'C' } : item;
+      }) })));
+    }
+    if (metadataDiffData.length && !metadataOpenRef.current) setHasUnreadMetadataUpdateByTfl(previous => ({ ...previous, [tflId]: true }));
+    if (codeDiffData) setCodeVersionByTfl(previous => ({ ...previous, [tflId]: (previous[tflId] ?? 1) + 1 }));
+    setDemoScenarioRequest({ id, scenario, codeDiffData, metadataDiffData });
+  };
+
   const handleGenerateComponentInWorkspace = (name: string, type: string, instructions: string) => {
     const newId = `generated-${Date.now()}`;
     const raw = name.trim();
@@ -12421,13 +12569,14 @@ function WorkspaceContent({
         ...b,
         state: 'ready',
         fields: [
-          { id: `${newId}_l`, label: 'Component Label', value: label, type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
-          { id: `${newId}_t`, label: 'Component Type', value: type, type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-          { id: `${newId}_d`, label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-          { id: `${newId}_v`, label: 'Source Variable(s)', value: 'AVAL, PARAM', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}] }
+          { id: `${newId}_l`, label: 'Component Label', value: label, type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, aiUpdated: true, inputType: 'input' as const },
+          { id: `${newId}_t`, label: 'Component Type', value: type, type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, aiUpdated: true, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
+          { id: `${newId}_d`, label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, aiUpdated: true, badge: 'ai-infer' as const, badgeTooltip: 'Inferred', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
+          { id: `${newId}_v`, label: 'Source Variable(s)', value: 'AVAL, PARAM', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, aiUpdated: true, badge: 'ai-infer' as const, badgeTooltip: 'Inferred', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}] }
         ]
       } : b));
     }, 6000);
+    return newId;
   };
 
   const constraints = {
@@ -12649,6 +12798,7 @@ function WorkspaceContent({
       setPanelView('both');
       if (!figureOpenedRef.current) {
         figureOpenedRef.current = true;
+        setCopilotScope('tfl');
         setAiCopilotOpen(true);
       }
     } else {
@@ -12750,6 +12900,7 @@ function WorkspaceContent({
   };
 
   const handleOpenAICopilotFromShell = (initialInput?: string) => {
+    setCopilotScope('tfl');
     setAiCopilotOpen(true);
     if (initialInput && typeof initialInput === 'string') {
       setAiInputValue(initialInput);
@@ -12996,6 +13147,13 @@ function WorkspaceContent({
 
 
   const handleSelect = (id: string) => {
+    if (id !== selectedId) {
+      setMetadataSyncRequest(null);
+      setDemoScenarioRequest(null);
+      setDemoCodeRequest(null);
+      setActiveDemoScenario(null);
+      setMetadataUpdatingByTfl(previous => ({ ...previous, [selectedTflKey]: false }));
+    }
     setSelectedId(id);
     onViewAssignment(id);
     if (!isTableSelected(id)) {
@@ -13013,6 +13171,7 @@ function WorkspaceContent({
   };
 
   const handleOpenAICopilot = () => {
+    if (!aiCopilotOpen) setCopilotScope('tfl');
     setAiCopilotOpen((prev) => !prev);
   };
 
@@ -13057,6 +13216,10 @@ function WorkspaceContent({
   };
 
   const handleCloseAICopilot = () => {
+    if (metadataUpdating) {
+      setMetadataSyncRequest(null);
+      setMetadataUpdating(false);
+    }
     requestDraftExit({ type: 'close' });
   };
 
@@ -13398,6 +13561,10 @@ function WorkspaceContent({
         currentTableId={selectedTable?.id || selectedId}
         onHandoffToEventCopilot={handleHandoffToEventCopilot}
         onComposerDirtyChange={setIsAiComposerDirty}
+        metadataSyncRequest={metadataSyncRequest}
+        demoScenarioRequest={demoScenarioRequest}
+        onMetadataSyncComplete={handleMetadataSyncComplete}
+        onRunningChange={setIsTflCopilotRunning}
         actorName={currentUserName}
         quoteInsertRef={quoteInsertRef}
         panelWidth={aiCopilotWidth}
@@ -13408,9 +13575,11 @@ function WorkspaceContent({
         onOpenCodePanel={() => handlePanelViewChange('code')}
         onOpenSpatialView={() => setRtfOpen(true)}
         onJumpToMetadata={(blockId, fieldId) => {
+          setPanelView('both');
           setMetadataOpen(true);
           if (fieldId) {
             setTargetMetadataFieldId(fieldId);
+            setTargetMetadataFieldTrigger(previous => previous + 1);
           }
         }}
         docType={docType}
@@ -13766,6 +13935,27 @@ function WorkspaceContent({
             />
           </div>
 
+          <div className="mb-[6px] flex shrink-0 items-center gap-[8px] overflow-x-auto rounded-[8px] border border-graphite-10 bg-white px-[10px] py-[6px] pointer-events-auto" aria-label="Demo controls">
+            <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-text-secondary">Demo controls</span>
+            {([
+              ['A', 'AI changes Code + Meta'],
+              ['B', 'AI changes Code only'],
+              ['C', 'AI changes Meta only'],
+              ['D', 'Manual edit, then Save'],
+            ] as const).map(([scenario, label]) => (
+              <button
+                key={scenario}
+                type="button"
+                onClick={() => handleDemoScenario(scenario)}
+                disabled={isTflCopilotRunning || isSelectedTflExecuting}
+                className={`shrink-0 rounded-[6px] border px-[9px] py-[5px] text-[12px] transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${activeDemoScenario === scenario ? 'border-brand-1 bg-[#F4E8EE] text-brand-1' : 'border-graphite-20 bg-white text-text-primary hover:bg-bg-panel'}`}
+              >
+                {scenario} · {label}
+              </button>
+            ))}
+            {activeDemoScenario === 'D' && <span className="shrink-0 text-[11px] text-text-secondary">Code change prepared. Click Save in Code, then Update Metadata.</span>}
+          </div>
+
           {/* Below ViewToggleBar: Container for Shell, Code, AI Copilot cards and floating GroupCodePanel */}
           <div className="relative min-w-0 min-h-0 flex-1 overflow-visible pointer-events-auto">
             {isEventStopped && (
@@ -13869,6 +14059,14 @@ function WorkspaceContent({
                         isOccupied={selectedTflOccupancy?.isOccupied ?? false}
                         lastEditedAt={selectedTflOccupancy?.lastEditedAt}
                         onTakeOver={handleTakeOver}
+                        onSaveCode={handleManualCodeSave}
+                        metadataBehind={metadataBehind}
+                        metadataNoticeDismissed={metadataNoticeDismissed}
+                        metadataUpdating={metadataUpdating}
+                        onUpdateMetadata={handleUpdateMetadata}
+                        onDismissMetadataNotice={() => setMetadataNoticeDismissed(true)}
+                        isCopilotRunning={isTflCopilotRunning || isSelectedTflExecuting}
+                        demoCodeRequest={demoCodeRequest}
                       />
                     </div>
                   )}
@@ -13927,6 +14125,7 @@ function WorkspaceContent({
                           return !open;
                         })}
                         hasUnreadMetadataUpdate={hasUnreadMetadataUpdate}
+                        aiMetadataUpdate={aiMetadataUpdate}
                         figureComponents={figureComponents}
                         setFigureComponents={setFigureComponents}
                         metadataOpen={metadataOpen}
@@ -13963,6 +14162,8 @@ function WorkspaceContent({
                         metaUpdateProcessing={metaUpdateProcessing}
                         submittedDiffItems={submittedDiffItems}
                         targetFieldId={targetMetadataFieldId || undefined}
+                        targetFieldTrigger={targetMetadataFieldTrigger}
+                        demoMetadataRequest={demoMetadataRequest}
                         onReviewItemsChange={setReviewItems}
                         onMetaCancel={() => setMetaUpdateActive(false)}
                         onQuoteField={handleQuoteField}
@@ -14012,6 +14213,14 @@ function WorkspaceContent({
                         isOccupied={selectedTflOccupancy?.isOccupied ?? false}
                         lastEditedAt={selectedTflOccupancy?.lastEditedAt}
                         onTakeOver={handleTakeOver}
+                        onSaveCode={handleManualCodeSave}
+                        metadataBehind={metadataBehind}
+                        metadataNoticeDismissed={metadataNoticeDismissed}
+                        metadataUpdating={metadataUpdating}
+                        onUpdateMetadata={handleUpdateMetadata}
+                        onDismissMetadataNotice={() => setMetadataNoticeDismissed(true)}
+                        isCopilotRunning={isTflCopilotRunning || isSelectedTflExecuting}
+                        demoCodeRequest={demoCodeRequest}
                       />
                     </div>
                   )}

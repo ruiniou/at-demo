@@ -1,139 +1,73 @@
 import React, { useState } from "react";
-import arrowRightIconUrl from "../../icons/arrow-right-s-line.svg";
-import arrowDownIconUrl from "../../icons/arrow-down-s-line.svg";
-import fileCopyIconUrl from "../../icons/file-copy-line.svg";
-
-const TEXT_SECONDARY_FILTER =
-  "brightness(0) saturate(100%) invert(64%) sepia(5%) saturate(446%) hue-rotate(136deg) brightness(90%) contrast(91%)";
 
 export interface DiffLine {
   content: string;
+  lineNumber?: number;
 }
 
 export interface AICodeDiffProps {
-  summary?: string;
   additions?: DiffLine[];
   deletions?: DiffLine[];
   additionCount?: number;
   deletionCount?: number;
   defaultExpanded?: boolean;
-  onCopy?: () => void;
   className?: string;
 }
 
 export function AICodeDiff({
-  summary = "Lines 3-7",
   additions = [
-    { content: "= 'AZD999\\n1 mg/kg'" },
-    { content: "= 'AZD999\\n2 mg/kg'" },
-    { content: "= 'Investigator choice of therapy'" },
-    { content: "= 'Total'" },
+    { content: "'AZD999 Cohort A (10 mg/kg)'", lineNumber: 1 },
+    { content: "'AZD999 Cohort B (20 mg/kg)'", lineNumber: 2 },
+    { content: "'Investigator Choice of Therapy'", lineNumber: 3 },
+    { content: "'Total (All Cohorts)'", lineNumber: 4 },
   ],
   deletions = [
-    { content: "= 'AZD999\\n1 mg/kg'" },
-    { content: "= 'AZD999\\n2 mg/kg'" },
-    { content: "= 'AZD999\\nTotal'" },
-    { content: "= 'Investigator choice of therapy'" },
-    { content: "= 'Total'" },
+    { content: "'AZD999 10 mg/kg'", lineNumber: 1 },
+    { content: "'AZD999 20 mg/kg'", lineNumber: 2 },
+    { content: "'Investigator Choice'", lineNumber: 3 },
+    { content: "'Total'", lineNumber: 4 },
   ],
   additionCount,
   deletionCount,
   defaultExpanded = false,
-  onCopy,
   className = "",
 }: AICodeDiffProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const [hovered, setHovered] = useState(false);
-
   const addCount = additionCount ?? additions.length;
   const delCount = deletionCount ?? deletions.length;
 
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={[
-        "bg-white border-[0.6px] border-graphite-20 rounded-[8px]",
-        "flex flex-col",
-        className,
-      ].join(" ")}
-    >
-      <div
-        onClick={() => setExpanded(!expanded)}
-        className={[
-          "flex items-center justify-between px-[10px] py-[8px] cursor-pointer select-none transition-colors",
-          hovered ? "bg-bg-panel" : "bg-transparent",
-        ].join(" ")}
+    <div className={`overflow-hidden rounded-[8px] border border-graphite-20 bg-white ${className}`}>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded(value => !value)}
+        className="flex min-h-[44px] w-full items-center gap-[8px] px-[12px] text-left hover:bg-bg-panel active:bg-graphite-10"
       >
-        <div className="flex items-center gap-[12px]">
-          <div className="flex items-center gap-[6px]">
-            <img
-              src={expanded ? arrowDownIconUrl : arrowRightIconUrl}
-              alt=""
-              aria-hidden="true"
-              className="w-[16px] h-[16px] block shrink-0"
-              style={{ filter: TEXT_SECONDARY_FILTER }}
-            />
-            <span className="t-body-compact text-text-primary">{summary}</span>
-          </div>
-          <div className="flex items-center gap-[4px]">
-            {addCount > 0 && (
-              <span className="t-small text-code-success">+{addCount}</span>
-            )}
-            {delCount > 0 && (
-              <span className="t-small text-status-error">-{delCount}</span>
-            )}
-          </div>
-        </div>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onCopy?.();
-          }}
-          className="w-[24px] h-[24px] rounded-[4px] flex items-center justify-center hover:bg-graphite-10 transition-colors shrink-0"
-        >
-          <img
-            src={fileCopyIconUrl}
-            alt="Copy"
-            className="w-[16px] h-[16px] block"
-            style={{ filter: TEXT_SECONDARY_FILTER }}
-          />
-        </button>
-      </div>
-
+        <svg className="h-[16px] w-[16px] shrink-0 text-text-secondary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M23 12 17.8145 17.1855 16.5182 15.889 20.4073 12 16.5182 8.11091 17.8145 6.81455 23 12ZM3.59273 12 7.48181 15.889 6.18545 17.1855 1 12 6.18545 6.81455 7.48181 8.11091 3.59273 12ZM9.97275 20.25H8.02175L14.0273 3.75H15.9782L9.97275 20.25Z" />
+        </svg>
+        <span className="t-body-compact text-text-primary">Edited code</span>
+        <span className="ml-[4px] flex gap-[6px] t-small tabular-nums">
+          <span className="text-code-success">+{addCount}</span>
+          <span className="text-status-error">-{delCount}</span>
+        </span>
+        <svg className={`ml-auto h-[16px] w-[16px] shrink-0 text-text-secondary transition-transform ${expanded ? 'rotate-90' : ''}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
       {expanded && (
-        <div className="flex flex-col border-t-[0.6px] border-graphite-10">
-          <div className="overflow-x-auto overflow-y-auto">
-            {deletions.length > 0 && (
-              <div className="bg-[#FDECEA] border-l-[3px] border-brand-1 py-[4px] min-w-max">
-                {deletions.map((line, idx) => (
-                  <div key={idx} className="flex items-stretch px-[10px]">
-                    <div className="w-[16px] shrink-0 flex items-center justify-center">
-                      <span className="t-code text-text-secondary leading-[20px]">-</span>
-                    </div>
-                    <div className="flex-1 flex items-center">
-                      <code className="t-code text-text-secondary leading-[20px]">{line.content}</code>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {additions.length > 0 && (
-              <div className="bg-[#E6F4EA] border-l-[3px] border-code-success py-[4px] min-w-max">
-                {additions.map((line, idx) => (
-                  <div key={idx} className="flex items-stretch px-[10px]">
-                    <div className="w-[16px] shrink-0 flex items-center justify-center">
-                      <span className="t-code text-text-secondary leading-[20px]">+</span>
-                    </div>
-                    <div className="flex-1 flex items-center">
-                      <code className="t-code text-text-secondary leading-[20px]">{line.content}</code>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="max-h-[260px] overflow-auto border-t border-graphite-10 font-mono t-code">
+          {deletions.map((line, index) => (
+            <div key={`remove-${index}`} className="flex min-w-max gap-[8px] border-l-[3px] border-brand-1 bg-[#FDECEA] px-[8px] leading-[20px] text-text-secondary">
+              <span aria-hidden="true">−</span><span className="w-[24px] text-right tabular-nums">{line.lineNumber ?? index + 1}</span><code className="whitespace-pre">{line.content}</code>
+            </div>
+          ))}
+          {additions.map((line, index) => (
+            <div key={`add-${index}`} className="flex min-w-max gap-[8px] border-l-[3px] border-code-success bg-[#E6F4EA] px-[8px] leading-[20px] text-text-secondary">
+              <span aria-hidden="true">+</span><span className="w-[24px] text-right tabular-nums">{line.lineNumber ?? index + 1}</span><code className="whitespace-pre">{line.content}</code>
+            </div>
+          ))}
         </div>
       )}
     </div>
