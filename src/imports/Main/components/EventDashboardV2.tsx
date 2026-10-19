@@ -38,6 +38,7 @@ export default function EventDashboardV2({ event, tfls, onBack, onOpenTfl, onOpe
   const changeSort = (key: SortKey) => setSort((current) => !current || current.key !== key ? { key, direction: 'asc' } : current.direction === 'asc' ? { key, direction: 'desc' } : null);
   const percent = totals.total ? Math.round(totals.locked / totals.total * 100) : 0;
   const columns = ['Member', 'Assigned', 'Completed', 'Single-TFL Requests', 'Event Requests'] as const;
+  const tflColumns = ['TFL', 'Assignee', 'Requests', 'Diff Accept Rounds'] as const;
   return <DashboardFrame title={event.name} updatedPlacement="title" headerLeading={headerLeading} updatedAt={updatedAt} onBack={onBack} onRefresh={() => setUpdatedAt(new Date())}>
     {loadState === 'error' ? <DashboardError onRetry={() => setUpdatedAt(new Date())} /> : <>
       {!tfls.length ? <section className="rounded-md border border-graphite-10 bg-white p-[24px] text-center t-body">No TFLs in this Event yet.</section> : <>
@@ -62,6 +63,18 @@ export default function EventDashboardV2({ event, tfls, onBack, onOpenTfl, onOpe
               <td className={`${tdClass} text-right tabular-nums`}>{member.singleTfl}</td><td className={`${tdClass} text-right tabular-nums`}>{member.event}</td>
             </tr>) : <tr><td colSpan={columns.length} className={`${tdClass} text-center text-text-secondary`}>No members found.</td></tr>}
           </tbody>
+        </DashboardTable>
+        <DashboardTable title="TFL Activity" minWidth="min-w-3xl">
+          <thead><tr>{tflColumns.map((label) => <th key={label} scope="col" className={`${thClass} ${label === 'TFL' || label === 'Assignee' ? '' : 'text-right'}`}>{label}</th>)}</tr></thead>
+          <tbody>{tfls.map((tfl) => {
+            const activity = mockDashboardDataSource.activityFor(event.id, tfl);
+            return <tr key={tfl.id} className="hover:bg-bg-panel">
+              <th scope="row" className={tdClass}><span className="block min-w-0 truncate">{tfl.name}</span></th>
+              <td className={tdClass}>{tfl.assignee ? <span className="flex min-w-0 items-center gap-[6px] text-[12px]"><Avatar name={tfl.assignee} level="modal" /><span className="min-w-0 truncate">{tfl.assignee}</span></span> : <span className="text-text-secondary">Unassigned</span>}</td>
+              <td className={`${tdClass} text-right tabular-nums`}>{activity.requests}</td>
+              <td className={`${tdClass} text-right tabular-nums`}>{activity.diffRounds}</td>
+            </tr>;
+          })}</tbody>
         </DashboardTable>
       </>}
     </>}

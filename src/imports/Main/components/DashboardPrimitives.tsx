@@ -6,12 +6,14 @@ import unassignedIcon from '../../../icons/empty-assignee.svg';
 import inProgressIcon from '../../../icons/Status label/Status=WIP.svg';
 import errorIcon from '../../../icons/error-warning-line.svg';
 import databaseIcon from '../../../icons/database-2-line.svg';
+import costIcon from '../../../icons/money-dollar-circle-line.svg';
 import lockedIcon from '../../../icons/Lock.svg';
 import resetIcon from '../../../icons/reset-right-line.svg';
 import dashboardIcon from '../../../icons/dashboard-3-line.svg';
 import studyIcon from '../../../icons/stack-line.svg';
 import eventIcon from '../../../icons/task-line.svg';
 import usageIcon from '../../../icons/bar-chart-2-line.svg';
+import infoIcon from '../../../icons/information-line.svg';
 import './dashboard.css';
 
 export function DashboardIcon({ src, className = 'size-4' }: { src: string; className?: string }) {
@@ -20,7 +22,7 @@ export function DashboardIcon({ src, className = 'size-4' }: { src: string; clas
 }
 
 export const usagePageIcon = usageIcon;
-export const metricIcons = { locked: lockedIcon, error: errorIcon, unassigned: unassignedIcon, inProgress: inProgressIcon, token: databaseIcon, study: studyIcon, event: eventIcon };
+export const metricIcons = { locked: lockedIcon, error: errorIcon, unassigned: unassignedIcon, inProgress: inProgressIcon, token: databaseIcon, cost: costIcon, study: studyIcon, event: eventIcon };
 
 export function DashboardFrame({ title, subtitle, updatedAt, onBack, onRefresh, actions, children, showBack = true, titleIcon = dashboardIcon, updatedPlacement = 'below', headerLeading }: {
   title: string;
@@ -69,8 +71,10 @@ export function DashboardFrame({ title, subtitle, updatedAt, onBack, onRefresh, 
   </main>;
 }
 
-export function MetricCard({ label, value, detail, icon, iconTone = 'neutral', onClick }: {
+export function MetricCard({ label, info, value, detail, icon, iconTone = 'neutral', onClick }: {
   label: string;
+  /** Explains how the value is calculated; shown in a tooltip beside the label. */
+  info?: string;
   value: string | number;
   detail?: string;
   icon?: string;
@@ -81,6 +85,7 @@ export function MetricCard({ label, value, detail, icon, iconTone = 'neutral', o
     <div className="flex min-h-8 items-start justify-between gap-3">
       <span className="flex items-center gap-2 t-small text-text-secondary">
         {label}
+        {info && <Tooltip label={info} placement="top" maxWidth={240}><span tabIndex={0} role="img" aria-label={info} className="flex rounded-sm text-text-secondary focus-visible:outline-2 focus-visible:outline-brand-1"><DashboardIcon src={infoIcon} className="size-3.5" /></span></Tooltip>}
       </span>
       {icon && <span className={`flex size-8 shrink-0 items-center justify-center rounded-md ${iconTone === 'danger' ? 'bg-status-error-bg text-status-error' : iconTone === 'warning' ? 'bg-status-warning-bg text-status-warning' : iconTone === 'brand' ? 'bg-bg-panel text-brand-1' : 'bg-bg-panel text-text-secondary'}`}><DashboardIcon src={icon} /></span>}
     </div>
@@ -92,16 +97,17 @@ export function MetricCard({ label, value, detail, icon, iconTone = 'neutral', o
     : <div className={className}>{body}</div>;
 }
 
-export function ProgressBar({ locked, inProgress, error, stopped = 0, total, label }: {
-  locked: number; inProgress: number; error: number; stopped?: number; total: number; label: string;
+export function ProgressBar({ locked, inProgress, error, stopped = 0, todo = 0, total, label }: {
+  locked: number; inProgress: number; error: number; stopped?: number; todo?: number; total: number; label: string;
 }) {
   const segments = [
     { value: locked, color: 'var(--color-brand-1)' },
     { value: inProgress, color: 'var(--color-status-warning)' },
     { value: error, color: 'var(--color-status-error)' },
     { value: stopped, color: 'var(--color-graphite-40)' },
+    { value: todo, color: 'var(--color-graphite-20)' },
   ];
-  return <div role="img" aria-label={`${label}: ${locked} Locked, ${inProgress} In Progress, ${error} Error${stopped ? `, ${stopped} Stopped` : ''}`} className="flex h-2 min-w-24 overflow-hidden rounded-sm bg-graphite-10">
+  return <div role="img" aria-label={`${label}: ${locked} Locked, ${inProgress} In Progress, ${error} Error${stopped ? `, ${stopped} Stopped` : ''}${todo ? `, ${todo} To Do` : ''}`} className="flex h-2 min-w-24 overflow-hidden rounded-sm bg-graphite-10">
     {total > 0 && segments.filter((part) => part.value > 0).map((part, index) => <span key={index} style={{ width: `${part.value / total * 100}%`, backgroundColor: part.color }} />)}
   </div>;
 }

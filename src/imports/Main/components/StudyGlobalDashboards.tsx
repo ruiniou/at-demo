@@ -10,7 +10,7 @@ import { Button } from '../../../components/ui/Button';
 import { SearchBar } from '../../../components/ui/SearchBar';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import { DashboardError, DashboardFrame, DashboardIcon, DashboardTable, MetricCard, ProgressBar, metricIcons, usagePageIcon, tdClass, thClass } from './DashboardPrimitives';
-import { countStatuses, mockDashboardDataSource, sumUsage } from './dashboardData';
+import { COST_NOTE, countStatuses, estimateCost, formatCost, mockDashboardDataSource, sumUsage } from './dashboardData';
 import type { DashboardTfl, TokenUsageRecord } from './dashboardData';
 import arrowRightIcon from '../../../icons/arrow-right-s-line.svg';
 
@@ -24,42 +24,47 @@ export function StudyDashboard({ study, onBack, showBack = true, loadState = 're
   const totals = countStatuses(tfls, mockDashboardDataSource);
   const records = mockDashboardDataSource.usageRecords().filter((row) => row.studyId === study.id);
   const usage = sumUsage(records);
-  const unattributed = sumUsage(records.filter((row) => row.eventId === null));
+  const legend = [['Locked', 'var(--color-brand-1)'], ['In Progress', 'var(--color-status-warning)'], ['Error', 'var(--color-status-error)'], ...(totals.stopped ? [['Stopped', 'var(--color-graphite-40)']] : [])];
   const percent = totals.total ? Math.round(totals.locked / totals.total * 100) : 0;
+  const costCell = (value: { input: number; output: number }) => <td className={`${tdClass} text-right tabular-nums`}>{formatCost(estimateCost(value))}</td>;
   return <DashboardFrame title={`Study ${study.id}`} updatedPlacement="title" headerLeading={headerLeading} updatedAt={updatedAt} onBack={onBack} onRefresh={() => setUpdatedAt(new Date())} showBack={showBack}>
     {loadState === 'error' ? <DashboardError onRetry={() => setUpdatedAt(new Date())} /> : !tfls.length ? <section className="rounded-md border border-graphite-10 bg-white p-[24px] text-center t-body">No TFLs in this Study yet.</section> : <>
       <section aria-label="Study Metrics" className="dashboard-metric-grid gap-3">
-        <MetricCard label="Completion" value={`${totals.locked} / ${totals.total}`} detail={`${percent}% locked`} icon={metricIcons.locked} iconTone="brand" />
-        <MetricCard label="In Progress" value={totals.inProgress} detail="Active TFLs" icon={metricIcons.inProgress} iconTone="warning" />
-        <MetricCard label="Error" value={totals.error} detail="Needs attention" icon={metricIcons.error} iconTone="danger" />
+        <MetricCard label="TFL Completion" value={`${totals.locked} / ${totals.total}`} detail={`${percent}% locked`} icon={metricIcons.locked} iconTone="brand" />
+        <MetricCard label="Events" value={study.events.length} detail="In this Study" icon={metricIcons.event} />
         <MetricCard label="Token Usage" value={number(usage.total)} detail="Cumulative" icon={metricIcons.token} />
+        <MetricCard label="Estimated Cost" info={COST_NOTE} value={formatCost(estimateCost(usage))} detail="Cumulative" icon={metricIcons.cost} />
       </section>
-      <DashboardTable title="Events" minWidth="min-w-4xl">
-        <thead><tr>{['Event', 'Event Owner', 'Completion', 'Input', 'Output', 'Total'].map((label) => <th key={label} scope="col" className={`${thClass} ${['Input', 'Output', 'Total'].includes(label) ? 'text-right' : ''}`}>{label}</th>)}</tr></thead>
+      <DashboardTable title="Events" minWidth="min-w-4xl" tools={<div className="flex items-center gap-4 t-small text-text-secondary">{legend.map(([name, color]) => <span key={name} className="flex items-center gap-2"><span className="size-2 rounded-sm" style={{ backgroundColor: color }} />{name}</span>)}</div>}>
+        <thead><tr>{['Event', 'Event Owner', 'TFL Progress', 'Input', 'Output', 'Total', 'Est. Cost'].map((label) => <th key={label} scope="col" className={`${thClass} ${['Input', 'Output', 'Total', 'Est. Cost'].includes(label) ? 'text-right' : ''}`}>{label}</th>)}</tr></thead>
         <tbody>{study.events.length ? study.events.map((event) => {
           const counts = countStatuses(event.tfls, mockDashboardDataSource);
           const eventUsage = sumUsage(records.filter((row) => row.eventId === event.id));
           return <tr key={event.id}>
-            <th scope="row" className={tdClass}><span className="inline-flex min-w-0 items-center gap-2"><span className="truncate">{event.name}</span>{counts.error > 0 && <span className="shrink-0 rounded-[calc(var(--radius-xs)*2)] bg-status-error-bg px-[6px] py-[2px] t-small text-status-error">{counts.error} Error</span>}</span></th><td className="px-[10px] py-[4px]"><ReadOnlyOwner name={event.owner} /></td>
-            <td className={tdClass}><div className="flex min-w-40 items-center gap-3"><ProgressBar locked={counts.locked} inProgress={0} error={0} total={counts.total} label={`${event.name} completion`} /><span className="whitespace-nowrap tabular-nums">{counts.locked} / {counts.total}</span></div></td>
-            <td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.input)}</td><td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.output)}</td><td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.total)}</td>
+            <th scope="row" className={tdClass}><span className="inline-flex min-w-0 items-center gap-2"><span className="truncate">{event.name}</span></span></th><td className="px-[10px] py-[4px]"><ReadOnlyOwner name={event.owner} /></td>
+            <td className={tdClass}><div className="flex min-w-40 items-center gap-3"><ProgressBar locked={counts.locked} inProgress={counts.inProgress} error={counts.error} stopped={counts.stopped} total={counts.total} label={`${event.name} TFL progress`} /><span className="whitespace-nowrap tabular-nums">{counts.locked} / {counts.total}</span></div></td>
+            <td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.input)}</td><td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.output)}</td><td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.total)}</td>{costCell(eventUsage)}
           </tr>;
         }) : null}
-        {unattributed.total > 0 && <tr className="bg-bg-panel"><th scope="row" className={tdClass}>Unattributed</th><td className={tdClass} /><td className={tdClass} /><td className={`${tdClass} text-right`}>{number(unattributed.input)}</td><td className={`${tdClass} text-right`}>{number(unattributed.output)}</td><td className={`${tdClass} text-right`}>{number(unattributed.total)}</td></tr>}
         </tbody>
       </DashboardTable>
     </>}
   </DashboardFrame>;
 }
 
-type GroupedUsage = { label: string; range: string; input: number; output: number; total: number };
-function groupedUsage(records: TokenUsageRecord[], month: dayjs.Dayjs): GroupedUsage[] {
+type GroupedUsage = { label: string; range: string; input: number; output: number; total: number; cost: number; [ta: string]: string | number };
+const TA_COLORS = ['var(--color-brand-1)', 'var(--color-az-blue)', 'var(--color-az-info)', 'var(--color-brand-1-disabled)'];
+function groupedUsage(records: TokenUsageRecord[], month: dayjs.Dayjs, taOf: Record<string, string>, tas: string[]): GroupedUsage[] {
   return Array.from({ length: 6 }, (_, index) => {
     const date = month.subtract(5 - index, 'month');
+    const inMonth = records.filter((record) => record.date.slice(0, 7) === date.format('YYYY-MM'));
+    const usage = sumUsage(inMonth);
     return {
       label: date.format('MMM'),
       range: date.format('MMMM YYYY'),
-      ...sumUsage(records.filter((record) => record.date.slice(0, 7) === date.format('YYYY-MM'))),
+      ...usage,
+      cost: estimateCost(usage),
+      ...Object.fromEntries(tas.map((ta) => [ta, estimateCost(sumUsage(inMonth.filter((record) => taOf[record.studyId] === ta)))])),
     };
   });
 }
@@ -73,6 +78,7 @@ export function GlobalDashboard({ studies, onBack, onExport, loadState = 'ready'
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(() => dayjs());
   const [groupBy, setGroupBy] = useState<'study' | 'ta'>('study');
+  const [metric, setMetric] = useState<'tokens' | 'cost'>('tokens');
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const all = mockDashboardDataSource.usageRecords();
@@ -80,7 +86,9 @@ export function GlobalDashboard({ studies, onBack, onExport, loadState = 'ready'
   const totals = sumUsage(rows);
   const activeStudies = new Set(rows.map((row) => row.studyId));
   const activeEvents = new Set(rows.map((row) => row.eventId).filter((id): id is string => Boolean(id)));
-  const chart = useMemo(() => groupedUsage(all.filter((row) => row.date <= end), month), [all, month, end]);
+  const taOf = useMemo(() => Object.fromEntries(studies.map((study) => [study.id, study.ta])), [studies]);
+  const allTas = useMemo(() => [...new Set(studies.map((study) => study.ta))].sort(), [studies]);
+  const chart = useMemo(() => groupedUsage(all.filter((row) => row.date <= end), month, taOf, allTas), [all, month, end, taOf, allTas]);
   const axisTicks = useMemo(() => {
     const count = Math.min(6, chart.length);
     if (count < 2) return chart.map((item) => item.label);
@@ -90,6 +98,7 @@ export function GlobalDashboard({ studies, onBack, onExport, loadState = 'ready'
   const visibleStudies = studies.filter((study) => activeStudies.has(study.id) && study.id.toLowerCase().includes(search.trim().toLowerCase()));
   const taGroups = [...new Set(visibleStudies.map((study) => study.ta))].sort();
   const cell = (value: number) => <td className={`${tdClass} text-right tabular-nums`}>{number(value)}</td>;
+  const costCell = (value: { input: number; output: number }) => <td className={`${tdClass} text-right tabular-nums`}>{formatCost(estimateCost(value))}</td>;
   const onKey = (event: React.KeyboardEvent<HTMLTableRowElement>, key: string) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(key); } };
   return <DashboardFrame title="Usage" titleIcon={usagePageIcon} headerLeading={headerLeading} updatedPlacement="title" updatedAt={updatedAt} onBack={onBack} onRefresh={() => setUpdatedAt(new Date())} showBack={false} actions={<>
     <ConfigProvider theme={{ token: { colorPrimary: 'var(--color-brand-1)', colorPrimaryHover: 'var(--color-brand-1-hover)', colorText: 'var(--color-text-primary)', colorBorder: 'var(--color-border-default)' } }}>
@@ -116,30 +125,31 @@ export function GlobalDashboard({ studies, onBack, onExport, loadState = 'ready'
   </>}>
     {loadState === 'error' ? <DashboardError onRetry={() => setUpdatedAt(new Date())} /> : <>
       <>
-        <section aria-label="Global Metrics" data-count="3" className="dashboard-metric-grid gap-3">
+        <section aria-label="Global Metrics" className="dashboard-metric-grid gap-3">
           <MetricCard label="Total Tokens" value={number(totals.total)} detail={`${start} – ${end}`} icon={metricIcons.token} />
+          <MetricCard label="Estimated Cost" info={COST_NOTE} value={formatCost(estimateCost(totals))} detail={`${start} – ${end}`} icon={metricIcons.cost} />
           <MetricCard label="Studies" value={activeStudies.size} detail="With token usage" icon={metricIcons.study} />
           <MetricCard label="Events" value={activeEvents.size} detail="With token usage" icon={metricIcons.event} />
         </section>
-        <section className="rounded-md border border-graphite-10 bg-white p-[16px]"><div className="mb-3 flex flex-wrap items-baseline justify-between gap-2"><h2 className="t-heading">Monthly Token Usage</h2><span className="t-small text-text-secondary">{month.subtract(5, 'month').format('MMM YYYY')} – {month.format('MMM YYYY')}</span></div><div className="h-64 min-w-0" role="img" aria-label="Monthly Token Usage over six months">
-          <>{chart.every((item) => item.total === 0) ? <div className="flex h-full items-center justify-center t-small text-text-secondary">No token usage recorded in these six months.</div> : <ResponsiveContainer width="100%" height="100%"><BarChart data={chart} accessibilityLayer><CartesianGrid vertical={false} stroke="var(--color-graphite-10)" /><XAxis dataKey="label" ticks={axisTicks} interval={0} tick={{ fill: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }} axisLine={false} tickLine={false} /><YAxis tick={{ fill: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }} axisLine={false} tickLine={false} tickFormatter={number} /><ChartTooltip content={({ active, payload }) => active && payload?.length ? <div className="rounded-md border border-graphite-20 bg-white p-3 t-small shadow-elevation-overlay"><p className="mb-2 t-small-medium">{payload[0].payload.range}</p><p>Input: {number(payload[0].payload.input)}</p><p>Output: {number(payload[0].payload.output)}</p><p>Total: {number(payload[0].payload.total)}</p></div> : null} /><Bar dataKey="input" name="Input" stackId="tokens" fill="var(--color-dark-mulberry)" isAnimationActive={false} /><Bar dataKey="output" name="Output" stackId="tokens" fill="var(--color-brand-1-disabled)" isAnimationActive={false} /></BarChart></ResponsiveContainer>}</>
-        </div><div className="mt-3 flex gap-4 t-small text-text-secondary"><span className="flex items-center gap-2"><span className="size-2 rounded-sm bg-dark-mulberry" />Input</span><span className="flex items-center gap-2"><span className="size-2 rounded-sm bg-brand-1-disabled" />Output</span></div></section>
-        <DashboardTable title="Token Usage Details" tools={<div className="flex flex-wrap items-center gap-3"><SegmentedControl size="panel" value={groupBy} onChange={(value) => setGroupBy(value as 'study' | 'ta')} options={[{ label: 'By Study', value: 'study' }, { label: 'By TA', value: 'ta' }]} /><SearchBar variant="embedded" size="compact" value={search} onChange={setSearch} placeholder="Search Studies" className="w-48" /></div>} minWidth="min-w-4xl">
-          <thead><tr>{(groupBy === 'study' ? ['Study / Event', 'Study Owner', 'Events', 'Input', 'Output', 'Total'] : ['TA / Study', 'Studies', 'Events', 'Input', 'Output', 'Total']).map((label) => <th key={label} scope="col" className={`${thClass} ${['Events', 'Studies', 'Input', 'Output', 'Total'].includes(label) ? 'text-right' : ''}`}>{label}</th>)}</tr></thead>
-          <tbody>{!visibleStudies.length && <tr><td colSpan={6} className="p-6 text-center t-small text-text-secondary">{search.trim() ? 'No Results Found' : 'No token usage recorded this month.'}</td></tr>}{groupBy === 'study' ? visibleStudies.map((study) => {
+          <section className="rounded-md border border-graphite-10 bg-white p-[16px]"><div className="mb-3 flex flex-wrap items-baseline justify-between gap-2"><h2 className="t-heading">Monthly Usage</h2><div className="flex flex-wrap items-center gap-3"><span className="t-small text-text-secondary">{month.subtract(5, 'month').format('MMM YYYY')} – {month.format('MMM YYYY')}</span><SegmentedControl size="panel" value={metric} onChange={(value) => setMetric(value as 'tokens' | 'cost')} options={[{ label: 'Tokens', value: 'tokens' }, { label: 'Estimated Cost', value: 'cost' }]} /></div></div><div className="h-64 min-w-0" role="img" aria-label={metric === 'tokens' ? 'Monthly Token Usage over six months' : 'Monthly Estimated Cost by TA over six months'}>
+          <>{chart.every((item) => item.total === 0) ? <div className="flex h-full items-center justify-center t-small text-text-secondary">No token usage recorded in these six months.</div> : <ResponsiveContainer width="100%" height="100%"><BarChart data={chart} accessibilityLayer><CartesianGrid vertical={false} stroke="var(--color-graphite-10)" /><XAxis dataKey="label" ticks={axisTicks} interval={0} tick={{ fill: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }} axisLine={false} tickLine={false} /><YAxis tick={{ fill: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }} axisLine={false} tickLine={false} tickFormatter={metric === 'tokens' ? number : formatCost} /><ChartTooltip content={({ active, payload }) => active && payload?.length ? <div className="rounded-md border border-graphite-20 bg-white p-3 t-small shadow-elevation-overlay"><p className="mb-2 t-small-medium">{payload[0].payload.range}</p>{metric === 'tokens' ? <><p>Input: {number(payload[0].payload.input)}</p><p>Output: {number(payload[0].payload.output)}</p><p>Total: {number(payload[0].payload.total)}</p></> : <>{allTas.map((ta) => <p key={ta}>{ta}: {formatCost(payload[0].payload[ta])}</p>)}<p className="mt-1 t-small-medium">Total: {formatCost(payload[0].payload.cost)}</p></>}</div> : null} />{metric === 'tokens' ? <><Bar dataKey="input" name="Input" stackId="tokens" fill="var(--color-dark-mulberry)" isAnimationActive={false} /><Bar dataKey="output" name="Output" stackId="tokens" fill="var(--color-brand-1-disabled)" isAnimationActive={false} /></> : allTas.map((ta, index) => <Bar key={ta} dataKey={ta} name={ta} stackId="cost" fill={TA_COLORS[index % TA_COLORS.length]} isAnimationActive={false} />)}</BarChart></ResponsiveContainer>}</>
+        </div><div className="mt-3 flex flex-wrap gap-4 t-small text-text-secondary">{metric === 'tokens' ? <><span className="flex items-center gap-2"><span className="size-2 rounded-sm bg-dark-mulberry" />Input</span><span className="flex items-center gap-2"><span className="size-2 rounded-sm bg-brand-1-disabled" />Output</span></> : allTas.map((ta, index) => <span key={ta} className="flex items-center gap-2"><span className="size-2 rounded-sm" style={{ backgroundColor: TA_COLORS[index % TA_COLORS.length] }} />{ta}</span>)}</div></section>
+        <DashboardTable title="Usage Details" tools={<div className="flex flex-wrap items-center gap-3"><SegmentedControl size="panel" value={groupBy} onChange={(value) => setGroupBy(value as 'study' | 'ta')} options={[{ label: 'By Study', value: 'study' }, { label: 'By TA', value: 'ta' }]} /><SearchBar variant="embedded" size="compact" value={search} onChange={setSearch} placeholder="Search Studies" className="w-48" /></div>} minWidth="min-w-4xl">
+          <thead><tr>{(groupBy === 'study' ? ['Study / Event', 'Study Owner', 'Events', 'Input', 'Output', 'Total', 'Est. Cost'] : ['TA / Study', 'Studies', 'Events', 'Input', 'Output', 'Total', 'Est. Cost']).map((label) => <th key={label} scope="col" className={`${thClass} ${['Events', 'Studies', 'Input', 'Output', 'Total', 'Est. Cost'].includes(label) ? 'text-right' : ''}`}>{label}</th>)}</tr></thead>
+          <tbody>{!visibleStudies.length && <tr><td colSpan={7} className="p-6 text-center t-small text-text-secondary">{search.trim() ? 'No Results Found' : 'No token usage recorded this month.'}</td></tr>}{groupBy === 'study' ? visibleStudies.map((study) => {
             const selected = rows.filter((row) => row.studyId === study.id);
             const usage = sumUsage(selected);
             const eventIds = new Set(selected.map((row) => row.eventId).filter((id): id is string => Boolean(id)));
             const isOpen = expanded.has(study.id);
-            return <React.Fragment key={study.id}><tr tabIndex={0} aria-expanded={isOpen} onClick={() => toggle(study.id)} onKeyDown={(event) => onKey(event, study.id)} className="cursor-pointer hover:bg-bg-panel focus-visible:outline-brand-1"><th scope="row" className={`${tdClass} font-medium`}><span className="inline-flex items-center gap-2"><DashboardIcon src={arrowRightIcon} className={`size-4 text-text-secondary transition-transform ${isOpen ? 'rotate-90' : ''}`} />{study.id}<Tag className="h-[20px] py-0 pointer-events-none">{study.ta}</Tag></span></th><td className="px-[10px] py-[4px]"><ReadOnlyOwner name={study.owner} /></td>{cell(eventIds.size)}{cell(usage.input)}{cell(usage.output)}{cell(usage.total)}</tr>
-              {isOpen && study.events.filter((event) => eventIds.has(event.id)).map((event) => { const item = sumUsage(selected.filter((row) => row.eventId === event.id)); return <tr key={event.id} className="bg-bg-panel"><th scope="row" className={`${tdClass} pl-8`}>{event.name}</th><td className={tdClass} /><td className={tdClass} />{cell(item.input)}{cell(item.output)}{cell(item.total)}</tr>; })}</React.Fragment>;
+            return <React.Fragment key={study.id}><tr tabIndex={0} aria-expanded={isOpen} onClick={() => toggle(study.id)} onKeyDown={(event) => onKey(event, study.id)} className="cursor-pointer hover:bg-bg-panel focus-visible:outline-brand-1"><th scope="row" className={`${tdClass} font-medium`}><span className="inline-flex items-center gap-2"><DashboardIcon src={arrowRightIcon} className={`size-4 text-text-secondary transition-transform ${isOpen ? 'rotate-90' : ''}`} />{study.id}<Tag className="h-[20px] py-0 pointer-events-none">{study.ta}</Tag></span></th><td className="px-[10px] py-[4px]"><ReadOnlyOwner name={study.owner} /></td>{cell(eventIds.size)}{cell(usage.input)}{cell(usage.output)}{cell(usage.total)}{costCell(usage)}</tr>
+              {isOpen && study.events.filter((event) => eventIds.has(event.id)).map((event) => { const item = sumUsage(selected.filter((row) => row.eventId === event.id)); return <tr key={event.id} className="bg-bg-panel"><th scope="row" className={`${tdClass} pl-8`}>{event.name}</th><td className={tdClass} /><td className={tdClass} />{cell(item.input)}{cell(item.output)}{cell(item.total)}{costCell(item)}</tr>; })}</React.Fragment>;
           }) : taGroups.map((ta) => {
             const children = visibleStudies.filter((study) => study.ta === ta);
             const selected = rows.filter((row) => children.some((study) => study.id === row.studyId));
             const usage = sumUsage(selected);
             const isOpen = expanded.has(`ta:${ta}`);
-            return <React.Fragment key={ta}><tr tabIndex={0} aria-expanded={isOpen} onClick={() => toggle(`ta:${ta}`)} onKeyDown={(event) => onKey(event, `ta:${ta}`)} className="cursor-pointer hover:bg-bg-panel focus-visible:outline-brand-1"><th scope="row" className={`${tdClass} font-medium`}><span className="inline-flex items-center gap-2"><DashboardIcon src={arrowRightIcon} className={`size-4 text-text-secondary transition-transform ${isOpen ? 'rotate-90' : ''}`} />{ta}</span></th>{cell(children.length)}{cell(new Set(selected.map((row) => row.eventId).filter(Boolean)).size)}{cell(usage.input)}{cell(usage.output)}{cell(usage.total)}</tr>
-              {isOpen && children.map((study) => { const item = rows.filter((row) => row.studyId === study.id); const total = sumUsage(item); return <tr key={study.id} className="bg-bg-panel"><th scope="row" className={`${tdClass} pl-8`}>{study.id}</th><td className={tdClass} />{cell(new Set(item.map((row) => row.eventId).filter(Boolean)).size)}{cell(total.input)}{cell(total.output)}{cell(total.total)}</tr>; })}</React.Fragment>;
+            return <React.Fragment key={ta}><tr tabIndex={0} aria-expanded={isOpen} onClick={() => toggle(`ta:${ta}`)} onKeyDown={(event) => onKey(event, `ta:${ta}`)} className="cursor-pointer hover:bg-bg-panel focus-visible:outline-brand-1"><th scope="row" className={`${tdClass} font-medium`}><span className="inline-flex items-center gap-2"><DashboardIcon src={arrowRightIcon} className={`size-4 text-text-secondary transition-transform ${isOpen ? 'rotate-90' : ''}`} />{ta}</span></th>{cell(children.length)}{cell(new Set(selected.map((row) => row.eventId).filter(Boolean)).size)}{cell(usage.input)}{cell(usage.output)}{cell(usage.total)}{costCell(usage)}</tr>
+              {isOpen && children.map((study) => { const item = rows.filter((row) => row.studyId === study.id); const total = sumUsage(item); return <tr key={study.id} className="bg-bg-panel"><th scope="row" className={`${tdClass} pl-8`}>{study.id}</th><td className={tdClass} />{cell(new Set(item.map((row) => row.eventId).filter(Boolean)).size)}{cell(total.input)}{cell(total.output)}{cell(total.total)}{costCell(total)}</tr>; })}</React.Fragment>;
           })}</tbody>
         </DashboardTable>
       </>

@@ -11,13 +11,15 @@ export type TokenUsage = { input: number; output: number; total: number };
 export type TokenUsageRecord = TokenUsage & {
   date: string;
   studyId: string;
-  eventId: string | null;
+  eventId: string;
 };
 export type RequestCounts = { singleTfl: number; event: number };
+export type TflActivity = { requests: number; diffRounds: number };
 
 export interface DashboardDataSource {
   statusOf(tfl: DashboardTfl): DashboardStatus;
   requestsFor(eventId: string, member: string): RequestCounts;
+  activityFor(eventId: string, tfl: DashboardTfl): TflActivity;
   usageRecords(): TokenUsageRecord[];
 }
 
@@ -68,14 +70,34 @@ const mockRequestCounts: Record<string, Record<string, RequestCounts>> = {
   e13: { 'Emily Liu': { singleTfl: 2, event: 1 } },
 };
 
+// Demo-only per-TFL activity derived from the TFL id until request and Diff instrumentation is available.
+// TODO (needs confirmation): "Diff accept round" = one round in which the user reviews and accepts a Diff.
+const mockActivityFor = (tfl: DashboardTfl): TflActivity => {
+  const seed = [...tfl.id].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const requests = 1 + seed % 5;
+  return { requests, diffRounds: Math.min(requests, seed % 4) };
+};
+
 export const mockDashboardDataSource: DashboardDataSource = {
   statusOf,
+  activityFor: (_eventId, tfl) => mockActivityFor(tfl),
   // Demo-only counts until per-member request instrumentation is available.
   requestsFor: (eventId, member) => mockRequestCounts[eventId]?.[member] ?? { singleTfl: 0, event: 0 },
-  // TODO (Proposal §5, red): confirm Event attribution and which Copilot requests contribute to Token Usage.
+  // TODO (Proposal §5, red): confirm which Copilot requests contribute to Token Usage.
   // TODO (Proposal §5, yellow): confirm reporting timezone and refresh contract before replacing these fixtures.
   usageRecords: () => mockRecords,
 };
+
+// TODO (needs confirmation): replace with the billed model price list and confirm currency.
+// Cost is derived at read time, so it follows the current model prices rather than a stored amount.
+export const MODEL_PRICING = { currency: 'USD', inputPerMillion: 3, outputPerMillion: 15 };
+export const COST_NOTE = 'Estimated at current model prices. Changes if prices change.';
+
+export const estimateCost = (usage: { input: number; output: number }) =>
+  usage.input / 1_000_000 * MODEL_PRICING.inputPerMillion + usage.output / 1_000_000 * MODEL_PRICING.outputPerMillion;
+
+export const formatCost = (value: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: MODEL_PRICING.currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
 export const sumUsage = (records: TokenUsageRecord[]): TokenUsage => records.reduce(
   (sum, row) => ({ input: sum.input + row.input, output: sum.output + row.output, total: sum.total + row.total }),
