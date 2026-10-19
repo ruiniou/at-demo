@@ -719,3 +719,10 @@
 * **根本原因 (Root Cause)**：`KMPlot` 的 Shell 分支为图表、风险人数表和森林图分别加了 `border`、`rounded`、`cursor-pointer`、Hover 样式和 `onBlockClick`，并把风险人数表放在图表容器之外。
 * **解决方案 (Solution)**：将图表与风险人数表合并到同一平铺容器，移除 Figure Shell 内容的卡片样式与点击事件，并同步更新 Shell 规范。
 * **经验教训 (Takeaways)**：调整 Shell Preview 时按文档类型核对展示语义，避免把 Table/Listing 的 Metadata 跳转规则直接套用到 Figure。
+
+### [2026-10-19] Audit Trail 日期范围弹层选中态显示为深色
+
+* **现象**：展开 Time Range 后，选中日期和时间列出现深色块，与 Atlas 的品牌色和浅色选中态不一致。
+* **根本原因 (Root Cause)**：`DatePicker.RangePicker` 的弹层使用 Ant Design 内部 `.ant-picker-cell-range-start`、`.ant-picker-cell-in-range` 和 `.ant-picker-time-panel-cell-selected` 样式；原有 `.audit-range-popup` 规则未覆盖到时间列的选中态，日期选中规则也被组件样式优先级盖过。
+* **解决方案 (Solution)**：在 `audit-trail.css` 中限定 `.audit-range-popup`，对日期端点及其 `::before` 范围背景、范围底色和时间选中态应用现有品牌色与次级背景 Token；保留范围选择行为。
+* **经验教训 (Takeaways)**：引入外部日期控件时，要展开后逐项检查日期、时间、悬停和范围状态的计算样式；仅给弹层外框换色不足以完成设计系统适配。

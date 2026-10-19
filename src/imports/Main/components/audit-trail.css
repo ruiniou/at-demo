@@ -1,0 +1,38 @@
+.audit-multi-trigger { display: flex; min-width: 0; width: 100%; height: 32px; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--color-form-border); border-radius: calc(var(--radius-xs) * 2); background: white; padding: 0 8px; color: var(--color-text-primary); font-size: 12px; text-align: left; }
+.audit-multi-trigger:hover { border-color: var(--color-graphite-50); }
+.audit-multi-trigger:focus-visible { outline: 2px solid var(--color-az-secondary); border-color: var(--color-brand-1); }
+.audit-range-picker.ant-picker { width: 100%; height: 32px; border: 1px solid var(--color-form-border); border-radius: calc(var(--radius-xs) * 2); box-shadow: none; padding: 0 8px; }
+.audit-range-picker.ant-picker:hover { border-color: var(--color-graphite-50); }
+.audit-range-picker.ant-picker-focused { border-color: var(--color-brand-1); box-shadow: 0 0 0 2px var(--color-az-secondary); }
+.audit-range-picker .ant-picker-input > input { font-size: 11px; color: var(--color-text-primary); }
+.audit-range-picker .ant-picker-suffix, .audit-range-picker .ant-picker-range-separator { color: var(--color-text-secondary); }
+.audit-range-popup .ant-picker-panel-container { border: 1px solid var(--color-form-border); border-radius: var(--radius-md); box-shadow: none; }
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner,
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner { background: var(--color-brand-1); color: var(--color-background); }
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-in-range::before,
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-range-hover::before { background: var(--color-az-secondary); }
+.audit-range-popup .ant-picker-cell-in-view:hover .ant-picker-cell-inner { background: var(--color-az-secondary); color: var(--color-brand-1); }
+.audit-range-popup .ant-picker-ok button { background: var(--color-brand-1); border-color: var(--color-brand-1); border-radius: calc(var(--radius-xs) * 2); }
+/* The picker popup is portaled to body; target its actual date and time states. */
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner,
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-selected .ant-picker-cell-inner {
+  background: var(--color-brand-1) !important;
+  color: var(--color-background) !important;
+}
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-in-range::before,
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-range-hover::before {
+  background: var(--color-az-secondary) !important;
+}
+.audit-range-popup .ant-picker-time-panel-cell-selected .ant-picker-time-panel-cell-inner {
+  background: var(--color-az-secondary) !important;
+  color: var(--color-brand-1) !important;
+}
+.audit-range-popup .ant-picker-time-panel-cell:not(.ant-picker-time-panel-cell-disabled):hover .ant-picker-time-panel-cell-inner {
+  background: var(--color-bg-panel) !important;
+}
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-range-start::before,
+.audit-range-popup .ant-picker-cell-in-view.ant-picker-cell-range-end::before {
+  background: var(--color-az-secondary) !important;
+}

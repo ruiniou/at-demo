@@ -83,6 +83,7 @@ import EventTeamMemberModal from "./components/EventTeamMemberModal";
 import EventDashboard from "./components/EventDashboardV2";
 import type { DashboardFilter } from "./components/EventDashboard";
 import { GlobalDashboard, StudyDashboard, type DashboardStudy } from "./components/StudyGlobalDashboards";
+import { AuditTrailPage } from "./components/AuditTrailPage";
 import type { TeamMember, TFLRow } from "./components/EventTeamMemberModal";
 import AccountMenu from "../../components/auth/AccountMenu";
 import { TreeFilterPopover } from "./components/TreeFilterPopover";
@@ -14846,10 +14847,10 @@ function HomePage({
   onLogout?: () => void;
   projects: ProjectItem[];
   currentRole: UserRole;
-  activeNav: 'events' | 'management' | 'global-dashboard' | 'study-dashboard' | 'event-dashboard';
+  activeNav: 'events' | 'management' | 'global-dashboard' | 'study-dashboard' | 'event-dashboard' | 'audit-trail';
   currentUserName: string;
   onSwitchRole: (role: UserRole) => void;
-  onSelectNav: (nav: 'events' | 'management' | 'global-dashboard' | 'study-dashboard' | 'event-dashboard') => void;
+  onSelectNav: (nav: 'events' | 'management' | 'global-dashboard' | 'study-dashboard' | 'event-dashboard' | 'audit-trail') => void;
   onOpenNewProject: () => void;
   onOpenNewStudy: (projectId?: string) => void;
   onChangeOwner: (projectId: string, studyId: string, owner: string) => void;
@@ -15129,6 +15130,7 @@ function HomePage({
               </div>
             )}
             {currentRole === 'admin' && <div className="px-2 pb-2 pt-1"><SidebarPrimaryNavItem label="Usage" selected={activeNav === 'global-dashboard'} onClick={onOpenGlobalDashboard} icon={<LocalIcon src={usageIconUrl} className="size-4 shrink-0" color={activeNav === 'global-dashboard' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />} /></div>}
+            {currentRole === 'admin' && <div className="px-2 pb-2"><SidebarPrimaryNavItem label="Audit Trail" selected={activeNav === 'audit-trail'} onClick={() => onSelectNav('audit-trail')} icon={<LocalIcon src={historyIconUrl} className="size-4 shrink-0" color={activeNav === 'audit-trail' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />} /></div>}
 
             {/* Events section: Events nav, Recents, and 3-tier hierarchy tree all grouped together */}
             <div className="flex min-h-0 flex-1 flex-col pt-[4px]">
@@ -15320,7 +15322,9 @@ function HomePage({
               </div>
             )}
 
-            {activeNav === 'event-dashboard' && eventDashboard ? (
+            {activeNav === 'audit-trail' && currentRole === 'admin' ? (
+              <AuditTrailPage headerLeading={expandTreeListButton} />
+            ) : activeNav === 'event-dashboard' && eventDashboard ? (
               eventDashboard(expandTreeListButton)
             ) : activeNav === 'global-dashboard' && currentRole === 'admin' ? (
               <GlobalDashboard studies={dashboardStudies} onBack={() => onSelectNav('management')} headerLeading={expandTreeListButton} />
@@ -15683,7 +15687,7 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
   const [unreadAssignmentKeys, setUnreadAssignmentKeys] = useState<Set<string>>(() => new Set(INITIAL_UNREAD_ASSIGNMENT_KEYS));
   const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
   const [currentRole, setCurrentRole] = useState<UserRole>('event-owner');
-  const [activeNav, setActiveNav] = useState<'events' | 'management' | 'global-dashboard' | 'study-dashboard' | 'event-dashboard'>('events');
+  const [activeNav, setActiveNav] = useState<'events' | 'management' | 'global-dashboard' | 'study-dashboard' | 'event-dashboard' | 'audit-trail'>('events');
   const [currentUserName, setCurrentUserName] = useState<string>('Emily Liu');
   const [recentEventIdsByUser, setRecentEventIdsByUser] = useState<Record<string, string[]>>({});
 

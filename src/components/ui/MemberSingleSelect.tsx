@@ -4,6 +4,7 @@ import { Avatar } from "./Avatar";
 import { FormItem } from "./FormItem";
 import { MemberOptionRow } from "./MemberOptionRow";
 import { OptionList } from "./OptionList";
+import { OptionRow } from "./OptionRow";
 import { Popover } from "./Popover";
 import { SearchBar } from "./SearchBar";
 
@@ -28,6 +29,8 @@ export interface MemberSingleSelectProps {
   error?: string;
   className?: string;
   optionListClassName?: string;
+  showPlaceholderAvatar?: boolean;
+  includeAllOption?: boolean;
 }
 
 /** Searchable, single-select member picker built from the shared selector primitives. */
@@ -43,6 +46,8 @@ export function MemberSingleSelect({
   error,
   className = "",
   optionListClassName = "max-h-[200px]",
+  showPlaceholderAvatar = true,
+  includeAllOption = false,
 }: MemberSingleSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -89,13 +94,13 @@ export function MemberSingleSelect({
         onClick={() => !disabled && handleOpenChange(!isOpen)}
         className={`flex h-[32px] w-full items-center gap-[8px] rounded-[4px] pl-[8px] pr-[10px] text-left transition-[border-color,box-shadow,background-color] ${boxClasses}`}
       >
-        <Avatar
+        {(selectedMember || showPlaceholderAvatar) && <Avatar
           name={selectedMember?.name}
           initials={selectedMember?.initials}
           color={selectedMember?.color}
           level="menu"
           disabled={disabled}
-        />
+        />}
         <span className={`min-w-0 flex-1 truncate t-small ${disabled ? "text-graphite-40" : selectedMember ? "text-text-primary" : "text-text-secondary"}`}>
           {selectedMember?.name ?? placeholder}
         </span>
@@ -120,9 +125,10 @@ export function MemberSingleSelect({
           autoFocus
         />
         <OptionList
-          empty={filteredOptions.length === 0}
+          empty={filteredOptions.length === 0 && !includeAllOption}
           className={optionListClassName}
         >
+          {includeAllOption && <OptionRow label="All" selected={!value} onSelect={() => { onChange(""); handleOpenChange(false); }} />}
           {filteredOptions.map((option) => (
             <MemberOptionRow
               key={option.value}
