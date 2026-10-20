@@ -43,12 +43,19 @@ const mockRecords: TokenUsageRecord[] = [
   { date: '2026-09-27', studyId: 'AZE2001-302', eventId: 'e7', input: 52400, output: 24600, total: 77000 },
   { date: '2026-10-02', studyId: 'AZE2001-301', eventId: 'e4', input: 28500, output: 12300, total: 40800 },
   { date: '2026-10-05', studyId: 'AZE2001-301', eventId: 'e5', input: 14900, output: 6500, total: 21400 },
-  { date: '2026-10-08', studyId: 'AZE2001-303', eventId: 'e8', input: 22100, output: 9400, total: 31500 },
-  { date: '2026-10-10', studyId: 'AZE2001-303', eventId: 'e9', input: 17700, output: 7600, total: 25300 },
+  { date: '2026-10-08', studyId: 'CVD3001-201', eventId: 'e8', input: 22100, output: 9400, total: 31500 },
+  { date: '2026-10-10', studyId: 'CVD3001-201', eventId: 'e9', input: 17700, output: 7600, total: 25300 },
   { date: '2026-10-06', studyId: 'AZE2001-301', eventId: 'e10', input: 8200, output: 3500, total: 11700 },
-  { date: '2026-10-09', studyId: 'AZE2001-401', eventId: 'e11', input: 38400, output: 16600, total: 55000 },
+  { date: '2026-10-09', studyId: 'CVD3002-110', eventId: 'e11', input: 38400, output: 16600, total: 55000 },
   { date: '2026-10-11', studyId: 'AZE2001-401', eventId: 'e12', input: 13200, output: 5800, total: 19000 },
   { date: '2026-10-12', studyId: 'AZE2001-301', eventId: 'e13', input: 10600, output: 4400, total: 15000 },
+  { date: '2026-07-14', studyId: 'AZE2001-302', eventId: 'e6', input: 31200, output: 13800, total: 45000 },
+  { date: '2026-08-11', studyId: 'AZE2001-302', eventId: 'e7', input: 46500, output: 20100, total: 66600 },
+  { date: '2026-08-19', studyId: 'CVD3001-201', eventId: 'e8', input: 27400, output: 11900, total: 39300 },
+  { date: '2026-09-12', studyId: 'CVD3001-201', eventId: 'e9', input: 33800, output: 14700, total: 48500 },
+  { date: '2026-09-18', studyId: 'CVD3002-110', eventId: 'e11', input: 21500, output: 9300, total: 30800 },
+  { date: '2026-10-14', studyId: 'CVD3001-201', eventId: 'e8', input: 41200, output: 18200, total: 59400 },
+  { date: '2026-10-16', studyId: 'CVD3002-110', eventId: 'e11', input: 16900, output: 7200, total: 24100 },
 ];
 
 const seedOf = (value: string) => [...value].reduce((sum, char) => sum + char.charCodeAt(0), 0);

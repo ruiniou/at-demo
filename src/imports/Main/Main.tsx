@@ -14266,8 +14266,8 @@ const homeEvents: EventCardData[] = [
     id: 'e8',
     name: 'Efficacy Endpoint Analysis',
     version: '2.0',
-    project: 'PRO003',
-    study: 'AZE2001-303',
+    project: 'PRO002',
+    study: 'CVD3001-201',
     creator: 'James',
     owner: 'James Park',
     createdDate: '2025-11-07',
@@ -14278,8 +14278,8 @@ const homeEvents: EventCardData[] = [
     id: 'e9',
     name: 'Concomitant Medications Listing',
     version: '1.5',
-    project: 'PRO003',
-    study: 'AZE2001-303',
+    project: 'PRO002',
+    study: 'CVD3001-201',
     creator: 'James',
     owner: 'James Park',
     createdDate: '2025-11-05',
@@ -14324,8 +14324,8 @@ const homeEvents: EventCardData[] = [
     id: 'e11',
     name: 'Vital Signs Summary Table',
     version: '1.0',
-    project: 'PRO004',
-    study: 'AZE2001-401',
+    project: 'PRO002',
+    study: 'CVD3002-110',
     creator: 'Emily',
     owner: 'Emily Liu',
     createdDate: '2025-11-01',
@@ -15821,8 +15821,6 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
             event={currentEventData}
             tfls={currentDashboardTfls}
             onBack={() => setActiveNav('events')}
-            onOpenTfl={(filter) => { setDashboardFilter(filter); setDashboardTflId(firstDashboardMatch(filter)?.id ?? null); setPage('event'); }}
-            onOpenAssignment={() => handleOpenDashboardAssignment(currentEventData)}
           /> : undefined}
         />
       ) : page === 'global-dashboard' && currentRole === 'admin' ? (
@@ -15834,8 +15832,6 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           event={currentEventData}
           tfls={currentDashboardTfls}
           onBack={() => setPage(dashboardOrigin)}
-          onOpenTfl={(filter) => { setDashboardFilter(filter); setDashboardTflId(firstDashboardMatch(filter)?.id ?? null); setPage('event'); }}
-          onOpenAssignment={() => handleOpenDashboardAssignment(currentEventData)}
         />
       ) : page === 'dashboard' || page === 'study-dashboard' || page === 'global-dashboard' ? (
         <div className="flex h-full flex-1 flex-col items-center justify-center gap-3 bg-bg-panel text-text-primary" role="alert">
