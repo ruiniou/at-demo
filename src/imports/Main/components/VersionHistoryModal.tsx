@@ -1,23 +1,23 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/Button";
-import { SingleSelect } from "../../../components/ui/SingleSelect";
+import { FilterChip } from "../../../components/ui/FilterChip";
 import { Avatar } from "../../../components/ui/Avatar";
 import { Tag } from "../../../components/ui/Tag";
 import { Tooltip } from "../../../components/ui/Tooltip";
-import arrowDownUrl from "../../../icons/arrow-down-s-line.svg";
+import { ScrollArea } from "../../../components/ui/ScrollArea";
 import arrowLeftUrl from "../../../icons/arrow-left-s-line.svg";
-import arrowRightUrl from "../../../icons/arrow-right-s-line.svg";
 import closeIconUrl from "../../../icons/close-line.svg";
 import lockIconUrl from "../../../icons/Lock.svg";
+import restoreIconUrl from "../../../icons/reset-left-line.svg";
 import {
   CodeVersion,
-  SEGMENT_LABEL,
-  SegmentDiff,
   SplitRow,
-  diffPrograms,
-  sourceText,
+  countChanges,
   totalCodeChange,
+  diffLines,
+  sourceText,
+  toSplitRows,
   versionLabel,
 } from "./versionHistoryData";
 
@@ -25,17 +25,17 @@ import {
 const DEL_ROW = "border-l-[3px] border-brand-1 bg-[#FDECEA]";
 const ADD_ROW = "border-l-[3px] border-code-success bg-[#E6F4EA]";
 const CONTEXT_LINES = 3;
-/* One row = one line. Every column is left-aligned; Action keeps two fixed slots so links and buttons line up across rows. */
-const LIST_COLUMNS = "grid-cols-[88px_168px_minmax(0,1fr)_104px_176px_136px_140px]";
+/* Every column is left-aligned; Version carries its time as a second line. Action keeps two fixed slots so links and buttons line up across rows. */
+const LIST_COLUMNS = "grid-cols-[152px_152px_minmax(0,1fr)_104px_176px_156px]";
 
 function MaskIcon({ src, size = 16, className = "bg-text-secondary" }: { src: string; size?: number; className?: string }) {
   const mask = `url("${src}") center / contain no-repeat`;
   return <span aria-hidden="true" className={`inline-block shrink-0 ${className}`} style={{ width: size, height: size, mask, WebkitMask: mask }} />;
 }
 
-function ChangeCounts({ added, removed }: { added: number; removed: number }) {
+function ChangeCounts({ added, removed, className = "t-body-compact" }: { added: number; removed: number; className?: string }) {
   return (
-    <span className="flex gap-[8px] t-body-compact tabular-nums">
+    <span className={`flex gap-[8px] tabular-nums ${className}`}>
       <span className="text-code-success">+{added}</span>
       <span className="text-status-error">−{removed}</span>
     </span>
@@ -50,14 +50,10 @@ export interface VersionHistoryModalProps {
   versions: CodeVersion[];
   /** Why Restore is unavailable right now (Locked, Copilot running, no edit permission). null = available. */
   restoreBlockedReason: string | null;
-  /** Current version is Locked — shown as a lock icon next to "Current". */
-  isCurrentLocked?: boolean;
   /** Another dialog (the Restore confirmation) is on top, so Escape must not close this one. */
   keysSuspended?: boolean;
   /** Copilot entry-point icon (same mark as the Copilot button), shown for versions written by Copilot. */
   copilotIcon: React.ReactNode;
-  /** Opens the Diff view for a specific pair (older → newer), e.g. from the Restore confirmation. */
-  diffRequest?: { id: number; base: number; target: number } | null;
   onClose: () => void;
   onRestore: (version: CodeVersion) => void;
 }
@@ -67,9 +63,7 @@ export default function VersionHistoryModal({
   outputName,
   versions,
   restoreBlockedReason,
-  isCurrentLocked = false,
   keysSuspended = false,
-  diffRequest = null,
   copilotIcon,
   onClose,
   onRestore,
@@ -86,14 +80,6 @@ export default function VersionHistoryModal({
     setPair(null);
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!isOpen || !diffRequest) return;
-    const base = byNumber.get(diffRequest.base);
-    const target = byNumber.get(diffRequest.target);
-    if (!base || !target) return;
-    setPair({ base: base.number, target: target.number });
-    setView("diff");
-  }, [diffRequest?.id]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -104,19 +90,25 @@ export default function VersionHistoryModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, keysSuspended, onClose]);
 
+
   /* Row stats are always "this version vs its previous version". */
   const rowStats = useMemo(() => {
     const stats = new Map<number, { added: number; removed: number }>();
     versions.forEach((version, index) => {
-      const previous = versions[index - 1];
-      if (!previous) {
-        stats.set(version.number, totalCodeChange("", version.code));
-        return;
-      }
-      stats.set(version.number, totalCodeChange(previous.code, version.code));
+      stats.set(version.number, totalCodeChange(versions[index - 1]?.code ?? "", version.code));
     });
     return stats;
   }, [versions]);
+
+  /* Computed here so the header counts and the code columns come from the same diff. */
+  const diff = useMemo(() => {
+    if (!pair) return null;
+    const base = byNumber.get(pair.base);
+    const target = byNumber.get(pair.target);
+    if (!base || !target) return null;
+    const entries = diffLines(base.code, target.code);
+    return { rows: toSplitRows(entries), ...countChanges(entries) };
+  }, [pair, byNumber]);
 
   if (!isOpen || !current) return null;
 
@@ -128,7 +120,7 @@ export default function VersionHistoryModal({
     setView("diff");
   };
 
-  const isDiff = view === "diff" && pair !== null;
+  const isDiff = view === "diff" && pair !== null && diff !== null;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-[16px] animate-fade-in">
@@ -155,10 +147,17 @@ export default function VersionHistoryModal({
                 </button>
               </Tooltip>
             )}
-            <div className="min-w-0">
-              <h2 id="version-history-title" className="t-heading text-text-primary">Version History</h2>
-              <p className="t-small truncate text-text-secondary">{outputName} · Code</p>
-            </div>
+            {isDiff ? (
+              <div className="flex min-w-0 items-center gap-[12px]">
+                <h2 id="version-history-title" className="t-heading truncate text-text-primary">{outputName}</h2>
+                <ChangeCounts added={diff.added} removed={diff.removed} />
+              </div>
+            ) : (
+              <div className="min-w-0">
+                <h2 id="version-history-title" className="t-heading text-text-primary">Version History</h2>
+                <p className="t-small truncate text-text-secondary">{outputName}</p>
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -174,8 +173,12 @@ export default function VersionHistoryModal({
           <DiffView
             versions={versions}
             byNumber={byNumber}
+            current={current}
             pair={pair}
+            rows={diff.rows}
+            restoreBlockedReason={restoreBlockedReason}
             onPairChange={setPair}
+            onRestore={onRestore}
           />
         ) : (
           <ListView
@@ -183,7 +186,6 @@ export default function VersionHistoryModal({
             current={current}
             rowStats={rowStats}
             copilotIcon={copilotIcon}
-            isCurrentLocked={isCurrentLocked}
             restoreBlockedReason={restoreBlockedReason}
             onOpenDiff={openDiff}
             onRestore={onRestore}
@@ -204,14 +206,14 @@ function OperatorCell({ version, copilotIcon }: { version: CodeVersion; copilotI
     return (
       <div className="flex min-w-0 items-center gap-[8px]">
         <Avatar name={version.operator.name} level="modal" />
-        <span className="t-body-compact truncate text-text-primary">{version.operator.name}</span>
+        <span className="t-caption truncate text-text-primary">{version.operator.name}</span>
       </div>
     );
   }
   const label = (
     <div className="flex min-w-0 items-center gap-[8px]">
       {copilotIcon}
-      <span className="t-body-compact truncate text-text-primary">Copilot</span>
+      <span className="t-caption truncate text-text-primary">Copilot</span>
     </div>
   );
   return version.operator.triggeredBy ? <Tooltip label={`Triggered by ${version.operator.triggeredBy}`}>{label}</Tooltip> : label;
@@ -222,7 +224,6 @@ function ListView({
   current,
   rowStats,
   copilotIcon,
-  isCurrentLocked,
   restoreBlockedReason,
   onOpenDiff,
   onRestore,
@@ -231,7 +232,6 @@ function ListView({
   current: CodeVersion;
   rowStats: Map<number, { added: number; removed: number }>;
   copilotIcon: React.ReactNode;
-  isCurrentLocked: boolean;
   restoreBlockedReason: string | null;
   onOpenDiff: (version: CodeVersion) => void;
   onRestore: (version: CodeVersion) => void;
@@ -249,18 +249,17 @@ function ListView({
           <p className="t-small text-text-primary">{restoreBlockedReason}</p>
         </div>
       )}
-      <div className="shrink-0 overflow-y-hidden border-b border-graphite-10 bg-bg-panel [scrollbar-gutter:stable]">
+      <div className="shrink-0 border-b border-graphite-10 bg-bg-panel">
         <div className={`grid ${LIST_COLUMNS} items-center gap-x-[16px] px-[24px] py-[8px]`}>
           <span className={headerCell}>Version</span>
           <span className={headerCell}>Source</span>
           <span className={headerCell}>Summary</span>
           <span className={headerCell}>Changes</span>
           <span className={headerCell}>Operator</span>
-          <span className={headerCell}>Time</span>
           <span className={headerCell}>Action</span>
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
+      <ScrollArea className="flex-1">
         {rows.map((version, index) => {
           const isCurrent = version.number === current.number;
           const hasPrevious = version.number > versions[0].number;
@@ -276,6 +275,7 @@ function ListView({
               }}
               aria-label={`Restore ${versionLabel(version)}`}
             >
+              <MaskIcon src={restoreIconUrl} size={14} className="bg-current" />
               Restore
             </Button>
           );
@@ -297,33 +297,27 @@ function ListView({
                     }
                   : undefined
               }
-              className={`grid ${LIST_COLUMNS} h-[48px] items-center gap-x-[16px] px-[24px] ${
+              className={`grid ${LIST_COLUMNS} min-h-[56px] items-center py-[8px] gap-x-[16px] px-[24px] ${
                 index < rows.length - 1 ? "border-b border-graphite-10" : ""
               } ${hasPrevious ? "cursor-pointer hover:bg-bg-panel focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-brand-1" : ""}`}
             >
-              <div className="flex items-center gap-[6px]">
-                <span className="t-body-compact font-medium text-text-primary">{versionLabel(version)}</span>
-                {isCurrent && isCurrentLocked && (
-                  <Tooltip label="Locked">
-                    <span className="flex size-[16px] items-center justify-center" aria-label="Locked">
-                      <MaskIcon src={lockIconUrl} size={14} />
-                    </span>
-                  </Tooltip>
-                )}
+              <div className="flex min-w-0 flex-col gap-[2px]">
+                <div className="flex items-center gap-[6px]">
+                  <span className="t-body-medium text-text-primary">{versionLabel(version)}</span>
+                  {isCurrent && <Tag variant="brand">Current</Tag>}
+                </div>
+                <span className="t-small tabular-nums text-text-secondary">{version.createdAt}</span>
               </div>
 
-              <div className="flex min-w-0 items-center gap-[6px]">
+              <div className="flex min-w-0 items-center">
                 <Tag>{sourceText(version)}</Tag>
-                {isCurrent && <Tag variant="brand">Current</Tag>}
               </div>
 
-              <span className="t-body-compact truncate text-text-primary" title={version.summary}>{version.summary}</span>
+              <span className="t-caption truncate text-text-primary" title={version.summary}>{version.summary}</span>
 
-              <ChangeCounts added={stat.added} removed={stat.removed} />
+              <ChangeCounts added={stat.added} removed={stat.removed} className="t-caption" />
 
               <OperatorCell version={version} copilotIcon={copilotIcon} />
-
-              <span className="t-body-compact tabular-nums text-text-secondary">{version.createdAt}</span>
 
               <div className="flex items-center gap-[12px]">
                 <span className="w-[56px]">
@@ -340,7 +334,7 @@ function ListView({
                     </button>
                   )}
                 </span>
-                <span className="inline-flex w-[64px]">
+                <span className="inline-flex w-[80px]">
                   {!isCurrent &&
                     (restoreBlockedReason ? (
                       <Tooltip label={restoreBlockedReason}>
@@ -354,7 +348,7 @@ function ListView({
             </div>
           );
         })}
-      </div>
+      </ScrollArea>
     </div>
   );
 }
@@ -363,34 +357,28 @@ function ListView({
 /* Diff                                                                */
 /* ------------------------------------------------------------------ */
 
+/* Two code columns, nothing else: each column header owns its version picker and, for a non-Current version, its Restore. */
 function DiffView({
   versions,
   byNumber,
+  current,
   pair,
+  rows,
+  restoreBlockedReason,
   onPairChange,
+  onRestore,
 }: {
   versions: CodeVersion[];
   byNumber: Map<number, CodeVersion>;
+  current: CodeVersion;
   pair: { base: number; target: number };
+  rows: SplitRow[];
+  restoreBlockedReason: string | null;
   onPairChange: (pair: { base: number; target: number }) => void;
+  onRestore: (version: CodeVersion) => void;
 }) {
   const base = byNumber.get(pair.base)!;
   const target = byNumber.get(pair.target)!;
-
-  const segments = useMemo(() => diffPrograms(base.code, target.code), [base, target]);
-  const codeTotals = useMemo(
-    () => segments.reduce((sum, segment) => ({ added: sum.added + segment.added, removed: sum.removed + segment.removed }), { added: 0, removed: 0 }),
-    [segments],
-  );
-
-  const options = useMemo(
-    () =>
-      [...versions].reverse().map((version) => ({
-        value: String(version.number),
-        label: `${versionLabel(version)} · ${sourceText(version)} · ${version.createdAt}`,
-      })),
-    [versions],
-  );
 
   /* Left is always the older version: picking a side that crosses the other one swaps them. */
   const changeBase = (value: string) => {
@@ -404,48 +392,75 @@ function DiffView({
     onPairChange(next > pair.base ? { base: pair.base, target: next } : { base: next, target: pair.base });
   };
 
+  const columnHeader = (version: CodeVersion, other: CodeVersion, onChange: (value: string) => void, side: "left" | "right") => {
+    const isCurrent = version.number === current.number;
+    const restoreButton = (
+      <Button
+        variant="secondary"
+        size="sm"
+        disabled={restoreBlockedReason !== null}
+        onClick={() => onRestore(version)}
+        aria-label={`Restore ${versionLabel(version)}`}
+      >
+        <MaskIcon src={restoreIconUrl} size={14} className="bg-current" />
+        Restore
+      </Button>
+    );
+    return (
+      <div className={`flex min-w-0 items-center gap-[8px] px-[16px] py-[8px] ${side === "right" ? "border-l border-graphite-10" : ""}`}>
+        {/* The other column's version is left out: a version is never compared with itself. */}
+        <FilterChip
+          type="Dropdown"
+          variant="select"
+          showIcon={false}
+          className="shrink-0"
+          aria-label={side === "left" ? "Base version" : "Compared version"}
+          options={[...versions]
+            .reverse()
+            .filter((item) => item.number !== other.number)
+            .map((item) => ({
+              value: String(item.number),
+              label: versionLabel(item),
+              suffix: item.number === current.number ? "(Current)" : undefined,
+            }))}
+          value={String(version.number)}
+          onChange={onChange}
+        />
+        <span className="t-small truncate tabular-nums text-text-secondary">{version.createdAt}</span>
+        {!isCurrent && (
+          <span className="ml-auto inline-flex shrink-0">
+            {restoreBlockedReason ? (
+              <Tooltip label={restoreBlockedReason}>
+                <span className="inline-flex">{restoreButton}</span>
+              </Tooltip>
+            ) : (
+              restoreButton
+            )}
+          </span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center gap-[8px] border-b border-graphite-10 px-[24px] py-[12px]">
-        <div className="w-[320px]">
-          <SingleSelect
-            triggerClassName="h-[28px] rounded-[4px] px-[8px]"
-            options={options.map((option) => ({ ...option, disabled: option.value === String(pair.target) }))}
-            value={String(pair.base)}
-            onChange={changeBase}
-          />
-        </div>
-        <span className="t-small text-text-secondary" aria-hidden="true">→</span>
-        <div className="w-[320px]">
-          <SingleSelect
-            triggerClassName="h-[28px] rounded-[4px] px-[8px]"
-            options={options.map((option) => ({ ...option, disabled: option.value === String(pair.base) }))}
-            value={String(pair.target)}
-            onChange={changeTarget}
-          />
-        </div>
-        <div className="ml-auto">
-          <ChangeCounts added={codeTotals.added} removed={codeTotals.removed} />
+      <div className="shrink-0 border-b border-graphite-10 bg-bg-panel">
+        <div className="grid grid-cols-2">
+          {columnHeader(base, target, changeBase, "left")}
+          {columnHeader(target, base, changeTarget, "right")}
         </div>
       </div>
-
-      <div className="min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
-        <CodePane key={`${pair.base}-${pair.target}`} base={base} target={target} segments={segments} />
-      </div>
+      <ScrollArea className="flex-1">
+        <CodeColumns key={`${pair.base}-${pair.target}`} base={base} target={target} rows={rows} />
+      </ScrollArea>
     </div>
   );
 }
 
-function EmptyNote({ children }: { children: React.ReactNode }) {
-  return <p className="px-[24px] py-[24px] t-body-compact text-text-secondary">{children}</p>;
-}
-
-type FoldItem =
-  | { type: "rows"; rows: SplitRow[]; firstChange: boolean[] }
-  | { type: "fold"; id: string; rows: SplitRow[] };
+type FoldItem = { type: "rows"; start: number; rows: SplitRow[] } | { type: "fold"; id: string; rows: SplitRow[] };
 
 /** Keeps CONTEXT_LINES around every change and folds longer unchanged runs. */
-function foldRows(segmentKey: string, rows: SplitRow[], expanded: Set<string>): FoldItem[] {
+function foldRows(rows: SplitRow[], expanded: Set<string>): FoldItem[] {
   const keep = rows.map(() => false);
   rows.forEach((row, index) => {
     if (!row.changed) return;
@@ -453,139 +468,64 @@ function foldRows(segmentKey: string, rows: SplitRow[], expanded: Set<string>): 
   });
   const items: FoldItem[] = [];
   let index = 0;
-  let previousChanged = false;
   while (index < rows.length) {
     const start = index;
-    if (keep[index] || rows.length === 0) {
-      while (index < rows.length && keep[index]) index++;
-      const slice = rows.slice(start, index);
-      const firstChange = slice.map((row) => {
-        const isStart = row.changed && !previousChanged;
-        previousChanged = row.changed;
-        return isStart;
-      });
-      items.push({ type: "rows", rows: slice, firstChange });
-    } else {
-      while (index < rows.length && !keep[index]) index++;
-      const slice = rows.slice(start, index);
-      const id = `${segmentKey}-${start}`;
-      if (slice.length < 4 || expanded.has(id)) items.push({ type: "rows", rows: slice, firstChange: slice.map(() => false) });
-      else items.push({ type: "fold", id, rows: slice });
-      previousChanged = false;
-    }
+    const kept = keep[index];
+    while (index < rows.length && keep[index] === kept) index++;
+    const slice = rows.slice(start, index);
+    const id = String(start);
+    if (kept || slice.length < 4 || expanded.has(id)) items.push({ type: "rows", start, rows: slice });
+    else items.push({ type: "fold", id, rows: slice });
   }
   return items;
 }
 
 function Cell({ line, side }: { line: SplitRow["left"] | SplitRow["right"]; side: "left" | "right" }) {
-  if (!line) return <div className="bg-bg-panel" aria-hidden="true" />;
-  const tint = line.op === "del" ? DEL_ROW : line.op === "add" ? ADD_ROW : "";
-  const marker = line.op === "del" ? "−" : line.op === "add" ? "+" : "";
+  const divider = side === "right" ? "border-l border-graphite-10" : "";
+  if (!line) return <div className={`bg-bg-panel ${divider}`} aria-hidden="true" />;
+  const tint = line.op === "del" ? DEL_ROW : line.op === "add" ? ADD_ROW : "border-l-[3px] border-transparent";
   return (
-    <div className={`flex min-w-0 gap-[8px] px-[8px] leading-[20px] ${tint} ${side === "right" ? "border-l border-graphite-10" : ""}`}>
-      <span className="w-[16px] shrink-0 select-none text-text-secondary" aria-hidden="true">{marker}</span>
-      <span className="w-[32px] shrink-0 select-none text-right tabular-nums text-text-secondary">{line.no}</span>
-      <code className="min-w-0 flex-1 whitespace-pre-wrap break-all text-text-primary">{line.text === "" ? " " : line.text}</code>
+    <div className={divider}>
+      <div className={`flex h-full min-w-0 gap-[12px] pl-[13px] pr-[16px] leading-[20px] ${tint}`}>
+        <span className="w-[32px] shrink-0 select-none text-right tabular-nums text-text-secondary">{line.no}</span>
+        <code className="min-w-0 flex-1 whitespace-pre-wrap break-all text-text-primary">{line.text === "" ? " " : line.text}</code>
+      </div>
     </div>
   );
 }
 
-function CodePane({ base, target, segments }: { base: CodeVersion; target: CodeVersion; segments: SegmentDiff[] }) {
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+function CodeColumns({ base, target, rows }: { base: CodeVersion; target: CodeVersion; rows: SplitRow[] }) {
   const [expandedFolds, setExpandedFolds] = useState<Set<string>>(new Set());
-  const containerRef = useRef<HTMLDivElement>(null);
-  const cursor = useRef(-1);
 
-  const totalChanges = segments.reduce((sum, segment) => {
-    let blocks = 0;
-    let previous = false;
-    segment.rows.forEach((row) => {
-      if (row.changed && !previous) blocks++;
-      previous = row.changed;
-    });
-    return sum + blocks;
-  }, 0);
-
-  const toggle = (set: Set<string>, setter: (next: Set<string>) => void, id: string) => {
-    const next = new Set(set);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setter(next);
-  };
-
-  const jump = (direction: 1 | -1) => {
-    const nodes = containerRef.current?.querySelectorAll<HTMLElement>("[data-change-start]");
-    if (!nodes || nodes.length === 0) return;
-    cursor.current = (cursor.current + direction + nodes.length) % nodes.length;
-    nodes[cursor.current].scrollIntoView({ block: "center", behavior: "smooth" });
-  };
-
-  if (totalChanges === 0) {
-    return <EmptyNote>No code changes between {versionLabel(base)} and {versionLabel(target)}.</EmptyNote>;
+  if (!rows.some((row) => row.changed)) {
+    return (
+      <p className="px-[24px] py-[24px] t-body-compact text-text-secondary">
+        {versionLabel(base)} and {versionLabel(target)} have the same code.
+      </p>
+    );
   }
 
   return (
-    <div ref={containerRef} className="flex flex-col">
-      <div className="sticky top-0 z-10 flex items-center gap-[8px] border-b border-graphite-10 bg-white px-[24px] py-[8px]">
-        <span className="t-small text-text-secondary">{totalChanges} {totalChanges === 1 ? "change" : "changes"}</span>
-        <div className="ml-auto flex items-center gap-[4px]">
-          <Button variant="ghost" size="sm" onClick={() => jump(-1)}>Previous Change</Button>
-          <Button variant="ghost" size="sm" onClick={() => jump(1)}>Next Change</Button>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 border-b border-graphite-10 bg-bg-panel px-[24px] py-[6px] t-small text-text-secondary">
-        <span>{versionLabel(base)}</span>
-        <span>{versionLabel(target)}</span>
-      </div>
-
-      <div className="flex flex-col gap-[12px] px-[24px] py-[12px]">
-        {segments.map((segment) => {
-          const isCollapsed = collapsed.has(segment.key);
-          const hasChanges = segment.added + segment.removed > 0;
-          const items = foldRows(segment.key, segment.rows, expandedFolds);
-          return (
-            <section key={segment.key} className="overflow-hidden rounded-[8px] border border-graphite-20">
-              <button
-                type="button"
-                aria-expanded={!isCollapsed}
-                onClick={() => toggle(collapsed, setCollapsed, segment.key)}
-                className="flex min-h-[40px] w-full items-center gap-[8px] bg-bg-panel px-[12px] text-left hover:bg-graphite-10"
-              >
-                <MaskIcon src={isCollapsed ? arrowRightUrl : arrowDownUrl} />
-                <span className="t-body-compact text-text-primary">{SEGMENT_LABEL[segment.key]}</span>
-                {hasChanges ? <ChangeCounts added={segment.added} removed={segment.removed} /> : <span className="t-small text-text-secondary">No changes</span>}
-              </button>
-              {!isCollapsed && hasChanges && (
-                <div className="border-t border-graphite-10 font-mono t-code">
-                  {items.map((item, itemIndex) =>
-                    item.type === "fold" ? (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => toggle(expandedFolds, setExpandedFolds, item.id)}
-                        className="flex h-[28px] w-full items-center justify-center bg-bg-panel t-small text-text-secondary hover:bg-graphite-10"
-                      >
-                        {item.rows.length} unchanged lines
-                      </button>
-                    ) : (
-                      item.rows.map((row, rowIndex) => (
-                        <div
-                          key={`${itemIndex}-${rowIndex}`}
-                          data-change-start={item.firstChange[rowIndex] ? "" : undefined}
-                          className="grid grid-cols-2"
-                        >
-                          <Cell line={row.left} side="left" />
-                          <Cell line={row.right} side="right" />
-                        </div>
-                      ))
-                    ),
-                  )}
-                </div>
-              )}
-            </section>
-          );
-        })}
-      </div>
+    <div className="font-mono t-code">
+      {foldRows(rows, expandedFolds).map((item) =>
+        item.type === "fold" ? (
+          <button
+            key={`fold-${item.id}`}
+            type="button"
+            onClick={() => setExpandedFolds((previous) => new Set(previous).add(item.id))}
+            className="flex h-[28px] w-full items-center justify-center border-y border-graphite-10 bg-bg-panel font-sans t-small text-text-secondary hover:bg-graphite-10 focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-brand-1"
+          >
+            Show {item.rows.length} unchanged lines
+          </button>
+        ) : (
+          item.rows.map((row, offset) => (
+            <div key={item.start + offset} className="grid grid-cols-2">
+              <Cell line={row.left} side="left" />
+              <Cell line={row.right} side="right" />
+            </div>
+          ))
+        ),
+      )}
     </div>
   );
 }

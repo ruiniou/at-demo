@@ -24,7 +24,7 @@ export interface CodeVersion {
   summary: string;
 }
 
-export const versionLabel = (version: Pick<CodeVersion, "number">) => `v${version.number}`;
+export const versionLabel = (version: Pick<CodeVersion, "number">) => `V${version.number}`;
 
 export const SOURCE_LABEL: Record<VersionSource, string> = {
   initial: "Initial",
@@ -35,7 +35,7 @@ export const SOURCE_LABEL: Record<VersionSource, string> = {
 };
 
 export const sourceText = (version: CodeVersion) =>
-  version.source === "restored" && version.restoredFrom ? `Restored from v${version.restoredFrom}` : SOURCE_LABEL[version.source];
+  version.source === "restored" && version.restoredFrom ? `Restored from V${version.restoredFrom}` : SOURCE_LABEL[version.source];
 
 export function formatNow(date = new Date()): string {
   const pad = (n: number) => String(n).padStart(2, "0");

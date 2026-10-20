@@ -84,7 +84,6 @@ import VersionHistoryModal from "./components/VersionHistoryModal";
 import {
   buildSeedVersions,
   formatNow,
-  totalCodeChange,
   versionLabel,
   type CodeVersion,
 } from "./components/versionHistoryData";
@@ -1258,7 +1257,7 @@ type Message = {
   dispatchedTaskData?: EventDispatchedTaskData;
   codeDiffData?: CodeDiffData;
   codeVersion?: number;
-  /** Set on 'version_restored' records: Restored v{from} as v{to}. */
+  /** Set on 'version_restored' records: Restored V{from} as V{to}. */
   restoredVersion?: { from: number; to: number };
   metadataDiffData?: { fieldId: string; label: string; oldValue: string; newValue: string; group: string }[];
 };
@@ -2213,7 +2212,7 @@ function ChatConversation({
                 )}
                 {msg.type === 'version_restored' && msg.restoredVersion && (
                   <p className="px-[10px] t-small text-text-secondary">
-                    Restored v{msg.restoredVersion.from} as v{msg.restoredVersion.to}.
+                    Restored V{msg.restoredVersion.from} as V{msg.restoredVersion.to}.
                   </p>
                 )}
                 {msg.type === 'demo_scenario_complete' && (
@@ -4636,6 +4635,7 @@ function WorkspaceModal({
   width = 400,
   hideIcon = false,
   primaryDisabled = false,
+  stacked = false,
 }: {
   isOpen: boolean;
   title: string;
@@ -4654,12 +4654,14 @@ function WorkspaceModal({
   /** Hide the leading warning icon for confirmations that are not warnings. */
   hideIcon?: boolean;
   primaryDisabled?: boolean;
+  /** Opened on top of another dialog: a lighter, blurred overlay so the dialog underneath recedes without doubling the dim. */
+  stacked?: boolean;
 }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      <button className="absolute inset-0 bg-black/40" aria-label="Close modal" onClick={onClose} />
+    <div className={`fixed inset-0 flex items-center justify-center ${stacked ? 'z-[110]' : 'z-[100]'}`}>
+      <button className={`absolute inset-0 ${stacked ? 'bg-black/20 backdrop-blur-[2px]' : 'bg-black/40'}`} aria-label="Close modal" onClick={onClose} />
       <div className="relative max-w-[90vw] rounded-[8px] bg-white shadow-[0px_4px_6px_rgba(0,0,0,0.15)]" style={{ width }}>
         <div className="flex items-center justify-between border-b border-[#E5E8E8] px-[24px] pb-[17px] pt-[16px]">
           <div className="flex min-w-0 items-center gap-[8px]">
@@ -11862,7 +11864,6 @@ ods graphics off;`;
   // Version History: snapshots are append-only. Demo data is seeded around the program shown in the editor.
   const [versions, setVersions] = useState<CodeVersion[]>(() => buildSeedVersions(codeContent, currentUser));
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [historyDiffRequest, setHistoryDiffRequest] = useState<{ id: number; base: number; target: number } | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<CodeVersion | null>(null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [restoreError, setRestoreError] = useState<string | null>(null);
@@ -12265,11 +12266,9 @@ ods graphics off;`;
         outputName={historyOutputName}
         versions={versions}
         restoreBlockedReason={restoreBlockedReason}
-        isCurrentLocked={effectiveIsLocked}
         keysSuspended={restoreTarget !== null}
-        diffRequest={historyDiffRequest}
         copilotIcon={
-          <span className="flex size-[20px] shrink-0 items-center justify-center rounded-[4px] bg-brand-1">
+          <span className="flex size-[20px] shrink-0 items-center justify-center rounded-full bg-brand-1">
             <AtlasLogoIcon className="h-[12px] w-[12px] shrink-0" color="white" />
           </span>
         }
@@ -12283,9 +12282,10 @@ ods graphics off;`;
         <WorkspaceModal
           isOpen
           hideIcon
+          stacked
           width={440}
           title={`Restore ${versionLabel(restoreTarget)} as a New Version?`}
-          description={`${versionLabel(restoreTarget)} will be saved as v${currentVersion.number + 1}. Existing versions stay in history.`}
+          description={`${versionLabel(restoreTarget)} will be saved as V${currentVersion.number + 1}. Existing versions stay in history.`}
           primaryLabel={isRestoring ? 'Restoring…' : restoreError ? 'Retry' : 'Restore'}
           primaryDisabled={isRestoring}
           secondaryLabel="Cancel"
@@ -12293,33 +12293,7 @@ ods graphics off;`;
           onSecondary={closeRestoreConfirm}
           onPrimary={handleConfirmRestore}
         >
-          {(() => {
-            const change = totalCodeChange(currentVersion.code, restoreTarget.code);
-            return (
-              <div className="mt-[12px] flex flex-col gap-[6px] rounded-[6px] bg-bg-panel px-[12px] py-[10px]">
-                <div className="flex items-center justify-between gap-[8px]">
-                  <span className="t-small-medium text-text-primary">vs Current ({versionLabel(currentVersion)})</span>
-                  <button
-                    type="button"
-                    className="t-small text-brand-1 hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1"
-                    onClick={() => {
-                      const target = restoreTarget;
-                      setRestoreTarget(null);
-                      setHistoryDiffRequest({ id: Date.now(), base: target.number, target: currentVersion.number });
-                    }}
-                  >
-                    View Full Diff
-                  </button>
-                </div>
-                <div className="flex items-center gap-[8px] t-small">
-                  <span className="text-text-secondary">Code</span>
-                  <span className="text-code-success tabular-nums">+{change.added}</span>
-                  <span className="text-status-error tabular-nums">−{change.removed}</span>
-                </div>
-                {restoreError && <p role="alert" className="t-small text-status-error">{restoreError}</p>}
-              </div>
-            );
-          })()}
+          {restoreError && <p role="alert" className="mt-[8px] t-small text-status-error">{restoreError}</p>}
         </WorkspaceModal>,
         document.body,
       )}

@@ -6,6 +6,8 @@ export interface FilterChipOption {
   label: string;
   value: string;
   icon?: React.ReactNode;
+  /** Secondary note after the label, in text-secondary, e.g. "(Current)". Shown on the chip and in the menu. */
+  suffix?: string;
 }
 
 export interface FilterChipProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type" | "onChange"> {
@@ -267,7 +269,11 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
       }
     } else {
       const currentOption = options?.find((opt) => opt.value === value);
-      displayLabel = currentOption ? currentOption.label : label;
+      displayLabel = currentOption
+        ? currentOption.suffix
+          ? <>{currentOption.label} <span className="text-text-secondary">{currentOption.suffix}</span></>
+          : currentOption.label
+        : label;
     }
 
     return (
@@ -386,7 +392,10 @@ export const FilterChip = forwardRef<HTMLButtonElement, FilterChipProps>(
                         : "text-[#3F4444] hover:bg-[#F8F7F7]"
                     }`}
                   >
-                    <span className="t-small font-normal leading-[18px] truncate flex-1 min-w-0 mr-[6px]" title={opt.label}>{opt.label}</span>
+                    <span className="t-small font-normal leading-[18px] truncate flex-1 min-w-0 mr-[6px]" title={opt.label}>
+                      {opt.label}
+                      {opt.suffix && <span className="text-text-secondary"> {opt.suffix}</span>}
+                    </span>
                     {isOptionSelected && (
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="shrink-0">
                         <path d="M9.9997 15.1709L19.1921 5.97852L20.6063 7.39273L9.9997 17.9993L3.63574 11.6354L5.04996 10.2212L9.9997 15.1709Z" fill="#830051" />
