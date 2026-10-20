@@ -439,7 +439,7 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
                 onChange={value => { resetScroll(activeTab); if (activeTab === "variables") setSearch(value); else if (activeTab === "vlm") setVlmSearch(value); else { setCodelistSearch(value); setTermPage(0); } }} />
             </div>
             <div className="flex flex-1 min-h-0 overflow-hidden">
-            {activeTab === "variables" && <PickerTable scrollRef={scrollRef} onScroll={onScroll} minWidth={crossDataset ? "min-w-[1240px]" : "min-w-[1160px]"} colgroup={<colgroup><col className="w-10" />{crossDataset && <col className="w-20" />}<col className="w-24" /><col className="w-36" /><col className="w-14" /><col className="w-96" /><col className="w-32" /><col className="w-16" /><col className="w-20" /><col className="w-24" /><col className="w-24" /></colgroup>} head={<tr className="text-left">
+            {activeTab === "variables" && <PickerTable scrollRef={scrollRef} onScroll={onScroll} minWidth={crossDataset ? "min-w-[1180px]" : "min-w-[1100px]"} colgroup={<colgroup><col className="w-10" />{crossDataset && <col className="w-20" />}<col className="w-24" /><col className="w-36" /><col className="w-14" /><col className="w-[300px]" /><col className="w-32" /><col className="w-16" /><col className="w-20" /><col className="w-24" /><col className="w-24" /></colgroup>} head={<tr className="text-left">
                   <th className="px-3 py-2 w-10"><Checkbox aria-label="Select all visible variables" checked={filteredVariables.length > 0 && filteredVariables.every(v => selected.includes(variableKey(v)))} indeterminate={filteredVariables.some(v => selected.includes(variableKey(v))) && !filteredVariables.every(v => selected.includes(variableKey(v)))} onChange={checked => {
                     const keys = filteredVariables.map(variableKey); setSelected(prev => checked ? [...new Set([...prev, ...keys])] : prev.filter(key => !keys.includes(key)));
                   }} /></th>
@@ -448,7 +448,7 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
                 </tr>} empty={!filteredVariables.length && <p className="t-small text-text-primary text-center p-8">{isShowingSelectedOnly && !selected.length ? "No variables selected yet" : "No matching variables found"}</p>}>
               {filteredVariables.map(v => {
                   const key = variableKey(v), checked = selected.includes(key);
-                  return <tr key={key} data-variable-key={key} className={`border-b border-graphite-10 ${checked ? "bg-bg-panel" : "hover:bg-bg-panel"}`}>
+                  return <tr key={key} data-variable-key={key} onClick={event => { if (!(event.target as HTMLElement).closest("button, input, label, a")) toggleVariable(key); }} className={`cursor-pointer border-b border-graphite-10 ${checked ? "bg-bg-panel" : "hover:bg-bg-panel"}`}>
                     <td className="px-3 py-2 align-top"><Checkbox aria-label={`Select ${key}`} checked={checked} onChange={() => toggleVariable(key)} /></td>
                     {crossDataset && <td className="px-2 py-2 align-top font-mono whitespace-nowrap">{v.datasetName}</td>}
                     <td className="px-2 py-2 align-top font-mono">{v.variable}</td>
