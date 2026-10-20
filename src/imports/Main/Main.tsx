@@ -80,6 +80,15 @@ import EventInformationModal, { type EventInputFiles } from "./components/EventI
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
 import DeleteEventModal from "./components/DeleteEventModal";
 import StopEventModal from "./components/StopEventModal";
+import VersionHistoryModal from "./components/VersionHistoryModal";
+import {
+  buildSeedVersions,
+  formatNow,
+  nextMetadata,
+  totalCodeChange,
+  versionLabel,
+  type CodeVersion,
+} from "./components/versionHistoryData";
 import StoppedEventCard from "./components/StoppedEventCard";
 import EventTeamMemberModal from "./components/EventTeamMemberModal";
 import EventDashboard from "./components/EventDashboardV2";
@@ -1221,6 +1230,7 @@ type Message = {
     | 'ai_update_accepted'
     | 'meta_update_card'
     | 'metadata_sync_complete'
+    | 'version_restored'
     | 'demo_scenario_complete'
     | 'event_thinking_block'
     | 'event_search_block'
@@ -1249,6 +1259,8 @@ type Message = {
   dispatchedTaskData?: EventDispatchedTaskData;
   codeDiffData?: CodeDiffData;
   codeVersion?: number;
+  /** Set on 'version_restored' records: Restored v{from} as v{to}. */
+  restoredVersion?: { from: number; to: number };
   metadataDiffData?: { fieldId: string; label: string; oldValue: string; newValue: string; group: string }[];
 };
 
@@ -2200,6 +2212,11 @@ function ChatConversation({
                     {!!msg.metadataDiffData?.length && <MetadataChangeNotice items={msg.metadataDiffData} />}
                   </div>
                 )}
+                {msg.type === 'version_restored' && msg.restoredVersion && (
+                  <p className="px-[10px] t-small text-text-secondary">
+                    Restored v{msg.restoredVersion.from} as v{msg.restoredVersion.to}.
+                  </p>
+                )}
                 {msg.type === 'demo_scenario_complete' && (
                   <div className="w-full flex flex-col gap-[8px]">
                     <p className="px-[10px] t-body text-text-primary">{msg.content}</p>
@@ -2496,8 +2513,11 @@ function AICopilotPanel({
   demoScenarioRequest,
   onMetadataSyncComplete,
   onRunningChange,
+  versionRestoreRecord,
 }: {
   variant?: 'drawer' | 'incard';
+  /** A completed Version History restore; leaves a system record in the TFL conversation. */
+  versionRestoreRecord?: { id: number; from: number; to: number } | null;
   quoteInsertRef?: React.MutableRefObject<((fieldId: string, label: string) => void) | null>;
   panelWidth: number;
   onClose: () => void;
@@ -2680,6 +2700,11 @@ function AICopilotPanel({
     }, 1000);
     return () => window.clearTimeout(timer);
   }, [metadataSyncRequest?.id]);
+  useEffect(() => {
+    // Ignore a stale record when the panel mounts after the restore (e.g. it was closed at the time).
+    if (!versionRestoreRecord || isEventCopilot || Date.now() - versionRestoreRecord.id > 3000) return;
+    setMessages(previous => [...previous, { type: 'version_restored', restoredVersion: { from: versionRestoreRecord.from, to: versionRestoreRecord.to } }]);
+  }, [versionRestoreRecord?.id]);
   useEffect(() => {
     if (!demoScenarioRequest || isEventCopilot) return;
     const { scenario, codeDiffData, metadataDiffData } = demoScenarioRequest;
@@ -4608,6 +4633,10 @@ function WorkspaceModal({
   onClose,
   dangerPrimary = false,
   iconColor,
+  children,
+  width = 400,
+  hideIcon = false,
+  primaryDisabled = false,
 }: {
   isOpen: boolean;
   title: string;
@@ -4619,16 +4648,23 @@ function WorkspaceModal({
   onClose: () => void;
   dangerPrimary?: boolean;
   iconColor?: string;
+  /** Extra content under the description (e.g. a change summary). */
+  children?: React.ReactNode;
+  /** Dialog width in px. Defaults to the standard confirmation width. */
+  width?: number;
+  /** Hide the leading warning icon for confirmations that are not warnings. */
+  hideIcon?: boolean;
+  primaryDisabled?: boolean;
 }) {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
       <button className="absolute inset-0 bg-black/40" aria-label="Close modal" onClick={onClose} />
-      <div className="relative w-[400px] max-w-[90vw] rounded-[8px] bg-white shadow-[0px_4px_6px_rgba(0,0,0,0.15)]">
+      <div className="relative max-w-[90vw] rounded-[8px] bg-white shadow-[0px_4px_6px_rgba(0,0,0,0.15)]" style={{ width }}>
         <div className="flex items-center justify-between border-b border-[#E5E8E8] px-[24px] pb-[17px] pt-[16px]">
           <div className="flex min-w-0 items-center gap-[8px]">
-            <ErrorWarningIcon className="w-[20px] h-[20px] shrink-0" color={iconColor || (dangerPrimary ? "#CC2C3C" : "#F0AB00")} />
+            {!hideIcon && <ErrorWarningIcon className="w-[20px] h-[20px] shrink-0" color={iconColor || (dangerPrimary ? "#CC2C3C" : "#F0AB00")} />}
             <h2 className="text-[16px] font-semibold leading-[22px] text-text-primary">{title}</h2>
           </div>
           <button
@@ -4641,6 +4677,7 @@ function WorkspaceModal({
         </div>
         <div className="px-[24px] py-[20px]">
           <p className="text-[14px] leading-[24px] text-text-secondary">{description}</p>
+          {children}
         </div>
         <div className="flex items-center justify-end gap-[12px] border-t border-[#E5E8E8] px-[24px] pb-[20px] pt-[21px]">
           <button
@@ -4651,7 +4688,8 @@ function WorkspaceModal({
           </button>
           <button
             onClick={onPrimary}
-            className={`h-[36px] rounded-[4px] px-[12px] text-[14px] font-medium leading-[24px] text-white active:scale-[0.96] ${dangerPrimary ? 'bg-[#CC2C3C] hover:bg-[#b02030]' : 'bg-brand-1 hover:bg-[#6D0043]'}`}
+            disabled={primaryDisabled}
+            className={`h-[36px] rounded-[4px] px-[12px] text-[14px] font-medium leading-[24px] text-white active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-60 ${dangerPrimary ? 'bg-[#CC2C3C] hover:bg-[#b02030]' : 'bg-brand-1 hover:bg-[#6D0043]'}`}
           >
             {primaryLabel}
           </button>
@@ -11635,6 +11673,7 @@ function CodePanel({
   onDismissMetadataNotice,
   isCopilotRunning = false,
   demoCodeRequest,
+  onVersionRestored,
 }: {
   selectedItem: string;
   docType?: DocumentType;
@@ -11668,6 +11707,8 @@ function CodePanel({
   onDismissMetadataNotice?: () => void;
   isCopilotRunning?: boolean;
   demoCodeRequest?: DemoCodeRequest | null;
+  /** Fires after Restore succeeds, so the parent can leave a record in the Copilot conversation. */
+  onVersionRestored?: (info: { from: number; to: number }) => void;
 }) {
   const [isLockedLocal, setIsLockedLocal] = useState(Boolean(isLockedProp));
 
@@ -11682,7 +11723,10 @@ function CodePanel({
   const handleToolbarToggleLock = () => {
     if (!effectiveIsLocked) {
       // Locking commits pending edits, so Save is not required first.
-      if (userCode !== savedCode) setSavedCode(userCode);
+      if (userCode !== savedCode) {
+        setSavedCode(userCode);
+        appendVersion({ source: 'manual-save', kind: 'code-only', code: userCode, operator: { name: currentUser, viaCopilot: false }, summary: 'Manual edit' });
+      }
       const baseline = lockedBaseline ?? codeContent;
       if (userCode !== baseline) onCodeLocked?.(userCode);
       setLockedBaseline(userCode);
@@ -11816,11 +11860,31 @@ ods graphics off;`;
   const [lastRunCode, setLastRunCode] = useState(codeContent);
   const [savedCode, setSavedCode] = useState(codeContent);
 
+  // Version History: snapshots are append-only. Demo data is seeded around the program shown in the editor.
+  const [versions, setVersions] = useState<CodeVersion[]>(() => buildSeedVersions(codeContent, selectedItem, currentUser));
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyDiffRequest, setHistoryDiffRequest] = useState<{ id: number; base: number; target: number } | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<CodeVersion | null>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+
+  const appendVersion = (draft: Omit<CodeVersion, 'number' | 'createdAt'>) => {
+    setVersions(previous => {
+      const last = previous[previous.length - 1];
+      // A successful save that did not change the program creates no node.
+      if (last && draft.source !== 'restored' && last.code === draft.code) return previous;
+      return [...previous, { ...draft, number: (last?.number ?? 0) + 1, createdAt: formatNow() }];
+    });
+  };
+
   useEffect(() => {
     setUserCode(codeContent);
     setLastRunCode(codeContent);
     setSavedCode(codeContent);
     setLockedBaseline(null);
+    setVersions(buildSeedVersions(codeContent, selectedItem, currentUser));
+    setHistoryOpen(false);
+    setRestoreTarget(null);
   }, [selectedItem, codeContent]);
   useEffect(() => {
     if (!demoCodeRequest) return;
@@ -11842,6 +11906,23 @@ ods graphics off;`;
     setSavedCode(demoCodeRequest.scenario === 'D' ? codeContent : nextCode);
     // AI rounds (A/B/C) keep Metadata in sync themselves; only a manual edit (D) leaves it behind until Code is locked.
     setLockedBaseline(demoCodeRequest.scenario === 'D' ? codeContent : nextCode);
+    // Saved AI rounds are version nodes: A is a write_code (Code + Metadata), B is an edit_code (Code Only).
+    const copilot = { name: 'Copilot', viaCopilot: true, triggeredBy: currentUser };
+    if (demoCodeRequest.scenario === 'A') {
+      appendVersion({
+        source: 'ai-write',
+        kind: 'code-metadata',
+        code: nextCode,
+        operator: copilot,
+        metadata: nextMetadata(versions, meta => ({
+          ...meta,
+          'Basic Information': { ...meta['Basic Information'], Title: `${meta['Basic Information']?.Title ?? selectedItem} (revised)` },
+        })),
+        summary: 'Updated title and program name',
+      });
+    } else if (demoCodeRequest.scenario === 'B') {
+      appendVersion({ source: 'ai-edit', kind: 'code-only', code: nextCode, operator: copilot, summary: 'Added a review comment' });
+    }
   }, [demoCodeRequest?.id]);
 
   const codeLines = userCode.split('\n');
@@ -11949,6 +12030,7 @@ ods graphics off;`;
     setIsSaving(true);
     setTimeout(() => {
       setSavedCode(userCode);
+      appendVersion({ source: 'manual-save', kind: 'code-only', code: userCode, operator: { name: currentUser, viaCopilot: false }, summary: 'Manual edit' });
       setIsSaving(false);
     }, 500);
   };
@@ -11957,6 +12039,52 @@ ods graphics off;`;
     navigator.clipboard?.writeText(userCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  const restoreBlockedReason = effectiveIsLocked
+    ? 'Unlock this output to restore a version.'
+    : isCopilotRunning
+      ? 'Wait for Copilot to finish, or stop the run.'
+      : null;
+  const historyOutputName = (() => {
+    const number = selectedItem.match(/^[\d.]+/)?.[0].replace(/\.$/, '');
+    const kind = docType === 'listing' ? 'Listing' : docType === 'figure' ? 'Figure' : 'Table';
+    return number ? `${kind} ${number}` : selectedItem;
+  })();
+  const currentVersion = versions[versions.length - 1];
+  const closeRestoreConfirm = () => {
+    if (isRestoring) return;
+    setRestoreTarget(null);
+    setRestoreError(null);
+  };
+  const handleConfirmRestore = () => {
+    if (!restoreTarget || isRestoring) return;
+    const target = restoreTarget;
+    const nextNumber = (currentVersion?.number ?? 0) + 1;
+    setIsRestoring(true);
+    setRestoreError(null);
+    window.setTimeout(() => {
+      try {
+        // Restore appends a new version equal to the chosen one; history is never rewritten.
+        setUserCode(target.code);
+        setSavedCode(target.code);
+        appendVersion({
+          source: 'restored',
+          restoredFrom: target.number,
+          kind: target.kind,
+          code: target.code,
+          metadata: target.metadata,
+          summary: `Same content as ${versionLabel(target)}`,
+          operator: { name: currentUser, viaCopilot: false },
+        });
+        setRestoreTarget(null);
+        onVersionRestored?.({ from: target.number, to: nextNumber });
+      } catch {
+        setRestoreError(`Couldn't restore ${versionLabel(target)}. Your current version is unchanged.`);
+      } finally {
+        setIsRestoring(false);
+      }
+    }, 500);
   };
 
   const toolbarButtons = (
@@ -12006,6 +12134,8 @@ ods graphics off;`;
       {/* 4. History */}
       <TooltipText label="Version History">
         <button
+          onClick={() => setHistoryOpen(true)}
+          aria-haspopup="dialog"
           className="flex h-[24px] w-[24px] items-center justify-center rounded-[4px] hover:bg-black/5 active:scale-[0.96]"
           aria-label="Version History"
         >
@@ -12138,6 +12268,67 @@ ods graphics off;`;
         </div>
       </div>
 
+      <VersionHistoryModal
+        isOpen={historyOpen}
+        outputName={historyOutputName}
+        versions={versions}
+        restoreBlockedReason={restoreBlockedReason}
+        isCurrentLocked={effectiveIsLocked}
+        keysSuspended={restoreTarget !== null}
+        diffRequest={historyDiffRequest}
+        onClose={() => setHistoryOpen(false)}
+        onRestore={(version) => {
+          setRestoreError(null);
+          setRestoreTarget(version);
+        }}
+      />
+      {restoreTarget && currentVersion && createPortal(
+        <WorkspaceModal
+          isOpen
+          hideIcon
+          width={440}
+          title={`Restore ${versionLabel(restoreTarget)} as a New Version?`}
+          description={`${versionLabel(restoreTarget)} will be saved as v${currentVersion.number + 1}. Existing versions stay in history.`}
+          primaryLabel={isRestoring ? 'Restoring…' : restoreError ? 'Retry' : 'Restore'}
+          primaryDisabled={isRestoring}
+          secondaryLabel="Cancel"
+          onClose={closeRestoreConfirm}
+          onSecondary={closeRestoreConfirm}
+          onPrimary={handleConfirmRestore}
+        >
+          {(() => {
+            const change = totalCodeChange(currentVersion.code, restoreTarget.code);
+            return (
+              <div className="mt-[12px] flex flex-col gap-[6px] rounded-[6px] bg-bg-panel px-[12px] py-[10px]">
+                <div className="flex items-center justify-between gap-[8px]">
+                  <span className="t-small-medium text-text-primary">vs Current ({versionLabel(currentVersion)})</span>
+                  <button
+                    type="button"
+                    className="t-link text-brand-1 hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1"
+                    onClick={() => {
+                      const target = restoreTarget;
+                      setRestoreTarget(null);
+                      setHistoryDiffRequest({ id: Date.now(), base: target.number, target: currentVersion.number });
+                    }}
+                  >
+                    View Full Diff
+                  </button>
+                </div>
+                <div className="flex items-center gap-[8px] t-small">
+                  <span className="text-text-secondary">Code</span>
+                  <span className="text-code-success tabular-nums">+{change.added}</span>
+                  <span className="text-status-error tabular-nums">−{change.removed}</span>
+                </div>
+                {restoreTarget.kind === 'code-metadata' && (
+                  <span className="t-small text-text-secondary">Metadata is restored together with the code.</span>
+                )}
+                {restoreError && <p role="alert" className="t-small text-status-error">{restoreError}</p>}
+              </div>
+            );
+          })()}
+        </WorkspaceModal>,
+        document.body,
+      )}
     </div>
   );
 }
@@ -12278,6 +12469,7 @@ function WorkspaceContent({
   const savedCodeText = savedCodeTextByTfl[selectedTflKey] || '';
   const setSavedCodeText = (value: string) => setSavedCodeTextByTfl(previous => ({ ...previous, [selectedTflKey]: value }));
   const [metadataSyncRequest, setMetadataSyncRequest] = useState<{ id: number; codeVersion: number; metadataDiffData: NonNullable<Message['metadataDiffData']> } | null>(null);
+  const [versionRestoreRecord, setVersionRestoreRecord] = useState<{ id: number; from: number; to: number } | null>(null);
   const [demoScenarioRequest, setDemoScenarioRequest] = useState<DemoScenarioRequest | null>(null);
   const [demoCodeRequest, setDemoCodeRequest] = useState<DemoCodeRequest | null>(null);
   const [demoMetadataRequest, setDemoMetadataRequest] = useState<DemoMetadataRequest | null>(null);
@@ -13511,6 +13703,7 @@ function WorkspaceContent({
         onHandoffToEventCopilot={handleHandoffToEventCopilot}
         onComposerDirtyChange={setIsAiComposerDirty}
         metadataSyncRequest={metadataSyncRequest}
+        versionRestoreRecord={versionRestoreRecord}
         demoScenarioRequest={demoScenarioRequest}
         onMetadataSyncComplete={handleMetadataSyncComplete}
         onRunningChange={setIsTflCopilotRunning}
@@ -13995,6 +14188,7 @@ function WorkspaceContent({
                         onDismissMetadataNotice={() => setMetadataNoticeDismissed(true)}
                         isCopilotRunning={isTflCopilotRunning || isSelectedTflExecuting}
                         demoCodeRequest={demoCodeRequest}
+                        onVersionRestored={(info) => setVersionRestoreRecord({ id: Date.now(), ...info })}
                       />
                     </div>
                   )}
@@ -14149,6 +14343,7 @@ function WorkspaceContent({
                         onDismissMetadataNotice={() => setMetadataNoticeDismissed(true)}
                         isCopilotRunning={isTflCopilotRunning || isSelectedTflExecuting}
                         demoCodeRequest={demoCodeRequest}
+                        onVersionRestored={(info) => setVersionRestoreRecord({ id: Date.now(), ...info })}
                       />
                     </div>
                   )}
