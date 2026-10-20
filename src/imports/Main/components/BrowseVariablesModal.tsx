@@ -1027,6 +1027,15 @@ export function groupVariablesByDataset(selected: string[]): Array<{ dataset: st
 
 // ==================== Inline Variable List ====================
 
+// Text width in the 12px tag font, so tags can be packed to a field without wrapping.
+let measureContext: CanvasRenderingContext2D | null | undefined;
+function textWidth(text: string, weight: number): number {
+  if (measureContext === undefined) measureContext = document.createElement("canvas").getContext("2d");
+  if (!measureContext) return text.length * 8;
+  measureContext.font = `${weight} 12px 'PingFang SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+  return measureContext.measureText(text).width;
+}
+
 function InlineVariableList({
   label,
   variables,
@@ -1049,6 +1058,15 @@ function InlineVariableList({
   const [dropdownPos, setDropdownPos] = useState<{ top?: number; bottom?: number; left: number; maxHeight: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [fieldWidth, setFieldWidth] = useState(0);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setFieldWidth(el.clientWidth));
+    setFieldWidth(el.clientWidth);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const updatePos = useCallback(() => {
     if (!containerRef.current) return;
@@ -1159,6 +1177,29 @@ function InlineVariableList({
     }
     return truncated;
   }, [groupedSelected, hasMoreThanThree, isExpandedTags]);
+
+  // A tag never wraps: a dataset with many variables becomes several one-line tags, packed to the field width.
+  const tagRows = useMemo(() => {
+    const capacity = Math.max(120, fieldWidth - 40);
+    const rows: { dataset: string; items: typeof groupedSelected[number]["items"] }[] = [];
+    for (const group of visibleGroups) {
+      const prefixWidth = textWidth(`${group.dataset}.`, 400) + 16;
+      let current: typeof group.items = [];
+      let used = prefixWidth;
+      for (const item of group.items) {
+        const itemWidth = textWidth(item.label, 500) + 28;
+        if (current.length && used + itemWidth > capacity) {
+          rows.push({ dataset: group.dataset, items: current });
+          current = [];
+          used = prefixWidth;
+        }
+        current.push(item);
+        used += itemWidth;
+      }
+      if (current.length) rows.push({ dataset: group.dataset, items: current });
+    }
+    return rows;
+  }, [visibleGroups, fieldWidth]);
 
   let boxClasses = "";
   if (disabled) {
@@ -1330,11 +1371,11 @@ function InlineVariableList({
               </span>
             ) : (
               <>
-                {visibleGroups.map((group) => (
+                {tagRows.map((row) => (
                   <GroupTag
-                    key={group.dataset}
-                    prefix={group.dataset}
-                    items={group.items}
+                    key={`${row.dataset}-${row.items[0].key}`}
+                    prefix={row.dataset}
+                    items={row.items}
                     disabled={disabled}
                     onRemoveItem={onRemove}
                   />

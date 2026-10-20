@@ -99,58 +99,57 @@ export interface GroupTagProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 /**
- * GroupTag component — Consolidated tag grouping variables under the same dataset namespace.
- * The dataset prefix stays on the left; each variable is its own chip, so a long group wraps
- * onto lines that line up under the first chip instead of running on after a comma.
- * E.g. ADSL.  [AAGE ✕] [SEX ✕]
+ * GroupTag component — Consolidated tag grouping variables under the same dataset namespace
+ * E.g. ADSL. AAGE ✕ , SEX ✕
  */
 const GroupTag = forwardRef<HTMLSpanElement, GroupTagProps>(
   ({ prefix, items, onRemoveItem, disabled = false, className = "", ...props }, ref) => {
     if (!items || items.length === 0) return null;
-    const removable = Boolean(onRemoveItem) && !disabled;
 
     return (
       <span
         ref={ref}
-        className={`inline-flex items-start gap-[6px] rounded-[4px] bg-graphite-10 px-[6px] py-[3px] max-w-full min-w-0 transition-colors ${className}`}
+        className={`inline-flex items-center rounded-[4px] bg-graphite-10 px-[6px] py-[2px] max-w-full min-w-0 transition-colors ${className}`}
         {...props}
       >
         {/* Dataset prefix */}
         <span
-          className="shrink-0 select-none text-[12px] font-normal leading-[20px] text-[#888E8E]"
+          className="text-[#888E8E] font-normal shrink-0 text-[12px] leading-[20px] select-none"
           style={{ fontFamily: "'PingFang SC', sans-serif" }}
         >
           {prefix}.
         </span>
 
-        {/* One chip per variable */}
-        <span className="flex min-w-0 flex-wrap items-center gap-[4px]">
-          {items.map((item) => (
-            <span
-              key={item.key}
-              className={`group/item inline-flex h-[20px] max-w-full items-center gap-[2px] rounded-[3px] bg-white pl-[6px] ${removable ? "pr-[2px]" : "pr-[6px]"} transition-colors ${removable ? "hover:bg-bg-panel" : ""}`}
-            >
-              <span
-                className="truncate text-[12px] font-medium leading-[20px] text-text-primary"
-                style={{ fontFamily: "'PingFang SC', sans-serif" }}
-              >
-                {item.label}
-              </span>
-              {removable && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRemoveItem?.(item.key);
-                  }}
-                  className="flex shrink-0 cursor-pointer items-center justify-center rounded-[2px] hover:bg-black/10 active:scale-[0.92]"
-                  style={{ width: 16, height: 16 }}
-                  aria-label={`Remove ${item.label}`}
+        {/* Variables inside the group */}
+        <span className="inline-flex min-w-0 items-center flex-nowrap gap-x-[2px] ml-[2px] overflow-hidden">
+          {items.map((item, idx) => (
+            <React.Fragment key={item.key}>
+              <span className={`inline-flex items-center gap-[2px] rounded-[2px] px-[2px] py-[0px] group/item ${onRemoveItem && !disabled ? "hover:bg-graphite-20 transition-colors" : ""}`}>
+                <span
+                  className="text-text-primary font-medium text-[12px] leading-[20px]"
+                  style={{ fontFamily: "'PingFang SC', sans-serif" }}
                 >
-                  <img src={closeIconUrl} alt="" className="h-[10px] w-[10px] opacity-70 group-hover/item:opacity-100" />
-                </button>
+                  {item.label}
+                </span>
+                {onRemoveItem && !disabled && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveItem(item.key);
+                    }}
+                    className="flex shrink-0 items-center justify-center p-[1px] rounded-[2px] hover:bg-black/10 active:scale-[0.92] cursor-pointer"
+                    style={{ width: 12, height: 12 }}
+                    aria-label={`Remove ${item.label}`}
+                  >
+                    <img src={closeIconUrl} alt="" className="h-[10px] w-[10px] opacity-70 group-hover/item:opacity-100" />
+                  </button>
+                )}
+              </span>
+              {idx < items.length - 1 && (
+                <span className="text-[#888E8E] text-[12px] leading-[20px] select-none mr-[2px]">,</span>
               )}
-            </span>
+            </React.Fragment>
           ))}
         </span>
       </span>
