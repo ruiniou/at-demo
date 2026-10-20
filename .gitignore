@@ -120,3 +120,8 @@ Thumbs.db
 
 # Local Clarity ADaM reference workbook; never include it in Git.
 /src/data/reference/20250919_Clarity_ADaM_spec_CSRandIDMCandCDX.xlsx
+
+# Agent instructions stay local (not shared on GitHub)
+.agents/
+AGENTS.md
+CLAUDE.md
