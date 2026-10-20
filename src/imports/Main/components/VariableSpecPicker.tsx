@@ -72,6 +72,42 @@ function ChevronRightTreeIcon({ isExpanded, color = "#888E8E" }: { isExpanded: b
 function PickerJumpButton({ label, children, onClick }: { label: string; children: React.ReactNode; onClick: React.MouseEventHandler<HTMLButtonElement> }) {
   return <Tooltip label={label}><Button variant="ghost" size="sm" aria-label={label} onClick={onClick} className="!bg-bg-panel !text-text-primary border border-graphite-10 !px-1.5 !py-0.5 t-small hover:!bg-graphite-10">{children}</Button></Tooltip>;
 }
+// Header and body are separate boxes so the vertical scrollbar starts below the column header.
+// Horizontal scrolling is shared: the body drives the header's scrollLeft.
+function PickerTable({ scrollRef, onScroll, colgroup, head, minWidth = "", empty, children }: {
+  scrollRef: React.RefObject<HTMLDivElement>;
+  onScroll: (event: React.UIEvent<HTMLDivElement>) => void;
+  colgroup: React.ReactNode;
+  head: React.ReactNode;
+  minWidth?: string;
+  empty?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
+  useLayoutEffect(() => {
+    const body = scrollRef.current;
+    if (!body) return;
+    const measure = () => setScrollbarWidth(body.offsetWidth - body.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    return () => observer.disconnect();
+  }, [scrollRef]);
+  const tableClass = `w-full ${minWidth} table-fixed border-collapse t-small text-left`;
+  return (
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div ref={headerRef} className="shrink-0 overflow-hidden bg-bg-panel" style={{ paddingRight: scrollbarWidth }}>
+        <table className={`${tableClass} text-text-secondary font-normal`}>{colgroup}<thead>{head}</thead></table>
+      </div>
+      <div ref={scrollRef} onScroll={event => { if (headerRef.current) headerRef.current.scrollLeft = event.currentTarget.scrollLeft; onScroll(event); }} className="min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
+        <table className={`${tableClass} text-text-primary`}>{colgroup}<tbody>{children}</tbody></table>
+        {empty}
+      </div>
+    </div>
+  );
+}
+
 type PickerTab = "variables" | "vlm" | "codelist";
 const EMPTY_VARIABLES: Variable[] = [];
 const EMPTY_VLM: VlmRow[] = [];
@@ -135,7 +171,7 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
       setSelected(normalized); setSearch(""); setTab("variables"); resetContext(); setIsShowingSelectedOnly(false);
       // The picker opens on the dataset the current selection comes from, if there is just one.
       const selectedDatasetNames = [...new Set(normalized.map(key => key.split(".")[0]))];
-      const dataset = selectedDatasetNames.length === 1 ? selectedDatasetNames[0] : null;
+      const dataset = selectedDatasetNames.length === 1 && variables.some(v => v.datasetName === selectedDatasetNames[0]) ? selectedDatasetNames[0] : null;
       const standard = dataset ? variableStandard(variables.find(v => v.datasetName === dataset) ?? { datasetName: dataset } as Variable) : isTableMode ? "ADaM" : null;
       setSelectedNavDataset(dataset); setSelectedNavStandard(standard);
       setIsAdamExpanded(standard !== "SDTM"); setIsSdtmExpanded(standard !== "ADaM");
@@ -403,17 +439,14 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
                 onChange={value => { resetScroll(activeTab); if (activeTab === "variables") setSearch(value); else if (activeTab === "vlm") setVlmSearch(value); else { setCodelistSearch(value); setTermPage(0); } }} />
             </div>
             <div className="flex flex-1 min-h-0 overflow-hidden">
-            {activeTab === "variables" && <div ref={scrollRef} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
-              <table className={`w-full ${crossDataset ? "min-w-[1070px]" : "min-w-[990px]"} table-fixed border-collapse t-small text-text-primary`}>
-                <colgroup><col className="w-10" />{crossDataset && <col className="w-20" />}<col className="w-24" /><col className="w-36" /><col className="w-14" /><col /><col className="w-32" /><col className="w-16" /><col className="w-20" /><col className="w-24" /><col className="w-24" /></colgroup>
-                <thead className="sticky top-0 z-10 bg-bg-panel text-text-secondary font-normal text-left"><tr>
+            {activeTab === "variables" && <PickerTable scrollRef={scrollRef} onScroll={onScroll} minWidth={crossDataset ? "min-w-[1240px]" : "min-w-[1160px]"} colgroup={<colgroup><col className="w-10" />{crossDataset && <col className="w-20" />}<col className="w-24" /><col className="w-36" /><col className="w-14" /><col className="w-96" /><col className="w-32" /><col className="w-16" /><col className="w-20" /><col className="w-24" /><col className="w-24" /></colgroup>} head={<tr className="text-left">
                   <th className="px-3 py-2 w-10"><Checkbox aria-label="Select all visible variables" checked={filteredVariables.length > 0 && filteredVariables.every(v => selected.includes(variableKey(v)))} indeterminate={filteredVariables.some(v => selected.includes(variableKey(v))) && !filteredVariables.every(v => selected.includes(variableKey(v)))} onChange={checked => {
                     const keys = filteredVariables.map(variableKey); setSelected(prev => checked ? [...new Set([...prev, ...keys])] : prev.filter(key => !keys.includes(key)));
                   }} /></th>
                   {crossDataset && <th className="px-2 py-2 font-medium">Dataset</th>}
                   {["Variable", "Label", "Type", "Derivation", "VLM / Codelist", "Length", "Format", "Core", "Origin"].map(label => <th key={label} className="px-2 py-2 font-normal whitespace-nowrap">{label}</th>)}
-                </tr></thead>
-                <tbody>{filteredVariables.map(v => {
+                </tr>} empty={!filteredVariables.length && <p className="t-small text-text-primary text-center p-8">{isShowingSelectedOnly && !selected.length ? "No variables selected yet" : "No matching variables found"}</p>}>
+              {filteredVariables.map(v => {
                   const key = variableKey(v), checked = selected.includes(key);
                   return <tr key={key} data-variable-key={key} className={`border-b border-graphite-10 ${checked ? "bg-bg-panel" : "hover:bg-bg-panel"}`}>
                     <td className="px-3 py-2 align-top"><Checkbox aria-label={`Select ${key}`} checked={checked} onChange={() => toggleVariable(key)} /></td>
@@ -431,20 +464,14 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
                     <td className="px-2 py-2 align-top">{v.core || "—"}</td>
                     <td className="px-2 py-2 align-top">{v.origin || "—"}</td>
                   </tr>;
-                })}</tbody>
-              </table>
-              {!filteredVariables.length && <p className="t-small text-text-primary text-center p-8">{isShowingSelectedOnly && !selected.length ? "No variables selected yet" : "No matching variables found"}</p>}
-            </div>}
-            {activeTab === "vlm" && <div ref={scrollRef} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto">
-              <table className="w-full border-collapse t-small text-text-primary text-left">
-                <thead className="sticky top-0 bg-bg-panel text-text-secondary font-normal"><tr><th className="px-4 py-2 font-normal w-1/3">Condition</th><th className="px-4 py-2 font-normal">Definitions</th></tr></thead>
-                <tbody>{matchingConditions.map(condition => <tr key={condition.key} className="border-b border-graphite-10">
+                })}
+            </PickerTable>}
+            {activeTab === "vlm" && <PickerTable scrollRef={scrollRef} onScroll={onScroll} colgroup={<colgroup><col className="w-1/3" /><col /></colgroup>} head={<tr><th className="px-4 py-2 font-normal">Condition</th><th className="px-4 py-2 font-normal">Definitions</th></tr>} empty={!matchingConditions.length && <p className="t-small text-center p-8">No match.</p>}>
+              {matchingConditions.map(condition => <tr key={condition.key} className="border-b border-graphite-10">
                   <td className="p-4 align-top break-words"><div className="font-medium">{condition.identifier === "*DEFAULT*" ? "Default definition" : condition.identifier}</div><div className="font-mono whitespace-pre-wrap break-words">{condition.expression}</div></td>
                   <td className="p-4 align-top"><div className="flex flex-col gap-2">{[...condition.definitions].sort((a, b) => Number(b.variable === vlmAnchor) - Number(a.variable === vlmAnchor)).map((definition, index) => <div key={`${definition.variable}-${index}`} className={`rounded-sm p-2 ${definition.variable === vlmAnchor ? "bg-az-secondary" : ""}`}><div className="font-mono font-medium">{definition.variable}</div><div className="whitespace-pre-wrap break-words">{definition.text}</div></div>)}{!condition.definitions.length && "—"}</div></td>
-                </tr>)}</tbody>
-              </table>
-              {!matchingConditions.length && <p className="t-small text-center p-8">No match.</p>}
-            </div>}
+                </tr>)}
+            </PickerTable>}
             {activeTab === "codelist" && <div className="flex flex-1 min-w-0 min-h-0">
               <div className="w-48 shrink-0 border-r border-graphite-10 p-2 overflow-auto">
                 {datasetCodelists.map(c => <button key={c.id} type="button" onClick={() => { setCodelistId(c.id); setCodelistSearch(""); setTermPage(0); resetScroll("codelist"); }} title={c.name} className={`flex min-h-7 w-full items-center text-left rounded-[4px] px-2 py-1 t-small break-words transition-colors ${currentCodelist?.id === c.id ? "bg-az-secondary text-brand-1" : "text-text-primary hover:bg-graphite-10"}`}>{c.name}</button>)}
@@ -452,12 +479,9 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
               <div className="flex flex-col flex-1 min-w-0">
                 {currentCodelist ? <>
                   <div className="px-4 py-2 border-b border-graphite-10 t-body-medium text-text-primary break-words" style={{ fontWeight: "var(--font-weight-semibold)" }}>{currentCodelist.name}</div>
-                  <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-auto">
-                    <table className="w-full border-collapse t-small text-text-primary text-left"><thead className="sticky top-0 bg-bg-panel text-text-secondary font-normal"><tr><th className="px-4 py-2 font-normal">Value</th><th className="px-4 py-2 font-normal">Label</th></tr></thead><tbody>
-                      {terms.slice(page * 100, (page + 1) * 100).map((term, index) => <tr key={`${term.value}-${index}`} className="border-b border-graphite-10"><td className="px-4 py-2 align-top font-mono break-words">{term.value}</td><td className="px-4 py-2 break-words">{term.label}</td></tr>)}
-                    </tbody></table>
-                    {!terms.length && <p className="p-8 text-center t-small text-text-primary">{codelistSearch ? "No match." : "No terms available."}</p>}
-                  </div>
+                  <PickerTable scrollRef={scrollRef} onScroll={onScroll} colgroup={<colgroup><col className="w-1/3" /><col /></colgroup>} head={<tr><th className="px-4 py-2 font-normal">Value</th><th className="px-4 py-2 font-normal">Label</th></tr>} empty={!terms.length && <p className="p-8 text-center t-small text-text-primary">{codelistSearch ? "No match." : "No terms available."}</p>}>
+                    {terms.slice(page * 100, (page + 1) * 100).map((term, index) => <tr key={`${term.value}-${index}`} className="border-b border-graphite-10"><td className="px-4 py-2 align-top font-mono break-words">{term.value}</td><td className="px-4 py-2 break-words">{term.label}</td></tr>)}
+                  </PickerTable>
                   {pageCount > 1 && <div className="flex items-center justify-end gap-3 px-4 py-2 border-t border-graphite-10 t-small text-text-primary"><Button variant="ghost" size="sm" disabled={page === 0} onClick={() => { setTermPage(page - 1); resetScroll("codelist"); }}>Previous</Button><span>Page {page + 1} of {pageCount}</span><Button variant="ghost" size="sm" disabled={page === pageCount - 1} onClick={() => { setTermPage(page + 1); resetScroll("codelist"); }}>Next</Button></div>}
                 </> : <p className="p-8 text-center t-small text-text-primary">No codelists available.</p>}
               </div>
