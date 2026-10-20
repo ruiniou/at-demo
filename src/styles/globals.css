@@ -304,6 +304,14 @@ html, body {
   background-color: var(--color-graphite-40, #888E8E);
 }
 
+/* ── Hidden native scrollbar: ScrollArea draws an overlay thumb instead ── */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Stable scrollbar gutter to prevent layout shift ── */
 .scrollbar-gutter-stable {
   scrollbar-gutter: stable;

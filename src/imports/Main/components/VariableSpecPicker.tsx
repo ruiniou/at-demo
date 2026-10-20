@@ -5,6 +5,7 @@ import { Checkbox } from "../../../components/ui/Checkbox";
 import { SearchBar } from "../../../components/ui/SearchBar";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
 import { Tooltip } from "../../../components/ui/Tooltip";
+import { ScrollArea } from "../../../components/ui/ScrollArea";
 import { variableKey, variableStandard, normalizeSelection, buildCodelists, buildConditions } from "./variablePickerData";
 import { Variable, VlmRow, AdamCodeListRow, SdtmCodeListRow } from "./BrowseVariablesModal";
 
@@ -84,26 +85,16 @@ function PickerTable({ scrollRef, onScroll, colgroup, head, minWidth = "", empty
   children: React.ReactNode;
 }) {
   const headerRef = useRef<HTMLDivElement>(null);
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
-  useLayoutEffect(() => {
-    const body = scrollRef.current;
-    if (!body) return;
-    const measure = () => setScrollbarWidth(body.offsetWidth - body.clientWidth);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(body);
-    return () => observer.disconnect();
-  }, [scrollRef]);
   const tableClass = `w-full ${minWidth} table-fixed border-collapse t-small text-left`;
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <div ref={headerRef} className="shrink-0 overflow-hidden bg-bg-panel" style={{ paddingRight: scrollbarWidth }}>
+      <div ref={headerRef} className="shrink-0 overflow-hidden bg-bg-panel">
         <table className={`${tableClass} text-text-secondary font-normal`}>{colgroup}<thead>{head}</thead></table>
       </div>
-      <div ref={scrollRef} onScroll={event => { if (headerRef.current) headerRef.current.scrollLeft = event.currentTarget.scrollLeft; onScroll(event); }} className="min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
+      <ScrollArea ref={scrollRef} onScroll={event => { if (headerRef.current) headerRef.current.scrollLeft = event.currentTarget.scrollLeft; onScroll(event); }} className="flex-1">
         <table className={`${tableClass} text-text-primary`}>{colgroup}<tbody>{children}</tbody></table>
         {empty}
-      </div>
+      </ScrollArea>
     </div>
   );
 }

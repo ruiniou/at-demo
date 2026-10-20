@@ -13,8 +13,6 @@
 .dashboard-table-scroll {
   /* The header is outside this box, so about ten 48px rows. */
   max-height: calc(var(--spacing) * 120);
-  /* Reserve the scrollbar's width so a short filtered list doesn't widen the columns. */
-  scrollbar-gutter: stable;
 }
 
 .dashboard-data-table tbody th[scope='row'] {

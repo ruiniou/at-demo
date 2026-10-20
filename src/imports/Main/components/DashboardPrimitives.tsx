@@ -1,4 +1,5 @@
 import React from 'react';
+import { ScrollArea } from '../../../components/ui/ScrollArea';
 import { Button } from '../../../components/ui/Button';
 import { Tooltip } from '../../../components/ui/Tooltip';
 import closeIcon from '../../../icons/close-line.svg';
@@ -109,7 +110,7 @@ function flattenNodes(nodes: React.ReactNode): React.ReactNode[] {
  * would resize them and make the table jump.
  *
  * The header sits outside the scrolling body, so the vertical scrollbar starts below it. The body drives the
- * header's horizontal scroll, and the header reserves the scrollbar's width so the columns stay aligned.
+ * header's horizontal scroll. ScrollArea's scrollbar overlays the rows, so header and body always share one width.
  */
 export function DashboardTable({ title, tools, children, minWidth = 'min-w-2xl', columns }: { title: string; tools?: React.ReactNode; children: React.ReactNode; minWidth?: string; columns: string[] }) {
   const nodes = flattenNodes(children);
@@ -117,24 +118,13 @@ export function DashboardTable({ title, tools, children, minWidth = 'min-w-2xl',
   const head = nodes.filter(isHead);
   const body = nodes.filter(node => !isHead(node));
   const headerRef = React.useRef<HTMLDivElement>(null);
-  const bodyRef = React.useRef<HTMLDivElement>(null);
-  const [scrollbarWidth, setScrollbarWidth] = React.useState(0);
-  React.useLayoutEffect(() => {
-    const element = bodyRef.current;
-    if (!element) return;
-    const measure = () => setScrollbarWidth(element.offsetWidth - element.clientWidth);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
   const tableClass = `dashboard-data-table w-full ${minWidth} table-fixed border-collapse text-left t-caption`;
   const colgroup = <colgroup>{columns.map((width, index) => <col key={index} style={width ? { width } : undefined} />)}</colgroup>;
   return <section className="min-w-0 overflow-hidden rounded-md border border-graphite-10 bg-white">
     <div className="flex flex-wrap items-center justify-between gap-[12px] border-b border-graphite-10 bg-white px-[16px] py-[12px]"><h2 className="t-heading">{title}</h2>{tools}</div>
-    <div ref={headerRef} className="overflow-hidden bg-white" style={{ paddingRight: scrollbarWidth }}><table className={tableClass}>{colgroup}{head}</table></div>
+    <div ref={headerRef} className="overflow-hidden bg-white"><table className={tableClass}>{colgroup}{head}</table></div>
     {/* Caps the body at about ten rows; longer lists scroll here, under the header. */}
-    <div ref={bodyRef} onScroll={event => { if (headerRef.current) headerRef.current.scrollLeft = event.currentTarget.scrollLeft; }} className="dashboard-table-scroll overflow-auto"><table className={tableClass}>{colgroup}{body}</table></div>
+    <ScrollArea onScroll={event => { if (headerRef.current) headerRef.current.scrollLeft = event.currentTarget.scrollLeft; }} viewportClassName="dashboard-table-scroll"><table className={tableClass}>{colgroup}{body}</table></ScrollArea>
   </section>;
 }
 
