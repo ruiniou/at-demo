@@ -1046,7 +1046,7 @@ function InlineVariableList({
   const [search, setSearch] = useState("");
   const [standardFilter, setStandardFilter] = useState<"All" | "ADaM" | "SDTM">("ADaM");
   const [isExpandedTags, setIsExpandedTags] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top?: number; bottom?: number; left: number; maxHeight: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -1062,14 +1062,16 @@ function InlineVariableList({
       left = Math.max(margin, window.innerWidth - dropdownWidth - margin);
     }
 
-    // Default below the input; flip upwards if overflowing bottom of screen
-    let top = rect.bottom + 4;
-    const dropdownHeight = 440;
-    if (top + dropdownHeight > window.innerHeight - margin && rect.top > dropdownHeight + margin) {
-      top = rect.top - dropdownHeight - 4;
-    }
-
-    setDropdownPos({ top, left });
+    // Open on the side with more room and cap the height to it, so the Browse All Variables button is always on screen.
+    // The option list scrolls; search and button stay put.
+    const preferredHeight = 440;
+    const spaceBelow = window.innerHeight - rect.bottom - 4 - margin;
+    const spaceAbove = rect.top - 4 - margin;
+    const openBelow = spaceBelow >= preferredHeight || spaceBelow >= spaceAbove;
+    const maxHeight = Math.max(200, Math.min(preferredHeight, openBelow ? spaceBelow : spaceAbove));
+    setDropdownPos(openBelow
+      ? { top: rect.bottom + 4, left, maxHeight }
+      : { bottom: window.innerHeight - rect.top + 4, left, maxHeight });
   }, []);
 
   useEffect(() => {
@@ -1175,7 +1177,9 @@ function InlineVariableList({
       style={{
         position: "fixed",
         top: dropdownPos.top,
+        bottom: dropdownPos.bottom,
         left: dropdownPos.left,
+        maxHeight: dropdownPos.maxHeight,
         width: 640,
         zIndex: 9999,
       }}
@@ -1207,7 +1211,7 @@ function InlineVariableList({
       </div>
 
       {/* Table structure */}
-      <div className="w-full rounded-[2px] border border-[#EAEAEA] overflow-hidden flex flex-col">
+      <div className="w-full min-h-0 rounded-[2px] border border-[#EAEAEA] overflow-hidden flex flex-col">
         {/* Table Header */}
         <div className="grid grid-cols-[44px_130px_170px_1fr] items-center bg-[#F8F9F9] border-b border-[#EAEAEA] h-[32px] px-[2px]">
           <div />
@@ -1217,7 +1221,7 @@ function InlineVariableList({
         </div>
 
         {/* Scrollable Option list */}
-        <div className="max-h-[336px] overflow-y-auto bg-white">
+        <div className="min-h-0 max-h-[336px] overflow-y-auto bg-white">
           {filtered.length === 0 ? (
             <div className="px-[12px] py-[24px] text-center">
               <p className="t-small text-[#888E8E]">No Results Found</p>
@@ -1274,7 +1278,7 @@ function InlineVariableList({
       </div>
 
       {/* Bottom Button — Secondary style matching Figma */}
-      <div className="w-full pt-[2px]">
+      <div className="w-full shrink-0 pt-[2px]">
         <button
           type="button"
           onClick={(e) => {
