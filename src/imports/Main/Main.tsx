@@ -8293,29 +8293,12 @@ function GroupCodeViewer({ lines }: { lines: string[] }) {
 
 // Removed METADATA_FIGURE_BLOCK_ITEMS_DATA, now using figureComponents state
 
-const COMMON_DATASET_OPTIONS = [
-  { label: 'ADSL', value: 'ADSL' },
-  { label: 'ADRESP', value: 'ADRESP' },
-  { label: 'ADAE', value: 'ADAE' },
-  { label: 'ADLB', value: 'ADLB' },
-  { label: 'ADVS', value: 'ADVS' },
-  { label: 'ADTTE', value: 'ADTTE' },
-  { label: 'ADEXSUM', value: 'ADEXSUM' },
-  { label: 'ADRS', value: 'ADRS' },
-  { label: 'DM', value: 'DM' },
-  { label: 'AE', value: 'AE' },
-  { label: 'LB', value: 'LB' },
-  { label: 'VS', value: 'VS' },
-  { label: 'EX', value: 'EX' },
-];
-
 // ── Block Items Data for Blocks Tab Two-Column Layout ──
 const METADATA_BLOCK_ITEMS_DATA = [
   {
     id: 'height',
     name: 'Height (cm)',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.HEIGHTBL', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'HEIGHTBL', value: 'HEIGHTBL'}, {label: 'WEIGHTBL', value: 'WEIGHTBL'}, {label: 'BMIBL', value: 'BMIBL'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_DESC', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_DESC', value: 'BLK_DESC'}, {label: 'BLK_CUM', value: 'BLK_CUM'}, {label: 'BLK_FREQ', value: 'BLK_FREQ'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8326,7 +8309,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'weight',
     name: 'Weight (kg)',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.WEIGHTBL', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'WEIGHTBL', value: 'WEIGHTBL'}, {label: 'WGTBLU', value: 'WGTBLU'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_DESC', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_DESC', value: 'BLK_DESC'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8337,7 +8319,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'weight_group',
     name: 'Weight group (kg)',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.WGTGR1', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'WGTGR1', value: 'WGTGR1'}, {label: 'WEIGHTBL', value: 'WEIGHTBL'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_FREQ', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_FREQ', value: 'BLK_FREQ'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8348,7 +8329,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'bmi',
     name: 'BMI (kg/m2)',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.BMIBL', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'BMIBL', value: 'BMIBL'}, {label: 'HEIGHTBL', value: 'HEIGHTBL'}, {label: 'WEIGHTBL', value: 'WEIGHTBL'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_DESC', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_DESC', value: 'BLK_DESC'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8359,7 +8339,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'bmi_group',
     name: 'BMI Group (kg/m2)',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.BMIGR1', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'BMIGR1', value: 'BMIGR1'}, {label: 'BMIBL', value: 'BMIBL'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_FREQ', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_FREQ', value: 'BLK_FREQ'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8370,7 +8349,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'ecog',
     name: 'ECOG performance status',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.ECOGBL', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'ECOGBL', value: 'ECOGBL'}, {label: 'ECOGBLN', value: 'ECOGBLN'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_FREQ', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_FREQ', value: 'BLK_FREQ'}, {label: 'BLK_CUM', value: 'BLK_CUM'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8381,7 +8359,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'nicotine',
     name: 'Nicotine use',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.NICSTT', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'NICSTT', value: 'NICSTT'}, {label: 'ALCSTT', value: 'ALCSTT'}, {label: 'AVAL', value: 'AVAL'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_CUM', value: 'BLK_CUM'}, {label: 'BLK_FREQ', value: 'BLK_FREQ'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8392,7 +8369,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'alcohol',
     name: 'Alcohol use',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.ALCSTT', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'NICSTT', value: 'NICSTT'}, {label: 'ALCSTT', value: 'ALCSTT'}, {label: 'AVAL', value: 'AVAL'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_CUM', value: 'BLK_CUM'}, {label: 'BLK_FREQ', value: 'BLK_FREQ'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8403,7 +8379,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'nicotine_current',
     name: 'Any current use of nicotine products',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.NICSYN', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'NICSYN', value: 'NICSYN'}, {label: 'NICSTT', value: 'NICSTT'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_CUM', value: 'BLK_CUM'}, {label: 'BLK_FREQ', value: 'BLK_FREQ'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8414,7 +8389,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'cigarette_pack',
     name: 'Number of cigarette pack years',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.CIGPKYR', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'CIGPKYR', value: 'CIGPKYR'}, {label: 'NICPKYR', value: 'NICPKYR'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_CUM', value: 'BLK_CUM'}, {label: 'BLK_FREQ', value: 'BLK_FREQ'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8425,7 +8399,6 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'nicotine_pack',
     name: 'Number of nicotine pack years',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true, inputType: 'multiselect' as const, options: COMMON_DATASET_OPTIONS },
       { id: 'variable', label: 'Variable', value: 'ADSL.NICPKYR', type: 'tag' as const, required: true, inputType: 'multiselect' as const, options: [{label: 'NICPKYR', value: 'NICPKYR'}, {label: 'CIGPKYR', value: 'CIGPKYR'}] },
       { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true, inputType: 'dropdown' as const, options: [{label: 'BLK_CUM', value: 'BLK_CUM'}, {label: 'BLK_FREQ', value: 'BLK_FREQ'}] },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true, inputType: 'dropdown' as const, options: [{label: 'm_t_dm', value: 'm_t_dm'}, {label: 'm_t_ae', value: 'm_t_ae'}] },
@@ -8436,8 +8409,7 @@ const METADATA_BLOCK_ITEMS_DATA = [
     id: 'nicotine_type',
     name: 'Nicotine type',
     fields: [
-      { id: 'dataset', label: 'Dataset', value: 'ADSL', type: 'text' as const, required: true },
-      { id: 'variable', label: 'Variable', value: 'NICTYP', type: 'tag' as const, required: true },
+      { id: 'variable', label: 'Variable', value: 'ADSL.NICTYP', type: 'tag' as const, required: true },
       { id: 'blockType', label: 'Block Type', value: 'BLK_CUM', type: 'text' as const, required: true },
       { id: 'macro', label: 'Macro', value: 'm_t_dm', type: 'tag' as const, hasLink: true },
       { id: 'formatName', label: 'Format Name', value: 'nictyp_cat', type: 'text' as const, hasLink: true },

@@ -70,17 +70,6 @@ function ChevronRightTreeIcon({ isExpanded, color = "#888E8E" }: { isExpanded: b
   );
 }
 
-function ArrowLeftIcon({ className = "size-[16px]" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none">
-      <path
-        d="M10.8284 12.0007L15.7782 16.9504L14.364 18.3646L8 12.0007L14.364 5.63672L15.7782 7.05093L10.8284 12.0007Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
 // Derived from Button with the existing neutral Tag treatment.
 function PickerJumpButton({ label, children, onClick }: { label: string; children: React.ReactNode; onClick: React.MouseEventHandler<HTMLButtonElement> }) {
   return <Tooltip label={label}><Button variant="ghost" size="sm" aria-label={label} onClick={onClick} className="!bg-bg-panel !text-text-primary border border-graphite-10 !px-1.5 !py-0.5 t-small hover:!bg-graphite-10">{children}</Button></Tooltip>;
@@ -102,9 +91,6 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
   const [isShowingSelectedOnly, setIsShowingSelectedOnly] = useState(false);
   const [isAdamExpanded, setIsAdamExpanded] = useState(true);
   const [isSdtmExpanded, setIsSdtmExpanded] = useState(!isTableMode);
-  const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
-  const [activeVariable, setActiveVariable] = useState<Variable | null>(null);
-  const [predecessorReturnVariable, setPredecessorReturnVariable] = useState<Variable | null>(null);
   const [tab, setTab] = useState<PickerTab>("variables");
   const [codelistId, setCodelistId] = useState("");
   const [termPage, setTermPage] = useState(0);
@@ -112,7 +98,6 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollPositions = useRef<Record<PickerTab, number>>({ variables: 0, vlm: 0, codelist: 0 });
-  const predecessorContext = useRef<{ dataset: string | null; standard: "ADaM" | "SDTM" | null; selectedOnly: boolean; search: string; scroll: number } | null>(null);
   const codelists = useMemo(() => buildCodelists(adamCodeListData, variables), [adamCodeListData, variables]);
   const unlinked = selectedNavDataset === "__unlinked__" && !isShowingSelectedOnly;
   const crossDataset = isShowingSelectedOnly || !selectedNavDataset;
@@ -123,10 +108,9 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
   const available = { variables: !unlinked, vlm: !unlinked && !crossDataset && !isSdtm && conditions.length > 0, codelist: unlinked || (!crossDataset && !isSdtm && datasetCodelists.length > 0) };
   const activeTab: PickerTab = available[tab] ? tab : unlinked ? "codelist" : "variables";
   const resetScroll = (target: PickerTab) => { scrollPositions.current[target] = 0; if (activeTab === target && scrollRef.current) scrollRef.current.scrollTop = 0; };
-  const clearReturn = () => { setPredecessorReturnVariable(null); predecessorContext.current = null; };
   const resetContext = () => {
     setVlmSearch(""); setCodelistSearch(""); setVlmAnchor(""); setCodelistId(""); setTermPage(0);
-    clearReturn(); setActiveVariable(null); setIsRightPanelOpen(false); setScrollTarget(null);
+    setScrollTarget(null);
     scrollPositions.current = { variables: 0, vlm: 0, codelist: 0 };
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   };
@@ -135,7 +119,7 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
     if (standard === "SDTM") setTab("variables");
   };
   const toggleSelectedOnly = () => {
-    clearReturn(); setIsShowingSelectedOnly(!isShowingSelectedOnly); setTab("variables"); resetScroll("variables");
+    setIsShowingSelectedOnly(!isShowingSelectedOnly); setTab("variables"); resetScroll("variables");
   };
   const getVarStandard = variableStandard;
   const navDatasets = useMemo(() => {
@@ -152,7 +136,9 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
     if (isOpen && !prevOpen.current) {
       const normalized = normalizeSelection(initialSelected, variables, sourceDatasets);
       setSelected(normalized); setSearch(""); setTab("variables"); resetContext(); setIsShowingSelectedOnly(false);
-      const dataset = sourceDatasets.length === 1 ? sourceDatasets[0] : null;
+      // Without a Dataset field the picker opens on the dataset the current selection comes from, if there is just one.
+      const selectedDatasetNames = [...new Set(normalized.map(key => key.split(".")[0]))];
+      const dataset = sourceDatasets.length === 1 ? sourceDatasets[0] : selectedDatasetNames.length === 1 ? selectedDatasetNames[0] : null;
       const standard = dataset ? variableStandard(variables.find(v => v.datasetName === dataset) ?? { datasetName: dataset } as Variable) : isTableMode ? "ADaM" : null;
       setSelectedNavDataset(dataset); setSelectedNavStandard(standard);
       setIsAdamExpanded(standard !== "SDTM"); setIsSdtmExpanded(standard !== "ADaM");
@@ -168,7 +154,6 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
     const row = Array.from(scrollRef.current?.querySelectorAll<HTMLElement>("[data-variable-key]") ?? []).find(row => row.dataset.variableKey === scrollTarget);
     if (row) { row.scrollIntoView({ block: "nearest" }); setScrollTarget(null); }
   }, [isOpen, activeTab, scrollTarget, filteredVariables]);
-  const handleRowClick = (v: Variable) => { clearReturn(); setActiveVariable(v); setIsRightPanelOpen(true); };
   const toggleVariable = (key: string) => setSelected(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
   const selectedDatasets = [...new Set(selected.map(key => key.split(".")[0]))].sort();
   const newlyAddedDatasets = sourceDatasets.length ? selectedDatasets.filter(ds => !sourceDatasets.includes(ds)) : [];
@@ -176,39 +161,14 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
   const codelistForVariable = (v: Variable) => codelists.find(c => c.links.some(link => link.dataset === v.datasetName && link.variable === v.variable));
   const variableHasVlm = (v: Variable) => variableStandard(v) === "ADaM" && (vlmData.some(r => r.datasetName === v.datasetName && r.variableName === v.variable) || Boolean(v.vlmParameters?.length));
   const jump = (target: "vlm" | "codelist", v: Variable) => {
-    selectScope(v.datasetName, variableStandard(v)); setIsAdamExpanded(true); setTab(target); setActiveVariable(v);
+    selectScope(v.datasetName, variableStandard(v)); setIsAdamExpanded(true); setTab(target);
     if (target === "vlm") setVlmAnchor(v.variable); else setCodelistId(codelistForVariable(v)?.id ?? "");
-  };
-  const parsedPredecessor = useMemo(() => {
-    if (!activeVariable) return null;
-    const match = activeVariable.derivation?.match(/^\s*([A-Za-z][A-Za-z0-9_]*)\.([A-Za-z][A-Za-z0-9_]*)\b/);
-    const dataset = activeVariable.predecessor?.dataset ?? match?.[1];
-    const variable = activeVariable.predecessor?.variable ?? match?.[2];
-    if (!dataset || !variable) return null;
-    return { name: `${dataset}.${variable}`, target: variables.find(v => v.datasetName.toUpperCase() === dataset.toUpperCase() && v.variable.toUpperCase() === variable.toUpperCase()) };
-  }, [activeVariable, variables]);
-  const handleDrillDownToPredecessor = () => {
-    const target = parsedPredecessor?.target;
-    if (!target || !activeVariable) return;
-    const context = { dataset: selectedNavDataset, standard: selectedNavStandard, selectedOnly: isShowingSelectedOnly, search, scroll: scrollPositions.current.variables };
-    const origin = activeVariable;
-    selectScope(target.datasetName, variableStandard(target)); setSearch(""); setTab("variables");
-    predecessorContext.current = context; setPredecessorReturnVariable(origin);
-    setActiveVariable(target); setIsRightPanelOpen(true); setScrollTarget(variableKey(target));
-    if (variableStandard(target) === "SDTM") setIsSdtmExpanded(true); else setIsAdamExpanded(true);
-  };
-  const handleBackFromPredecessor = () => {
-    if (!predecessorReturnVariable || !predecessorContext.current) return;
-    const context = predecessorContext.current;
-    setSelectedNavDataset(context.dataset); setSelectedNavStandard(context.standard); setIsShowingSelectedOnly(context.selectedOnly); setSearch(context.search);
-    setActiveVariable(predecessorReturnVariable); setScrollTarget(variableKey(predecessorReturnVariable));
-    scrollPositions.current.variables = context.scroll; clearReturn();
   };
   useEffect(() => {
     if (!isOpen) return;
-    const keydown = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); if (activeTab === "variables" && predecessorReturnVariable) handleBackFromPredecessor(); else if (activeTab === "variables" && isRightPanelOpen) { setIsRightPanelOpen(false); clearReturn(); } else onClose(); } };
+    const keydown = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); onClose(); } };
     window.addEventListener("keydown", keydown); return () => window.removeEventListener("keydown", keydown);
-  }, [isOpen, activeTab, predecessorReturnVariable, isRightPanelOpen, onClose]);
+  }, [isOpen, onClose]);
   const workspaceTitle = isShowingSelectedOnly ? "Selected only" : unlinked ? "Unlinked codelists" : selectedNavDataset ?? selectedNavStandard ?? "All datasets";
   const unavailableReason = (target: PickerTab) => unlinked ? "Select a dataset to view variables or VLM" : crossDataset ? "Select a dataset to view VLM or codelists" : isSdtm ? "SDTM VLM / Codelist is not in scope yet" : target === "vlm" ? "No VLM for this dataset" : "No codelist for this dataset";
   const terms = (currentCodelist?.terms ?? []).filter(t => !codelistSearch.trim() || [t.value, t.label].some(text => text.toLowerCase().includes(codelistSearch.trim().toLowerCase())));
@@ -252,7 +212,7 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
         {/* ================= 3. Main 3-Column Area ================= */}
         <div className="flex flex-1 min-h-0 overflow-hidden bg-white">
           {/* ----- Column 1: Left Dataset Tree List (Aligned with Detail Page Tree List) ----- */}
-          <div className="w-[200px] shrink-0 border-r border-graphite-10 bg-bg-panel/40 flex flex-col overflow-hidden">
+          <div className="w-44 shrink-0 border-r border-graphite-10 bg-bg-panel/40 flex flex-col overflow-hidden">
             {/* Top Header: Selected only switch (Exact height 36px, full width, border-b aligned with right table header) */}
             <div
               onClick={() => toggleSelectedOnly()}
@@ -445,25 +405,29 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
                 onChange={value => { resetScroll(activeTab); if (activeTab === "variables") setSearch(value); else if (activeTab === "vlm") setVlmSearch(value); else { setCodelistSearch(value); setTermPage(0); } }} />
             </div>
             <div className="flex flex-1 min-h-0 overflow-hidden">
-            {activeTab === "variables" && <div ref={scrollRef} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto">
-              <table className="w-full min-w-xl table-fixed border-collapse t-small text-text-primary">
-                <colgroup><col className="w-10" />{crossDataset && <col className="w-20" />}<col className="w-20" /><col className="w-28" /><col className="w-12" /><col /><col className="w-32" /></colgroup>
+            {activeTab === "variables" && <div ref={scrollRef} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
+              <table className={`w-full ${crossDataset ? "min-w-[1070px]" : "min-w-[990px]"} table-fixed border-collapse t-small text-text-primary`}>
+                <colgroup><col className="w-10" />{crossDataset && <col className="w-20" />}<col className="w-24" /><col className="w-36" /><col className="w-14" /><col /><col className="w-16" /><col className="w-20" /><col className="w-24" /><col className="w-24" /><col className="w-32" /></colgroup>
                 <thead className="sticky top-0 z-10 bg-bg-panel text-text-secondary font-normal text-left"><tr>
                   <th className="px-3 py-2 w-10"><Checkbox aria-label="Select all visible variables" checked={filteredVariables.length > 0 && filteredVariables.every(v => selected.includes(variableKey(v)))} indeterminate={filteredVariables.some(v => selected.includes(variableKey(v))) && !filteredVariables.every(v => selected.includes(variableKey(v)))} onChange={checked => {
                     const keys = filteredVariables.map(variableKey); setSelected(prev => checked ? [...new Set([...prev, ...keys])] : prev.filter(key => !keys.includes(key)));
                   }} /></th>
                   {crossDataset && <th className="px-2 py-2 font-medium">Dataset</th>}
-                  {["Variable", "Label", "Type", "Derivation", "VLM / Codelist"].map(label => <th key={label} className="px-2 py-2 font-normal whitespace-nowrap">{label}</th>)}
+                  {["Variable", "Label", "Type", "Derivation", "Length", "Format", "Core", "Origin", "VLM / Codelist"].map(label => <th key={label} className="px-2 py-2 font-normal whitespace-nowrap">{label}</th>)}
                 </tr></thead>
                 <tbody>{filteredVariables.map(v => {
-                  const key = variableKey(v), checked = selected.includes(key), inspecting = activeVariable && variableKey(activeVariable) === key;
-                  return <tr key={key} data-variable-key={key} onClick={() => handleRowClick(v)} className={`border-b border-graphite-10 cursor-pointer ${inspecting ? "bg-az-secondary" : checked ? "bg-bg-panel" : "hover:bg-bg-panel"}`}>
+                  const key = variableKey(v), checked = selected.includes(key);
+                  return <tr key={key} data-variable-key={key} className={`border-b border-graphite-10 ${checked ? "bg-bg-panel" : "hover:bg-bg-panel"}`}>
                     <td className="px-3 py-2 align-top"><Checkbox aria-label={`Select ${key}`} checked={checked} onChange={() => toggleVariable(key)} /></td>
                     {crossDataset && <td className="px-2 py-2 align-top font-mono whitespace-nowrap">{v.datasetName}</td>}
                     <td className="px-2 py-2 align-top font-mono">{v.variable}</td>
                     <td className="px-2 py-2 align-top min-w-24">{v.label}</td>
                     <td className="px-2 py-2 align-top font-mono">{v.type || "—"}</td>
                     <td className="px-2 py-2 align-top min-w-32"><DerivationCell text={v.derivation} /></td>
+                    <td className="px-2 py-2 align-top font-mono">{v.length || "—"}</td>
+                    <td className="px-2 py-2 align-top font-mono">{v.displayFormat || "—"}</td>
+                    <td className="px-2 py-2 align-top">{v.core || "—"}</td>
+                    <td className="px-2 py-2 align-top">{v.origin || "—"}</td>
                     <td className="px-2 py-2 align-top"><div className="flex flex-wrap gap-1">
                       {variableHasVlm(v) && <PickerJumpButton onClick={event => { event.stopPropagation(); jump("vlm", v); }} label={`Open ${v.datasetName} VLM for ${v.variable}`}>VLM</PickerJumpButton>}
                       {variableStandard(v) === "ADaM" && codelistForVariable(v) && <PickerJumpButton onClick={event => { event.stopPropagation(); jump("codelist", v); }} label={`Open codelist for ${key}`}>Codelist</PickerJumpButton>}
@@ -500,104 +464,6 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
                 </> : <p className="p-8 text-center t-small text-text-primary">No codelists available.</p>}
               </div>
             </div>}
-          {/* ----- Column 3: Right Collapsible Detail Panel ----- */}
-          {activeTab === "variables" && isRightPanelOpen && activeVariable && (
-            <div className="w-90 shrink-0 border-l border-graphite-10 bg-white flex flex-col overflow-hidden">
-              {/* Panel Top Header: No background color, no divider line, minimal gap between Dataset and Variable */}
-              <div className="px-[16px] pt-[12px] pb-[4px] shrink-0 select-none">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-[6px] min-w-0">
-                    {predecessorReturnVariable && (
-                      <button
-                        type="button"
-                        onClick={handleBackFromPredecessor}
-                        className="size-[20px] flex items-center justify-center rounded-[4px] text-text-secondary hover:text-text-primary hover:bg-black/5 transition-colors cursor-pointer shrink-0"
-                        title={`Back to ${predecessorReturnVariable.datasetName}.${predecessorReturnVariable.variable}`}
-                      >
-                        <ArrowLeftIcon className="size-[16px]" />
-                      </button>
-                    )}
-                    <span className="t-small font-mono font-medium text-text-secondary truncate">
-                      {activeVariable.datasetName}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRightPanelOpen(false);
-                      clearReturn();
-                    }}
-                    className="size-[20px] flex items-center justify-center rounded-[4px] text-text-secondary hover:text-text-primary hover:bg-black/5 transition-colors cursor-pointer shrink-0"
-                    title="Collapse details panel (Esc)"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="mt-[2px]">
-                  <h3 className="t-title-3 font-semibold text-text-primary font-mono leading-tight">
-                    {activeVariable.variable}
-                  </h3>
-                  <p className="t-small text-text-secondary leading-snug mt-[2px]">
-                    {activeVariable.label}
-                  </p>
-                </div>
-              </div>
-
-              {/* Panel Scrollable Body */}
-              <div className="flex-1 overflow-y-auto px-[16px] pt-[8px] pb-[16px] flex flex-col gap-[14px]">
-                {/* Properties Rounded Card (Type to Origin in unified card, Origin in Col 1) */}
-                <div className="rounded-[8px] bg-bg-panel/60 border border-graphite-10 p-[12px]">
-                      <div className="grid grid-cols-2 gap-x-[16px] gap-y-[8px]">
-                        <div className="flex items-center justify-between min-w-0">
-                          <span className="t-footnote text-text-secondary">Type</span>
-                          <span className="t-footnote font-mono font-medium text-text-primary">{activeVariable.type || "-"}</span>
-                        </div>
-                        <div className="flex items-center justify-between min-w-0">
-                          <span className="t-footnote text-text-secondary">Length</span>
-                          <span className="t-footnote font-mono font-medium text-text-primary">{activeVariable.length || "-"}</span>
-                        </div>
-                        <div className="flex items-center justify-between min-w-0">
-                          <span className="t-footnote text-text-secondary">Format</span>
-                          <span className="t-footnote font-mono font-medium text-text-primary">{activeVariable.displayFormat || "-"}</span>
-                        </div>
-                        <div className="flex items-center justify-between min-w-0">
-                          <span className="t-footnote text-text-secondary">Core</span>
-                          <span className="t-footnote font-medium text-text-primary">{activeVariable.core || "Required"}</span>
-                        </div>
-                        {/* Origin aligned in Column 1 */}
-                        <div className="flex items-center justify-between min-w-0">
-                          <span className="t-footnote text-text-secondary">Origin</span>
-                          <span className="t-footnote font-medium text-text-primary">
-                            {activeVariable.origin || (activeVariable.derivation ? "Derived" : "Assigned")}
-                          </span>
-                        </div>
-                        {activeVariable.predecessor && (
-                          <div className="flex items-center justify-between min-w-0">
-                            <span className="t-footnote text-text-secondary">Source</span>
-                            <span className="t-footnote font-mono font-medium text-text-primary">
-                              {activeVariable.predecessor.dataset}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <span className="t-small font-semibold text-text-primary">Derivation</span>
-                      <div className="rounded-lg bg-bg-panel/40 border border-graphite-10 p-3 flex flex-col gap-1.5">
-                        <p className="t-small text-text-primary whitespace-pre-wrap break-words leading-relaxed">{activeVariable.derivation || "No derivation specified."}</p>
-                        {parsedPredecessor && <div className="mt-1 pt-2 border-t border-graphite-10 flex items-center gap-1.5">
-                          <span className="t-footnote text-text-primary">Predecessor:</span>
-                          {parsedPredecessor.target ? <button type="button" onClick={handleDrillDownToPredecessor} className="t-footnote font-mono text-brand-1 underline focus-visible:outline-brand-1">{parsedPredecessor.name}</button> : <span className="t-footnote font-mono text-text-primary">{parsedPredecessor.name}</span>}
-                        </div>}
-                      </div>
-                    </div>
-              </div>
-            </div>
-          )}
             </div>
           </div>
         </div>
