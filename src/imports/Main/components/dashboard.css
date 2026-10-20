@@ -9,8 +9,20 @@
 
 .dashboard-metric-card { container-type: inline-size; }
 
-.dashboard-data-table thead {
-  background: var(--color-bg-app);
+
+.dashboard-table-scroll {
+  max-height: calc(var(--spacing) * 130);
+  /* Reserve the scrollbar's width so a short filtered list doesn't widen the columns. */
+  scrollbar-gutter: stable;
+}
+
+/* Sticky cells drop collapsed borders, so the header divider is drawn as an inset shadow. */
+.dashboard-data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: white;
+  box-shadow: inset 0 -1px 0 var(--color-graphite-10);
 }
 
 .dashboard-data-table tbody th[scope='row'] {
@@ -21,7 +33,6 @@
   font-weight: var(--font-weight-medium);
 }
 
-.dashboard-data-table thead tr,
 .dashboard-data-table tbody tr:not(:last-child) {
   border-bottom: thin solid var(--color-graphite-10);
 }
@@ -56,4 +67,14 @@
 @container (min-width: 56.25rem) {
   .dashboard-metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .dashboard-metric-grid[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* The chart is hover-only; recharts' wrapper, surface and bars should never show a focus frame. */
+.dashboard-chart .recharts-wrapper,
+.dashboard-chart .recharts-surface,
+.dashboard-chart .recharts-layer,
+.dashboard-chart .recharts-rectangle,
+.dashboard-chart :focus,
+.dashboard-chart :focus-visible {
+  outline: none;
 }

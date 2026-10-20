@@ -74,6 +74,7 @@ import resetRightIconUrl from "../../icons/reset-right-line.svg";
 import fileIconUrl from "../../icons/file-icon.svg";
 import { EventThinkingBlock, type EventThinkingData } from "../../components/ui/EventThinkingBlock";
 import { EventStatusBadge } from "../../components/ui/EventStatusBadge";
+import { StatusTag as SharedStatusTag } from "../../components/ui/StatusTag";
 import CreateEventModal from "./components/CreateEventModal";
 import EventInformationModal, { type EventInputFiles } from "./components/EventInformationModal";
 import DownloadSasProgramsModal from "./components/DownloadSasProgramsModal";
@@ -14476,8 +14477,8 @@ const homeEvents: EventCardData[] = [
     id: 'e8',
     name: 'Efficacy Endpoint Analysis',
     version: '2.0',
-    project: 'PRO003',
-    study: 'AZE2001-303',
+    project: 'PRO002',
+    study: 'CVD3001-201',
     creator: 'James',
     owner: 'James Park',
     createdDate: '2025-11-07',
@@ -14488,8 +14489,8 @@ const homeEvents: EventCardData[] = [
     id: 'e9',
     name: 'Concomitant Medications Listing',
     version: '1.5',
-    project: 'PRO003',
-    study: 'AZE2001-303',
+    project: 'PRO002',
+    study: 'CVD3001-201',
     creator: 'James',
     owner: 'James Park',
     createdDate: '2025-11-05',
@@ -14534,8 +14535,8 @@ const homeEvents: EventCardData[] = [
     id: 'e11',
     name: 'Vital Signs Summary Table',
     version: '1.0',
-    project: 'PRO004',
-    study: 'AZE2001-401',
+    project: 'PRO002',
+    study: 'CVD3002-110',
     creator: 'Emily',
     owner: 'Emily Liu',
     createdDate: '2025-11-01',
@@ -14601,19 +14602,7 @@ const statusConfig: Record<EventStatus | 'uploading', { icon: string; label: str
 
 function StatusTag({ status }: { status: EventStatus | 'uploading' }) {
   const config = statusConfig[status];
-  const isUploading = status === 'uploading';
-  return (
-    <div className="flex items-center gap-[4px] rounded-[4px]">
-      {isUploading ? (
-        <svg className="h-[16px] w-[16px] animate-spin block shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="8" cy="8" r="6" stroke="var(--color-text-secondary)" strokeWidth="2" strokeDasharray="12" strokeLinecap="round" />
-        </svg>
-      ) : (
-        <img src={config.icon} alt="" className="h-[16px] w-[16px] block shrink-0" />
-      )}
-      <span className="t-small" style={{ color: config.color }}>{config.label}</span>
-    </div>
-  );
+  return <SharedStatusTag icon={config.icon} label={config.label} color={config.color} loading={status === 'uploading'} />;
 }
 
 interface EventCardProps {
@@ -16046,8 +16035,6 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
             event={currentEventData}
             tfls={currentDashboardTfls}
             onBack={() => setActiveNav('events')}
-            onOpenTfl={(filter) => { setDashboardFilter(filter); setDashboardTflId(firstDashboardMatch(filter)?.id ?? null); setPage('event'); }}
-            onOpenAssignment={() => handleOpenDashboardAssignment(currentEventData)}
           /> : undefined}
         />
       ) : page === 'global-dashboard' && currentRole === 'admin' ? (
@@ -16059,8 +16046,6 @@ export default function Main({ onLogout }: { onLogout?: () => void } = {}) {
           event={currentEventData}
           tfls={currentDashboardTfls}
           onBack={() => setPage(dashboardOrigin)}
-          onOpenTfl={(filter) => { setDashboardFilter(filter); setDashboardTflId(firstDashboardMatch(filter)?.id ?? null); setPage('event'); }}
-          onOpenAssignment={() => handleOpenDashboardAssignment(currentEventData)}
         />
       ) : page === 'dashboard' || page === 'study-dashboard' || page === 'global-dashboard' ? (
         <div className="flex h-full flex-1 flex-col items-center justify-center gap-3 bg-bg-panel text-text-primary" role="alert">
