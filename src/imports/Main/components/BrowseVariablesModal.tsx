@@ -106,7 +106,6 @@ export type InlineVariableListProps = {
   label?: React.ReactNode;
   variables: Variable[];
   selected: string[];
-  sourceDatasets?: string[];
   onToggle: (variable: string) => void;
   onRemove: (variable: string) => void;
   onBrowseAll: () => void;
@@ -1032,7 +1031,6 @@ function InlineVariableList({
   label,
   variables,
   selected,
-  sourceDatasets = [],
   onToggle,
   onRemove,
   onBrowseAll,
@@ -1118,30 +1116,6 @@ function InlineVariableList({
       if (standardFilter === "ADaM" && vStd !== "ADaM") return false;
       if (standardFilter === "SDTM" && vStd !== "SDTM") return false;
 
-      // Intelligent scoping by sourceDatasets:
-      // - In ADaM mode: constrain to sourceDatasets that are ADaM (if defined)
-      // - In SDTM mode: constrain to sourceDatasets that are SDTM; if sourceDatasets contains NO SDTM datasets
-      //   (e.g. Table block only has ADSL), do NOT block with 0 results — allow exploring SDTM variables,
-      //   and selecting one will auto-expand sourceDatasets via onDatasetsExpand.
-      // - In All mode: prioritize sourceDatasets when no query is typed; allow cross-dataset search if user types.
-      if (sourceDatasets && sourceDatasets.length > 0) {
-        if (standardFilter === "ADaM") {
-          const adamSources = sourceDatasets.filter((d) => d.startsWith("AD"));
-          if (adamSources.length > 0 && !adamSources.includes(v.datasetName)) {
-            return false;
-          }
-        } else if (standardFilter === "SDTM") {
-          const sdtmSources = sourceDatasets.filter((d) => !d.startsWith("AD"));
-          if (sdtmSources.length > 0 && !sdtmSources.includes(v.datasetName)) {
-            return false;
-          }
-        } else if (standardFilter === "All") {
-          if (!q && !sourceDatasets.includes(v.datasetName)) {
-            return false;
-          }
-        }
-      }
-
       if (!q) return true;
       return (
         v.variable.toLowerCase().includes(q) ||
@@ -1156,9 +1130,9 @@ function InlineVariableList({
       const aS = selected.includes(keyA) || selected.includes(a.variable) ? 0 : 1;
       const bS = selected.includes(keyB) || selected.includes(b.variable) ? 0 : 1;
       if (aS !== bS) return aS - bS;
-      return a.variable.localeCompare(b.variable);
+      return a.variable.localeCompare(b.variable) || a.datasetName.localeCompare(b.datasetName);
     });
-  }, [variables, search, selected, standardFilter, sourceDatasets]);
+  }, [variables, search, selected, standardFilter]);
 
   const groupedSelected = useMemo(() => groupVariablesByDataset(selected), [selected]);
   const hasMoreThanThree = selected.length > 3;
@@ -1282,6 +1256,7 @@ function InlineVariableList({
                   {/* Variable name */}
                   <div className="min-w-0 pr-[6px]">
                     <p className="t-small text-text-primary truncate">{v.variable}</p>
+                    <p className="t-footnote text-text-secondary truncate">{v.datasetName}</p>
                   </div>
 
                   {/* Label */}
@@ -2205,8 +2180,6 @@ export interface BrowseVariablesFieldProps {
   value?: string[];
   onChange?: (selected: string[]) => void;
   initialSelected?: string[];
-  sourceDatasets?: string[];
-  onDatasetsExpand?: (newDatasets: string[]) => void;
   required?: boolean;
   disabled?: boolean;
   badge?: React.ReactNode;
@@ -2225,8 +2198,6 @@ export function BrowseVariablesField({
   value,
   onChange,
   initialSelected = [],
-  sourceDatasets = [],
-  onDatasetsExpand,
   required = false,
   disabled = false,
   badge,
@@ -2249,17 +2220,11 @@ export function BrowseVariablesField({
   const normalizedSelected = useMemo(() => {
     return currentSelected.map((itemKey) => {
       if (itemKey.includes(".")) return itemKey;
-      if (sourceDatasets && sourceDatasets.length > 0) {
-        const match = variables.find(
-          (v) => v.variable === itemKey && sourceDatasets.includes(v.datasetName)
-        );
-        if (match) return `${match.datasetName}.${match.variable}`;
-      }
       const anyMatch = variables.find((v) => v.variable === itemKey);
       if (anyMatch) return `${anyMatch.datasetName}.${anyMatch.variable}`;
       return itemKey;
     });
-  }, [currentSelected, sourceDatasets, variables]);
+  }, [currentSelected, variables]);
 
   const handleToggle = (variableKey: string) => {
     const isSel = normalizedSelected.includes(variableKey) || normalizedSelected.includes(variableKey.split('.').pop() || '');
@@ -2268,13 +2233,6 @@ export function BrowseVariablesField({
       : [...normalizedSelected, variableKey];
     if (onChange) onChange(next);
     if (!isControlled) setInternalSelected(next);
-
-    if (!isSel && variableKey.includes('.')) {
-      const dName = variableKey.split('.')[0];
-      if (sourceDatasets && sourceDatasets.length > 0 && !sourceDatasets.includes(dName)) {
-        onDatasetsExpand?.([dName]);
-      }
-    }
   };
 
   const handleRemove = (variableKey: string) => {
@@ -2300,7 +2258,6 @@ export function BrowseVariablesField({
         className={className}
         variables={variables}
         selected={normalizedSelected}
-        sourceDatasets={sourceDatasets}
         onToggle={handleToggle}
         onRemove={handleRemove}
         onBrowseAll={() => setModalOpen(true)}
@@ -2311,8 +2268,6 @@ export function BrowseVariablesField({
         onClose={() => setModalOpen(false)}
         onConfirm={handleConfirm}
         initialSelected={normalizedSelected}
-        sourceDatasets={sourceDatasets}
-        onDatasetsExpand={onDatasetsExpand}
         variables={variables}
         vlmData={vlmData}
         adamCodeListData={adamCodeListData}

@@ -702,9 +702,7 @@ export type ReviewItem = { type: 'ai-infer' | 'conflict', fieldName: string, too
 export const DEFAULT_FIGURE_REVIEW_ITEMS: ReviewItem[] = [
   { type: 'ai-infer', fieldName: 'Input Dataset(s)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'figBasic', fieldId: 'inputDataset' },
   { type: 'conflict', fieldName: 'General Filter', tooltip: 'Conflicting value detected with SAP specification.', blockId: 'figBasic', fieldId: 'generalFilter' },
-  { type: 'ai-infer', fieldName: 'Source Dataset(s) (KM Plot Chart)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'kmCurve', fieldId: 'sourceDataset1' },
   { type: 'ai-infer', fieldName: 'Source Variable(s) (KM Plot Chart)', tooltip: 'Inferred based on typical KM Plot requirements.', blockId: 'kmCurve', fieldId: 'sourceVariable1' },
-  { type: 'ai-infer', fieldName: 'Source Dataset(s) (Number at Risk Table)', tooltip: 'Inferred from standard TTE dataset naming convention.', blockId: 'riskTable', fieldId: 'sourceDataset2' },
   { type: 'conflict', fieldName: 'Source Variable(s) (Number at Risk Table)', tooltip: 'Conflicting variable: TRTA used instead of TRT01P.', blockId: 'riskTable', fieldId: 'sourceVariable2' }
 ];
 
@@ -1268,7 +1266,7 @@ const DEMO_FIGURE_UPDATED_LABEL = 'Kaplan-Meier PFS Curves';
 const DEMO_FIGURE_RISK_LINE = 'axistable x=tatrisk value=atrisk / class=trt01p title="Number at Risk" position=bottom;';
 const DEMO_FIGURE_UPDATED_RISK_LINE = 'axistable x=tatrisk value=atrisk / class=trt01p title="Participants at Risk" position=bottom;';
 const DEMO_FIGURE_UPDATED_RISK_LABEL = 'Participants at Risk Table';
-const DEMO_FIGURE_FIELD_IDS = ['sourceDataset1', 'compLabel1', 'compLabel2'] as const;
+const DEMO_FIGURE_FIELD_IDS = ['compLabel1', 'compLabel2'] as const;
 
 function findTableItem(programs?: ProgramItem[], currentTableId?: string): TableItem | null {
   if (!programs || !currentTableId) return null;
@@ -2328,10 +2326,7 @@ function ChatConversation({
                           <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 1: KM Plot Chart</h1>
                           <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
                             <li className="t-body text-text-primary">
-                              <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
-                            </li>
-                            <li className="t-body text-text-primary">
-                              <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>CNSR</InlineHighlight>, <InlineHighlight>PARAMCD</InlineHighlight></span>
+                              <span>Source Variables: <InlineHighlight>ADTTTE.AVAL</InlineHighlight>, <InlineHighlight>ADTTTE.CNSR</InlineHighlight>, <InlineHighlight>ADTTTE.PARAMCD</InlineHighlight></span>
                             </li>
                           </ul>
                           <div style={{ borderTop: '1px dashed var(--color-border-subtle)', width: '100%', margin: '8px 0' }}></div>
@@ -2355,10 +2350,7 @@ function ChatConversation({
                           <h1 className="text-[14px] font-bold text-text-primary mb-[8px]" style={{ fontFamily: 'var(--font-body)' }}>Component 2: Number at Risk Table</h1>
                           <ul className="list-disc pl-[24px] flex flex-col gap-[8px]">
                             <li className="t-body text-text-primary">
-                              <span>Source Dataset: <InlineHighlight>ADTTTE</InlineHighlight></span>
-                            </li>
-                            <li className="t-body text-text-primary">
-                              <span>Source Variables: <InlineHighlight>AVAL</InlineHighlight>, <InlineHighlight>TRTA</InlineHighlight></span>
+                              <span>Source Variables: <InlineHighlight>ADTTTE.AVAL</InlineHighlight>, <InlineHighlight>ADTTTE.TRTA</InlineHighlight></span>
                             </li>
                           </ul>
                         </div>
@@ -8950,32 +8942,9 @@ function BlocksTabContent({
                             const isVariableField = field.id === 'variable' || field.id.toLowerCase().includes('variable') || String(field.label || '').toLowerCase().includes('variable');
                             
                             if (isVariableField) {
-                              // Find dataset field in the same block to establish dependency
-                              const datasetField = block.fields?.find((f: any) => {
-                                const fId = (f.id || '').toLowerCase();
-                                const fLabel = (f.label || '').toLowerCase();
-                                return fId === 'dataset' || fId === 'datasets' || fId.includes('dataset') || fLabel.includes('dataset');
-                              });
-                              const sourceDatasets = datasetField?.value
-                                ? datasetField.value.split(',').map((s: string) => s.trim()).filter(Boolean)
-                                : [];
-
                               const currentSelectedVars = field.value
                                 ? field.value.split(',').map((s: string) => s.trim()).filter(Boolean)
                                 : [];
-
-                              // Orphaned variable warning: variables whose dataset is not in sourceDatasets
-                              const orphanedVars = currentSelectedVars.filter((varKey: string) => {
-                                if (sourceDatasets.length === 0) return false;
-                                if (varKey.includes('.')) {
-                                  const dataset = varKey.split('.')[0];
-                                  return !sourceDatasets.includes(dataset);
-                                }
-                                return false;
-                              });
-                              const variableWarning = orphanedVars.length > 0
-                                ? `${orphanedVars.length} variable(s) outside dataset scope (${orphanedVars.map((v: string) => v.split('.')[0]).join(', ')}). Review or update dataset.`
-                                : undefined;
 
                               return (
                                 <BrowseVariablesField
@@ -8983,16 +8952,8 @@ function BlocksTabContent({
                                   required={field.required}
                                   disabled={fieldIsDisabled}
                                   badge={badgeNode}
-                                  error={variableWarning}
                                   placeholder={field.required ? "Required" : "Optional"}
                                   value={currentSelectedVars}
-                                  sourceDatasets={sourceDatasets}
-                                  onDatasetsExpand={(newDatasets) => {
-                                    if (datasetField) {
-                                      const merged = Array.from(new Set([...sourceDatasets, ...newDatasets]));
-                                      onFieldEdit?.(block.id, datasetField.id, merged.join(', '));
-                                    }
-                                  }}
                                   onChange={(val) => onFieldEdit?.(block.id, field.id, val.join(', '))}
                                 />
                               );
@@ -9295,7 +9256,6 @@ const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
     fields: [
       { id: 'compLabel1', label: 'Component Label', value: 'Kaplan-Meier Survival Curves', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
       { id: 'compType1', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-      { id: 'sourceDataset1', label: 'Source Dataset(s)', value: 'ADTTTE, ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
       { id: 'sourceVariable1', label: 'Source Variable(s)', value: 'ADTTTE.AVAL, ADTTTE.CNSR, ADTTTE.PARAMCD, ADTTTE.TRT01P', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred based on KM Plot requirements.', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}, {label: 'TRT01P', value: 'TRT01P'}, {label: 'TRTA', value: 'TRTA'}] },
       { id: 'filter1', label: 'Filter', value: "ADTTTE.PARAMCD = 'PFS' and ADTTTE.SAFFL = 'Y';", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
     ],
@@ -9330,7 +9290,6 @@ const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
     fields: [
       { id: 'compLabel2', label: 'Component Label', value: 'Number at Risk Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
       { id: 'compType2', label: 'Component Type', value: 'Table', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-      { id: 'sourceDataset2', label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE dataset naming convention.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
       { id: 'sourceVariable2', label: 'Source Variable(s)', value: 'ADTTTE.TRTA, ADTTTE.AVAL', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Conflicting treatment variable: TRTA used instead of TRT01P.', inputType: 'multiselect' as const, options: [{label: 'TRTA', value: 'TRTA'}, {label: 'TRT01P', value: 'TRT01P'}, {label: 'AVAL', value: 'AVAL'}] },
       { id: 'filter2', label: 'Filter', value: "ADTTTE.PARAMCD = 'PFS' and ADTTTE.SAFFL = 'Y';", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
     ],
@@ -9354,7 +9313,6 @@ const INITIAL_FIGURE_COMPONENTS: MetadataBlock[] = [
     fields: [
       { id: 'compLabel3', label: 'Component Label', value: 'Subgroup Analysis (Forest Plot)', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'input' as const },
       { id: 'compType3', label: 'Component Type', value: 'Chart', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-      { id: 'sourceDataset3', label: 'Source Dataset(s)', value: 'ADTTTE, ADSL', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Inferred from standard TTE and Demographics datasets.', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADRESP', value: 'ADRESP'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
       { id: 'sourceVariable3', label: 'Source Variable(s)', value: 'ADSL.AGEGR1, ADSL.SEX, ADSL.ECOGGR1, ADSL.PRIORL, ADSL.PDL1FL, ADTTTE.AVAL, ADTTTE.CNSR', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, badge: 'ai-infer' as const, badgeTooltip: 'Subgroup variables derived from ADSL.', inputType: 'multiselect' as const, options: [{label: 'AGEGR1', value: 'AGEGR1'}, {label: 'SEX', value: 'SEX'}, {label: 'ECOGGR1', value: 'ECOGGR1'}, {label: 'PRIORL', value: 'PRIORL'}, {label: 'PDL1FL', value: 'PDL1FL'}] },
       { id: 'filter3', label: 'Filter / Model', value: "Unstratified Cox Proportional Hazards regression by subgroup with treatment-by-subgroup interaction test.", type: 'text', required: false, status: 'default' as FieldStatus, confirmed: false, badge: 'conflict' as const, badgeTooltip: 'Verify whether stratified Cox model is required.', inputType: 'input' as const },
     ],
@@ -10231,8 +10189,7 @@ function MetadataPanel({
         fields: [
           { id: `${newId}_l`, label: 'Component Label', value: label, type: 'text', required: true, status: 'default', confirmed: false },
           { id: `${newId}_t`, label: 'Component Type', value: type, type: 'text', required: true, status: 'default', confirmed: false },
-          { id: `${newId}_d`, label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default', confirmed: false, badge: 'ai-infer', badgeTooltip: 'Inferred' },
-          { id: `${newId}_v`, label: 'Source Variable(s)', value: 'AVAL, PARAM', type: 'tag', required: true, status: 'default', confirmed: false, badge: 'ai-infer', badgeTooltip: 'Inferred' }
+          { id: `${newId}_v`, label: 'Source Variable(s)', value: 'ADTTTE.AVAL, ADTTTE.PARAM', type: 'tag', required: true, status: 'default', confirmed: false, badge: 'ai-infer', badgeTooltip: 'Inferred' }
         ]
       } : b));
       setHasMetadataComponentEdits(true);
@@ -11703,7 +11660,7 @@ function CodePanel({
   /** Called when the current user clicks "Take over" and confirms. */
   onTakeOver?: () => void;
   /** Fires when the user locks Code with changes made since the last lock (or since Metadata was last in sync). */
-  onCodeLocked?: (previous: string, next: string) => void;
+  onCodeLocked?: (next: string) => void;
   metadataBehind?: boolean;
   metadataNoticeDismissed?: boolean;
   metadataUpdating?: boolean;
@@ -11727,7 +11684,7 @@ function CodePanel({
       // Locking commits pending edits, so Save is not required first.
       if (userCode !== savedCode) setSavedCode(userCode);
       const baseline = lockedBaseline ?? codeContent;
-      if (userCode !== baseline) onCodeLocked?.(baseline, userCode);
+      if (userCode !== baseline) onCodeLocked?.(userCode);
       setLockedBaseline(userCode);
     }
     setIsLockedLocal((prev) => !prev);
@@ -12318,7 +12275,6 @@ function WorkspaceContent({
   const [metadataSyncedVersionByTfl, setMetadataSyncedVersionByTfl] = useState<Record<string, number>>({});
   const codeVersion = codeVersionByTfl[selectedTflKey] ?? 1;
   const [savedCodeTextByTfl, setSavedCodeTextByTfl] = useState<Record<string, string>>({});
-  const [metadataCodeBaselineByTfl, setMetadataCodeBaselineByTfl] = useState<Record<string, string>>({});
   const savedCodeText = savedCodeTextByTfl[selectedTflKey] || '';
   const setSavedCodeText = (value: string) => setSavedCodeTextByTfl(previous => ({ ...previous, [selectedTflKey]: value }));
   const [metadataSyncRequest, setMetadataSyncRequest] = useState<{ id: number; codeVersion: number; metadataDiffData: NonNullable<Message['metadataDiffData']> } | null>(null);
@@ -12440,9 +12396,7 @@ function WorkspaceContent({
   const metadataOpenRef = useRef(metadataOpen);
   metadataOpenRef.current = metadataOpen;
 
-  const handleCodeLocked = (previous: string, next: string) => {
-    if (previous === next) return;
-    if (!metadataBehind) setMetadataCodeBaselineByTfl(previousBaselines => ({ ...previousBaselines, [selectedTflKey]: previous }));
+  const handleCodeLocked = (next: string) => {
     setSavedCodeText(next);
     setCodeVersionByTfl(previous => ({ ...previous, [selectedTflKey]: (previous[selectedTflKey] ?? 1) + 1 }));
     if (!metadataBehind) setMetadataNoticeDismissed(false);
@@ -12452,17 +12406,9 @@ function WorkspaceContent({
   const handleUpdateMetadata = () => {
     if (!metadataBehind || codeVersion <= (metadataSyncedVersionByTfl[selectedTflKey] ?? 1)) return;
     // Demo adapter: production must consume the Copilot metadata diff returned for this saved Code version.
-    const readDatasets = (code: string) => [...new Set([...code.matchAll(/\badam\.([a-z][a-z0-9_]*)\b/gi)].map(match => match[1].toUpperCase()))].join(', ');
-    const uniqueDatasets = readDatasets(savedCodeText);
-    // Only a change in the datasets the Code reads should touch Source Dataset(s); spelling gaps in the sample Code must not.
-    const datasetsChanged = uniqueDatasets !== readDatasets(metadataCodeBaselineByTfl[selectedTflKey] ?? savedCodeText);
-    const sourceField = figureComponents[0]?.fields.find(field => field.id === 'sourceDataset1');
     const labelField = figureComponents[0]?.fields.find(field => field.id === 'compLabel1');
     const riskLabelField = figureComponents[1]?.fields.find(field => field.id === 'compLabel2');
     const metadataDiffData: NonNullable<Message['metadataDiffData']> = [];
-    if (docType === 'figure' && sourceField && uniqueDatasets && datasetsChanged && sourceField.value !== uniqueDatasets) {
-      metadataDiffData.push({ fieldId: sourceField.id, label: sourceField.label, oldValue: sourceField.value, newValue: uniqueDatasets, group: 'KM Plot Chart' });
-    }
     if (docType === 'figure' && labelField && savedCodeText.includes(DEMO_FIGURE_UPDATED_TITLE_LINE) && labelField.value !== DEMO_FIGURE_UPDATED_LABEL) {
       metadataDiffData.push({ fieldId: labelField.id, label: labelField.label, oldValue: labelField.value, newValue: DEMO_FIGURE_UPDATED_LABEL, group: 'KM Plot Chart' });
     }
@@ -12495,7 +12441,6 @@ function WorkspaceContent({
       if (!metadataOpenRef.current) setHasUnreadMetadataUpdate(true);
     }
     setMetadataBehind(false);
-    setMetadataCodeBaselineByTfl(previous => { const next = { ...previous }; delete next[selectedTflKey]; return next; });
     setMetadataSyncedVersionByTfl(previous => ({ ...previous, [selectedTflKey]: codeVersion }));
     setMetadataUpdating(false);
     setMetadataNoticeDismissed(false);
@@ -12576,8 +12521,7 @@ function WorkspaceContent({
         fields: [
           { id: `${newId}_l`, label: 'Component Label', value: label, type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, aiUpdated: true, inputType: 'input' as const },
           { id: `${newId}_t`, label: 'Component Type', value: type, type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, aiUpdated: true, inputType: 'dropdown' as const, options: [{label: 'Chart', value: 'Chart'}, {label: 'Table', value: 'Table'}] },
-          { id: `${newId}_d`, label: 'Source Dataset(s)', value: 'ADTTTE', type: 'text', required: true, status: 'default' as FieldStatus, confirmed: false, aiUpdated: true, badge: 'ai-infer' as const, badgeTooltip: 'Inferred', inputType: 'multiselect' as const, options: [{label: 'ADSL', value: 'ADSL'}, {label: 'ADAE', value: 'ADAE'}, {label: 'ADTTTE', value: 'ADTTTE'}] },
-          { id: `${newId}_v`, label: 'Source Variable(s)', value: 'AVAL, PARAM', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, aiUpdated: true, badge: 'ai-infer' as const, badgeTooltip: 'Inferred', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}] }
+          { id: `${newId}_v`, label: 'Source Variable(s)', value: 'ADTTTE.AVAL, ADTTTE.PARAM', type: 'tag', required: true, status: 'default' as FieldStatus, confirmed: false, aiUpdated: true, badge: 'ai-infer' as const, badgeTooltip: 'Inferred', inputType: 'multiselect' as const, options: [{label: 'AVAL', value: 'AVAL'}, {label: 'CNSR', value: 'CNSR'}, {label: 'PARAMCD', value: 'PARAMCD'}] }
         ]
       } : b));
     }, 6000);

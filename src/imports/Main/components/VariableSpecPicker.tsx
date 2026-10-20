@@ -17,8 +17,6 @@ export interface VariableSpecPickerProps {
   vlmData?: VlmRow[];
   adamCodeListData?: AdamCodeListRow[];
   sdtmCodeListData?: SdtmCodeListRow[];
-  sourceDatasets?: string[];
-  onDatasetsExpand?: (newDatasets: string[]) => void;
   mode?: "table" | "listing";
 }
 
@@ -78,9 +76,8 @@ type PickerTab = "variables" | "vlm" | "codelist";
 const EMPTY_VARIABLES: Variable[] = [];
 const EMPTY_VLM: VlmRow[] = [];
 const EMPTY_CODELISTS: AdamCodeListRow[] = [];
-const EMPTY_DATASETS: string[] = [];
 
-export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected, variables = EMPTY_VARIABLES, vlmData = EMPTY_VLM, adamCodeListData = EMPTY_CODELISTS, sourceDatasets = EMPTY_DATASETS, onDatasetsExpand, mode = "table" }: VariableSpecPickerProps) {
+export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected, variables = EMPTY_VARIABLES, vlmData = EMPTY_VLM, adamCodeListData = EMPTY_CODELISTS, mode = "table" }: VariableSpecPickerProps) {
   const isTableMode = mode !== "listing";
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
@@ -134,17 +131,17 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
   const prevOpen = useRef(false);
   useEffect(() => {
     if (isOpen && !prevOpen.current) {
-      const normalized = normalizeSelection(initialSelected, variables, sourceDatasets);
+      const normalized = normalizeSelection(initialSelected, variables, []);
       setSelected(normalized); setSearch(""); setTab("variables"); resetContext(); setIsShowingSelectedOnly(false);
-      // Without a Dataset field the picker opens on the dataset the current selection comes from, if there is just one.
+      // The picker opens on the dataset the current selection comes from, if there is just one.
       const selectedDatasetNames = [...new Set(normalized.map(key => key.split(".")[0]))];
-      const dataset = sourceDatasets.length === 1 ? sourceDatasets[0] : selectedDatasetNames.length === 1 ? selectedDatasetNames[0] : null;
+      const dataset = selectedDatasetNames.length === 1 ? selectedDatasetNames[0] : null;
       const standard = dataset ? variableStandard(variables.find(v => v.datasetName === dataset) ?? { datasetName: dataset } as Variable) : isTableMode ? "ADaM" : null;
       setSelectedNavDataset(dataset); setSelectedNavStandard(standard);
       setIsAdamExpanded(standard !== "SDTM"); setIsSdtmExpanded(standard !== "ADaM");
     }
     prevOpen.current = isOpen;
-  }, [isOpen, initialSelected, variables, sourceDatasets, isTableMode]);
+  }, [isOpen, initialSelected, variables, isTableMode]);
   useEffect(() => { if (tab !== activeTab) setTab(activeTab); }, [tab, activeTab]);
   useLayoutEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollPositions.current[activeTab];
@@ -155,9 +152,7 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
     if (row) { row.scrollIntoView({ block: "nearest" }); setScrollTarget(null); }
   }, [isOpen, activeTab, scrollTarget, filteredVariables]);
   const toggleVariable = (key: string) => setSelected(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
-  const selectedDatasets = [...new Set(selected.map(key => key.split(".")[0]))].sort();
-  const newlyAddedDatasets = sourceDatasets.length ? selectedDatasets.filter(ds => !sourceDatasets.includes(ds)) : [];
-  const handleConfirm = () => { if (newlyAddedDatasets.length) onDatasetsExpand?.(newlyAddedDatasets); onConfirm(selected); onClose(); };
+  const handleConfirm = () => { onConfirm(selected); onClose(); };
   const codelistForVariable = (v: Variable) => codelists.find(c => c.links.some(link => link.dataset === v.datasetName && link.variable === v.variable));
   const variableHasVlm = (v: Variable) => variableStandard(v) === "ADaM" && (vlmData.some(r => r.datasetName === v.datasetName && r.variableName === v.variable) || Boolean(v.vlmParameters?.length));
   const jump = (target: "vlm" | "codelist", v: Variable) => {
@@ -388,7 +383,10 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
                 )}
               </div>
             )}
-            <button type="button" onClick={() => { selectScope("__unlinked__", null); setTab("codelist"); }} className={`mt-2 w-full rounded-sm px-2 py-1 text-left t-small ${unlinked ? "bg-az-secondary text-brand-1" : "text-text-primary hover:bg-graphite-10"}`}>Unlinked codelists</button>
+            </div>
+            {/* Codelists without a dataset are not part of the tree above, so this entry stays pinned at the bottom. */}
+            <div className="shrink-0 border-t border-graphite-10 p-[6px]">
+            <button type="button" onClick={() => { selectScope("__unlinked__", null); setTab("codelist"); }} className={`h-[28px] w-full rounded-[4px] px-[10px] text-left t-small transition-colors ${unlinked ? "bg-[#F4E8EE] text-brand-1 font-medium" : "text-text-primary hover:bg-graphite-10"}`}>Unlinked codelists</button>
             </div>
           </div>
 
@@ -407,13 +405,13 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
             <div className="flex flex-1 min-h-0 overflow-hidden">
             {activeTab === "variables" && <div ref={scrollRef} onScroll={onScroll} className="min-w-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
               <table className={`w-full ${crossDataset ? "min-w-[1070px]" : "min-w-[990px]"} table-fixed border-collapse t-small text-text-primary`}>
-                <colgroup><col className="w-10" />{crossDataset && <col className="w-20" />}<col className="w-24" /><col className="w-36" /><col className="w-14" /><col /><col className="w-16" /><col className="w-20" /><col className="w-24" /><col className="w-24" /><col className="w-32" /></colgroup>
+                <colgroup><col className="w-10" />{crossDataset && <col className="w-20" />}<col className="w-24" /><col className="w-36" /><col className="w-14" /><col /><col className="w-32" /><col className="w-16" /><col className="w-20" /><col className="w-24" /><col className="w-24" /></colgroup>
                 <thead className="sticky top-0 z-10 bg-bg-panel text-text-secondary font-normal text-left"><tr>
                   <th className="px-3 py-2 w-10"><Checkbox aria-label="Select all visible variables" checked={filteredVariables.length > 0 && filteredVariables.every(v => selected.includes(variableKey(v)))} indeterminate={filteredVariables.some(v => selected.includes(variableKey(v))) && !filteredVariables.every(v => selected.includes(variableKey(v)))} onChange={checked => {
                     const keys = filteredVariables.map(variableKey); setSelected(prev => checked ? [...new Set([...prev, ...keys])] : prev.filter(key => !keys.includes(key)));
                   }} /></th>
                   {crossDataset && <th className="px-2 py-2 font-medium">Dataset</th>}
-                  {["Variable", "Label", "Type", "Derivation", "Length", "Format", "Core", "Origin", "VLM / Codelist"].map(label => <th key={label} className="px-2 py-2 font-normal whitespace-nowrap">{label}</th>)}
+                  {["Variable", "Label", "Type", "Derivation", "VLM / Codelist", "Length", "Format", "Core", "Origin"].map(label => <th key={label} className="px-2 py-2 font-normal whitespace-nowrap">{label}</th>)}
                 </tr></thead>
                 <tbody>{filteredVariables.map(v => {
                   const key = variableKey(v), checked = selected.includes(key);
@@ -424,14 +422,14 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
                     <td className="px-2 py-2 align-top min-w-24">{v.label}</td>
                     <td className="px-2 py-2 align-top font-mono">{v.type || "—"}</td>
                     <td className="px-2 py-2 align-top min-w-32"><DerivationCell text={v.derivation} /></td>
-                    <td className="px-2 py-2 align-top font-mono">{v.length || "—"}</td>
-                    <td className="px-2 py-2 align-top font-mono">{v.displayFormat || "—"}</td>
-                    <td className="px-2 py-2 align-top">{v.core || "—"}</td>
-                    <td className="px-2 py-2 align-top">{v.origin || "—"}</td>
                     <td className="px-2 py-2 align-top"><div className="flex flex-wrap gap-1">
                       {variableHasVlm(v) && <PickerJumpButton onClick={event => { event.stopPropagation(); jump("vlm", v); }} label={`Open ${v.datasetName} VLM for ${v.variable}`}>VLM</PickerJumpButton>}
                       {variableStandard(v) === "ADaM" && codelistForVariable(v) && <PickerJumpButton onClick={event => { event.stopPropagation(); jump("codelist", v); }} label={`Open codelist for ${key}`}>Codelist</PickerJumpButton>}
                     </div></td>
+                    <td className="px-2 py-2 align-top font-mono">{v.length || "—"}</td>
+                    <td className="px-2 py-2 align-top font-mono">{v.displayFormat || "—"}</td>
+                    <td className="px-2 py-2 align-top">{v.core || "—"}</td>
+                    <td className="px-2 py-2 align-top">{v.origin || "—"}</td>
                   </tr>;
                 })}</tbody>
               </table>
@@ -470,23 +468,7 @@ export function VariableSpecPicker({ isOpen, onClose, onConfirm, initialSelected
 
         {/* ================= 4. Footer ================= */}
         <div className="flex shrink-0 items-center justify-between border-t border-graphite-10 px-[20px] py-[14px] bg-white">
-          {/* Left: new datasets addition notice (if any) */}
-          <div className="flex items-center">
-            {newlyAddedDatasets.length > 0 && (
-              <span
-                className="t-small text-text-secondary flex items-center gap-[6px]"
-                title={`${newlyAddedDatasets.join(", ")} will be appended to Source Dataset(s)`}
-              >
-                <span className="inline-flex size-[16px] items-center justify-center rounded-full bg-[#F4E8EE] text-[#830051] text-[11px] font-bold shrink-0">
-                  i
-                </span>
-                <span>
-                  <span className="text-text-primary font-medium">+{newlyAddedDatasets.length}</span>
-                  {" "}dataset(s) will be added to Source Dataset(s)
-                </span>
-              </span>
-            )}
-          </div>
+          <div />
 
           {/* Right actions */}
           <div className="flex items-center gap-[10px]">
