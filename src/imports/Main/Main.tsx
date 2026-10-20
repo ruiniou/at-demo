@@ -13777,9 +13777,9 @@ function WorkspaceContent({
               >
                 {onOpenDashboard && (
                   <button type="button" role="menuitem" onClick={(event) => { event.stopPropagation(); setEventMenuOpen(false); onOpenDashboard(); }}
-                    className="flex items-center gap-[8px] w-full px-[8px] py-[7px] rounded-[4px] text-[13px] text-text-primary hover:bg-bg-panel focus-visible:outline focus-visible:outline-brand-1 text-left">
+                    className="flex items-center gap-[8px] w-full px-[8px] py-[7px] rounded-[4px] text-[13px] font-normal text-text-primary hover:bg-black/5 active:bg-black/10 transition-colors text-left cursor-pointer">
                     <LocalIcon src={barChartIconUrl} className="h-[15px] w-[15px] shrink-0" color="var(--color-text-secondary)" />
-                    <span>View Dashboard</span>
+                    <span className="flex-1 truncate">View Dashboard</span>
                   </button>
                 )}
                 {onOpenEditEventModal && (
