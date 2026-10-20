@@ -3,17 +3,11 @@
  *
  * Model (see Version History Proposal):
  * - Every successful code change creates a version node; versions are immutable and append-only.
- * - `code-metadata` = AI write_code: a complete snapshot (Code + Delivery Metadata).
- * - `code-only`     = AI edit_code / Manual Save: Code only. Metadata of Code Only versions is
- *                     intentionally not handled in this round.
+ * - This round covers Code only; Metadata is intentionally out of scope.
  * - Restore never rewrites history: it appends a new version whose content equals the restored one.
  */
 
 export type VersionSource = "initial" | "ai-write" | "ai-edit" | "manual-save" | "restored";
-export type VersionKind = "code-metadata" | "code-only";
-
-/** Group name -> field label -> value. Mirrors the Metadata panel (Basic Information / Blocks). */
-export type MetadataSnapshot = Record<string, Record<string, string>>;
 
 export interface CodeVersion {
   /** Sequential version number, 1-based. */
@@ -25,14 +19,9 @@ export interface CodeVersion {
   restoredFrom?: number;
   /** AI versions are authored by Copilot on behalf of a person; `triggeredBy` keeps them attributable (ALCOA+). */
   operator: { name: string; viaCopilot: boolean; triggeredBy?: string };
-  kind: VersionKind;
   code: string;
-  /** Present only when kind === "code-metadata". */
-  metadata?: MetadataSnapshot;
   /** One-line semantic summary. */
   summary: string;
-  /** Blueprint was updated by this version (P0 shows a status label only). */
-  blueprintUpdated?: boolean;
 }
 
 export const versionLabel = (version: Pick<CodeVersion, "number">) => `v${version.number}`;
@@ -43,11 +32,6 @@ export const SOURCE_LABEL: Record<VersionSource, string> = {
   "ai-edit": "AI Edit",
   "manual-save": "Manual Save",
   restored: "Restored",
-};
-
-export const KIND_LABEL: Record<VersionKind, string> = {
-  "code-metadata": "Code + Metadata",
-  "code-only": "Code Only",
 };
 
 export const sourceText = (version: CodeVersion) =>
@@ -247,43 +231,6 @@ export function totalCodeChange(oldCode: string, newCode: string) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Metadata diff                                                       */
-/* ------------------------------------------------------------------ */
-
-export interface MetadataChange {
-  group: string;
-  field: string;
-  from: string | null;
-  to: string | null;
-}
-
-export function diffMetadata(oldMeta: MetadataSnapshot, newMeta: MetadataSnapshot): MetadataChange[] {
-  const changes: MetadataChange[] = [];
-  const groups = Array.from(new Set([...Object.keys(oldMeta), ...Object.keys(newMeta)]));
-  for (const group of groups) {
-    const before = oldMeta[group] ?? {};
-    const after = newMeta[group] ?? {};
-    const fields = Array.from(new Set([...Object.keys(before), ...Object.keys(after)]));
-    for (const field of fields) {
-      const from = before[field] ?? null;
-      const to = after[field] ?? null;
-      if (from !== to) changes.push({ group, field, from, to });
-    }
-  }
-  return changes;
-}
-
-/** Metadata can only be compared when both versions carry a snapshot (Code Only versions do not, this round). */
-export function compareMetadata(base: CodeVersion, target: CodeVersion):
-  | { status: "ok"; changes: MetadataChange[] }
-  | { status: "code-only-target" }
-  | { status: "no-base-snapshot" } {
-  if (!target.metadata) return { status: "code-only-target" };
-  if (!base.metadata) return { status: "no-base-snapshot" };
-  return { status: "ok", changes: diffMetadata(base.metadata, target.metadata) };
-}
-
-/* ------------------------------------------------------------------ */
 /* Mock seed                                                           */
 /* ------------------------------------------------------------------ */
 
@@ -303,28 +250,11 @@ function touchFirstComment(code: string, suffix: string): string {
   return lines.join("\n");
 }
 
-const baseMetadata = (tflName: string): MetadataSnapshot => ({
-  "Basic Information": {
-    Title: tflName,
-    Population: "Intent-to-Treat (ITTFL = Y)",
-    "Source Dataset": "ADSL",
-    Suffix: "t01",
-  },
-  "Block 1 · Treatment Groups": {
-    Groups: "Placebo | AZD999 10 mg/kg",
-    "Group Variable": "TRT01P",
-    Format: "Count (%)",
-  },
-  "Review Notes": {
-    "Residual Risk": "Population flag to be confirmed with the SAP",
-  },
-});
-
 /**
  * Builds a small, realistic history around the program that is actually shown in the Code panel,
  * so Diff and Restore visibly change the editor content. The last version equals `currentCode`.
  */
-export function buildSeedVersions(currentCode: string, tflName: string, currentUser: string): CodeVersion[] {
+export function buildSeedVersions(currentCode: string, currentUser: string): CodeVersion[] {
   const v3Code = touchFirstComment(currentCode, " (draft) ");
   const v2Code = mutate(v3Code, [[/conftype=loglog/, "conftype=plain"], [/page_cols = \d+/, "page_cols = 4"]], "/* Macro: m_u_listing v1 */");
   const v1Code = mutate(
@@ -333,64 +263,11 @@ export function buildSeedVersions(currentCode: string, tflName: string, currentU
     "/* Population: ITT */",
   );
 
-  const metadataV1 = baseMetadata(tflName);
-  const metadataV2: MetadataSnapshot = {
-    ...metadataV1,
-    "Basic Information": { ...metadataV1["Basic Information"], Population: "Safety Analysis Set (SAFFL = Y)" },
-    "Block 1 · Treatment Groups": {
-      ...metadataV1["Block 1 · Treatment Groups"],
-      Groups: "Placebo | AZD999 10 mg/kg | AZD999 20 mg/kg",
-    },
-    "Review Notes": { "Residual Risk": "None" },
-  };
-
   const ai = { name: "Copilot", viaCopilot: true, triggeredBy: currentUser };
   return [
-    {
-      number: 1,
-      createdAt: "2026-10-19 10:12",
-      source: "initial",
-      operator: ai,
-      kind: "code-metadata",
-      code: v1Code,
-      metadata: metadataV1,
-      summary: "Initial program and Metadata generated from AI analysis",
-      blueprintUpdated: true,
-    },
-    {
-      number: 2,
-      createdAt: "2026-10-19 16:40",
-      source: "ai-write",
-      operator: ai,
-      kind: "code-metadata",
-      code: v2Code,
-      metadata: metadataV2,
-      summary: "Population changed to Safety Analysis Set, 1 group added",
-      blueprintUpdated: true,
-    },
-    {
-      number: 3,
-      createdAt: "2026-10-20 09:25",
-      source: "ai-edit",
-      operator: ai,
-      kind: "code-only",
-      code: v3Code,
-      summary: "Edited one statement in the main code",
-    },
-    {
-      number: 4,
-      createdAt: "2026-10-20 11:03",
-      source: "manual-save",
-      operator: { name: currentUser, viaCopilot: false },
-      kind: "code-only",
-      code: currentCode,
-      summary: "Manual edit",
-    },
+    { number: 1, createdAt: "2026-10-19 10:12", source: "initial", operator: ai, code: v1Code, summary: "Initial program generated" },
+    { number: 2, createdAt: "2026-10-19 16:40", source: "ai-write", operator: ai, code: v2Code, summary: "Population set to Safety Set" },
+    { number: 3, createdAt: "2026-10-20 09:25", source: "ai-edit", operator: ai, code: v3Code, summary: "Edited one statement" },
+    { number: 4, createdAt: "2026-10-20 11:03", source: "manual-save", operator: { name: currentUser, viaCopilot: false }, code: currentCode, summary: "Manual edit" },
   ];
-}
-
-/** Metadata snapshot used when the demo Copilot writes a new Code + Metadata version. */
-export function nextMetadata(previous: CodeVersion[], tweak: (meta: MetadataSnapshot) => MetadataSnapshot): MetadataSnapshot {
-  const latest = [...previous].reverse().find((version) => version.metadata);
-  return tweak(latest?.metadata ?? baseMetadata("Output"));
 }

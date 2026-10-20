@@ -84,7 +84,6 @@ import VersionHistoryModal from "./components/VersionHistoryModal";
 import {
   buildSeedVersions,
   formatNow,
-  nextMetadata,
   totalCodeChange,
   versionLabel,
   type CodeVersion,
@@ -11725,7 +11724,7 @@ function CodePanel({
       // Locking commits pending edits, so Save is not required first.
       if (userCode !== savedCode) {
         setSavedCode(userCode);
-        appendVersion({ source: 'manual-save', kind: 'code-only', code: userCode, operator: { name: currentUser, viaCopilot: false }, summary: 'Manual edit' });
+        appendVersion({ source: 'manual-save', code: userCode, operator: { name: currentUser, viaCopilot: false }, summary: 'Manual edit' });
       }
       const baseline = lockedBaseline ?? codeContent;
       if (userCode !== baseline) onCodeLocked?.(userCode);
@@ -11861,7 +11860,7 @@ ods graphics off;`;
   const [savedCode, setSavedCode] = useState(codeContent);
 
   // Version History: snapshots are append-only. Demo data is seeded around the program shown in the editor.
-  const [versions, setVersions] = useState<CodeVersion[]>(() => buildSeedVersions(codeContent, selectedItem, currentUser));
+  const [versions, setVersions] = useState<CodeVersion[]>(() => buildSeedVersions(codeContent, currentUser));
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyDiffRequest, setHistoryDiffRequest] = useState<{ id: number; base: number; target: number } | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<CodeVersion | null>(null);
@@ -11882,7 +11881,7 @@ ods graphics off;`;
     setLastRunCode(codeContent);
     setSavedCode(codeContent);
     setLockedBaseline(null);
-    setVersions(buildSeedVersions(codeContent, selectedItem, currentUser));
+    setVersions(buildSeedVersions(codeContent, currentUser));
     setHistoryOpen(false);
     setRestoreTarget(null);
   }, [selectedItem, codeContent]);
@@ -11911,17 +11910,12 @@ ods graphics off;`;
     if (demoCodeRequest.scenario === 'A') {
       appendVersion({
         source: 'ai-write',
-        kind: 'code-metadata',
         code: nextCode,
         operator: copilot,
-        metadata: nextMetadata(versions, meta => ({
-          ...meta,
-          'Basic Information': { ...meta['Basic Information'], Title: `${meta['Basic Information']?.Title ?? selectedItem} (revised)` },
-        })),
-        summary: 'Updated title and program name',
+        summary: 'Updated program name',
       });
     } else if (demoCodeRequest.scenario === 'B') {
-      appendVersion({ source: 'ai-edit', kind: 'code-only', code: nextCode, operator: copilot, summary: 'Added a review comment' });
+      appendVersion({ source: 'ai-edit', code: nextCode, operator: copilot, summary: 'Added a review comment' });
     }
   }, [demoCodeRequest?.id]);
 
@@ -12030,7 +12024,7 @@ ods graphics off;`;
     setIsSaving(true);
     setTimeout(() => {
       setSavedCode(userCode);
-      appendVersion({ source: 'manual-save', kind: 'code-only', code: userCode, operator: { name: currentUser, viaCopilot: false }, summary: 'Manual edit' });
+      appendVersion({ source: 'manual-save', code: userCode, operator: { name: currentUser, viaCopilot: false }, summary: 'Manual edit' });
       setIsSaving(false);
     }, 500);
   };
@@ -12071,9 +12065,7 @@ ods graphics off;`;
         appendVersion({
           source: 'restored',
           restoredFrom: target.number,
-          kind: target.kind,
           code: target.code,
-          metadata: target.metadata,
           summary: `Same content as ${versionLabel(target)}`,
           operator: { name: currentUser, viaCopilot: false },
         });
@@ -12276,6 +12268,11 @@ ods graphics off;`;
         isCurrentLocked={effectiveIsLocked}
         keysSuspended={restoreTarget !== null}
         diffRequest={historyDiffRequest}
+        copilotIcon={
+          <span className="flex size-[20px] shrink-0 items-center justify-center rounded-[4px] bg-brand-1">
+            <AtlasLogoIcon className="h-[12px] w-[12px] shrink-0" color="white" />
+          </span>
+        }
         onClose={() => setHistoryOpen(false)}
         onRestore={(version) => {
           setRestoreError(null);
@@ -12304,7 +12301,7 @@ ods graphics off;`;
                   <span className="t-small-medium text-text-primary">vs Current ({versionLabel(currentVersion)})</span>
                   <button
                     type="button"
-                    className="t-link text-brand-1 hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1"
+                    className="t-small text-brand-1 hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1"
                     onClick={() => {
                       const target = restoreTarget;
                       setRestoreTarget(null);
@@ -12319,9 +12316,6 @@ ods graphics off;`;
                   <span className="text-code-success tabular-nums">+{change.added}</span>
                   <span className="text-status-error tabular-nums">−{change.removed}</span>
                 </div>
-                {restoreTarget.kind === 'code-metadata' && (
-                  <span className="t-small text-text-secondary">Metadata is restored together with the code.</span>
-                )}
                 {restoreError && <p role="alert" className="t-small text-status-error">{restoreError}</p>}
               </div>
             );

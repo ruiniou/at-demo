@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/Button";
 import { SingleSelect } from "../../../components/ui/SingleSelect";
-import { Tabs } from "../../../components/ui/Tabs";
+import { Avatar } from "../../../components/ui/Avatar";
 import { Tag } from "../../../components/ui/Tag";
 import { Tooltip } from "../../../components/ui/Tooltip";
 import arrowDownUrl from "../../../icons/arrow-down-s-line.svg";
@@ -12,23 +12,21 @@ import closeIconUrl from "../../../icons/close-line.svg";
 import lockIconUrl from "../../../icons/Lock.svg";
 import {
   CodeVersion,
-  KIND_LABEL,
   SEGMENT_LABEL,
   SegmentDiff,
   SplitRow,
-  compareMetadata,
   diffPrograms,
   sourceText,
   totalCodeChange,
   versionLabel,
-  diffMetadata,
 } from "./versionHistoryData";
 
 /* Diff row tints mirror the Copilot "Edited code" card (AI-CodeDiff) so both diffs read the same way. */
 const DEL_ROW = "border-l-[3px] border-brand-1 bg-[#FDECEA]";
 const ADD_ROW = "border-l-[3px] border-code-success bg-[#E6F4EA]";
 const CONTEXT_LINES = 3;
-const LIST_COLUMNS = "grid-cols-[180px_120px_minmax(0,1fr)_170px_150px]";
+/* One row = one line. Every column is left-aligned; Action keeps two fixed slots so links and buttons line up across rows. */
+const LIST_COLUMNS = "grid-cols-[88px_168px_minmax(0,1fr)_104px_176px_136px_140px]";
 
 function MaskIcon({ src, size = 16, className = "bg-text-secondary" }: { src: string; size?: number; className?: string }) {
   const mask = `url("${src}") center / contain no-repeat`;
@@ -37,7 +35,7 @@ function MaskIcon({ src, size = 16, className = "bg-text-secondary" }: { src: st
 
 function ChangeCounts({ added, removed }: { added: number; removed: number }) {
   return (
-    <span className="flex gap-[6px] t-small tabular-nums">
+    <span className="flex gap-[8px] t-body-compact tabular-nums">
       <span className="text-code-success">+{added}</span>
       <span className="text-status-error">−{removed}</span>
     </span>
@@ -56,6 +54,8 @@ export interface VersionHistoryModalProps {
   isCurrentLocked?: boolean;
   /** Another dialog (the Restore confirmation) is on top, so Escape must not close this one. */
   keysSuspended?: boolean;
+  /** Copilot entry-point icon (same mark as the Copilot button), shown for versions written by Copilot. */
+  copilotIcon: React.ReactNode;
   /** Opens the Diff view for a specific pair (older → newer), e.g. from the Restore confirmation. */
   diffRequest?: { id: number; base: number; target: number } | null;
   onClose: () => void;
@@ -70,12 +70,12 @@ export default function VersionHistoryModal({
   isCurrentLocked = false,
   keysSuspended = false,
   diffRequest = null,
+  copilotIcon,
   onClose,
   onRestore,
 }: VersionHistoryModalProps) {
   const [view, setView] = useState<"list" | "diff">("list");
   const [pair, setPair] = useState<{ base: number; target: number } | null>(null);
-  const [tab, setTab] = useState<"metadata" | "code">("code");
 
   const current = versions[versions.length - 1];
   const byNumber = useMemo(() => new Map(versions.map((version) => [version.number, version])), [versions]);
@@ -91,9 +91,7 @@ export default function VersionHistoryModal({
     const base = byNumber.get(diffRequest.base);
     const target = byNumber.get(diffRequest.target);
     if (!base || !target) return;
-    const meta = compareMetadata(base, target);
     setPair({ base: base.number, target: target.number });
-    setTab(meta.status === "ok" && meta.changes.length > 0 ? "metadata" : "code");
     setView("diff");
   }, [diffRequest?.id]);
 
@@ -108,17 +106,14 @@ export default function VersionHistoryModal({
 
   /* Row stats are always "this version vs its previous version". */
   const rowStats = useMemo(() => {
-    const stats = new Map<number, { added: number; removed: number; metadataCount: number | null }>();
+    const stats = new Map<number, { added: number; removed: number }>();
     versions.forEach((version, index) => {
       const previous = versions[index - 1];
       if (!previous) {
-        stats.set(version.number, { ...totalCodeChange("", version.code), metadataCount: null });
+        stats.set(version.number, totalCodeChange("", version.code));
         return;
       }
-      const code = totalCodeChange(previous.code, version.code);
-      const metadataCount =
-        version.metadata && previous.metadata ? diffMetadata(previous.metadata, version.metadata).length : null;
-      stats.set(version.number, { ...code, metadataCount });
+      stats.set(version.number, totalCodeChange(previous.code, version.code));
     });
     return stats;
   }, [versions]);
@@ -129,9 +124,7 @@ export default function VersionHistoryModal({
     const index = versions.findIndex((item) => item.number === version.number);
     const previous = versions[index - 1];
     if (!previous) return;
-    const meta = compareMetadata(previous, version);
     setPair({ base: previous.number, target: version.number });
-    setTab(meta.status === "ok" && meta.changes.length > 0 ? "metadata" : "code");
     setView("diff");
   };
 
@@ -145,7 +138,7 @@ export default function VersionHistoryModal({
         aria-modal="true"
         aria-labelledby="version-history-title"
         className={`relative flex max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[8px] border border-graphite-10 bg-white shadow-elevation-modal ${
-          isDiff ? "h-[min(820px,calc(100vh-32px))] w-[1200px]" : "max-h-[calc(100vh-32px)] w-[1040px]"
+          isDiff ? "h-[min(820px,calc(100vh-32px))] w-[1200px]" : "max-h-[calc(100vh-32px)] w-[1200px]"
         }`}
       >
         <div className="flex shrink-0 items-center justify-between gap-[12px] border-b border-graphite-10 px-[24px] py-[14px]">
@@ -164,7 +157,7 @@ export default function VersionHistoryModal({
             )}
             <div className="min-w-0">
               <h2 id="version-history-title" className="t-heading text-text-primary">Version History</h2>
-              <p className="t-small truncate text-text-secondary">{outputName}</p>
+              <p className="t-small truncate text-text-secondary">{outputName} · Code</p>
             </div>
           </div>
           <button
@@ -182,8 +175,6 @@ export default function VersionHistoryModal({
             versions={versions}
             byNumber={byNumber}
             pair={pair}
-            tab={tab}
-            onTabChange={setTab}
             onPairChange={setPair}
           />
         ) : (
@@ -191,6 +182,7 @@ export default function VersionHistoryModal({
             versions={versions}
             current={current}
             rowStats={rowStats}
+            copilotIcon={copilotIcon}
             isCurrentLocked={isCurrentLocked}
             restoreBlockedReason={restoreBlockedReason}
             onOpenDiff={openDiff}
@@ -207,22 +199,29 @@ export default function VersionHistoryModal({
 /* List                                                                */
 /* ------------------------------------------------------------------ */
 
-function OperatorCell({ version }: { version: CodeVersion }) {
-  if (!version.operator.viaCopilot) return <span className="t-body-compact truncate text-text-primary">{version.operator.name}</span>;
-  return (
-    <div className="flex min-w-0 flex-col">
+function OperatorCell({ version, copilotIcon }: { version: CodeVersion; copilotIcon: React.ReactNode }) {
+  if (!version.operator.viaCopilot) {
+    return (
+      <div className="flex min-w-0 items-center gap-[8px]">
+        <Avatar name={version.operator.name} level="modal" />
+        <span className="t-body-compact truncate text-text-primary">{version.operator.name}</span>
+      </div>
+    );
+  }
+  const label = (
+    <div className="flex min-w-0 items-center gap-[8px]">
+      {copilotIcon}
       <span className="t-body-compact truncate text-text-primary">Copilot</span>
-      {version.operator.triggeredBy && (
-        <span className="t-small truncate text-text-secondary">triggered by {version.operator.triggeredBy}</span>
-      )}
     </div>
   );
+  return version.operator.triggeredBy ? <Tooltip label={`Triggered by ${version.operator.triggeredBy}`}>{label}</Tooltip> : label;
 }
 
 function ListView({
   versions,
   current,
   rowStats,
+  copilotIcon,
   isCurrentLocked,
   restoreBlockedReason,
   onOpenDiff,
@@ -230,14 +229,15 @@ function ListView({
 }: {
   versions: CodeVersion[];
   current: CodeVersion;
-  rowStats: Map<number, { added: number; removed: number; metadataCount: number | null }>;
+  rowStats: Map<number, { added: number; removed: number }>;
+  copilotIcon: React.ReactNode;
   isCurrentLocked: boolean;
   restoreBlockedReason: string | null;
   onOpenDiff: (version: CodeVersion) => void;
   onRestore: (version: CodeVersion) => void;
 }) {
   const rows = [...versions].reverse();
-  const headerCell = "t-small-medium text-text-secondary";
+  const headerCell = "t-small text-text-secondary";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -254,8 +254,10 @@ function ListView({
           <span className={headerCell}>Version</span>
           <span className={headerCell}>Source</span>
           <span className={headerCell}>Summary</span>
+          <span className={headerCell}>Changes</span>
           <span className={headerCell}>Operator</span>
-          <span className={`${headerCell} text-right`}>Action</span>
+          <span className={headerCell}>Time</span>
+          <span className={headerCell}>Action</span>
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto [scrollbar-gutter:stable]">
@@ -295,63 +297,59 @@ function ListView({
                     }
                   : undefined
               }
-              className={`grid ${LIST_COLUMNS} items-center gap-x-[16px] px-[24px] py-[12px] ${
+              className={`grid ${LIST_COLUMNS} h-[48px] items-center gap-x-[16px] px-[24px] ${
                 index < rows.length - 1 ? "border-b border-graphite-10" : ""
               } ${hasPrevious ? "cursor-pointer hover:bg-bg-panel focus-visible:outline focus-visible:outline-1 focus-visible:-outline-offset-1 focus-visible:outline-brand-1" : ""}`}
             >
-              <div className="flex min-w-0 flex-col gap-[4px]">
-                <div className="flex items-center gap-[6px]">
-                  <span className="t-body-medium text-text-primary">{versionLabel(version)}</span>
-                  {isCurrent && <Tag variant="brand">Current</Tag>}
-                  {isCurrent && isCurrentLocked && (
-                    <Tooltip label="Locked">
-                      <span className="flex size-[16px] items-center justify-center" aria-label="Locked">
-                        <MaskIcon src={lockIconUrl} size={14} />
-                      </span>
-                    </Tooltip>
-                  )}
-                </div>
-                <div className="flex items-center gap-[6px]">
-                  <Tag>{KIND_LABEL[version.kind]}</Tag>
-                </div>
-                <span className="t-small tabular-nums text-text-secondary">{version.createdAt}</span>
-              </div>
-
-              <span className="t-body-compact truncate text-text-primary">{sourceText(version)}</span>
-
-              <div className="flex min-w-0 flex-col gap-[2px]">
-                <span className="t-body-compact text-text-primary">{version.summary}</span>
-                <div className="flex items-center gap-[8px]">
-                  <ChangeCounts added={stat.added} removed={stat.removed} />
-                  {stat.metadataCount !== null && stat.metadataCount > 0 && (
-                    <span className="t-small text-text-secondary">Metadata ×{stat.metadataCount}</span>
-                  )}
-                </div>
-              </div>
-
-              <OperatorCell version={version} />
-
-              <div className="flex items-center justify-end gap-[12px]">
-                {hasPrevious && (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onOpenDiff(version);
-                    }}
-                    className="t-link text-brand-1 hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1"
-                  >
-                    View Diff
-                  </button>
+              <div className="flex items-center gap-[6px]">
+                <span className="t-body-compact font-medium text-text-primary">{versionLabel(version)}</span>
+                {isCurrent && isCurrentLocked && (
+                  <Tooltip label="Locked">
+                    <span className="flex size-[16px] items-center justify-center" aria-label="Locked">
+                      <MaskIcon src={lockIconUrl} size={14} />
+                    </span>
+                  </Tooltip>
                 )}
-                {!isCurrent &&
-                  (restoreBlockedReason ? (
-                    <Tooltip label={restoreBlockedReason}>
-                      <span className="inline-flex">{restoreButton}</span>
-                    </Tooltip>
-                  ) : (
-                    restoreButton
-                  ))}
+              </div>
+
+              <div className="flex min-w-0 items-center gap-[6px]">
+                <Tag>{sourceText(version)}</Tag>
+                {isCurrent && <Tag variant="brand">Current</Tag>}
+              </div>
+
+              <span className="t-body-compact truncate text-text-primary" title={version.summary}>{version.summary}</span>
+
+              <ChangeCounts added={stat.added} removed={stat.removed} />
+
+              <OperatorCell version={version} copilotIcon={copilotIcon} />
+
+              <span className="t-body-compact tabular-nums text-text-secondary">{version.createdAt}</span>
+
+              <div className="flex items-center gap-[12px]">
+                <span className="w-[56px]">
+                  {hasPrevious && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onOpenDiff(version);
+                      }}
+                      className="t-small whitespace-nowrap text-brand-1 hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1"
+                    >
+                      View Diff
+                    </button>
+                  )}
+                </span>
+                <span className="inline-flex w-[64px]">
+                  {!isCurrent &&
+                    (restoreBlockedReason ? (
+                      <Tooltip label={restoreBlockedReason}>
+                        <span className="inline-flex">{restoreButton}</span>
+                      </Tooltip>
+                    ) : (
+                      restoreButton
+                    ))}
+                </span>
               </div>
             </div>
           );
@@ -369,15 +367,11 @@ function DiffView({
   versions,
   byNumber,
   pair,
-  tab,
-  onTabChange,
   onPairChange,
 }: {
   versions: CodeVersion[];
   byNumber: Map<number, CodeVersion>;
   pair: { base: number; target: number };
-  tab: "metadata" | "code";
-  onTabChange: (tab: "metadata" | "code") => void;
   onPairChange: (pair: { base: number; target: number }) => void;
 }) {
   const base = byNumber.get(pair.base)!;
@@ -388,14 +382,12 @@ function DiffView({
     () => segments.reduce((sum, segment) => ({ added: sum.added + segment.added, removed: sum.removed + segment.removed }), { added: 0, removed: 0 }),
     [segments],
   );
-  const metadata = useMemo(() => compareMetadata(base, target), [base, target]);
-  const blueprintUpdated = versions.some((version) => version.number > base.number && version.number <= target.number && version.blueprintUpdated);
 
   const options = useMemo(
     () =>
       [...versions].reverse().map((version) => ({
         value: String(version.number),
-        label: `${versionLabel(version)} · ${KIND_LABEL[version.kind]} · ${version.createdAt}`,
+        label: `${versionLabel(version)} · ${sourceText(version)} · ${version.createdAt}`,
       })),
     [versions],
   );
@@ -412,13 +404,10 @@ function DiffView({
     onPairChange(next > pair.base ? { base: pair.base, target: next } : { base: next, target: pair.base });
   };
 
-  const previousFull = [...versions].reverse().find((version) => version.number < target.number && version.kind === "code-metadata");
-  const metadataLabel = metadata.status === "ok" ? `Metadata (${metadata.changes.length})` : "Metadata";
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 flex-wrap items-center gap-[8px] border-b border-graphite-10 px-[24px] py-[12px]">
-        <div className="w-[300px]">
+      <div className="flex shrink-0 items-center gap-[8px] border-b border-graphite-10 px-[24px] py-[12px]">
+        <div className="w-[320px]">
           <SingleSelect
             triggerClassName="h-[28px] rounded-[4px] px-[8px]"
             options={options.map((option) => ({ ...option, disabled: option.value === String(pair.target) }))}
@@ -427,7 +416,7 @@ function DiffView({
           />
         </div>
         <span className="t-small text-text-secondary" aria-hidden="true">→</span>
-        <div className="w-[300px]">
+        <div className="w-[320px]">
           <SingleSelect
             triggerClassName="h-[28px] rounded-[4px] px-[8px]"
             options={options.map((option) => ({ ...option, disabled: option.value === String(pair.base) }))}
@@ -435,106 +424,20 @@ function DiffView({
             onChange={changeTarget}
           />
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={!previousFull || previousFull.number === pair.base}
-          onClick={() => previousFull && onPairChange({ base: previousFull.number, target: target.number })}
-        >
-          vs Previous Code + Metadata
-        </Button>
-      </div>
-
-      <div className="flex shrink-0 flex-wrap items-center gap-[8px] border-b border-graphite-10 bg-bg-panel px-[24px] py-[8px]">
-        <Tag>{KIND_LABEL[target.kind]}</Tag>
-        <span className="t-small text-text-primary">
-          {target.kind === "code-metadata"
-            ? `${versionLabel(target)} changed code and Metadata.`
-            : `${versionLabel(target)} changed code only.`}
-        </span>
-        <span className="ml-auto">
-          <Tag>{blueprintUpdated ? "Blueprint Updated" : "Blueprint Unchanged"}</Tag>
-        </span>
-      </div>
-
-      <div className="shrink-0 border-b border-graphite-10 px-[16px]">
-        <Tabs
-          value={tab}
-          onChange={(value) => onTabChange(value as "metadata" | "code")}
-          options={[
-            { id: "metadata", label: metadataLabel },
-            { id: "code", label: `Code (+${codeTotals.added} −${codeTotals.removed})` },
-          ]}
-        />
+        <div className="ml-auto">
+          <ChangeCounts added={codeTotals.added} removed={codeTotals.removed} />
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto [scrollbar-gutter:stable]">
-        {tab === "metadata" ? (
-          <MetadataPane base={base} target={target} result={metadata} />
-        ) : (
-          <CodePane key={`${pair.base}-${pair.target}`} base={base} target={target} segments={segments} />
-        )}
+        <CodePane key={`${pair.base}-${pair.target}`} base={base} target={target} segments={segments} />
       </div>
     </div>
   );
 }
 
 function EmptyNote({ children }: { children: React.ReactNode }) {
-  return <p className="px-[24px] py-[24px] t-body-secondary text-text-secondary">{children}</p>;
-}
-
-function MetadataPane({
-  base,
-  target,
-  result,
-}: {
-  base: CodeVersion;
-  target: CodeVersion;
-  result: ReturnType<typeof compareMetadata>;
-}) {
-  if (result.status === "code-only-target") return <EmptyNote>This version only changed code.</EmptyNote>;
-  if (result.status === "no-base-snapshot") return <EmptyNote>No Metadata to compare with {versionLabel(base)} (Code Only).</EmptyNote>;
-  if (result.changes.length === 0) return <EmptyNote>No Metadata changes between {versionLabel(base)} and {versionLabel(target)}.</EmptyNote>;
-
-  const groups = Array.from(new Set(result.changes.map((change) => change.group)));
-  return (
-    <div className="flex flex-col gap-[16px] px-[24px] py-[16px]">
-      {groups.map((group) => (
-        <section key={group} className="overflow-hidden rounded-[8px] border border-graphite-20">
-          <div className="flex items-center justify-between bg-bg-panel px-[12px] py-[8px]">
-            <h3 className="t-body-compact text-text-primary">{group}</h3>
-            <span className="t-small tabular-nums text-text-secondary">{result.changes.filter((change) => change.group === group).length}</span>
-          </div>
-          {result.changes
-            .filter((change) => change.group === group)
-            .map((change) => (
-              <div key={change.field} className="grid grid-cols-[200px_minmax(0,1fr)] gap-x-[16px] border-t border-graphite-10 px-[12px] py-[8px]">
-                <span className="t-small text-text-secondary">{change.field}</span>
-                <div className="flex min-w-0 flex-wrap items-center gap-[6px] t-small">
-                  {change.from === null ? (
-                    <>
-                      <Tag>Added</Tag>
-                      <span className="text-brand-1">{change.to}</span>
-                    </>
-                  ) : change.to === null ? (
-                    <>
-                      <Tag>Removed</Tag>
-                      <span className="text-text-secondary line-through">{change.from}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-text-secondary line-through">{change.from || "Empty"}</span>
-                      <span className="text-text-secondary" aria-hidden="true">→</span>
-                      <span className="text-brand-1">{change.to || "Empty"}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-        </section>
-      ))}
-    </div>
-  );
+  return <p className="px-[24px] py-[24px] t-body-compact text-text-secondary">{children}</p>;
 }
 
 type FoldItem =
@@ -630,7 +533,7 @@ function CodePane({ base, target, segments }: { base: CodeVersion; target: CodeV
           <Button variant="ghost" size="sm" onClick={() => jump(1)}>Next Change</Button>
         </div>
       </div>
-      <div className="grid grid-cols-2 border-b border-graphite-10 bg-bg-panel px-[24px] py-[6px] t-small-medium text-text-secondary">
+      <div className="grid grid-cols-2 border-b border-graphite-10 bg-bg-panel px-[24px] py-[6px] t-small text-text-secondary">
         <span>{versionLabel(base)}</span>
         <span>{versionLabel(target)}</span>
       </div>
