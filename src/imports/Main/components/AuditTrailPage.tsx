@@ -8,7 +8,7 @@ import { SearchBar } from '../../../components/ui/SearchBar';
 import { SingleSelect } from '../../../components/ui/SingleSelect';
 import { Tooltip } from '../../../components/ui/Tooltip';
 import { DashboardIcon } from './DashboardPrimitives';
-import historyIcon from '../../../icons/History Icon.svg';
+import auditTrailIcon from '../../../icons/file-list-3-line.svg';
 import downloadIcon from '../../../icons/download-2-line.svg';
 import leftIcon from '../../../icons/arrow-left-s-line.svg';
 import rightIcon from '../../../icons/arrow-right-s-line.svg';
@@ -27,6 +27,23 @@ const ACTIONS: Record<ObjectType, string[]> = { Project: ['Create', 'Edit', 'Dis
 const initialRange = (): [Dayjs, Dayjs] => [dayjs().subtract(7, 'day').startOf('day'), dayjs().endOf('day')];
 const emptyFilters = (): Filters => ({ range: initialRange(), operator: '', types: [], actions: [] });
 // Illustrative records only. An audit service must supply authoritative, immutable history.
+const additionalRowTemplates: Omit<RecordRow, 'id' | 'time'>[] = [
+  { operator: 'Emily Liu', email: 'emily.liu@example.com', type: 'Project', object: 'Project C', project: 'Project C', action: 'Create', changes: ['Project created'] },
+  { operator: 'Sarah Chen', email: 'sarah.chen@example.com', type: 'Project', object: 'Project B', project: 'Project B', action: 'Edit', changes: ['Therapeutic area: Oncology → Hematology', 'Owner: Emily Liu → Sarah Chen'] },
+  { operator: 'Alex Kim', email: 'alex.kim@example.com', type: 'Project', object: 'Project C', project: 'Project C', action: 'Disable', changes: ['Status: Active → Disabled'] },
+  { operator: 'Sarah Chen', email: 'sarah.chen@example.com', type: 'Project', object: 'Project C', project: 'Project C', action: 'Enable', changes: ['Status: Disabled → Active'] },
+  { operator: 'Emily Liu', email: 'emily.liu@example.com', type: 'Study', object: 'Study 03', project: 'Project A', study: 'Study 03', action: 'Create', changes: ['Study created'] },
+  { operator: 'Alex Kim', email: 'alex.kim@example.com', type: 'Study', object: 'Study 04', project: 'Project B', study: 'Study 04', action: 'Edit', changes: ['Name: Study 04 Draft → Study 04', 'Description updated'] },
+  { operator: 'Emily Liu', email: 'emily.liu@example.com', type: 'Study', object: 'Study 02', project: 'Project A', study: 'Study 02', action: 'Disable', changes: ['Status: Active → Disabled'] },
+  { operator: 'Alex Kim', email: 'alex.kim@example.com', type: 'Study', object: 'Study 04', project: 'Project B', study: 'Study 04', action: 'Enable', changes: ['Status: Disabled → Active'] },
+  { operator: 'Sarah Chen', email: 'sarah.chen@example.com', type: 'Event', object: 'Event 6', project: 'Project A', study: 'Study 03', event: 'Event 6', action: 'Create', changes: ['Event created'] },
+  { operator: 'Emily Liu', email: 'emily.liu@example.com', type: 'Event', object: 'Event 3', project: 'Project A', study: 'Study 01', event: 'Event 3', action: 'Edit', changes: ['Planned date updated', 'Description updated'] },
+  { operator: 'Alex Kim', email: 'alex.kim@example.com', type: 'Event', object: 'Event 5', project: 'Project B', study: 'Study 04', event: 'Event 5', action: 'Delete', changes: ['Event removed'] },
+  { operator: 'Sarah Chen', email: 'sarah.chen@example.com', type: 'Event', object: 'Event 6', project: 'Project A', study: 'Study 03', event: 'Event 6', action: 'Terminate', changes: ['Status: Running → Terminated'] },
+  { operator: 'System', type: 'TFL', kind: 'Table', object: 'Table 14.2.2', project: 'Project A', study: 'Study 01', event: 'Event 3', action: 'Lock', changes: ['Locked'] },
+  { operator: 'Emily Liu', email: 'emily.liu@example.com', type: 'TFL', kind: 'Listing', object: 'Listing 16.1.3', project: 'Project A', study: 'Study 01', event: 'Event 3', action: 'Unlock', changes: ['Unlocked'] },
+];
+
 const sampleRows: RecordRow[] = [
   { id: 1, time: dayjs().subtract(1, 'hour').format('YYYY-MM-DD HH:mm:ss'), operator: 'Sarah Chen', email: 'sarah.chen@example.com', type: 'Event', object: 'Event 3', project: 'Project A', study: 'Study 01', action: 'Terminate', changes: ['Status: Running → Terminated'] },
   { id: 2, time: dayjs().subtract(3, 'hour').format('YYYY-MM-DD HH:mm:ss'), operator: 'System', type: 'TFL', kind: 'Table', object: 'Table 14.2.1', project: 'Project A', study: 'Study 01', event: 'Event 3', action: 'Lock', changes: ['Locked'] },
@@ -35,6 +52,11 @@ const sampleRows: RecordRow[] = [
   { id: 5, time: dayjs().subtract(3, 'day').format('YYYY-MM-DD HH:mm:ss'), operator: 'Sarah Chen', email: 'sarah.chen@example.com', type: 'Project', object: 'Project B', project: 'Project B', action: 'Edit', changes: ['Name: Project Beta → Project B', 'Owner: Emily Liu → Alex Kim', 'Therapeutic area: Oncology → Hematology'] },
   { id: 6, time: dayjs().subtract(4, 'day').format('YYYY-MM-DD HH:mm:ss'), operator: 'Emily Liu', email: 'emily.liu@example.com', type: 'TFL', kind: 'Listing', object: 'Listing 16.1.2', project: 'Project A', study: 'Study 01', event: 'Event 3', action: 'Unlock', changes: ['Unlocked'] },
   { id: 7, time: dayjs().subtract(6, 'day').format('YYYY-MM-DD HH:mm:ss'), operator: 'System', type: 'TFL', kind: 'Figure', object: 'Figure 14.3.1', project: 'Project A', study: 'Study 01', event: 'Event 3', action: 'Lock', changes: ['Locked'] },
+  ...Array.from({ length: 46 }, (_, index) => ({
+    ...additionalRowTemplates[index % additionalRowTemplates.length],
+    id: index + 8,
+    time: dayjs().subtract(4 + index * 2, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+  })),
 ];
 const iconFor = (row: RecordRow) => row.kind === 'Table' ? tableIcon : row.kind === 'Listing' ? listingIcon : row.kind === 'Figure' ? figureIcon : row.type === 'Project' ? stackIcon : row.type === 'Study' ? studyIcon : eventIcon;
 const sameSet = <T,>(items: T[], item: T) => items.includes(item) ? items.filter(value => value !== item) : [...items, item];
@@ -64,7 +86,7 @@ export function AuditTrailPage({ headerLeading }: { headerLeading?: React.ReactN
   const reset = () => { const next = emptyFilters(); setDraft(next); setApplied(next); setKeyword(''); setPage(1); };
   return <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden bg-white px-[16px] pb-[20px] pt-[20px] font-body text-text-primary sm:px-[28px]">
     <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-2">{headerLeading}<span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-az-secondary text-brand-1"><DashboardIcon src={historyIcon} /></span><h1 className="text-[22px] font-bold leading-[28px]">Audit Trail</h1></div>
+      <div className="flex min-w-0 items-center gap-2">{headerLeading}<span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-az-secondary text-brand-1"><DashboardIcon src={auditTrailIcon} /></span><h1 className="text-[22px] font-bold leading-[28px]">Audit Trail</h1></div>
       <div className="flex flex-wrap items-center gap-2"><SearchBar value={keyword} onChange={value => { setKeyword(value); setPage(1); }} placeholder="Search operator or object name" className="w-[260px]" /><Tooltip label="Export"><Button type="button" variant="icon" size="icon" onClick={() => setExportOpen(true)} aria-label="Export Audit Trail"><DashboardIcon src={downloadIcon} /></Button></Tooltip><Button type="button" variant="secondary" size="sm" onClick={() => setPanelOpen(open => !open)} aria-expanded={panelOpen}>Advanced Search {activeCount > 0 && <span className="rounded-sm bg-az-secondary px-1 text-brand-1">{activeCount}</span>}</Button></div>
     </header>
     <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">

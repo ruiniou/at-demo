@@ -25,6 +25,7 @@ import pauseCircleIconUrl from "../../icons/pause-circle-line.svg";
 import expandIconUrl from "../../icons/Icon-expand.svg";
 import figureIconUrl from "../../icons/Figure.svg";
 import historyIconUrl from "../../icons/History Icon.svg";
+import auditTrailIconUrl from "../../icons/file-list-3-line.svg";
 import listingIconUrl from "../../icons/Listing.svg";
 import lockIconUrl from "../../icons/Lock.svg";
 import moreIconUrl from "../../icons/More Icon.svg";
@@ -15130,7 +15131,7 @@ function HomePage({
               </div>
             )}
             {currentRole === 'admin' && <div className="px-2 pb-2 pt-1"><SidebarPrimaryNavItem label="Usage" selected={activeNav === 'global-dashboard'} onClick={onOpenGlobalDashboard} icon={<LocalIcon src={usageIconUrl} className="size-4 shrink-0" color={activeNav === 'global-dashboard' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />} /></div>}
-            {currentRole === 'admin' && <div className="px-2 pb-2"><SidebarPrimaryNavItem label="Audit Trail" selected={activeNav === 'audit-trail'} onClick={() => onSelectNav('audit-trail')} icon={<LocalIcon src={historyIconUrl} className="size-4 shrink-0" color={activeNav === 'audit-trail' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />} /></div>}
+            {currentRole === 'admin' && <div className="px-2 pb-2"><SidebarPrimaryNavItem label="Audit Trail" selected={activeNav === 'audit-trail'} onClick={() => onSelectNav('audit-trail')} icon={<LocalIcon src={auditTrailIconUrl} className="size-4 shrink-0" color={activeNav === 'audit-trail' ? 'var(--color-brand-1)' : 'var(--color-text-secondary)'} />} /></div>}
 
             {/* Events section: Events nav, Recents, and 3-tier hierarchy tree all grouped together */}
             <div className="flex min-h-0 flex-1 flex-col pt-[4px]">
