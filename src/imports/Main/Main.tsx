@@ -12104,6 +12104,15 @@ ods graphics off;`;
         }
         actions={toolbarButtons}
       />
+      {/* One banner slot: the Metadata notice takes it while shown; dismissing it or updating Metadata reveals the Read-only banner. */}
+      {!(metadataBehind && !metadataNoticeDismissed) && effectiveIsLocked && (
+        <div className="flex shrink-0 items-center gap-[8px] border-y border-status-warning-bg bg-status-warning-bg/40 px-[12px] py-[6px]" role="status">
+          <span className="flex size-[20px] shrink-0 items-center justify-center rounded-[4px] bg-status-warning-bg">
+            <LocalIcon src={lockIconUrl} className="size-[13px]" color="var(--color-status-warning-icon)" />
+          </span>
+          <p className="t-small text-text-primary"><strong className="font-semibold">Read-only:</strong> The code is locked and cannot be edited.</p>
+        </div>
+      )}
       {metadataBehind && !metadataNoticeDismissed && (
         <div className="flex min-h-[40px] items-center gap-[8px] border-b border-graphite-10 bg-bg-panel px-[12px] t-small text-text-primary" role="status">
           <span className="min-w-0 flex-1">{metadataUpdating ? 'Updating Metadata…' : 'Code changed.'}</span>
@@ -13957,27 +13966,6 @@ function WorkspaceContent({
               onSelectCopilotScope={setCopilotScope}
               controlsDisabled={isEventStopped}
             />
-          </div>
-
-          <div className="mb-[6px] flex shrink-0 items-center gap-[8px] overflow-x-auto rounded-[8px] border border-graphite-10 bg-white px-[10px] py-[6px] pointer-events-auto" aria-label="Demo controls">
-            <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-text-secondary">Demo controls</span>
-            {([
-              ['A', 'AI changes Code + Meta'],
-              ['B', 'AI changes Code only'],
-              ['C', 'AI changes Meta only'],
-              ['D', 'Manual edit, then Save'],
-            ] as const).map(([scenario, label]) => (
-              <button
-                key={scenario}
-                type="button"
-                onClick={() => handleDemoScenario(scenario)}
-                disabled={isTflCopilotRunning || isSelectedTflExecuting}
-                className={`shrink-0 rounded-[6px] border px-[9px] py-[5px] text-[12px] transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${activeDemoScenario === scenario ? 'border-brand-1 bg-[#F4E8EE] text-brand-1' : 'border-graphite-20 bg-white text-text-primary hover:bg-bg-panel'}`}
-              >
-                {scenario} · {label}
-              </button>
-            ))}
-            {activeDemoScenario === 'D' && <span className="shrink-0 text-[11px] text-text-secondary">Code change prepared. Lock Code, then Update Metadata.</span>}
           </div>
 
           {/* Below ViewToggleBar: Container for Shell, Code, AI Copilot cards and floating GroupCodePanel */}
