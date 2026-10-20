@@ -98,16 +98,43 @@ export function ProgressBar({ locked, inProgress, error, stopped = 0, todo = 0, 
   </div>;
 }
 
+// Callers pass <thead> and <tbody> (sometimes inside fragments); the header is rendered outside the scroll area.
+function flattenNodes(nodes: React.ReactNode): React.ReactNode[] {
+  return React.Children.toArray(nodes).flatMap(node => React.isValidElement(node) && node.type === React.Fragment ? flattenNodes((node.props as { children?: React.ReactNode }).children) : [node]);
+}
+
 /**
  * `columns` fixes the layout: one width per column, '' for the column that takes the remaining space.
  * Without it the browser sizes columns from the visible rows, so filtering, searching or expanding rows
  * would resize them and make the table jump.
+ *
+ * The header sits outside the scrolling body, so the vertical scrollbar starts below it. The body drives the
+ * header's horizontal scroll, and the header reserves the scrollbar's width so the columns stay aligned.
  */
-export function DashboardTable({ title, tools, children, minWidth = 'min-w-2xl', columns }: { title: string; tools?: React.ReactNode; children: React.ReactNode; minWidth?: string; columns?: string[] }) {
+export function DashboardTable({ title, tools, children, minWidth = 'min-w-2xl', columns }: { title: string; tools?: React.ReactNode; children: React.ReactNode; minWidth?: string; columns: string[] }) {
+  const nodes = flattenNodes(children);
+  const isHead = (node: React.ReactNode) => React.isValidElement(node) && node.type === 'thead';
+  const head = nodes.filter(isHead);
+  const body = nodes.filter(node => !isHead(node));
+  const headerRef = React.useRef<HTMLDivElement>(null);
+  const bodyRef = React.useRef<HTMLDivElement>(null);
+  const [scrollbarWidth, setScrollbarWidth] = React.useState(0);
+  React.useLayoutEffect(() => {
+    const element = bodyRef.current;
+    if (!element) return;
+    const measure = () => setScrollbarWidth(element.offsetWidth - element.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const tableClass = `dashboard-data-table w-full ${minWidth} table-fixed border-collapse text-left t-caption`;
+  const colgroup = <colgroup>{columns.map((width, index) => <col key={index} style={width ? { width } : undefined} />)}</colgroup>;
   return <section className="min-w-0 overflow-hidden rounded-md border border-graphite-10 bg-white">
     <div className="flex flex-wrap items-center justify-between gap-[12px] border-b border-graphite-10 bg-white px-[16px] py-[12px]"><h2 className="t-heading">{title}</h2>{tools}</div>
-    {/* Caps the body at about ten rows; longer lists scroll under a sticky header. */}
-    <div className="dashboard-table-scroll overflow-auto"><table className={`dashboard-data-table w-full ${minWidth} ${columns ? 'table-fixed' : ''} border-collapse text-left t-caption`}>{columns && <colgroup>{columns.map((width, index) => <col key={index} style={width ? { width } : undefined} />)}</colgroup>}{children}</table></div>
+    <div ref={headerRef} className="overflow-hidden bg-white" style={{ paddingRight: scrollbarWidth }}><table className={tableClass}>{colgroup}{head}</table></div>
+    {/* Caps the body at about ten rows; longer lists scroll here, under the header. */}
+    <div ref={bodyRef} onScroll={event => { if (headerRef.current) headerRef.current.scrollLeft = event.currentTarget.scrollLeft; }} className="dashboard-table-scroll overflow-auto"><table className={tableClass}>{colgroup}{body}</table></div>
   </section>;
 }
 
