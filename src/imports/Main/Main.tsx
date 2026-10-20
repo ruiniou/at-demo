@@ -12115,8 +12115,8 @@ ods graphics off;`;
       )}
       {metadataBehind && !metadataNoticeDismissed && (
         <div className="flex min-h-[40px] items-center gap-[8px] border-b border-graphite-10 bg-bg-panel px-[12px] t-small text-text-primary" role="status">
-          <span className="min-w-0 flex-1">{metadataUpdating ? 'Updating Metadata…' : 'Code changed.'}</span>
-          {!metadataUpdating && <button type="button" onClick={onUpdateMetadata} className="text-brand-1 hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1">Update Metadata</button>}
+          <span className="min-w-0 flex-1">{metadataUpdating ? 'Updating Metadata…' : 'Metadata is behind.'}</span>
+          {!metadataUpdating && <button type="button" onClick={onUpdateMetadata} aria-label="Update Metadata" className="shrink-0 text-brand-1 hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-brand-1">Update</button>}
           {!metadataUpdating && <button type="button" aria-label="Dismiss metadata reminder" onClick={onDismissMetadataNotice} className="flex h-[28px] w-[28px] items-center justify-center rounded-[4px] hover:bg-graphite-10"><img src={closeIconUrl} alt="" className="h-[16px] w-[16px]" /></button>}
         </div>
       )}
