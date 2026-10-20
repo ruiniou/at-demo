@@ -901,13 +901,9 @@ function ErrorMessageWithRetry() {
 // Until it returns, Copilot tells the user in the conversation which Metadata fields changed.
 function MetadataChangeNotice({ items }: { items: NonNullable<Message['metadataDiffData']> }) {
   return (
-    <ul className="flex list-disc flex-col gap-[4px] pl-[34px] pr-[10px]">
-      {items.map(item => (
-        <li key={item.fieldId} className="t-body text-text-primary">
-          <span>{item.label}: <s className="text-text-secondary">{item.oldValue || 'Empty'}</s> → <InlineHighlight>{item.newValue || 'Empty'}</InlineHighlight></span>
-        </li>
-      ))}
-    </ul>
+    <p className="px-[10px] t-body leading-relaxed text-text-primary">
+      Metadata changes: {items.map(item => `${item.label.toLowerCase()} is now ${item.newValue || 'empty'}`).join('; ')}.
+    </p>
   );
 }
 
@@ -2202,7 +2198,7 @@ function ChatConversation({
                 )}
                 {msg.type === 'metadata_sync_complete' && (
                   <div className="w-full flex flex-col gap-[8px]">
-                    <p className="px-[10px] t-body text-text-primary">{msg.metadataDiffData?.length ? 'Metadata updated. Review and confirm the changes in Metadata.' : 'Metadata is up to date.'}</p>
+                    {!msg.metadataDiffData?.length && <p className="px-[10px] t-body text-text-primary">Metadata is up to date.</p>}
                     {!!msg.metadataDiffData?.length && <MetadataChangeNotice items={msg.metadataDiffData} />}
                   </div>
                 )}
@@ -2311,7 +2307,7 @@ function ChatConversation({
 
             {msg.type === 'ai_complete' && (
               <div className="flex flex-col gap-[12px] w-full relative">
-                {!!msg.metadataDiffData?.length && <><p className="px-[10px] t-body text-text-primary">Metadata updated. Review and confirm the changes in Metadata.</p><MetadataChangeNotice items={msg.metadataDiffData} /></>}
+                {!!msg.metadataDiffData?.length && <MetadataChangeNotice items={msg.metadataDiffData} />}
                 <div className="flex flex-col w-full relative gap-[12px]">
                   {msg.content ? (
                     <div className="flex flex-col w-full px-[10px]">
@@ -2711,7 +2707,7 @@ function AICopilotPanel({
         const thinkingIndex = next.findLastIndex(message => message.type === 'ai_thinking');
         if (thinkingIndex >= 0) next[thinkingIndex] = {
           type: 'demo_scenario_complete',
-          content: scenario === 'A' ? 'Code and Metadata updated. Review the Code change, then confirm the Metadata changes in Metadata.' : scenario === 'B' ? 'Code updated. Metadata did not need a change.' : 'Metadata updated. Code did not need a change.',
+          content: scenario === 'A' ? 'Code and Metadata updated.' : scenario === 'B' ? 'Code updated. Metadata did not need a change.' : 'Metadata updated. Code did not need a change.',
           codeDiffData,
           metadataDiffData,
         };
