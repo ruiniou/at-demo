@@ -42,7 +42,7 @@ export function StudyDashboard({ study, onBack, showBack = true, loadState = 're
           const counts = countStatuses(event.tfls, mockDashboardDataSource);
           const eventUsage = sumUsage(records.filter((row) => row.eventId === event.id));
           return <tr key={event.id}>
-            <th scope="row" className={tdClass}><span className="inline-flex min-w-0 items-center gap-2"><span className="truncate">{event.name}</span></span></th><td className="px-[10px] py-[4px]"><ReadOnlyOwner name={event.owner} /></td>
+            <th scope="row" className={`${tdClass} max-w-0 overflow-hidden`}><span className="block truncate" title={event.name}>{event.name}</span></th><td className="px-[10px] py-[4px]"><ReadOnlyOwner name={event.owner} /></td>
             <td className={tdClass}><div className="flex min-w-40 items-center gap-3"><ProgressBar locked={counts.locked} inProgress={counts.inProgress} error={counts.error} stopped={counts.stopped} total={counts.total} label={`${event.name} TFL progress`} /><span className="whitespace-nowrap tabular-nums">{counts.locked} / {counts.total}</span></div></td>
             <td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.input)}</td><td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.output)}</td><td className={`${tdClass} text-right tabular-nums`}>{number(eventUsage.total)}</td>{costCell(eventUsage)}
           </tr>;

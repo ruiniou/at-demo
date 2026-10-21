@@ -726,3 +726,10 @@
 * **根本原因 (Root Cause)**：`DatePicker.RangePicker` 的弹层使用 Ant Design 内部 `.ant-picker-cell-range-start`、`.ant-picker-cell-in-range` 和 `.ant-picker-time-panel-cell-selected` 样式；原有 `.audit-range-popup` 规则未覆盖到时间列的选中态，日期选中规则也被组件样式优先级盖过。
 * **解决方案 (Solution)**：在 `audit-trail.css` 中限定 `.audit-range-popup`，对日期端点及其 `::before` 范围背景、范围底色和时间选中态应用现有品牌色与次级背景 Token；保留范围选择行为。
 * **经验教训 (Takeaways)**：引入外部日期控件时，要展开后逐项检查日期、时间、悬停和范围状态的计算样式；仅给弹层外框换色不足以完成设计系统适配。
+
+### [2026-10-20] Study Dashboard 的 Event 名称与 Owner 交叠
+
+* **现象**：1440px 视口下，较长的 Event 名称越过首列，与 Event Owner 的头像和姓名交叠。
+* **根本原因 (Root Cause)**：`StudyDashboard` 的首列使用 `inline-flex` 包裹 `truncate`，但表格首列是弹性列；外层没有宽度和溢出约束，长内容仍可越出单元格。
+* **解决方案 (Solution)**：在首列单元格上加 `max-w-0 overflow-hidden`，将名称改为块级 `truncate`，并用 `title` 保留完整名称。
+* **经验教训 (Takeaways)**：固定布局表格的弹性文本列必须在单元格和文本两层限制溢出；验证时包含长名称及实际目标视口。
