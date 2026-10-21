@@ -63,7 +63,7 @@ const sameSet = <T,>(items: T[], item: T) => items.includes(item) ? items.filter
 
 export function AuditTrailPage({ headerLeading }: { headerLeading?: React.ReactNode }) {
   const [keyword, setKeyword] = useState('');
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [draft, setDraft] = useState<Filters>(emptyFilters);
   const [applied, setApplied] = useState<Filters>(emptyFilters);
   const [expanded, setExpanded] = useState<number[]>([]);
