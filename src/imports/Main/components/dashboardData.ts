@@ -103,6 +103,8 @@ export const mockDashboardDataSource: DashboardDataSource = {
 // TODO (needs confirmation): replace with the billed model price list and confirm currency.
 // Cost is derived at read time, so it follows the current model prices rather than a stored amount.
 export const MODEL_PRICING = { currency: 'USD', inputPerMillion: 3, outputPerMillion: 15 };
+// TODO (needs confirmation): replace with the real model name once Usage reports which model was selected.
+export const MODEL_NAME = 'model name 1.0';
 export const COST_NOTE = 'Estimated at current model prices. Changes if prices change.';
 
 export const estimateCost = (usage: { input: number; output: number }) =>

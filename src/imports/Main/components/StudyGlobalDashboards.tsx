@@ -10,7 +10,7 @@ import { Button } from '../../../components/ui/Button';
 import { SearchBar } from '../../../components/ui/SearchBar';
 import { SegmentedControl } from '../../../components/ui/SegmentedControl';
 import { DashboardError, DashboardFrame, DashboardIcon, DashboardTable, MetricCard, ProgressBar, metricIcons, usagePageIcon, tdClass, thClass } from './DashboardPrimitives';
-import { COST_NOTE, countStatuses, estimateCost, formatCost, mockDashboardDataSource, sumUsage } from './dashboardData';
+import { COST_NOTE, MODEL_NAME, countStatuses, estimateCost, formatCost, mockDashboardDataSource, sumUsage } from './dashboardData';
 import type { DashboardTfl, TokenUsageRecord } from './dashboardData';
 import arrowRightIcon from '../../../icons/arrow-right-s-line.svg';
 import downloadIcon from '../../../icons/download-2-line.svg';
@@ -128,7 +128,7 @@ export function GlobalDashboard({ studies, onBack, onExport, loadState = 'ready'
       <>
         <section aria-label="Global Metrics" className="dashboard-metric-grid gap-3">
           <MetricCard label="Total Tokens" value={number(totals.total)} icon={metricIcons.token} />
-          <MetricCard label="Estimated Cost" info={COST_NOTE} value={formatCost(estimateCost(totals))} icon={metricIcons.cost} />
+          <MetricCard label="Estimated Cost" info={COST_NOTE} value={formatCost(estimateCost(totals))} detail={MODEL_NAME} icon={metricIcons.cost} />
           <MetricCard label="Studies" value={activeStudies.size} icon={metricIcons.study} />
           <MetricCard label="Events" value={activeEvents.size} icon={metricIcons.event} />
         </section>
